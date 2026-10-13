@@ -62,7 +62,7 @@ export function RecordBar({
         <div className="flex min-w-0 items-start gap-3">
           <Avatar name={candidate.name} email={candidate.email} size="lg" className="hidden sm:flex" />
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h1 className="truncate text-adm-xl font-semibold leading-8 tracking-[-0.02em] text-white">
                 {candidate.name || "Unnamed candidate"}
               </h1>
@@ -189,7 +189,7 @@ export function RecordBar({
                 type="button"
                 onClick={onClaim}
                 disabled={ownerSaving}
-                className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-white px-2.5 font-medium text-[var(--adm-danger-ink)] hover:bg-white/90"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-white px-3 font-medium text-[var(--adm-danger-ink)] hover:bg-white/90"
               >
                 <IconUserCheck className="h-3.5 w-3.5" aria-hidden="true" />Unclaimed, claim
               </button>

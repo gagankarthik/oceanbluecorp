@@ -101,7 +101,7 @@ export function ListFooter({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-2.5">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3">
       <p className="text-adm-xs text-[var(--adm-ink-subtle)]">
         Showing <span className="font-semibold tabular-nums text-[var(--adm-ink-mute)]">{shown}</span>
         {shown !== total && (
@@ -151,7 +151,7 @@ export function Th({
     <th
       style={width ? { width } : undefined}
       className={cn(
-        "whitespace-nowrap px-4 py-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]",
+        "whitespace-nowrap px-4 py-3 text-adm-xs font-medium text-[var(--adm-ink-mute)]",
         align === "right" && "text-right",
         align === "center" && "text-center",
         align === "left" && "text-left",
@@ -249,7 +249,7 @@ export function InlineSelect({
         autoComplete="off"
         aria-label={ariaLabel}
         className={cn(
-          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-2.5 pr-7 text-adm-base font-medium",
+          "cursor-pointer appearance-none rounded-[8px] border py-1 pl-3 pr-7 text-adm-base font-medium",
           "transition-colors duration-150",
           className,
         )}

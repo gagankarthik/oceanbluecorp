@@ -145,7 +145,7 @@ export function TasksTab({
                 type="button"
                 onClick={() => setShowDone((v) => !v)}
                 aria-expanded={showDone}
-                className="w-full px-4 py-2.5 text-left text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
+                className="w-full px-4 py-3 text-left text-adm-xs font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]"
               >
                 {showDone ? "Hide" : "Show"} completed ({done.length})
               </button>
@@ -183,7 +183,7 @@ function TaskRow({
   const state = task.done ? "none" : dueState(task.dueAt);
   const assignee = task.assigneeId === meId ? "You" : task.assigneeName || "Unassigned";
   return (
-    <li className="flex items-start gap-3 px-4 py-2.5">
+    <li className="flex items-start gap-3 px-4 py-3">
       <TaskCheck done={task.done} busy={busy} label={task.text} onToggle={onToggle} />
       <div className="min-w-0 flex-1">
         <p className={cn(

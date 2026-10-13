@@ -22,7 +22,7 @@ export function fitScoreColor(score: number): string {
 export function VerdictBadge({ verdict, className }: { verdict: Verdict; className?: string }) {
   const m = VERDICT_META[verdict] ?? VERDICT_META.weak;
   return (
-    <span className={cn("whitespace-nowrap rounded-full px-2.5 py-1 text-adm-xs font-medium leading-none", m.cls, className)}>
+    <span className={cn("whitespace-nowrap rounded-full px-3 py-1 text-adm-xs font-medium leading-none", m.cls, className)}>
       {m.label}
     </span>
   );

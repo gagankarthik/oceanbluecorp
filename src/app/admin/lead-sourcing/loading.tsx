@@ -11,7 +11,7 @@ export default function LeadSourcingLoading() {
       </div>
 
       <div className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]">
-        <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-2.5">
+        <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3">
           <div className="space-y-1.5">
             <Skel className="h-4 w-32" />
             <Skel className="h-3 w-72 max-w-full" />

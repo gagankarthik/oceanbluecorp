@@ -22,7 +22,7 @@ export default function DocsLoading() {
           <div className="flex min-h-11 items-center px-4 lg:border-b lg:border-[var(--adm-line-soft)]">
             <Skel className="h-3.5 w-20" />
           </div>
-          <div className="hidden space-y-2.5 p-3 lg:block">
+          <div className="hidden space-y-3 p-3 lg:block">
             {Array.from({ length: 9 }).map((_, i) => (
               <Skel key={i} className={i % 3 === 0 ? "h-3.5 w-28" : "ml-3 h-3 w-32"} />
             ))}

@@ -134,7 +134,7 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
 
               {/* Resume */}
               <section className="overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-                <h3 className="border-b border-[var(--adm-line-soft)] px-4 py-2.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">Resume</h3>
+                <h3 className="border-b border-[var(--adm-line-soft)] px-4 py-3 text-adm-xs font-medium text-[var(--adm-ink-mute)]">Resume</h3>
                 {fileError ? (
                   <p role="alert" className="px-4 py-6 text-center text-adm-base text-[var(--adm-danger-ink)]">{fileError}</p>
                 ) : !url ? (

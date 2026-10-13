@@ -118,7 +118,7 @@ export default function RolesPage() {
       cell: (r) => {
         const Icon = r.icon;
         return (
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 items-center gap-3">
             <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />
             <div className="min-w-0">
               <p className="font-semibold text-[var(--adm-ink)]">{r.name}</p>
@@ -157,7 +157,7 @@ export default function RolesPage() {
           const c = roleConfigs[role];
           const Icon = c.icon;
           return (
-            <AdminCard key={role} className="flex flex-col gap-2.5 p-4">
+            <AdminCard key={role} className="flex flex-col gap-3 p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-adm-xs font-medium text-[var(--adm-ink-mute)]">{c.name}</span>
                 <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" strokeWidth={1.75} />

@@ -14,7 +14,7 @@ export function AdminRowsSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div className="divide-y divide-[var(--adm-line-soft)]" aria-hidden="true">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-4 py-3.5">
+        <div key={i} className="flex items-center gap-4 px-4 py-4">
           <Skel className="h-9 w-9 flex-shrink-0 rounded-full" />
           <div className="flex-1 space-y-1.5">
             <Skel className="h-3.5 w-1/3" />
@@ -99,7 +99,7 @@ export function AdminDetailSkeleton({ label = "Loading record" }: { label?: stri
             <Skel className="h-4 w-32" />
             <Skel className="h-3 w-24" />
           </div>
-          <div className="space-y-2.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
+          <div className="space-y-3 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4">
             {Array.from({ length: 5 }).map((_, i) => <Skel key={i} className="h-3.5 w-full" />)}
           </div>
         </div>
@@ -154,7 +154,7 @@ export function BrandBandSkeleton({ stats, size = "md", className }: { stats: nu
   const bar = "rounded-[6px] bg-[var(--adm-accent)] opacity-15";
   return (
     <div className={cn("flex-none overflow-hidden rounded-[8px] bg-[var(--adm-accent-soft)]", className)}>
-      <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-3.5" : "pb-4 pt-5")}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-4" : "pb-4 pt-5")}>
         <div className="space-y-2">
           <div className={cn(bar, "h-6 w-44")} />
           <div className={cn(bar, "h-3.5 w-56")} />
@@ -166,7 +166,7 @@ export function BrandBandSkeleton({ stats, size = "md", className }: { stats: nu
       </div>
       <div className="flex gap-px border-t border-[var(--adm-surface)]">
         {Array.from({ length: stats }).map((_, i) => (
-          <div key={i} className={cn("min-w-0 flex-1 space-y-2 px-5", sm ? "py-2.5" : "py-4", i > 1 && "hidden sm:block", i > 3 && "sm:hidden lg:block")}>
+          <div key={i} className={cn("min-w-0 flex-1 space-y-2 px-5", sm ? "py-3" : "py-4", i > 1 && "hidden sm:block", i > 3 && "sm:hidden lg:block")}>
             <div className={cn(bar, "h-3 w-20 max-w-full")} />
             <div className={cn(bar, sm ? "h-5 w-10" : "h-7 w-14")} />
             {!sm && <div className={cn(bar, "h-3 w-24 max-w-full")} />}

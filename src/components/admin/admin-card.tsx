@@ -57,7 +57,7 @@ export function AdminCardHeader({
 }) {
   const t = tones[tone];
   return (
-    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[8px] border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface)] px-4 py-2.5">
+    <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[8px] border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface)] px-4 py-3">
       <div className="flex min-w-0 items-center gap-2">
         {Icon && <Icon className={cn("h-4 w-4 flex-none", tone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text)} strokeWidth={1.75} />}
         <div className="min-w-0">

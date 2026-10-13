@@ -50,9 +50,9 @@ export function ActivityTab({ history, activity }: { history: HistoryEntry[]; ac
             const isLast = i === items.length - 1;
             const key = item.type === "activity" ? item.entry.id : `stage-${i}-${item.at}`;
             return (
-              <li key={key} className="relative flex gap-3.5 pb-5 last:pb-0">
+              <li key={key} className="relative flex gap-4 pb-5 last:pb-0">
                 {!isLast && (
-                  <span aria-hidden className="absolute bottom-0 left-[7px] top-5 w-px bg-[var(--adm-line)]" />
+                  <span aria-hidden className="absolute bottom-0 left-2 top-5 w-px bg-[var(--adm-line)]" />
                 )}
                 {item.type === "stage" ? <StageRow entry={item.entry} /> : <ActivityRow entry={item.entry} />}
               </li>
@@ -77,9 +77,9 @@ function When({ at }: { at: string }) {
 function StageRow({ entry }: { entry: HistoryEntry }) {
   return (
     <>
-      <span aria-hidden className="relative mt-[5px] grid h-[11px] w-[15px] flex-none place-items-center">
+      <span aria-hidden className="relative mt-1 grid h-3 w-4 flex-none place-items-center">
         <span
-          className="h-[11px] w-[11px] rounded-full ring-4 ring-[var(--adm-surface)]"
+          className="size-3 rounded-full ring-4 ring-[var(--adm-surface)]"
           style={{ background: statusColor(entry.status) }}
         />
       </span>
@@ -97,7 +97,7 @@ function StageRow({ entry }: { entry: HistoryEntry }) {
           <When at={entry.changedAt} />
         </div>
         {entry.notes && (
-          <p className="mt-2 rounded-[6px] bg-[var(--adm-surface-sunken)] px-3 py-2 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
+          <p className="mt-2 rounded-[var(--adm-radius-control)] bg-[var(--adm-surface-sunken)] px-3 py-2 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
             {entry.notes}
           </p>
         )}
@@ -110,8 +110,8 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
   const Icon = KIND_ICON[entry.kind] ?? IconHistory;
   return (
     <>
-      <span aria-hidden className="relative mt-[2px] grid h-[15px] w-[15px] flex-none place-items-center bg-[var(--adm-surface)]">
-        <Icon className="h-[15px] w-[15px] text-[var(--adm-ink-subtle)]" />
+      <span aria-hidden className="relative mt-0.5 grid size-4 flex-none place-items-center bg-[var(--adm-surface)]">
+        <Icon className="size-4 text-[var(--adm-ink-subtle)]" />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">

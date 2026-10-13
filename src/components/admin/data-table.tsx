@@ -556,7 +556,7 @@ export function DataTable<T>({
           how to move. This replaces the separate WorkspaceFooter, which stated
           the record count a second time directly underneath. It renders even
           on one page, the rows-per-page control is how you get OFF one page. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3">
         <p className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           {sorted.length === 0 ? (
             <>No {noun}</>
@@ -583,7 +583,7 @@ export function DataTable<T>({
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 aria-label="Rows per page"
-                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-2.5 pr-7 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-3 pr-7 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
               >
                 {pageSizeOptions.map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -606,7 +606,7 @@ export function DataTable<T>({
                 type="button"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={safePage === 0}
-                className={cn(PAGER_BTN, "gap-1.5 px-2.5")}
+                className={cn(PAGER_BTN, "gap-1.5 px-3")}
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Previous</span>
@@ -640,7 +640,7 @@ export function DataTable<T>({
                 type="button"
                 onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
                 disabled={safePage >= pageCount - 1}
-                className={cn(PAGER_BTN, "gap-1.5 px-2.5")}
+                className={cn(PAGER_BTN, "gap-1.5 px-3")}
               >
                 <span className="hidden sm:inline">Next</span>
                 <span className="sr-only sm:hidden">Next page</span>

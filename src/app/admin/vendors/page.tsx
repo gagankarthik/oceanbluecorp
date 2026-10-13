@@ -320,7 +320,7 @@ export default function VendorsPage() {
       width: "230px",
       sortValue: (v) => v.name,
       cell: (v) => (
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-3">
           <Avatar name={v.name} size="sm" />
           <span className="truncate font-semibold text-[var(--adm-ink)]">{v.name}</span>
         </div>

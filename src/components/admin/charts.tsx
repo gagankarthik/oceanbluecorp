@@ -44,7 +44,7 @@ export function PeriodSwitcher<P extends string>({
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
           className={cn(
-            "flex h-full items-center whitespace-nowrap rounded-[7px] px-2.5 text-adm-xs font-medium transition-colors",
+            "flex h-full items-center whitespace-nowrap rounded-[7px] px-3 text-adm-xs font-medium transition-colors",
             value === o.value
               ? "bg-[var(--adm-seg-active)] text-[var(--adm-ink)] shadow-[0_1px_2px_rgba(15,23,42,0.08),0_0_0_1px_var(--adm-line)]"
               : "text-[var(--adm-ink-mute)] hover:text-[var(--adm-ink)]",

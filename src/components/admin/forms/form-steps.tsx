@@ -163,7 +163,7 @@ export function StepRail({
                 onClick={() => jumpToStep(s.id)}
                 aria-current={active === s.id ? "step" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-[6px] px-2 py-1.5 text-left text-adm-xs transition-colors",
+                  "flex w-full items-center gap-3 rounded-[6px] px-2 py-1.5 text-left text-adm-xs transition-colors",
                   active === s.id
                     ? "bg-[var(--adm-accent-tint)] font-medium text-[var(--adm-ink)]"
                     : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",

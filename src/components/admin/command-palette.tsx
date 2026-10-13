@@ -214,7 +214,7 @@ export function CommandPalette({ open, onOpenChange, onCreateCandidate, userRole
       >
         {/* Search input */}
         <div className="flex items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3">
-          <Search className="h-[18px] w-[18px] flex-shrink-0 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+          <Search className="size-5 flex-shrink-0 text-[var(--adm-ink-subtle)]" aria-hidden="true" />
           <input
             ref={inputRef}
             role="combobox"
@@ -334,7 +334,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   const id = React.useId();
   return (
     <div role="group" aria-labelledby={id} className="px-1.5 py-1">
-      <p id={id} className="px-2.5 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">{title}</p>
+      <p id={id} className="px-3 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)]">{title}</p>
       {children}
     </div>
   );
@@ -362,7 +362,7 @@ function Item({
       // Keep focus in the input so aria-activedescendant stays valid.
       onMouseDown={(e) => e.preventDefault()}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-3 rounded-[var(--adm-radius-control)] px-2.5 py-2 text-left transition-colors duration-150",
+        "flex w-full cursor-pointer items-center gap-3 rounded-[var(--adm-radius-control)] px-3 py-2 text-left transition-colors duration-150",
         active ? "bg-[var(--adm-accent-soft)]" : "hover:bg-[var(--adm-row-hover)]",
       )}
     >

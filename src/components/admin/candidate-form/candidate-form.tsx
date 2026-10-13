@@ -30,7 +30,7 @@ const inlineErrorCls = "flex items-center gap-1.5 rounded-[10px] bg-[var(--adm-d
 const iconBtnCls = "grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
 const iconBtnDangerCls = "grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)]";
 const dropzoneCls = "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-[var(--adm-line-strong)] bg-[var(--adm-surface-sunken)] p-5 transition-colors hover:border-[var(--adm-accent)] hover:bg-[var(--adm-accent-tint)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]";
-const checkWellCls = "flex cursor-pointer items-start gap-2.5 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3.5 py-3 transition-colors hover:border-[var(--adm-line-strong)]";
+const checkWellCls = "flex cursor-pointer items-start gap-3 rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 transition-colors hover:border-[var(--adm-line-strong)]";
 const checkboxCls = "border-[var(--adm-line-strong)] data-[state=checked]:border-[var(--adm-accent)] data-[state=checked]:bg-[var(--adm-accent)]";
 
 const BENCH_ONLY_STAGES: AppStatus[] = ["active", "inactive"];
@@ -133,7 +133,7 @@ export function CandidateForm({
           <FormInput id={IDS.phone} type="tel" className="tabular-nums" {...invalidProps("phone")} value={v.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+1 (555) 000-0000" />
         </Field>
         {form.duplicates.length > 0 && (
-          <div role="status" className={cn(wellCls, "col-span-full space-y-1.5 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] py-2.5")}>
+          <div role="status" className={cn(wellCls, "col-span-full space-y-1.5 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] py-3")}>
             <p className="flex items-center gap-2 text-adm-xs font-medium text-[var(--adm-warning-ink)]">
               <IconWarning className="h-4 w-4 flex-none" aria-hidden="true" />
               {form.duplicates.some((d) => d.matchedOn.includes("email"))
@@ -214,7 +214,7 @@ export function CandidateForm({
       <div className="space-y-3 p-4">
         {form.resumeFile ? (
           <div className={cn(wellCls, "flex flex-wrap items-center gap-3 border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]")}>
-            <IconFile className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+            <IconFile className="size-5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{form.resumeFile.name}</p>
               <p className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
@@ -230,7 +230,7 @@ export function CandidateForm({
           </div>
         ) : existing ? (
           <div className={cn(wellCls, "flex items-center gap-3 border-[var(--adm-line)] bg-[var(--adm-surface-sunken)]")}>
-            <IconFile className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
+            <IconFile className="size-5 flex-none text-[var(--adm-ink-subtle)]" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{existing.fileName}</p>
               <p className="text-adm-xs text-[var(--adm-ink-subtle)]">
@@ -380,7 +380,7 @@ export function CandidateForm({
           </Field>
         )}
 
-        <label htmlFor="cand-sponsorship" className="flex cursor-pointer items-center gap-2.5">
+        <label htmlFor="cand-sponsorship" className="flex cursor-pointer items-center gap-3">
           <Checkbox
             id="cand-sponsorship"
             checked={v.visaSponsorshipRequired}
@@ -393,7 +393,7 @@ export function CandidateForm({
         {v.workAuthorization && (
           <p className={cn(
             wellCls,
-            "py-2.5 text-adm-xs leading-relaxed",
+            "py-3 text-adm-xs leading-relaxed",
             isPermanent
               ? "border-[var(--adm-success-soft)] bg-[var(--adm-success-soft)] text-[var(--adm-success-ink)]"
               : "border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)] text-[var(--adm-warning-ink)]",

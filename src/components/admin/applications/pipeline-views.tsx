@@ -238,7 +238,7 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
         isDragging && "opacity-40",
       )}
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-3">
         <Avatar name={app.name} email={app.email} size="sm" />
         <div className="min-w-0 flex-1">
           <button
@@ -261,12 +261,12 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
       </div>
 
       {(app.skills || []).length > 0 && (
-        <div className="mt-2.5">
+        <div className="mt-3">
           <SkillChips skills={app.skills} max={3} />
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-2.5">
+      <div className="mt-3 flex items-center justify-between border-t border-[var(--adm-line-soft)] pt-3">
         <StarRating rating={app.rating || 0} onRate={(r) => onRating(app.id, r === app.rating ? 0 : r)} />
         <span className="text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
           {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}

@@ -99,7 +99,7 @@ function fmtSize(bytes: number) {
 /** Format mark: a small text chip, not a tinted tile. */
 function FileTypeTag({ type }: { type: string }) {
   return (
-    <span className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
+    <span className="inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] bg-[var(--adm-surface-2)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
       {formatLabel(type)}
     </span>
   );
@@ -600,7 +600,7 @@ export default function ResumeBankPage() {
             onClick={(e) => { e.stopPropagation(); void indexKeys([r]); }}
             disabled={bulkRunning || jobBusy}
             title={serverFailures.get(r.fileKey) || "The last attempt failed"}
-            className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
+            className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[var(--adm-danger-soft)] px-2 text-adm-xs font-medium text-[var(--adm-danger-ink)] transition-[filter] hover:brightness-95 disabled:opacity-50"
           >
             Failed · Retry
           </button>
@@ -731,7 +731,7 @@ export default function ResumeBankPage() {
                   )}
 
                   {item.status === "uploading" && (
-                    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
                       <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${item.progress}%` }} />
                     </div>
                   )}
@@ -1021,14 +1021,14 @@ function DupChip({ role }: { role?: "keeper" | "extra" }) {
   return role === "extra" ? (
     <span
       title="Same file name and size as a kept copy. Safe to delete."
-      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-warning-ink)]"
+      className="inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] bg-[var(--adm-warning-soft)] px-1.5 text-adm-xs font-medium text-[var(--adm-warning-ink)]"
     >
       Extra copy
     </span>
   ) : (
     <span
       title="Other copies of this file exist. This is the one kept and indexed."
-      className="inline-flex h-[22px] flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
+      className="inline-flex h-6 flex-none items-center rounded-[var(--adm-radius-chip)] border border-[var(--adm-line)] px-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]"
     >
       Kept copy
     </span>
@@ -1119,7 +1119,7 @@ function DuplicatesDialog({
           const losesIndexed = !keptFile?.indexed && g.files.some((f) => f.indexed);
           return (
             <li key={g.groupKey} className="overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)]">
-              <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-2)] px-4 py-2.5">
+              <div className="flex items-center justify-between gap-3 border-b border-[var(--adm-line-soft)] bg-[var(--adm-surface-2)] px-4 py-3">
                 <p className="min-w-0 truncate text-adm-base font-semibold text-[var(--adm-ink)]" title={g.keeper.fileName}>{g.keeper.fileName}</p>
                 <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-mute)]">
                   {fmtSize(g.keeper.size)} · {g.files.length} copies

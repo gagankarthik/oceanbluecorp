@@ -303,7 +303,7 @@ export default function UsersPage() {
       header: "Staff member",
       sortValue: u => u.name || u.email,
       cell: u => (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <Avatar name={u.name} email={u.email} size="sm" />
           <span className="truncate font-semibold text-[var(--adm-ink)]">{u.name || "Unnamed"}</span>
         </div>

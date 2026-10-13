@@ -719,7 +719,7 @@ export function JobForm({
           steps={steps}
           active={activeStep}
           // The main pane is the scroller; keep the rail inside it.
-          className="sticky top-0 hidden max-h-[calc(100dvh-56px-48px)] lg:flex"
+          className="sticky top-0 hidden max-h-[calc(100dvh-56px-64px)] lg:flex"
           summary={
             <dl className="space-y-2 text-adm-xs">
               {summary.map((row) => (
@@ -749,7 +749,7 @@ export function JobForm({
       </div>
 
       {/* Narrow screens: the primary action stays in reach at the bottom. */}
-      <div className="sticky -bottom-4 z-20 -mx-4 -mb-4 mt-4 flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3 sm:-bottom-5 sm:-mx-5 sm:-mb-5 lg:hidden">
+      <div className="sticky -bottom-5 z-20 -mx-5 -mb-5 mt-4 flex items-center justify-between gap-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 lg:hidden">
         <p className="min-w-0 text-adm-xs text-[var(--adm-ink-mute)]">
           {requiredLeft > 0
             ? <>{requiredLeft} required step{requiredLeft === 1 ? "" : "s"} left</>

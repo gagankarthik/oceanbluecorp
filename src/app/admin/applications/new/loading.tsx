@@ -16,7 +16,7 @@ export default function NewApplicationLoading() {
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="space-y-2.5 rounded-[12px] border border-[var(--adm-line)] p-4">
+            <div key={i} className="space-y-3 rounded-[12px] border border-[var(--adm-line)] p-4">
               <Skel className="h-4 w-40" />
               <Skel className="h-3 w-full" />
               <Skel className="h-3 w-3/4" />

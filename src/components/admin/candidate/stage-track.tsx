@@ -62,7 +62,7 @@ export function StageTrack({
 
       <div className="flex flex-none flex-wrap items-center gap-2">
         {isRejected ? (
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[var(--adm-danger-soft)] px-2.5 text-adm-base font-medium text-[var(--adm-danger-ink)]">
+          <span className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[var(--adm-danger-soft)] px-3 text-adm-base font-medium text-[var(--adm-danger-ink)]">
             <IconError className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
             Rejected, pick a stage to reopen
           </span>

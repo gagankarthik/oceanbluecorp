@@ -392,7 +392,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
     // Hidden only when the table holds no pricing columns to make room for.
     hideBelow: canPrice ? "xl" : "lg",
     cell: (j) => (
-      <span title={jobLocationLabel(j) || undefined} className="inline-flex max-w-[130px] items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
+      <span title={jobLocationLabel(j) || undefined} className="inline-flex max-w-32 items-center gap-1.5 align-middle text-[var(--adm-ink-mute)]">
         <IconLocation className="h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]" />
         <span className="min-w-0 truncate">{jobLocationLabel(j) || "–"}</span>
       </span>

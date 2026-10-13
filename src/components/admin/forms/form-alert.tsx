@@ -20,7 +20,7 @@ export function FormErrorBanner({
     <div
       role="alert"
       className={cn(
-        "flex items-start gap-2.5 rounded-[10px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-2.5 text-adm-xs leading-snug text-[var(--adm-danger-ink)]",
+        "flex items-start gap-3 rounded-[10px] border border-[var(--adm-danger)] bg-[var(--adm-danger-soft)] px-3 py-3 text-adm-xs leading-snug text-[var(--adm-danger-ink)]",
         className,
       )}
     >

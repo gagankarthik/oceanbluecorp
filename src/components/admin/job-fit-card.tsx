@@ -91,7 +91,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
       <div className="p-4">
         {/* The previous verdict belongs to a different requisition, so it is withheld. */}
         {staleForJobChange && !fit && !error && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-warning-ink)]">
+          <div className="mb-4 flex items-start gap-3 rounded-[12px] bg-[var(--adm-warning-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-warning-ink)]">
             <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>
               This candidate moved to a different job, so the previous fit score no longer
@@ -101,7 +101,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         )}
 
         {loadError && !fit && !error && (
-          <div role="alert" className="mb-4 flex flex-wrap items-center gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+          <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span className="min-w-0 flex-1">The saved fit score couldn&apos;t be loaded.</span>
             <WorkspaceButton className="h-8 px-3 text-adm-base" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</WorkspaceButton>
@@ -109,7 +109,7 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
         )}
 
         {error && (
-          <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
+          <div role="alert" className="mb-4 flex items-start gap-3 rounded-[12px] bg-[var(--adm-danger-soft)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">
             <IconWarning className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
             <span>{error}</span>
           </div>

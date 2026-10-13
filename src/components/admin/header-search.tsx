@@ -110,7 +110,7 @@ export function HeaderSearch({ className }: { className?: string }) {
           className,
         )}
       >
-        <IconSearch className="h-[18px] w-[18px]" aria-hidden="true" />
+        <IconSearch className="size-5" aria-hidden="true" />
       </button>
     );
   }

@@ -574,7 +574,7 @@ export default function AdminDashboard() {
               }))}
             />
             {bottleneck && (
-              <p className="border-t border-[var(--adm-line)] px-4 py-2.5 text-adm-xs text-[var(--adm-ink-mute)]">
+              <p className="border-t border-[var(--adm-line)] px-4 py-3 text-adm-xs text-[var(--adm-ink-mute)]">
                 <span className="font-medium text-[var(--adm-ink)]">{bottleneck.label}</span> is the slowest stage, at a median of {bottleneck.medianAge}d.
               </p>
             )}
@@ -608,7 +608,7 @@ export default function AdminDashboard() {
             <AdminCardHeader title="Pipeline by client" subtitle="Share of pipeline by client" />
             <RankedBars items={clientMix} emptyMessage="No client data yet" />
             {topClientShare !== null && topClientShare >= 40 && clientMix.length > 0 && (
-              <p className="border-t border-[var(--adm-line)] px-4 py-2.5 text-adm-xs text-[var(--adm-ink-mute)]">
+              <p className="border-t border-[var(--adm-line)] px-4 py-3 text-adm-xs text-[var(--adm-ink-mute)]">
                 <span className="font-medium text-[var(--adm-ink)]">{clientMix[0].label}</span> holds{" "}
                 <span className="font-semibold text-[var(--adm-warning-ink)]">{topClientShare}%</span> of the pipeline.
               </p>
@@ -639,7 +639,7 @@ export default function AdminDashboard() {
               {recentShown.map((a) => (
                 <li key={a.id}>
                   <Link href={`/admin/candidates/${a.id}`}
-                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--adm-row-hover)]">
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--adm-row-hover)]">
                     <Avatar name={a.name || a.email} size="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-adm-xs font-medium text-[var(--adm-ink)]">{a.name || "Unnamed"}</span>
@@ -683,7 +683,7 @@ export default function AdminDashboard() {
                     return (
                       <tr key={r.name} className="transition-colors hover:bg-[var(--adm-row-hover)]" style={{ ["--adm-row-h" as string]: "44px" }}>
                         <td className="px-4">
-                          <div className="flex min-w-0 items-center gap-2.5">
+                          <div className="flex min-w-0 items-center gap-3">
                             <Avatar name={r.name} size="xs" />
                             <span className={cn("truncate", r.name === "Unassigned" ? "text-[var(--adm-ink-subtle)]" : "font-medium text-[var(--adm-ink)]")}>
                               {r.name}

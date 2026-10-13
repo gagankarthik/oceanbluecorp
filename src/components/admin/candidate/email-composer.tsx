@@ -160,7 +160,7 @@ export function EmailComposer({
           </Field>
 
           {unfilled.length > 0 && (
-            <div role="alert" className="flex gap-2.5 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-3 py-2.5 text-adm-xs text-[var(--adm-warning-ink)]">
+            <div role="alert" className="flex gap-3 rounded-[6px] border border-[var(--adm-warning)] bg-[var(--adm-warning-soft)] px-3 py-3 text-adm-xs text-[var(--adm-warning-ink)]">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
               <p>
                 Fill in or remove {unfilled.map((p) => `{{${p}}}`).join(", ")} before sending.
@@ -170,7 +170,7 @@ export function EmailComposer({
           )}
 
           <div className="rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)]">
-            <label className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5">
+            <label className="flex cursor-pointer items-center gap-3 px-3 py-3">
               <input
                 type="checkbox"
                 checked={invite}

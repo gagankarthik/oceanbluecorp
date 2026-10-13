@@ -274,7 +274,7 @@ export function JobTeamCard({
                       disabled={!!savingId}
                       aria-pressed={assigned}
                       className={cn(
-                        "flex w-full items-center gap-2.5 border-b border-[var(--adm-line-soft)] px-4 py-2.5 text-left transition-colors last:border-0",
+                        "flex w-full items-center gap-3 border-b border-[var(--adm-line-soft)] px-4 py-3 text-left transition-colors last:border-0",
                         "hover:bg-[var(--adm-row-hover)] disabled:opacity-60",
                         assigned && "bg-[var(--adm-surface)]",
                       )}
@@ -317,7 +317,7 @@ export function JobTeamCard({
           <ul className="flex max-h-[168px] flex-wrap gap-1.5 overflow-y-auto p-3">
             {job.recruitmentManagerName && (
               <li
-                className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] pl-1 pr-2.5"
+                className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-accent-tint)] pl-1 pr-3"
                 title={`${job.recruitmentManagerName}, recruitment manager`}
               >
                 <Avatar name={job.recruitmentManagerName} size="xs" />
@@ -331,7 +331,7 @@ export function JobTeamCard({
                 key={ids[i] ?? i}
                 className={cn(
                   "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-1",
-                  canEdit ? "pr-1" : "pr-2.5",
+                  canEdit ? "pr-1" : "pr-3",
                 )}
                 title={`${name}, assignee`}
               >

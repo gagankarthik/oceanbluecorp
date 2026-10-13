@@ -62,7 +62,7 @@ function Section({
 /** One repeatable entry (a role, a degree, a certificate) inside a section. */
 function Entry({ label, onRemove, children }: { label: string; onRemove: () => void; children: React.ReactNode }) {
   return (
-    <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3.5">
+    <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">{label}</p>
         <button
@@ -191,7 +191,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
         showCloseButton={false}
         className="flex w-full flex-col gap-0 bg-[var(--adm-canvas)] p-0 sm:max-w-[640px]"
       >
-        <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-3.5">
+        <div className="flex flex-none items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
             <SheetTitle className="text-adm-md font-semibold tracking-[-0.01em] text-[var(--adm-ink)]">
               Edit resume analysis
@@ -212,7 +212,7 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {error && (
-            <div role="alert" className="flex items-start gap-2.5 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
+            <div role="alert" className="flex items-start gap-3 rounded-[12px] border border-[var(--adm-danger-soft)] bg-[var(--adm-danger-soft)] px-4 py-3">
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" aria-hidden="true" />
               <p className="text-adm-xs leading-relaxed text-[var(--adm-danger-ink)]">{error}</p>
             </div>

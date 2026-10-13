@@ -98,7 +98,7 @@ export function EmptyState({
         className={cn(resolvedTone === "slate" ? "text-[var(--adm-ink-subtle)]" : t.text, sm ? "h-5 w-5" : "h-6 w-6")}
         strokeWidth={1.5}
       />
-      <p className={cn("mt-2.5 font-medium text-[var(--adm-ink)]", sm ? "text-adm-xs" : "text-adm-base")}>
+      <p className={cn("mt-3 font-medium text-[var(--adm-ink)]", sm ? "text-adm-xs" : "text-adm-base")}>
         {resolvedTitle}
       </p>
       {resolvedDescription && (

@@ -44,7 +44,7 @@ const ENQUIRY_COLUMNS: DataTableColumn<Contact>[] = [
     sortValue: (c) => c.inquiryType,
     cell: (c) => {
       const text = isJobSeeker(c.inquiryType) ? `Job seeker · ${seekerArea(c.inquiryType)}` : c.inquiryType;
-      return <span className="block max-w-[170px] truncate text-[var(--adm-ink-mute)]" title={text}>{text}</span>;
+      return <span className="block max-w-[168px] truncate text-[var(--adm-ink-mute)]" title={text}>{text}</span>;
     },
   },
 ];
@@ -63,7 +63,7 @@ const NAME_COLUMN: DataTableColumn<Contact> = {
       <Link
         href={`/admin/contacts/${c.id}`}
         onClick={(e) => e.stopPropagation()}
-        className="flex min-w-0 items-center gap-2.5 rounded-[6px]"
+        className="flex min-w-0 items-center gap-3 rounded-[6px]"
       >
         <Avatar name={contactName(c)} email={c.email} size="sm" />
         <span className={cn("truncate text-[var(--adm-ink)]", unread ? "font-semibold" : "font-medium")}>

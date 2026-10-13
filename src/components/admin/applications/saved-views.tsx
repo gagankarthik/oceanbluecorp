@@ -51,7 +51,7 @@ export function SavedViewsMenu<S>({
           aria-label="My views"
           className={cn(
             // Same size and edge as Filters, so the toolbar's controls read as one set.
-            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-2.5 text-adm-base font-medium transition-colors sm:px-3",
+            "inline-flex h-9 flex-none items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-adm-base font-medium transition-colors sm:px-3",
             activeId
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
@@ -70,7 +70,7 @@ export function SavedViewsMenu<S>({
         sideOffset={6}
         className="w-[20rem] rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-0 shadow-[var(--adm-shadow-pop)]"
       >
-        <div className="border-b border-[var(--adm-line-soft)] px-4 py-2.5">
+        <div className="border-b border-[var(--adm-line-soft)] px-4 py-3">
           <span className="text-adm-xs font-semibold text-[var(--adm-ink)]">My views</span>
           <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-subtle)]">Search, filters and layout, saved in this browser.</p>
         </div>
@@ -109,7 +109,7 @@ export function SavedViewsMenu<S>({
         <form
           onSubmit={save}
           onKeyDown={(e) => e.stopPropagation()}
-          className="flex items-center gap-2 border-t border-[var(--adm-line-soft)] px-3 py-2.5"
+          className="flex items-center gap-2 border-t border-[var(--adm-line-soft)] px-3 py-3"
         >
           <FormInput
             aria-label="Name for the current view"

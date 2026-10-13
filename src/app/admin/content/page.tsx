@@ -154,7 +154,7 @@ function ContentSkeleton() {
 /** On/off field. The label is the control's name; the row is the hit area. */
 function ToggleRow({ id, label, on, onChange }: { id: string; label: string; on: boolean; onChange: (next: boolean) => void }) {
   return (
-    <div className="col-span-full flex items-center justify-between gap-4 rounded-[10px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-3.5 py-2.5">
+    <div className="col-span-full flex items-center justify-between gap-4 rounded-[10px] border border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-4 py-3">
       <label htmlFor={id} className="text-adm-base font-medium text-[var(--adm-ink)]">{label}</label>
       <button
         id={id}
@@ -288,7 +288,7 @@ export default function ContentPage() {
       ) : (
         <div className="max-w-4xl space-y-4">
           {loadFailed && (
-            <NotePanel className="flex items-start gap-2.5">
+            <NotePanel className="flex items-start gap-3">
               <IconAlert className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-danger-ink)]" />
               The saved copy could not be loaded, so these fields are empty and saving is off. Refresh to try again.
             </NotePanel>

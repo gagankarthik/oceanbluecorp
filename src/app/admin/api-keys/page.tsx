@@ -367,7 +367,7 @@ export default function ApiKeysPage() {
             onClick={() => handleToggle(k.id, k.isActive)}
             disabled={togglingId === k.id}
             title={k.isActive ? "Disable key" : "Enable key"}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2.5 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] disabled:opacity-50"
           >
             {togglingId === k.id ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -419,7 +419,7 @@ export default function ApiKeysPage() {
           className="rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-warning)_35%,transparent)] bg-[var(--adm-warning-soft)] p-4"
         >
           <div className="flex items-start gap-3">
-            <IconWarning className="mt-0.5 h-[18px] w-[18px] flex-none text-[var(--adm-warning-ink)]" />
+            <IconWarning className="mt-0.5 size-5 flex-none text-[var(--adm-warning-ink)]" />
             <div className="min-w-0 flex-1">
               <p className="text-adm-base font-semibold text-[var(--adm-warning-ink)]">Copy your API key now, it won&apos;t be shown again</p>
               <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">
@@ -464,7 +464,7 @@ export default function ApiKeysPage() {
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-2.5 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-adm-base text-[var(--adm-danger-ink)]"
+          className="flex items-center gap-3 rounded-[var(--adm-radius-card)] border border-[color-mix(in_srgb,var(--adm-danger)_30%,transparent)] bg-[var(--adm-danger-soft)] py-2 pl-4 pr-2 text-adm-base text-[var(--adm-danger-ink)]"
         >
           <IconError className="h-4 w-4 flex-none" />
           <span className="min-w-0 flex-1">{error}</span>
@@ -515,7 +515,7 @@ export default function ApiKeysPage() {
               { route: "GET /api/v1/jobs/:id", scope: "jobs:read" },
               { route: "POST /api/v1/jobs", scope: "jobs:write" },
             ].map(({ route, scope }) => (
-              <li key={route} className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
+              <li key={route} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <span className="min-w-0 break-all font-mono text-adm-xs text-[var(--adm-ink)]">{route}</span>
                 <span className={codeChip}>{scope}</span>
               </li>

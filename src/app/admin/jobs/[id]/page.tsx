@@ -379,7 +379,7 @@ export default function JobDetailPage({
           <>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <WorkspaceButton aria-label="More actions" className="px-2.5">
+                <WorkspaceButton aria-label="More actions" className="px-3">
                   <MoreVertical aria-hidden="true" />
                 </WorkspaceButton>
               </DropdownMenuTrigger>
@@ -461,7 +461,7 @@ export default function JobDetailPage({
             ))}
           </dl>
           {missingDetails.length > 0 && (
-            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-2.5 text-adm-xs text-[var(--adm-ink-subtle)]">
+            <p className="border-t border-[var(--adm-line-soft)] bg-[var(--adm-surface-sunken)] px-5 py-3 text-adm-xs text-[var(--adm-ink-subtle)]">
               Not recorded: {missingDetails.join(", ").toLowerCase()}.
               {canEdit && (
                 <>

@@ -61,7 +61,7 @@ function RecordRow({
   value: string;
 }) {
   return (
-    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-4 py-2.5 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
+    <div className="grid gap-1 border-b border-[var(--adm-line-soft)] px-4 py-3 last:border-0 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-4">
       <span className="flex items-center gap-2 text-adm-xs text-[var(--adm-ink-mute)]">
         <Icon className="h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
         {label}
@@ -379,13 +379,13 @@ export default function SettingsPage() {
                   onClick={() => { setActiveTab(tab.id); setSaveError(null); profileCheck.reset(); passwordCheck.reset(); }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-9 flex-none items-center gap-2.5 rounded-[8px] px-3 text-left text-adm-base transition-colors duration-150 lg:w-full",
+                    "flex h-9 flex-none items-center gap-3 rounded-[8px] px-3 text-left text-adm-base transition-colors duration-150 lg:w-full",
                     active
                       ? "bg-[var(--adm-accent-tint)] font-semibold text-[var(--adm-accent)]"
                       : "font-medium text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",
                   )}
                 >
-                  <tab.icon className={cn("h-[18px] w-[18px] flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")} />
+                  <tab.icon className={cn("size-5 flex-none", active ? "text-[var(--adm-accent)]" : "text-[var(--adm-ink-mute)]")} />
                   <span className="whitespace-nowrap">{tab.name}</span>
                 </button>
               );
@@ -505,7 +505,7 @@ export default function SettingsPage() {
             <AdminCard>
               <AdminCardHeader title="Change password" />
               <div className="space-y-4 p-4">
-                <NotePanel className="flex items-start gap-2.5">
+                <NotePanel className="flex items-start gap-3">
                   <IconInfo className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-ink-subtle)]" />
                   Use a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols.
                 </NotePanel>

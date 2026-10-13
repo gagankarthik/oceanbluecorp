@@ -83,7 +83,7 @@ export function RecordSidebar({
         <h2 className={RAIL_HEAD}>Owner</h2>
         {candidate.ownership && candidate.ownershipName ? (
           <div className="mt-2 flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-3">
               <Avatar name={candidate.ownershipName} size="sm" />
               <div className="min-w-0">
                 <p className="truncate text-adm-base font-medium text-[var(--adm-ink)]">{candidate.ownershipName}</p>
@@ -123,9 +123,9 @@ export function RecordSidebar({
           <button
             type="button"
             onClick={onViewResume}
-            className="group mt-2 flex w-full items-center gap-3 rounded-[8px] border border-[var(--adm-line-control)] px-3 py-2.5 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)]"
+            className="group mt-2 flex w-full items-center gap-3 rounded-[8px] border border-[var(--adm-line-control)] px-3 py-3 text-left transition-colors duration-150 hover:bg-[var(--adm-row-hover)]"
           >
-            <IconFile className="h-[18px] w-[18px] flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
+            <IconFile className="size-5 flex-none text-[var(--adm-ink-mute)]" aria-hidden="true" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-adm-base font-medium text-[var(--adm-ink)]">
                 {candidate.resumeFileName || "resume.pdf"}

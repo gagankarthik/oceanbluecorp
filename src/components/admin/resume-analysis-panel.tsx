@@ -54,7 +54,7 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
 }
 
 const bullet =
-  "relative pl-3.5 before:absolute before:left-0 before:top-[8px] before:h-1 before:w-1 before:rounded-full";
+  "relative pl-4 before:absolute before:left-0 before:top-2 before:h-1 before:w-1 before:rounded-full";
 
 // ── skills grouping ──────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
   const range = dateRange(w.start_date, w.end_date, w.is_current);
   return (
     <li className="relative border-l border-[var(--adm-line-soft)] pb-5 pl-5 last:border-transparent last:pb-0">
-      <span aria-hidden className="absolute -left-[4.5px] top-[7px] h-2 w-2 rounded-full bg-[var(--adm-accent)]" />
+      <span aria-hidden className="absolute -left-[4.5px] top-2 size-2 rounded-full bg-[var(--adm-accent)]" />
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
           <p className="text-adm-base font-semibold text-[var(--adm-ink)]">{w.job_title || "Role"}</p>
@@ -107,7 +107,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
         {range && <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">{range}</span>}
       </div>
       {!!(w.responsibilities && w.responsibilities.length) && (
-        <ul className="mt-2.5 space-y-1">
+        <ul className="mt-3 space-y-1">
           {w.responsibilities.map((r, i) => (
             <li key={i} className={cn(bullet, "text-adm-xs leading-relaxed text-[var(--adm-ink-mute)] before:bg-[var(--adm-line-strong)]")}>
               {r}
@@ -116,7 +116,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
         </ul>
       )}
       {!!(w.achievements && w.achievements.length) && (
-        <ul className="mt-2.5 space-y-1">
+        <ul className="mt-3 space-y-1">
           {w.achievements.map((a, i) => (
             <li key={i} className={cn(bullet, "text-adm-xs leading-relaxed text-[var(--adm-ink)] before:bg-[var(--adm-success)]")}>
               {a}
@@ -324,7 +324,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
                 {langs.map((l, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-2.5 py-1 text-adm-xs"
+                    className="inline-flex items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-3 py-1 text-adm-xs"
                   >
                     <span className="font-medium text-[var(--adm-ink)]">{l.language}</span>
                     {l.proficiency && <span className="text-[var(--adm-ink-subtle)]">{l.proficiency}</span>}

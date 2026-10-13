@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const FORM_ID = "applicant-edit-form";
 
 /** Bleeds to the edges of main's `p-4 sm:p-5 lg:p-6` so it spans the pane. */
-const actionBarCls = "sticky bottom-0 z-20 -mx-4 -mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:px-5 lg:-mx-6 lg:-mb-6 lg:px-6";
+const actionBarCls = "sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8";
 
 function EditApplicationInner() {
   const router = useRouter();

@@ -28,7 +28,7 @@ export function NotesTab({
   return (
     <div className="space-y-4">
       <AdminCard className="overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-[var(--adm-line-soft)] px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b border-[var(--adm-line-soft)] px-4 py-3">
           <Avatar name={authorName} size="xs" />
           <span className="text-adm-base font-medium text-[var(--adm-ink)]">{authorName}</span>
           <span className="text-adm-xs text-[var(--adm-ink-subtle)]">adding a note</span>
@@ -69,7 +69,7 @@ export function NotesTab({
           <ol className="divide-y divide-[var(--adm-line-soft)]">
             {[...notes].reverse().map((note) => (
               <li key={note.id} className="px-4 py-3">
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Avatar name={note.addedByName} size="xs" />
                   <span className="min-w-0 truncate text-adm-base font-medium text-[var(--adm-ink)]">
                     {note.addedByName}
@@ -78,7 +78,7 @@ export function NotesTab({
                     {fmtDateTime(note.addedAt)}
                   </span>
                 </div>
-                <p className="mt-1.5 whitespace-pre-line pl-[34px] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
+                <p className="mt-2 whitespace-pre-line pl-9 text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
                   {note.text}
                 </p>
               </li>

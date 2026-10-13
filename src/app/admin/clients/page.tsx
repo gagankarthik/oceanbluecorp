@@ -299,7 +299,7 @@ export default function ClientsPage() {
       width: "250px",
       sortValue: (c) => c.name,
       cell: (c) => (
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-3">
           <Avatar name={c.name} size="sm" />
           <StackCell
             primary={<span className="font-semibold">{c.name}</span>}

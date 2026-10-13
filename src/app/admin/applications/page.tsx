@@ -117,7 +117,7 @@ function StageSelect({ app, onChange }: {
   onChange: (id: string, s: Application["status"]) => void;
 }) {
   return (
-    <span className="relative inline-flex w-[142px] items-center" onClick={(e) => e.stopPropagation()}>
+    <span className="relative inline-flex w-36 items-center" onClick={(e) => e.stopPropagation()}>
       <span
         aria-hidden
         className="pointer-events-none absolute left-3 h-2 w-2 flex-none rounded-full"
@@ -759,7 +759,7 @@ export default function ApplicationsPage() {
                     <IconStar
                       aria-hidden
                       className={cn(
-                        "h-[18px] w-[18px] transition-colors",
+                        "size-5 transition-colors",
                         n <= minRating
                           ? "fill-[var(--adm-warning)] text-[var(--adm-warning)]"
                           : "text-[var(--adm-ink-subtle)] group-hover/star:text-[var(--adm-warning)]",
@@ -845,7 +845,7 @@ export default function ApplicationsPage() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-adm-base font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-base font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10"
               >
                 Move to stage
               </button>
@@ -869,7 +869,7 @@ export default function ApplicationsPage() {
           <button
             type="button"
             onClick={() => setBulkDeleteOpen(true)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-adm-base font-medium text-white/85 transition-colors hover:bg-[var(--adm-danger)] hover:text-white"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-base font-medium text-white/85 transition-colors hover:bg-[var(--adm-danger)] hover:text-white"
           >
             <IconTrash className="h-3.5 w-3.5" />Delete
           </button>

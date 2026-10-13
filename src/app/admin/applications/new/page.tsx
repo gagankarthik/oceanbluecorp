@@ -32,7 +32,7 @@ const wellCls = "rounded-[12px] border px-4 py-3";
 const choiceCls = "group flex cursor-pointer flex-col rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-4 transition-[border-color,box-shadow] duration-150 hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]";
 const inlineErrorCls = "flex items-center gap-1.5 rounded-[10px] bg-[var(--adm-danger-soft)] px-3 py-2 text-adm-xs font-medium text-[var(--adm-danger-ink)]";
 /** Bleeds to the edges of main's `p-4 sm:p-5 lg:p-6` so it spans the pane. */
-const actionBarCls = "sticky bottom-0 z-20 -mx-4 -mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:px-5 lg:-mx-6 lg:-mb-6 lg:px-6";
+const actionBarCls = "sticky bottom-0 z-20 -mx-5 -mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8";
 
 function NewApplicationInner() {
   const router = useRouter();
@@ -249,7 +249,7 @@ function NewApplicationInner() {
           <div className={cn("grid gap-3 p-4", forBench ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
             <label className={choiceCls}>
               <input type="file" accept={RESUME_ACCEPT} onChange={handleStartFromResume} className="sr-only" />
-              <IconSparkles className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
+              <IconSparkles className="size-5 text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
               <span className="mt-3 text-adm-base font-semibold text-[var(--adm-ink)]">Upload a resume</span>
               <span className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                 Name, contact, location, skills and experience are read from the document and filled in for you to check.
@@ -262,7 +262,7 @@ function NewApplicationInner() {
               onClick={() => { form.setResumeError(null); setMode("form"); }}
               className={cn(choiceCls, "text-left")}
             >
-              <IconEdit className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
+              <IconEdit className="size-5 text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
               <span className="mt-3 text-adm-base font-semibold text-[var(--adm-ink)]">Enter details manually</span>
               <span className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                 Fill the form in yourself. A resume can still be attached at the end, and read at any point.
@@ -271,7 +271,7 @@ function NewApplicationInner() {
 
             {!forBench && (
               <button type="button" onClick={openBench} className={cn(choiceCls, "text-left")}>
-                <IconGroup className="h-[18px] w-[18px] text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
+                <IconGroup className="size-5 text-[var(--adm-ink-subtle)] transition-colors group-hover:text-[var(--adm-accent)]" aria-hidden="true" />
                 <span className="mt-3 text-adm-base font-semibold text-[var(--adm-ink)]">Pick from talent bench</span>
                 <span className="mt-1 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
                   Choose someone already on the bench. Their details and resume are carried over for you to check.
@@ -347,7 +347,7 @@ function NewApplicationInner() {
       ) : (
         <>
           {parsing && (
-            <div className={cn(wellCls, "flex items-center gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
+            <div className={cn(wellCls, "flex items-center gap-3 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
               <Loader2 className="h-4 w-4 flex-none animate-spin text-[var(--adm-accent)]" aria-hidden="true" />
               <p className="text-adm-base text-[var(--adm-ink-mute)]" role="status" aria-live="polite">
                 Still reading {form.resumeFile?.name ?? "the resume"}; empty fields may fill in shortly.
@@ -357,7 +357,7 @@ function NewApplicationInner() {
           )}
 
           {benchFrom && (
-            <div className={cn(wellCls, "flex items-start gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
+            <div className={cn(wellCls, "flex items-start gap-3 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
               <IconGroup className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
               <p className="text-adm-base text-[var(--adm-ink-mute)]">
                 Filled from <span className="font-medium text-[var(--adm-ink)]">{benchFrom}</span>&apos;s bench profile.
@@ -367,7 +367,7 @@ function NewApplicationInner() {
           )}
 
           {!parsing && prefillFrom && (
-            <div className={cn(wellCls, "flex items-start gap-2.5 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
+            <div className={cn(wellCls, "flex items-start gap-3 border-[var(--adm-line)] bg-[var(--adm-accent-tint)]")}>
               <IconSparkles className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-accent)]" aria-hidden="true" />
               <p className="text-adm-base text-[var(--adm-ink-mute)]">
                 Filled from <span className="font-medium text-[var(--adm-ink)]">{prefillFrom}</span>: {prefillFields.join(", ")}.
@@ -378,7 +378,7 @@ function NewApplicationInner() {
 
           {/* A failed read is not a failed record: the form still works and the file is still attached. */}
           {!parsing && parseError && (
-            <div role="alert" className={cn(wellCls, "flex flex-wrap items-start gap-2.5 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]")}>
+            <div role="alert" className={cn(wellCls, "flex flex-wrap items-start gap-3 border-[var(--adm-warning-soft)] bg-[var(--adm-warning-soft)]")}>
               <IconWarning className="mt-0.5 h-4 w-4 flex-none text-[var(--adm-warning-ink)]" aria-hidden="true" />
               <p className="min-w-0 flex-1 text-adm-base text-[var(--adm-warning-ink)]">
                 Couldn&apos;t read the resume, enter the details below instead. {parseError}

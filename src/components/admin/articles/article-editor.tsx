@@ -614,7 +614,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                       : "border-[var(--adm-warning)]/40 bg-[var(--adm-warning-soft)]",
                   )}
                 >
-                  <label className="flex items-start gap-2.5">
+                  <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={!!form.approvalOnFile}
@@ -789,7 +789,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 </FieldWarning>
               </Field>
 
-              <label className="flex items-center gap-2.5">
+              <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={!!form.featured}
@@ -965,7 +965,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   onChange={(e) => set("canonicalUrl", e.target.value)}
                 />
               </Field>
-              <label className="flex items-start gap-2.5">
+              <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   checked={!!form.noIndex}

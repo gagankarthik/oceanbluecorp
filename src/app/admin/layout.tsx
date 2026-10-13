@@ -209,7 +209,7 @@ function Sidebar({
         </button>
       </div>
 
-      <nav className="adm-scroll-hidden flex-1 overflow-y-auto px-2.5 py-3" aria-label="Main navigation">
+      <nav className="adm-scroll-hidden flex-1 overflow-y-auto px-3 py-3" aria-label="Main navigation">
         {SECTION_ORDER.map((section, groupIdx) => {
           const items = NAV_ITEMS.filter((item) => item.section === section && hasAnyRole(item.roles));
           if (items.length === 0) return null;
@@ -231,7 +231,7 @@ function Sidebar({
                         onClick={onClose}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex h-9 items-center gap-2.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base transition-colors",
+                          "group relative flex h-9 items-center gap-3 rounded-[var(--adm-radius-control)] px-3 text-adm-base transition-colors",
                           rail && "lg:justify-center lg:px-0",
                           active
                             ? "bg-[var(--adm-nav-active)] font-semibold text-[var(--adm-nav-active-ink)] before:absolute before:inset-y-1.5 before:-left-2.5 before:w-[3px] before:rounded-r-full before:bg-[var(--adm-nav-active-icon)]"
@@ -241,7 +241,7 @@ function Sidebar({
                         <item.icon
                           aria-hidden="true"
                           className={cn(
-                            "h-[18px] w-[18px] flex-none transition-colors",
+                            "size-5 flex-none transition-colors",
                             active ? "text-[var(--adm-nav-active-icon)]" : "text-[var(--adm-nav-mute)] group-hover:text-[var(--adm-nav-ink)]",
                           )}
                         />
@@ -283,9 +283,9 @@ function UserMenu({
   );
 
   // Rows share the top bar's 36px height and 18px icons.
-  const row = "flex h-9 w-full items-center gap-3 rounded-[var(--adm-radius-control)] px-2.5 text-adm-base transition-colors";
+  const row = "flex h-9 w-full items-center gap-3 rounded-[var(--adm-radius-control)] px-3 text-adm-base transition-colors";
   const item = cn(row, "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]");
-  const icon = "h-[18px] w-[18px] flex-none text-[var(--adm-ink-subtle)]";
+  const icon = "size-5 flex-none text-[var(--adm-ink-subtle)]";
   const external = "ml-auto h-3.5 w-3.5 flex-none text-[var(--adm-ink-subtle)]";
 
   return (
@@ -309,7 +309,7 @@ function UserMenu({
           aria-label="Account"
           className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]"
         >
-          <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-3.5 py-3">
+          <div className="flex items-center gap-3 border-b border-[var(--adm-line)] px-4 py-3">
             {avatar("md")}
             <div className="min-w-0 flex-1">
               <p className="truncate text-adm-xs font-semibold text-[var(--adm-ink)]">{user?.name}</p>
@@ -342,7 +342,7 @@ function UserMenu({
               onClick={() => signOut()}
               className={cn(row, "text-[var(--adm-danger-ink)] hover:bg-[var(--adm-danger-soft)]")}
             >
-              <IconLogout className="h-[18px] w-[18px] flex-none" aria-hidden="true" /> Sign out
+              <IconLogout className="size-5 flex-none" aria-hidden="true" /> Sign out
             </button>
           </div>
         </div>
@@ -396,7 +396,7 @@ function NotificationsPanel() {
         aria-haspopup="dialog"
         className={cn(iconButton, "relative", open && "bg-[var(--adm-surface-2)]")}
       >
-        <IconBell className="h-[18px] w-[18px]" aria-hidden="true" />
+        <IconBell className="size-5" aria-hidden="true" />
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
@@ -432,7 +432,7 @@ function NotificationsPanel() {
               )}
             </div>
             {unreadCount > 0 && (
-            <div className="mt-2.5">
+            <div className="mt-3">
               <ListTabs
                 label="Show"
                 value={view}
@@ -634,7 +634,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex h-[56px] items-center justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-3 sm:px-5 lg:px-6">
           <div className="flex min-w-0 items-center gap-1">
             <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className={cn(iconButton, "lg:hidden")}>
-              <IconMenu className="h-[18px] w-[18px]" aria-hidden="true" />
+              <IconMenu className="size-5" aria-hidden="true" />
             </button>
             <h1 className="ml-1 truncate text-adm-base font-semibold text-[var(--adm-ink)] md:hidden">{title}</h1>
           </div>
@@ -643,7 +643,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             {canSearch && <HeaderSearch />}
             <NotificationsPanel />
             <Link href="/admin/help" title="Help and team" aria-label="Help and team directory" className={iconButton}>
-              <IconHelp className="h-[18px] w-[18px]" aria-hidden="true" />
+              <IconHelp className="size-5" aria-hidden="true" />
             </Link>
             <UserMenu user={user} signOut={signOut} />
           </div>
@@ -656,7 +656,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           // `relative`: sr-only labels inside are position:absolute. Without a
           // positioned scroller they anchor to <body>, escape this overflow and
           // stretch the document, which shows as blank space under the page.
-          className="relative flex h-[calc(100dvh-56px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-4 sm:p-5 lg:p-6"
+          className="relative flex h-[calc(100dvh-56px)] min-w-0 flex-col overflow-y-auto overflow-x-hidden bg-[var(--adm-canvas)] p-5 sm:p-6 lg:p-8"
         >
           {routeAllowed ? children : <AccessDenied userRole={user?.role} />}
         </main>
