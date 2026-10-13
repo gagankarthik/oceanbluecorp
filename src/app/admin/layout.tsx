@@ -189,7 +189,7 @@ function Sidebar({
         >
           {/* Full wordmark when expanded (and in the mobile drawer); the mark alone in the rail. */}
           <Image
-            src="/brand/oceanblue-logo.svg"
+            src="/brand/oceanblue-logo-small.svg"
             alt="Oceanblue"
             width={256}
             height={76}
