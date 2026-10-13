@@ -766,7 +766,6 @@ function PipelineRecordDrawer({
       <SheetContent
         side="right"
         showCloseButton={false}
-        overlayClassName="bg-[var(--adm-scrim)]"
         onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }}
         className="w-full sm:max-w-[520px] p-0 flex flex-col gap-0 bg-[var(--adm-surface-sunken)]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4 sm:px-5">

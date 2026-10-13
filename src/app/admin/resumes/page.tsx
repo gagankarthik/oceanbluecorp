@@ -732,7 +732,7 @@ export default function ResumeBankPage() {
 
                   {item.status === "uploading" && (
                     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--adm-surface-2)]">
-                      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${item.progress}%` }} />
+                      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-300 ease-[var(--adm-ease)]" style={{ width: `${item.progress}%` }} />
                     </div>
                   )}
 
@@ -1038,7 +1038,7 @@ function Progress({ value }: { value: number }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
     <div className="mt-2 h-1.5 w-full max-w-[420px] overflow-hidden rounded-full bg-[var(--adm-surface-2)]" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-500" style={{ width: `${pct}%` }} />
+      <div className="h-full rounded-full bg-[var(--adm-accent)] transition-[width] duration-300 ease-[var(--adm-ease)]" style={{ width: `${pct}%` }} />
     </div>
   );
 }

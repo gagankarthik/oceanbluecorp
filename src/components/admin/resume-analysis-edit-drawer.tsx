@@ -186,7 +186,6 @@ export function ResumeAnalysisEditDrawer({ open, onOpenChange, application, onSa
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        overlayClassName="bg-[var(--adm-scrim)]"
         side="right"
         showCloseButton={false}
         className="flex w-full flex-col gap-0 bg-[var(--adm-canvas)] p-0 sm:max-w-[640px]"

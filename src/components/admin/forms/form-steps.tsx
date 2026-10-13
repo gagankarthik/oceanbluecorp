@@ -145,7 +145,7 @@ export function StepRail({
         >
           <div
             className={cn(
-              "h-full rounded-full transition-[width] duration-500 ease-[var(--adm-ease)]",
+              "h-full rounded-full transition-[width] duration-300 ease-[var(--adm-ease)]",
               pct === 100 ? "bg-[var(--adm-success)]" : "bg-[var(--adm-accent)]",
             )}
             style={{ width: `${pct}%` }}

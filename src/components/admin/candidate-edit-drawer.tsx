@@ -55,7 +55,7 @@ export function CandidateEditDrawer({
     <Sheet open={open} onOpenChange={(next) => (next ? onOpenChange(true) : requestClose())}>
       <SheetContent
         side="right"
-        onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }} showCloseButton={false} overlayClassName="bg-[var(--adm-scrim)]" className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[560px]">
+        onEscapeKeyDown={(e) => { if (confirmDiscard) e.preventDefault(); }} showCloseButton={false} className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[560px]">
         <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[var(--adm-line)] bg-[var(--adm-surface)] px-4 py-4">
           <div className="min-w-0">
             <SheetTitle className="truncate text-adm-md font-semibold tracking-[-0.015em] text-[var(--adm-ink)]">

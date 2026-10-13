@@ -61,7 +61,6 @@ export function MatchProfileDrawer({ candidate, onClose }: { candidate: MatchPro
       <SheetContent
         side="right"
         showCloseButton={false}
-        overlayClassName="bg-[var(--adm-scrim)]"
         className="flex w-full flex-col gap-0 bg-[var(--adm-surface-sunken)] p-0 sm:max-w-[640px]"
       >
         {c && (

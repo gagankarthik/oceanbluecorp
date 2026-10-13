@@ -75,7 +75,6 @@ export function JobPreviewDrawer({
       <SheetContent
         side="right"
         showCloseButton={false}
-        overlayClassName="bg-[var(--adm-scrim)]"
         className="flex w-full flex-col gap-0 bg-[var(--adm-surface)] p-0 sm:max-w-[480px]"
       >
         {job && (
