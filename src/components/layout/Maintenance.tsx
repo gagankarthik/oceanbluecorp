@@ -36,9 +36,9 @@ export default function Maintenance({
     <main className="site flex min-h-[100svh] w-full flex-col bg-white">
       <div className="mx-auto w-full max-w-[var(--grid-max)] px-[var(--space-layout-gutter)] pt-6">
         <Image
-          src="/logo.webp"
+          src="/brand/oceanblue-logo.svg"
           alt="Oceanblue Solutions, Inc."
-          width={150}
+          width={135}
           height={40}
           className="mx-auto h-8 w-auto lg:mx-0"
           priority

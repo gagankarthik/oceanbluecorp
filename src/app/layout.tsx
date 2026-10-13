@@ -124,7 +124,8 @@ const jsonLd = {
   // Former and short names, so searches for the old name still resolve here.
   alternateName: ["Oceanblue Solutions", "Oceanblue", "Ocean Blue Corporation", "OceanBlueCorp"],
   url: "https://oceanbluecorp.com",
-  logo: "https://oceanbluecorp.com/Logo_400x400.png",
+  logo: { "@type": "ImageObject", url: "https://oceanbluecorp.com/brand/oceanblue-mark-512.png", width: 512, height: 512 },
+  image: "https://oceanbluecorp.com/brand/oceanblue-logo.png",
   description:
     "Provider of IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce, serving enterprises and state government agencies across North America.",
   foundingDate: "2013",

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { jobLocationLabel } from "@/lib/workplace";
+import { OG_LOGO, ogLogoSrc } from "@/lib/og-brand";
 import { loadJob } from "./job";
 
 export const runtime = "nodejs";
@@ -22,6 +23,7 @@ export default async function OGImage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const logo = await ogLogoSrc();
 
   let jobTitle = "Open Position";
   let jobLocation = "United States";
@@ -89,31 +91,8 @@ export default async function OGImage({
 
         {/* Top: brand */}
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{
-            width: "48px",
-            height: "48px",
-            borderRadius: "12px",
-            background: "linear-gradient(135deg, #3b82f6, #6366f1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            <div style={{
-              width: "22px",
-              height: "22px",
-              borderRadius: "50%",
-              border: "3px solid white",
-              display: "flex",
-            }} />
-          </div>
-          <span style={{
-            color: "rgba(255,255,255,0.75)",
-            fontSize: "20px",
-            fontWeight: "600",
-            letterSpacing: "0.01em",
-          }}>
-            Oceanblue Solutions, Inc.
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logo} alt="Oceanblue Solutions" height={56} width={Math.round((56 * OG_LOGO.width) / OG_LOGO.height)} />
           <div style={{
             marginLeft: "auto",
             background: "rgba(59,130,246,0.15)",

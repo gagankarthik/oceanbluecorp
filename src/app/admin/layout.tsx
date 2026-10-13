@@ -189,17 +189,17 @@ function Sidebar({
         >
           {/* Full wordmark when expanded (and in the mobile drawer); the mark alone in the rail. */}
           <Image
-            src="/logo.webp"
+            src="/brand/oceanblue-logo.svg"
             alt="Oceanblue"
             width={256}
-            height={70}
+            height={76}
             priority
             className={cn("h-9 w-auto max-w-full object-contain", rail && "lg:hidden")}
           />
           <Image
-            src="/favicon.png"
+            src="/brand/oceanblue-mark.svg"
             alt="Oceanblue"
-            width={80}
+            width={76}
             height={76}
             className={cn("hidden h-8 w-auto object-contain", rail && "lg:block")}
           />

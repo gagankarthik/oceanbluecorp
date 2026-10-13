@@ -159,7 +159,7 @@ export function articleJsonLd(article: Article) {
     "@type": "Organization",
     name: "Oceanblue Solutions, Inc.",
     url: SITE,
-    logo: { "@type": "ImageObject", url: `${SITE}/Logo_400x400.png`, width: 400, height: 400 },
+    logo: { "@type": "ImageObject", url: `${SITE}/brand/oceanblue-mark-512.png`, width: 512, height: 512 },
   };
 
   return {

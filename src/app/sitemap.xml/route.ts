@@ -2,35 +2,31 @@ import { getPublicJobs } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "@/lib/articles";
 import { getLiveArticles } from "@/lib/articles-public";
+import { SOLUTION_SLUGS } from "@/app/solutions/[slug]/content";
 
 const BASE = "https://oceanbluecorp.com";
 
-type Entry = { url: string; lastmod?: string; changefreq?: string; priority?: number };
+type Entry = { url: string; lastmod?: string; changefreq?: string; priority?: number; images?: string[] };
 
 // Static public pages (kept in sync with the human sitemap at /sitemap)
 const STATIC: Entry[] = [
-  { url: BASE, changefreq: "weekly", priority: 1.0 },
+  // The logo and share card ride along so image search picks up the redrawn mark.
+  { url: BASE, changefreq: "weekly", priority: 1.0, images: [`${BASE}/brand/oceanblue-logo.png`, `${BASE}/opengraph-image`] },
   { url: `${BASE}/about`, changefreq: "monthly", priority: 0.8 },
   { url: `${BASE}/solutions`, changefreq: "monthly", priority: 0.9 },
-  { url: `${BASE}/solutions/staffing`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/cloud`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/cybersecurity`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/erp`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/salesforce`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/ai`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/managed`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/training`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/solutions/transformation`, changefreq: "monthly", priority: 0.85 },
+  // One per solution, from the same list that generates the pages.
+  ...SOLUTION_SLUGS.map((slug) => ({ url: `${BASE}/solutions/${slug}`, changefreq: "monthly", priority: 0.85 })),
   { url: `${BASE}/solutions/engineering`, changefreq: "monthly", priority: 0.85 },
   { url: `${BASE}/team`, changefreq: "monthly", priority: 0.7 },
   { url: `${BASE}/products`, changefreq: "monthly", priority: 0.75 },
   { url: `${BASE}/developers`, changefreq: "monthly", priority: 0.6 },
-  { url: `${BASE}/brand-kit`, changefreq: "yearly", priority: 0.4 },
+  { url: `${BASE}/brand-kit`, changefreq: "yearly", priority: 0.4, images: [`${BASE}/brand/oceanblue-logo.png`, `${BASE}/brand/oceanblue-logo-reversed.png`, `${BASE}/brand/oceanblue-mark-512.png`] },
   { url: `${BASE}/careers`, changefreq: "daily", priority: 0.95 },
   { url: `${BASE}/careers/search`, changefreq: "daily", priority: 0.9 },
   { url: `${BASE}/contact`, changefreq: "monthly", priority: 0.75 },
   { url: `${BASE}/faq`, changefreq: "monthly", priority: 0.6 },
   { url: `${BASE}/sitemap`, changefreq: "yearly", priority: 0.3 },
+  { url: `${BASE}/status`, changefreq: "daily", priority: 0.3 },
   // Security sits above the legal block: procurement reads it, and it is a
   // page we want indexed rather than merely available.
   { url: `${BASE}/security`, changefreq: "yearly", priority: 0.5 },
@@ -110,13 +106,14 @@ export async function GET() {
 
   const body =
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n` +
     entries
       .map((e) => {
         const parts = [`    <loc>${escapeXml(e.url)}</loc>`];
         if (e.lastmod) parts.push(`    <lastmod>${e.lastmod}</lastmod>`);
         if (e.changefreq) parts.push(`    <changefreq>${e.changefreq}</changefreq>`);
         if (e.priority !== undefined) parts.push(`    <priority>${e.priority.toFixed(1)}</priority>`);
+        for (const img of e.images ?? []) parts.push(`    <image:image><image:loc>${escapeXml(img)}</image:loc></image:image>`);
         return `  <url>\n${parts.join("\n")}\n  </url>`;
       })
       .join("\n") +

@@ -55,9 +55,9 @@ export default function GlobalError({
               what has failed if this boundary is rendering. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/brand/oceanblue-logo.svg"
             alt="Oceanblue Solutions, Inc."
-            width={170}
+            width={135}
             height={40}
             style={{ height: 32, width: "auto" }}
           />

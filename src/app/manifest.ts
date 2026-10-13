@@ -10,6 +10,6 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#ffffff",
     // Matches `viewport.themeColor` in the root layout.
     theme_color: "#0b1a33",
-    icons: [{ src: "/Logo_400x400.png", sizes: "400x400", type: "image/png", purpose: "any" }],
+    icons: [{ src: "/brand/oceanblue-mark-512.png", sizes: "512x512", type: "image/png", purpose: "any" }],
   };
 }

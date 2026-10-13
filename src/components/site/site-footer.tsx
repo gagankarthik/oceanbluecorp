@@ -121,7 +121,7 @@ export function SiteFooter() {
         <div className="mx-auto max-w-[1240px] px-4 pt-6 pb-5 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" aria-label={`${LEGAL_NAME}, home`} className="inline-flex flex-none rounded-sm">
-              <Image src="/logo.webp" alt="" width={225} height={60} className="h-9 w-auto" />
+              <Image src="/brand/oceanblue-logo.svg" alt="" width={202} height={60} className="h-9 w-auto" />
             </Link>
             <a
               href="#top"

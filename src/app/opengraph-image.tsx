@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { OG_LOGO, ogLogoSrc } from "@/lib/og-brand";
 
 /* ============================================================
    Social share card, 1200×630, generated at build time.
@@ -12,7 +13,8 @@ export const alt =
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpengraphImage() {
+export default async function OpengraphImage() {
+  const logo = await ogLogoSrc();
   return new ImageResponse(
     (
       <div
@@ -39,19 +41,9 @@ export default function OpengraphImage() {
           }}
         />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }}>
-          <div style={{ width: 10, height: 40, borderRadius: 4, background: "#5ce0f7", display: "flex" }} />
-          <div
-            style={{
-              fontSize: 26,
-              fontWeight: 600,
-              color: "#ffffff",
-              letterSpacing: "-0.01em",
-              display: "flex",
-            }}
-          >
-            Oceanblue Solutions, Inc.
-          </div>
+        <div style={{ display: "flex", position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logo} alt="Oceanblue Solutions" height={72} width={Math.round((72 * OG_LOGO.width) / OG_LOGO.height)} />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", position: "relative" }}>

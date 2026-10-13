@@ -83,7 +83,7 @@ function jobPostingLd(job: PublicJob, id: string, publishedAt?: string) {
       "@type": "Organization",
       name: "Oceanblue Solutions, Inc.",
       sameAs: "https://oceanbluecorp.com",
-      logo: "https://oceanbluecorp.com/Logo_400x400.png",
+      logo: "https://oceanbluecorp.com/brand/oceanblue-mark-512.png",
     },
     ...(job.department ? { industry: job.department } : {}),
     // Fully remote: Google wants TELECOMMUTE plus where applicants may live, and no jobLocation.

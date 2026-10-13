@@ -110,7 +110,7 @@ const MENUS: Group[] = [
 export function Wordmark({ className }: { className?: string }) {
   return (
     <Link href="/" aria-label="Oceanblue Solutions, Inc., home" className={cn("flex items-center", className)}>
-      <Image src="/logo.webp" alt="Oceanblue Solutions, Inc." width={150} height={40} priority className="h-8 w-auto" />
+      <Image src="/brand/oceanblue-logo.svg" alt="Oceanblue Solutions, Inc." width={135} height={40} priority className="h-8 w-auto" />
     </Link>
   );
 }

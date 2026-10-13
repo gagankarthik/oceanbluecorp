@@ -204,7 +204,7 @@ export default function BrandKitContent() {
               The logo, colour, type, icons and drawings behind Oceanblue Solutions, Inc., the single source of truth for a consistent brand.
             </p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "240ms" }}>
-              <a href="/logo.png" download className={buttonClass("primary", "lg")}>
+              <a href="/brand/oceanblue-logo.svg" download className={buttonClass("primary", "lg")}>
                 <IconDownload size={16} />
                 Download logo
               </a>
@@ -236,16 +236,25 @@ export default function BrandKitContent() {
           <KitSection id="logo" n="01" title="Logo" sub="Primary wordmark. Keep clear space around it and don't recolor or distort.">
             <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
               <div className="flex min-h-[220px] items-center justify-center bg-white p-10">
-                <Image src="/logo.png" alt="Oceanblue Solutions, Inc. logo on light" width={220} height={60} className="h-12 w-auto" />
+                <Image src="/brand/oceanblue-logo.svg" alt="Oceanblue Solutions, Inc. logo on light" width={202} height={60} className="h-12 w-auto" />
               </div>
               <div className="flex min-h-[220px] items-center justify-center bg-ink p-10">
-                <Image src="/logo.png" alt="Oceanblue Solutions, Inc. logo on dark" width={220} height={60} className="h-12 w-auto brightness-0 invert" />
+                <Image src="/brand/oceanblue-logo-reversed.svg" alt="Oceanblue Solutions, Inc. logo on dark" width={202} height={60} className="h-12 w-auto" />
               </div>
             </div>
-            <a href="/logo.png" download className="mt-4 inline-flex min-h-10 items-center gap-2 type-label font-semibold text-cobalt hover:text-cobalt-deep">
-              <IconDownload size={16} />
-              Download logo (PNG)
-            </a>
+            <div className="mt-4 flex flex-wrap gap-x-6">
+              {[
+                { href: "/brand/oceanblue-logo.svg", label: "Logo (SVG)" },
+                { href: "/brand/oceanblue-logo-reversed.svg", label: "Logo on dark (SVG)" },
+                { href: "/brand/oceanblue-logo.png", label: "Logo (PNG)" },
+                { href: "/brand/oceanblue-mark.svg", label: "Mark (SVG)" },
+              ].map((f) => (
+                <a key={f.href} href={f.href} download className="inline-flex min-h-10 items-center gap-2 type-label font-semibold text-cobalt hover:text-cobalt-deep">
+                  <IconDownload size={16} />
+                  {f.label}
+                </a>
+              ))}
+            </div>
           </KitSection>
 
           <KitSection id="color" n="02" title="Color" sub="One cobalt accent, a warm ink ramp, and white and paper surfaces. Click any value to copy it.">
