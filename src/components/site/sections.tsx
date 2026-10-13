@@ -82,7 +82,7 @@ export function SectionLink({ href, children, className, dark }: { href: string;
 }
 
 type Ground = "white" | "paper";
-const GROUND: Record<Ground | "none", string> = { white: "#fff", paper: "var(--color-paper)", none: "transparent" };
+const GROUND: Record<Ground | "none", string> = { white: "var(--color-background-primary)", paper: "var(--color-paper)", none: "transparent" };
 
 /** Wraps a dark band so its cut corners show the section above (`ground`) at
  *  the top and the section below (`below`, default the same) at the bottom.

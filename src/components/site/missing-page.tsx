@@ -48,17 +48,17 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
       <defs>
         <ArtShadows id={id} />
         <linearGradient id={`${id}-void`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#c9d6ec" />
-          <stop offset="1" stopColor="#e7edf6" />
+          <stop offset="0" stopColor="var(--p-blue-150)" />
+          <stop offset="1" stopColor="var(--color-background-tertiary)" />
         </linearGradient>
         <linearGradient id={`${id}-digits`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#3b6cf0" />
-          <stop offset="1" stopColor="#1740ad" />
+          <stop offset="0" stopColor="var(--p-blue-500)" />
+          <stop offset="1" stopColor="var(--color-action-primary-hover)" />
         </linearGradient>
         <radialGradient id={`${id}-lens`} cx=".35" cy=".3" r=".8">
-          <stop offset="0" stopColor="#fff" stopOpacity=".6" />
-          <stop offset=".45" stopColor="#fff" stopOpacity=".08" />
-          <stop offset="1" stopColor="#a9c1ff" stopOpacity=".35" />
+          <stop offset="0" stopColor="var(--color-background-primary)" stopOpacity=".6" />
+          <stop offset=".45" stopColor="var(--color-background-primary)" stopOpacity=".08" />
+          <stop offset="1" stopColor="var(--color-text-interactive-inverse)" stopOpacity=".35" />
         </radialGradient>
         <clipPath id={`${id}-hole`}>
           <path d={HOLE} />
@@ -67,7 +67,7 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
 
       <g className="nf-rise">
         <ArtWindow id={id}>
-          oceanbluecorp.com/<tspan fill="#e8432f" className="nf-blink">page-not-found</tspan>
+          oceanbluecorp.com/<tspan fill="var(--p-red-500)" className="nf-blink">page-not-found</tspan>
         </ArtWindow>
 
         {/* Page skeleton, shimmering as if still loading. */}
@@ -79,18 +79,18 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
             width={w}
             height="8"
             rx="4"
-            fill={i < LINES_TOP.length ? "#cbd5e3" : "#e2e8f1"}
+            fill={i < LINES_TOP.length ? "var(--color-border-strong)" : "var(--color-border-default)"}
             className="nf-shimmer"
             style={{ animationDelay: `${(i % 6) * 180}ms` }}
           />
         ))}
-        <rect x="96" y="200" width="54" height="40" rx="8" fill="#eef2ff" />
-        <rect x="490" y="190" width="54" height="54" rx="27" fill="#eef2ff" />
+        <rect x="96" y="200" width="54" height="40" rx="8" fill="var(--color-background-selected)" />
+        <rect x="490" y="190" width="54" height="54" rx="27" fill="var(--color-background-selected)" />
 
         {/* The hole: a torn edge, the void behind it, 404 in the void. */}
         <path d={HOLE} fill={`url(#${id}-void)`} />
         <g clipPath={`url(#${id}-hole)`}>
-          <path d={HOLE} fill="none" stroke="#0b1a33" strokeOpacity=".16" strokeWidth="14" transform="translate(0 6)" />
+          <path d={HOLE} fill="none" stroke="var(--color-text-primary)" strokeOpacity=".16" strokeWidth="14" transform="translate(0 6)" />
           <text
             x="320"
             y="252"
@@ -105,18 +105,18 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
             404
           </text>
         </g>
-        <path d={HOLE} fill="none" stroke="#fff" strokeWidth="5" strokeLinejoin="round" />
-        <path d={HOLE} fill="none" stroke="#cbd5e3" strokeWidth="1.25" strokeLinejoin="round" />
+        <path d={HOLE} fill="none" stroke="var(--color-background-primary)" strokeWidth="5" strokeLinejoin="round" />
+        <path d={HOLE} fill="none" stroke="var(--color-border-strong)" strokeWidth="1.25" strokeLinejoin="round" />
       </g>
 
       {/* The missing piece, fluttering. */}
       <g transform="translate(470 368)">
         <g className="nf-scrap">
           <g filter={`url(#${id}-soft)`}>
-            <path d={SCRAP} fill="#fff" stroke="#cbd5e3" strokeWidth="1.25" strokeLinejoin="round" />
+            <path d={SCRAP} fill="var(--color-background-primary)" stroke="var(--color-border-strong)" strokeWidth="1.25" strokeLinejoin="round" />
           </g>
-          <rect x="-34" y="-10" width="52" height="6" rx="3" fill="#e2e8f1" />
-          <rect x="-34" y="2" width="36" height="6" rx="3" fill="#e2e8f1" />
+          <rect x="-34" y="-10" width="52" height="6" rx="3" fill="var(--color-border-default)" />
+          <rect x="-34" y="2" width="36" height="6" rx="3" fill="var(--color-border-default)" />
         </g>
       </g>
 
@@ -124,12 +124,12 @@ export function MissingPage({ id = "nf", className }: { id?: string; className?:
       <g transform="translate(320 200)">
         <g className="nf-sweep">
           <g filter={`url(#${id}-soft)`}>
-            <path d="M34 34l40 40" stroke="#0b1a33" strokeWidth="14" strokeLinecap="round" />
-            <path d="M34 34l40 40" stroke="#3a4a66" strokeWidth="8" strokeLinecap="round" />
-            <circle r="44" fill={`url(#${id}-lens)`} stroke="#0b1a33" strokeWidth="9" />
+            <path d="M34 34l40 40" stroke="var(--color-text-primary)" strokeWidth="14" strokeLinecap="round" />
+            <path d="M34 34l40 40" stroke="var(--color-text-secondary)" strokeWidth="8" strokeLinecap="round" />
+            <circle r="44" fill={`url(#${id}-lens)`} stroke="var(--color-text-primary)" strokeWidth="9" />
           </g>
-          <circle r="44" fill="none" stroke="#1d4ed8" strokeWidth="3" />
-          <path d="M-22 -24a32 32 0 0 1 22 -10" stroke="#fff" strokeWidth="5" strokeLinecap="round" fill="none" />
+          <circle r="44" fill="none" stroke="var(--color-action-primary)" strokeWidth="3" />
+          <path d="M-22 -24a32 32 0 0 1 22 -10" stroke="var(--color-background-primary)" strokeWidth="5" strokeLinecap="round" fill="none" />
         </g>
       </g>
     </svg>

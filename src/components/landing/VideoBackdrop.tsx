@@ -117,7 +117,7 @@ export default function VideoBackdrop({
           onLoadedData={start}
           onPlaying={() => setPlaying(true)}
           onEnded={() => setEnded(true)}
-          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-out"
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[var(--dur-long)] ease-out"
           // Faded up only once frames are arriving, so the swap is a dissolve
           // rather than a black rectangle while the first frame decodes.
           style={{ opacity: playing ? intensity / 100 : 0 }}
@@ -130,7 +130,7 @@ export default function VideoBackdrop({
         type="button"
         onClick={togglePause}
         aria-label={paused ? "Play background video" : "Pause background video"}
-        className="absolute bottom-4 right-4 z-20 grid h-10 w-10 place-items-center rounded-full border border-white/60 bg-black/40 text-white transition-colors hover:bg-black/60"
+        className="absolute bottom-4 right-4 z-20 grid size-10 pointer-coarse:size-11 place-items-center rounded-full border border-white/60 bg-black/40 text-white transition-colors duration-[var(--dur-short)] hover:bg-black/60"
       >
         {paused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
       </button>

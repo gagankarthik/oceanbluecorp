@@ -55,7 +55,7 @@ function Shell({
 function Cursor() {
   return (
     <svg aria-hidden viewBox="0 0 16 20" className="demo-cursor pointer-events-none absolute size-5 drop-shadow">
-      <path d="M1 1l13 9-6 1.2L5 18z" fill="#0b1a33" stroke="#fff" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M1 1l13 9-6 1.2L5 18z" fill="var(--color-text-primary)" stroke="var(--color-background-primary)" strokeWidth="1.2" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -209,12 +209,12 @@ function Electrical({ on }: CardProps) {
   return (
     <Shell on={on} title="Board design review" sub="Electrical & electronics" cta="Approve review">
       <svg viewBox="0 0 240 90" className="h-22 w-full rounded-lg border border-line bg-paper">
-        <g fill="none" stroke="#1d4ed8" strokeWidth="1.5">
+        <g fill="none" stroke="var(--color-action-primary)" strokeWidth="1.5">
           <path d="M20 45h40l10-15 10 30 10-30 10 15h40" />
           <rect x="150" y="30" width="30" height="30" rx="3" />
           <path d="M180 45h40M40 45v25h160V60" strokeOpacity=".45" />
         </g>
-        <g fill="#1d4ed8">
+        <g fill="var(--color-action-primary)">
           <circle cx="20" cy="45" r="3" />
           <circle cx="220" cy="45" r="3" />
         </g>
@@ -288,13 +288,13 @@ function Security({ on }: CardProps) {
     <Shell on={on} title="Security posture" sub="Across cloud accounts and endpoints" cta="Review findings">
       <div className="flex items-center gap-4">
         <svg viewBox="0 0 36 36" className="size-16 shrink-0 -rotate-90">
-          <circle cx="18" cy="18" r="15" fill="none" stroke="#e7edf6" strokeWidth="4" />
+          <circle cx="18" cy="18" r="15" fill="none" stroke="var(--color-background-tertiary)" strokeWidth="4" />
           <circle
             cx="18"
             cy="18"
             r="15"
             fill="none"
-            stroke="#047857"
+            stroke="var(--color-text-success)"
             strokeWidth="4"
             strokeLinecap="round"
             strokeDasharray="94.2"
@@ -343,7 +343,7 @@ function ProductionAi({ on }: CardProps) {
       <svg viewBox="0 0 200 60" className="h-[60px] w-full">
         <polyline
           fill="none"
-          stroke="#1d4ed8"
+          stroke="var(--color-action-primary)"
           strokeWidth="2"
           strokeLinejoin="round"
           points={pts.map((p, i) => `${i * 22},${60 - p}`).join(" ")}

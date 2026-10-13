@@ -20,10 +20,12 @@
 
   /* Blue-grey: the public site's neutral, navy at the dark end. */
   --p-neutral-0:   #ffffff;
+  --p-slate-25:    #eef2fb;
   --p-slate-50:    #f3f6fb;
   --p-slate-100:   #e7edf6;
   --p-slate-200:   #e2e8f1;
   --p-slate-300:   #cbd5e3;
+  --p-slate-400:   #9aa6ba;
   --p-slate-450:   #828b9c;
   --p-slate-600:   #56637b;
   --p-slate-700:   #3a4a66;
@@ -42,7 +44,10 @@
 
   /* Blue: cobalt is 700. */
   --p-blue-50:     #eef2ff;
+  --p-blue-100:    #dbe6fe;
+  --p-blue-150:    #c9d6ec;
   --p-blue-300:    #a9c1ff;
+  --p-blue-500:    #3b6cf0;
   --p-blue-700:    #1d4ed8;
   --p-blue-800:    #1740ad;
   --p-blue-900:    #12348c;
@@ -52,13 +57,17 @@
   --p-brand-aqua:  #0cacCF;
 
   --p-green-50:    #ecfdf5;
+  --p-green-200:   #b9dfc3;
   --p-green-600:   #059669;
   --p-green-700:   #047857;
   --p-amber-50:    #fffbeb;
+  --p-amber-200:   #f4d9a1;
   --p-amber-600:   #d97706;
   --p-amber-700:   #b45309;
   --p-amber-800:   #92400e;
   --p-red-50:      #fef2f2;
+  --p-red-200:     #f3b5ae;
+  --p-red-500:     #e8432f;
   --p-red-700:     #b91c1c;
   --p-rose-700:    #be123c;
   --p-indigo-600:  #4f46e5;

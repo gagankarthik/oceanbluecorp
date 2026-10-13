@@ -21,7 +21,7 @@ export default function Photo({
   src,
   alt = "",
   className = "",
-  fallback = "linear-gradient(135deg, #dbe6fe 0%, #eef2fb 100%)",
+  fallback = "linear-gradient(135deg, var(--p-blue-100) 0%, var(--p-slate-25) 100%)",
   sizes = "100vw",
   priority = false,
 }: {

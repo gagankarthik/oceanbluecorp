@@ -69,7 +69,7 @@ export function CustomerMarquee({ label }: { label: string }) {
             onClick={() => setPaused((p) => !p)}
             aria-pressed={paused}
             aria-label={paused ? "Resume client logos" : "Pause client logos"}
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-line text-ink-muted transition-colors hover:border-cobalt hover:text-cobalt"
+            className="grid size-10 pointer-coarse:size-11 shrink-0 place-items-center rounded-full border border-line-input text-ink-muted transition-colors duration-[var(--dur-short)] hover:border-cobalt hover:text-cobalt"
           >
             {paused ? <Play className="size-3.5" aria-hidden="true" /> : <Pause className="size-3.5" aria-hidden="true" />}
           </button>
@@ -83,7 +83,7 @@ export function CustomerMarquee({ label }: { label: string }) {
           {Array.from({ length: CELLS }, (_, i) => (
             <li
               key={i}
-              className={`group relative h-24 overflow-hidden border-line [perspective:600px] transition-colors duration-300 hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : i < CELLS - 1 ? "sm:border-r" : ""} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
+              className={`group relative h-24 overflow-hidden border-line [perspective:600px] transition-colors duration-[var(--dur-short)] hover:bg-paper sm:h-28 ${i % 2 === 0 ? "border-r" : i < CELLS - 1 ? "sm:border-r" : ""} ${i < 2 ? "border-b sm:border-b-0" : ""}`}
             >
               {set > 0 && (
                 <span
@@ -100,7 +100,7 @@ export function CustomerMarquee({ label }: { label: string }) {
                 className={`absolute inset-0 flex items-center justify-center px-5 ${set > 0 ? "logo-in" : ""}`}
                 style={set > 0 ? { animationDelay: `${i * STAGGER + 260}ms` } : undefined}
               >
-                <span className="flex transition-transform duration-300 ease-[var(--ease-standard)] group-hover:scale-110">
+                <span className="flex transition-transform duration-[var(--dur-medium)] ease-out group-hover:scale-110">
                   <Mark l={LOGOS[at(set, i)]} hidden={false} />
                 </span>
               </span>

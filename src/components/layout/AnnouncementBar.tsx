@@ -28,8 +28,8 @@ export default function AnnouncementBar({
   const barStyle = {
     // Ink navy, not cobalt: the strip sits above a blue hero, and blue on blue
     // read as one smeared band. Dark bar, white header, blue hero instead.
-    background: "#0b1a33",
-    color: "#ffffff", // force white, beats the .horizon base color
+    background: "var(--color-text-primary)",
+    color: "var(--color-background-primary)", // force white, beats the .horizon base color
   } as const;
 
   /**
