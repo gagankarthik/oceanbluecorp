@@ -153,10 +153,11 @@ export function MoneyInput({
   return (
     <div className="relative">
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--adm-ink-subtle)]">$</span>
+      {/* Text, not type=number, so "$75" and "1,200" can be typed; toNumber() parses them. */}
       <FormInput
-        type="number"
-        step="0.01"
-        min="0"
+        type="text"
+        inputMode="decimal"
+        autoComplete="off"
         className={cn("pl-7 tabular-nums", className)}
         {...props}
       />

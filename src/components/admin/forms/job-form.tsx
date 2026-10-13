@@ -19,7 +19,7 @@ import { useFormErrors } from "@/hooks/use-form-errors";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import {
   LIMITS, check, collectErrors, email, htmlText, isBlank, maxLen, nonNegative, pastDateWarning,
-  payOverBillWarning, phone, rangeInverted, required, website,
+  payOverBillWarning, phone, rangeInverted, required, toNumber, website,
 } from "@/lib/form-validation";
 import { FieldWarning, FormErrorBanner } from "./form-alert";
 import { StepCard, StepRail, useActiveStep, type StepInfo, type StepState } from "./form-steps";
@@ -172,11 +172,11 @@ export function formDataToPayload(data: JobFormData) {
     responsibilities: data.responsibilities?.trim() ? data.responsibilities : undefined,
     // null, not undefined, so clearing the range clears it on the record.
     salary: data.salaryMin && data.salaryMax
-      ? { min: parseFloat(data.salaryMin), max: parseFloat(data.salaryMax), currency: "$", period: data.salaryPeriod }
+      ? { min: toNumber(data.salaryMin), max: toNumber(data.salaryMax), currency: "$", period: data.salaryPeriod }
       : null,
     // Bill and pay rates are hourly; an annual role leaves the stored ones alone.
-    clientBillRate: data.salaryPeriod === "hour" && data.clientBillRate ? parseFloat(data.clientBillRate) : undefined,
-    payRate: data.salaryPeriod === "hour" && data.payRate ? parseFloat(data.payRate) : undefined,
+    clientBillRate: data.salaryPeriod === "hour" && data.clientBillRate ? toNumber(data.clientBillRate) : undefined,
+    payRate: data.salaryPeriod === "hour" && data.payRate ? toNumber(data.payRate) : undefined,
     status: data.status,
     submissionDueDate: data.submissionDueDate || undefined,
     clientId: data.clientId || undefined,
@@ -410,7 +410,7 @@ export function JobForm({
   const requiredLeft = steps.filter((s) => s.required && s.state !== "done").length;
 
   const payLine = !isBlank(data.salaryMin) && !isBlank(data.salaryMax)
-    ? `$${Number(data.salaryMin).toLocaleString()} – $${Number(data.salaryMax).toLocaleString()}${SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short ?? ""}`
+    ? `$${toNumber(data.salaryMin).toLocaleString()} – $${toNumber(data.salaryMax).toLocaleString()}${SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short ?? ""}`
     : "";
   const summary: { k: string; v: string }[] = [
     { k: "Title", v: data.title.trim() },
@@ -992,7 +992,7 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
         </div>
         {data.salaryMin && data.salaryMax && (
           <p className="text-adm-md font-semibold tabular-nums text-[var(--adm-ink)]">
-            ${Number(data.salaryMin).toLocaleString()} – ${Number(data.salaryMax).toLocaleString()}
+            ${toNumber(data.salaryMin).toLocaleString()} – ${toNumber(data.salaryMax).toLocaleString()}
             <span className="ml-1 text-adm-xs font-medium text-[var(--adm-ink-mute)]">
               {SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}
             </span>
