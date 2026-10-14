@@ -21,7 +21,7 @@ these; new code imports the kit directly.
 | `ErrorState` | `title`, `message`, `onRetry`, `retrying`. Always offers Get help. |
 | `Button` | `loading` disables and shows a spinner without changing width. `Spinner` for inline waits. |
 | Skeletons | `Skeleton` block, `ListPageSkeleton`, `DashboardSkeleton`, `DetailSkeleton`, `FormSkeleton`, parts (`HeaderSkeleton`, `KpiRowSkeleton`, `InsightsSkeleton`, `TableSkeleton`, `PanelSkeleton`). |
-| `useNavProgress` / `usePortalRouter` | Top progress bar. Links start it on their own; use `usePortalRouter().push` for programmatic moves. |
+| `useNavProgress` / `usePortalRouter` | Navigation state (no visible bar; route skeletons are the feedback). `usePortalRouter().push` for programmatic moves. |
 
 ## Page anatomy
 

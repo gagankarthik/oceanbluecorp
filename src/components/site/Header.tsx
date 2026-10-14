@@ -54,7 +54,7 @@ const menus: Menu[] = [
     groups: [
       {
         title: "Industries we serve",
-        items: industries.map((i) => ({ href: `/industries#${i.slug}`, label: i.name, desc: i.body.split(".")[0] + "." })),
+        items: industries.map((i) => ({ href: `/industries#${i.slug}`, label: i.name, desc: i.tagline })),
       },
     ],
     feature: {
@@ -371,19 +371,33 @@ export default function Header() {
                     <Chevron open={open} />
                   </button>
                   {open && (
-                    <div className="grid gap-4 bg-mist-100 px-2 py-3">
-                      {m.groups.map((g) => (
-                        <div key={g.title}>
-                          <p className="px-3 text-[13px] font-semibold text-mist-600">{g.title}</p>
-                          <ul className="mt-1 grid">
-                            {g.items.map((it) => (
-                              <li key={it.href + it.label}>
-                                <ItemLink item={it} touch />
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
+                    <div className="grid gap-3 bg-mist-100 px-2 py-3">
+                      {m.groups.map((g) => {
+                        // A group whose links all land on one page (a single service's features) is one link
+                        const pages = [...new Map(g.items.map((it) => [it.href, it])).values()];
+                        if (pages.length === 1) {
+                          return <ItemLink key={g.title} item={{ href: pages[0].href, label: g.title }} touch />;
+                        }
+                        return (
+                          <div key={g.title}>
+                            {g.href ? (
+                              <Link href={g.href} className="flex min-h-11 items-center px-3 text-[13px] font-semibold text-mist-600 hover:text-navy-900">
+                                {g.title}
+                              </Link>
+                            ) : (
+                              <p className="px-3 text-[13px] font-semibold text-mist-600">{g.title}</p>
+                            )}
+                            {/* Two columns on phones so long menus stay short */}
+                            <ul className={`grid ${m.compact ? "grid-cols-2" : ""}`}>
+                              {g.items.map((it) => (
+                                <li key={it.href + it.label} className="min-w-0">
+                                  <ItemLink item={it} touch />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </li>

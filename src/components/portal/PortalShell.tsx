@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { RECRUITING_ROLES } from "@/lib/auth/config";
 import { Avatar } from "./ui";
 import { useDialog } from "./kit/overlay";
-import { NavProgressBar, NavProgressProvider, usePortalRouter } from "./kit/NavProgress";
+import { NavProgressProvider, usePortalRouter } from "./kit/NavProgress";
 
 const NOTE_ICON: Record<string, IconName> = {
   job_posted: "briefcase",
@@ -454,7 +454,6 @@ function Shell({ children }: { children: React.ReactNode }) {
               )}
             </div>
           </div>
-          <NavProgressBar />
         </header>
 
         {/* The one gutter: pages never pad themselves (see portal README) */}
