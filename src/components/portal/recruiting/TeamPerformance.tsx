@@ -6,10 +6,12 @@ import type { Application } from "@/lib/aws/dynamodb";
 import Icon from "../icons";
 import { Avatar } from "../ui";
 import { scorecards } from "../performance/TeamPerformance";
+import { useUserDirectory } from "@/hooks/use-console-data";
 
 /** Compact leaderboard for the dashboard: placements and submissions by owner, last 30 days */
 export default function TeamPerformance({ applications, titles, onOpen }: { applications: Application[]; titles: Map<string, string>; onOpen: () => void }) {
-  const rows = useMemo(() => scorecards(applications, 30, titles).rows.filter((r) => r.name !== "Unassigned"), [applications, titles]);
+  const { users } = useUserDirectory();
+  const rows = useMemo(() => scorecards(applications, 30, titles, users).rows.filter((r) => r.name !== "Unassigned"), [applications, titles, users]);
   const top = rows.slice(0, 5);
   const leader = Math.max(1, top[0]?.placements ?? 0, ...top.map((r) => r.submitted));
   const placed = rows.reduce((n, r) => n + r.placements, 0);

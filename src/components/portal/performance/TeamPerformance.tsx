@@ -8,7 +8,7 @@ import DataTable, { Drawer, type Column } from "@/components/portal/DataTable";
 import Icon from "@/components/portal/icons";
 import { Avatar, EmptyState, ErrorState, KpiRow, ListPageSkeleton, Panel, Segmented, StatCard } from "@/components/portal/kit";
 import { buckets, countIn, reachedAt, type Bucket } from "@/components/portal/recruiting/model";
-import { useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
+import { useApplicationSummaries, useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
 import { DAY, TERMINAL, median } from "@/lib/pipeline";
 
@@ -34,17 +34,40 @@ export type Scorecard = {
   placed: { id: string; name: string; job: string; at: number }[];
 };
 
+type Owner = { id: string; sub?: string; name?: string; email: string };
+
+/**
+ * One owner per person. Claims store the Cognito sub and the picker the
+ * directory id (with the email as name when the profile had none), so match
+ * on id, sub, email or name before falling back to the stored text.
+ */
+function ownerOf(people: Owner[]) {
+  const idx = new Map<string, Owner>();
+  for (const p of people) {
+    for (const k of [p.id, p.sub, p.email, p.name]) if (k) idx.set(k.toLowerCase(), p);
+  }
+  return (a: Application) => {
+    const p = (a.ownership && idx.get(a.ownership.toLowerCase())) || (a.ownershipName && idx.get(a.ownershipName.toLowerCase()));
+    if (p) return { key: p.id, name: p.name || p.email };
+    const name = a.ownershipName || "Unassigned";
+    return { key: name, name };
+  };
+}
+
 /** Per-owner pipeline figures over a window, from the application records themselves. */
-export function scorecards(apps: Application[], days: number, titles: Map<string, string>): { rows: Scorecard[]; weeks: Bucket[] } {
+export function scorecards(apps: Application[], days: number, titles: Map<string, string>, people: Owner[] = []): { rows: Scorecard[]; weeks: Bucket[] } {
   const start = Date.now() - days * DAY;
   const weeks = buckets(days);
   const inWindow = (t: number | null) => t !== null && t >= start;
-  const groups = new Map<string, Application[]>();
+  const owner = ownerOf(people);
+  const groups = new Map<string, { name: string; list: Application[] }>();
   for (const a of apps) {
-    const k = a.ownershipName || "Unassigned";
-    groups.set(k, [...(groups.get(k) ?? []), a]);
+    const { key, name } = owner(a);
+    const g = groups.get(key);
+    if (g) g.list.push(a);
+    else groups.set(key, { name, list: [a] });
   }
-  const rows = [...groups.entries()].map(([name, list]): Scorecard => {
+  const rows = [...groups.entries()].map(([id, { name, list }]): Scorecard => {
     const at = (s: string) => list.map((a) => reachedAt(a, s));
     const n = (s: string) => at(s).filter(inWindow).length;
     const hires = list.filter((a) => a.status === "hired" && inWindow(reachedAt(a, "hired")));
@@ -52,7 +75,7 @@ export function scorecards(apps: Application[], days: number, titles: Map<string
     const interviews = n("interview");
     const placements = hires.length;
     return {
-      id: name,
+      id,
       name,
       active: list.filter((a) => !TERMINAL.has(a.status)).length,
       submitted,
@@ -78,12 +101,13 @@ const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%
 export default function TeamPerformance({ period }: { period: Period }) {
   const appsRes = useApplicationSummaries();
   const jobsRes = useJobSummaries();
+  const { users } = useUserDirectory();
   const [metric, setMetric] = useState<"placements" | "submitted">("placements");
   const [open, setOpen] = useState<Scorecard | null>(null);
 
   const p = PERIODS.find((x) => x.id === period)!;
   const titles = useMemo(() => new Map((jobsRes.jobs ?? []).map((j) => [j.id, j.title])), [jobsRes.jobs]);
-  const { rows, weeks } = useMemo(() => scorecards(appsRes.applications ?? [], p.days, titles), [appsRes.applications, p.days, titles]);
+  const { rows, weeks } = useMemo(() => scorecards(appsRes.applications ?? [], p.days, titles, users), [appsRes.applications, p.days, titles, users]);
   const apps = appsRes.applications ?? [];
   const start = Date.now() - p.days * DAY;
   const series = {
