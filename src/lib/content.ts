@@ -1,17 +1,19 @@
 import { getContentBlock } from "@/lib/aws/dynamodb";
 
 /**
- * Sitewide announcement bar text/link, edited under /admin/content → Homepage.
+ * Sitewide announcement bar text/link, edited under /portal/content → Homepage.
  * Read by the root layout. The layout/pages are ISR (revalidate=60) and the
  * content API calls revalidatePath("/", "layout") on save, so clearing the
  * announcement removes the bar immediately, and within 60s as a fallback.
  */
-export async function getAnnouncement(): Promise<{ text: string; href: string; scroll: boolean }> {
+export async function getAnnouncement(): Promise<{ text: string; href: string; scroll: boolean; tag: string; linkLabel: string }> {
   const c = await getSiteContent("homepage");
   return {
     text: (c.announcement || "").trim(),
     href: (c.announcementHref || "").trim(),
     scroll: c.announcementScroll === "true",
+    tag: (c.announcementTag || "").trim(),
+    linkLabel: (c.announcementLinkLabel || "").trim(),
   };
 }
 

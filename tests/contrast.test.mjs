@@ -15,7 +15,8 @@ import { load } from "./load.mjs";
 
 const { ratioOn, contrastRatio, hexToRgb, AA } = load("src/lib/contrast.ts");
 
-const css = readFileSync("src/app/globals.css", "utf8");
+// colors.css first: the console tokens alias its scale steps.
+const css = readFileSync("src/styles/colors.css", "utf8") + readFileSync("src/app/globals.css", "utf8");
 
 /**
  * The value a token resolves to. Tokens are defined more than once (an early
@@ -214,43 +215,44 @@ describe("form controls (1.4.11)", () => {
   });
 });
 
-describe("the cobalt BrandBand", () => {
-  /* Alphas are read out of workspace.tsx: every text-white/NN in the band and
-     the record header must clear AA on the resting cell (accent) and on the
-     selected/hovered cell (accent-strong). */
+describe("record and page headers", () => {
+  /* The cobalt band was retired for the portal look: headers sit on the canvas
+     and the candidate identity sits on a white card. Pin both the colours and
+     that no white-on-fill text survives in the header components. */
   const ws = readFileSync("src/components/admin/workspace.tsx", "utf8");
   const slice = (from, to) => ws.slice(ws.indexOf(from), ws.indexOf(to, ws.indexOf(from)));
-  const band = slice("export function RecordHeader", "export function RecordFact")
-    + slice("export function BrandBand", "export const BAND_PRIMARY");
-  const alphas = [...new Set([...band.matchAll(/text-white\/(\d+)/g)].map(([, a]) => Number(a)))];
-  const inks = [...band.matchAll(/--adm-ink(?:-mute|-subtle)?:rgba\(255,255,255,([\d.]+)\)/g)].map(([, a]) => Math.round(Number(a) * 100));
+  const header = slice("export function BackLink", "export function RecordFact");
+  const bar = readFileSync("src/components/admin/candidate/record-bar.tsx", "utf8");
 
-  test("the band text was found", () => {
-    assert.ok(alphas.length >= 2, `expected white/NN text in the band, found ${alphas.length}`);
+  test("the header components were found", () => {
+    assert.ok(header.includes("export function RecordHeader"), "RecordHeader not found");
   });
 
-  test("every white tint reads on both cell states", () => {
+  test("no white text on a fill in the headers", () => {
+    for (const [name, src] of [["RecordHeader/BackLink", header], ["RecordBar", bar]]) {
+      assert.doesNotMatch(src, /text-white/, `${name} still sets white text`);
+    }
+  });
+
+  test("title, subtitle and facts read on canvas and surface", () => {
     const failures = [];
-    for (const a of [...alphas, ...inks]) {
-      for (const [bName, bg] of [["accent", ACCENT], ["accent-strong", ACCENT_STRONG]]) {
-        const r = ratioOn(`rgba(255, 255, 255, ${a / 100})`, bg);
-        if (r < NEED.text) failures.push(`white/${a} on ${bName} = ${r.toFixed(2)}:1`);
+    for (const name of ["ink", "ink-mute", "ink-subtle"]) {
+      for (const [sName, surf] of [["canvas", CANVAS], ["surface", SURFACE]]) {
+        const r = ratioOn(token(`adm-${name}`), surf);
+        if (r < NEED.text) failures.push(`--adm-${name} on ${sName} = ${r.toFixed(2)}:1`);
       }
     }
-    assert.deepEqual(failures, [], `band text below ${NEED.text}:1`);
+    assert.deepEqual(failures, [], `header text below ${NEED.text}:1`);
   });
 
-  test("selection is not carried by fill alone", () => {
-    // accent vs accent-strong is ~1.3:1, so the selected cell gets a white bar.
-    assert.match(band, /s\.selected \? "[^"]*shadow-\[inset_0_-3px_0_0_#fff\]/);
-    const bar = ratioOn("#ffffff", ACCENT_STRONG);
-    assert.ok(bar >= NEED.nonText, `selection bar is ${bar.toFixed(2)}:1, needs ${NEED.nonText}`);
-  });
-
-  test("the focus ring inside the band is white, and reads on cobalt", () => {
-    assert.match(css, /\.adm-on-band[^{]*:focus-visible\s*\{[^}]*outline-color:\s*#fff/);
-    const r = ratioOn("#ffffff", ACCENT);
-    assert.ok(r >= NEED.nonText, `white ring on accent is ${r.toFixed(2)}:1`);
+  test("the back link reads at rest and on hover", () => {
+    assert.match(header, /text-\[var\(--adm-accent-strong\)\][^"]*hover:text-\[var\(--adm-accent-press\)\]/);
+    for (const name of ["accent-strong", "accent-press"]) {
+      for (const [sName, surf] of [["canvas", CANVAS], ["surface", SURFACE]]) {
+        const r = ratioOn(token(`adm-${name}`), surf);
+        assert.ok(r >= NEED.text, `--adm-${name} back link on ${sName} is ${r.toFixed(2)}:1`);
+      }
+    }
   });
 });
 

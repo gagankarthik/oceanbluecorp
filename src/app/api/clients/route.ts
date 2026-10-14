@@ -2,12 +2,13 @@ import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 import { NextRequest, NextResponse } from "next/server";
 import { getAllClients, createClient, getJobCountsByParty, Client } from "@/lib/aws/dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireRoles } from "@/lib/auth/verify";
+import { CLIENT_VENDOR_READ_ROLES, CLIENT_VENDOR_CREATE_ROLES } from "@/lib/auth/config";
 import { serverError } from "@/lib/api-errors";
 
 // GET /api/clients - Get all clients
 export async function GET(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireRoles(request, CLIENT_VENDOR_READ_ROLES);
   if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/clients - Create a new client
 export async function POST(request: NextRequest) {
-  const auth = await requireStaff(request);
+  const auth = await requireRoles(request, CLIENT_VENDOR_CREATE_ROLES);
   if (!auth.ok) return auth.response;
   try {
     const body = await request.json();

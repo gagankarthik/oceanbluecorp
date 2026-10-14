@@ -37,6 +37,7 @@ export default function TermsPage() {
       meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Jurisdiction", value: "State of Ohio, USA" }]}
       history={history}
       toc={SECTIONS}
+      current="/terms"
     >
 
             <DocSection id="acceptance" number="01" title="Acceptance of Terms">

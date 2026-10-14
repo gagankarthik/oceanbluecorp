@@ -6,14 +6,13 @@ import { load } from "./load.mjs";
 
 const { isPubliclyOpen, PUBLIC_JOB_STATUSES } = load("src/lib/job-status.ts");
 
-test("active and open are live", () => {
+test("only active is live", () => {
   assert.equal(isPubliclyOpen("active"), true);
-  assert.equal(isPubliclyOpen("open"), true);
-  assert.deepEqual([...PUBLIC_JOB_STATUSES], ["active", "open"]);
+  assert.deepEqual([...PUBLIC_JOB_STATUSES], ["active"]);
 });
 
 test("every other status, and a missing one, is not", () => {
-  for (const s of ["draft", "paused", "closed", "on-hold", "", null, undefined, "ACTIVE"]) {
+  for (const s of ["open", "draft", "paused", "closed", "on-hold", "", null, undefined, "ACTIVE"]) {
     assert.equal(isPubliclyOpen(s), false, String(s));
   }
 });

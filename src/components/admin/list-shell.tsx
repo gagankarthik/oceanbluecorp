@@ -22,10 +22,10 @@ export function ListHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("mb-4 flex flex-wrap items-center justify-between gap-3", className)}>
+    <header className={cn("mb-6 flex flex-wrap items-center justify-between gap-4", className)}>
       <div className="min-w-0">
-        <h1 className="text-adm-lg font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">{title}</h1>
-        {meta && <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{meta}</p>}
+        <h1 className="text-adm-xl font-semibold tracking-tight text-[var(--adm-ink)]">{title}</h1>
+        {meta && <p className="mt-0.5 text-adm-base text-[var(--adm-ink-subtle)]">{meta}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -62,7 +62,7 @@ export function ListTabs<K extends string>({
       role="tablist"
       aria-label={label}
       className={cn(
-        "flex h-9 max-w-full flex-none overflow-x-auto rounded-[var(--adm-radius-control)] bg-[var(--adm-surface-2)] p-0.5 [scrollbar-width:none]",
+        "flex h-10 max-w-full flex-none overflow-x-auto rounded-[var(--adm-radius-control)] bg-[var(--adm-surface-2)] p-0.5 [scrollbar-width:none]",
         className,
       )}
     >

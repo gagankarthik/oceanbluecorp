@@ -14,14 +14,14 @@ interface AvatarProps {
   onError?: () => void;
 }
 
-// Identity, not status: cobalt and navy steps only, all >= 5.5:1 under white initials.
+// Identity, not status: the portal's pale tints with dark initials (AA on each).
 const PALETTE = [
-  "bg-[var(--adm-seq-3)]",
-  "bg-[var(--adm-seq-4)]",
-  "bg-[var(--adm-seq-5)]",
-  "bg-[var(--adm-ink-subtle)]",
-  "bg-[var(--adm-ink-mute)]",
-  "bg-[var(--adm-ink)]",
+  "bg-ocean-100 text-ocean-800",
+  "bg-cyan-100 text-cyan-700",
+  "bg-tide-200 text-tide-800",
+  "bg-mist-100 text-mist-700",
+  "bg-ocean-50 text-ocean-700",
+  "bg-tide-100 text-navy-900",
 ];
 
 function hash(str: string): number {
@@ -53,7 +53,7 @@ export function Avatar({ name, email, size = "md", className, src, onLoad, onErr
   return (
     <div
       className={cn(
-        "relative flex flex-shrink-0 select-none items-center justify-center overflow-hidden rounded-full font-semibold tracking-[0.02em] text-white",
+        "relative flex flex-shrink-0 select-none items-center justify-center overflow-hidden rounded-full font-semibold",
         fill,
         sz,
         className,

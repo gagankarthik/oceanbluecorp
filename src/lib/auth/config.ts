@@ -109,8 +109,43 @@ export const JOB_COMMERCIAL_FIELDS = [
   "excludedDepartments",
 ] as const;
 
+/**
+ * Clients and vendors API, least privilege.
+ *
+ *   read (GET list/one)   admin, hr, recruiter, sales  job form pickers, pipeline submission form
+ *   create (POST)         admin, hr, sales             "+ Add new" on the job form (job editors who can price)
+ *   update/delete         admin, hr                    matches routeAccess /portal/clients, /portal/vendors
+ *
+ * Media gets none of it: client and vendor are commercial fields.
+ */
+export const CLIENT_VENDOR_READ_ROLES: UserRole[] = JOB_COMMERCIAL_ROLES;
+export const CLIENT_VENDOR_CREATE_ROLES: UserRole[] = JOB_EDIT_ROLES.filter((r) => JOB_COMMERCIAL_ROLES.includes(r));
+export const CLIENT_VENDOR_MANAGE_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.HR];
+
 const hasAny = (groups: ReadonlyArray<string> | null | undefined, allowed: UserRole[]): boolean =>
   staffRolesOf(groups).some((r) => allowed.includes(r));
+
+/** True when the groups grant any of `allowed`. Server guards use this via `requireRoles`. */
+export const hasAnyRole = hasAny;
+
+/**
+ * True when a user-admin target is the caller's own account. The target id is a
+ * Cognito username, which is the sub or the email depending on the pool, so all
+ * three are compared.
+ */
+export function isSameAccount(
+  caller: { sub?: string | null; email?: string | null },
+  target: { id?: string | null; email?: string | null },
+): boolean {
+  const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+  const sub = norm(caller.sub);
+  const email = norm(caller.email);
+  const id = norm(target.id);
+  const targetEmail = norm(target.email);
+  if (sub && id === sub) return true;
+  if (email && (id === email || targetEmail === email)) return true;
+  return false;
+}
 
 /** Works the recruiting side: candidates, applications, resumes, CRM, rates. */
 export const hasRecruitingAccess = (groups: ReadonlyArray<string> | null | undefined): boolean =>
@@ -229,7 +264,7 @@ export function hasStaffAccess(groups: ReadonlyArray<string> | null | undefined)
  * the first thing it ever sees.
  */
 export function landingRouteFor(role: UserRole | null | undefined): string {
-  return role === UserRole.MEDIA ? "/admin/blog" : "/admin";
+  return role === UserRole.MEDIA ? "/portal/blog" : "/portal";
 }
 
 // Cognito Hosted UI URLs
@@ -259,46 +294,47 @@ const EVERY_ROLE = [...RECRUITING_ROLES, UserRole.MEDIA];
 export const routeAccess: Record<string, UserRole[]> = {
   // No Media: the dashboard is a recruiting report (pipeline, candidates,
   // sources). `landingRouteFor` sends them to /admin/blog instead.
-  "/admin": ALL_STAFF,
+  "/portal": ALL_STAFF,
   // Media reads postings so they can promote them. The API hands them the
   // public projection, no rates, client or assignees, and JOB_EDIT_ROLES keeps
   // the create/edit controls away from them.
   // /admin/jobs still guards the posting pages (detail, edit, new) shared by both lists.
-  "/admin/jobs": [...ALL_STAFF, UserRole.MEDIA],
-  "/admin/state-roles": [...ALL_STAFF, UserRole.MEDIA],
-  "/admin/open-roles": [...ALL_STAFF, UserRole.MEDIA],
-  "/admin/applications": ALL_STAFF,
-  "/admin/candidates": ALL_STAFF,
-  "/admin/bench": ALL_STAFF,
-  "/admin/lead-sourcing": ALL_STAFF,
-  "/admin/resumes": ALL_STAFF,
-  "/admin/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
-  "/admin/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
-  "/admin/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
-  "/admin/content": [UserRole.ADMIN],
+  "/portal/jobs": [...ALL_STAFF, UserRole.MEDIA],
+  "/portal/state-roles": [...ALL_STAFF, UserRole.MEDIA],
+  "/portal/open-roles": [...ALL_STAFF, UserRole.MEDIA],
+  "/portal/applications": ALL_STAFF,
+  "/portal/candidates": ALL_STAFF,
+  "/portal/talent-bench": ALL_STAFF,
+  "/portal/lead-sourcing": ALL_STAFF,
+  "/portal/resumes": ALL_STAFF,
+  "/portal/contacts": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
+  "/portal/clients": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
+  "/portal/vendors": [UserRole.ADMIN, UserRole.HR], // RECRUITER/SALES cannot access
+  "/portal/content": [UserRole.ADMIN],
   // Publishing. Mirrored by requirePublisher on /api/articles, so the UI gate
   // and the API gate name the same set (PUBLISHING_ROLES) rather than drifting.
-  "/admin/blog": PUBLISHING_ROLES,
-  "/admin/case-studies": PUBLISHING_ROLES,
-  "/admin/customer-stories": PUBLISHING_ROLES,
-  "/admin/news": PUBLISHING_ROLES,
+  "/portal/blog": PUBLISHING_ROLES,
+  "/portal/case-studies": PUBLISHING_ROLES,
+  "/portal/customer-stories": PUBLISHING_ROLES,
+  "/portal/news": PUBLISHING_ROLES,
   // Account administration is shared with HR: they invite staff and manage
   // ordinary accounts. The API still reserves Admin/HR role changes for admins.
-  "/admin/users": [UserRole.ADMIN, UserRole.HR],
-  "/admin/roles": [UserRole.ADMIN],
-  "/admin/api-keys": [UserRole.ADMIN],
+  "/portal/users": [UserRole.ADMIN, UserRole.HR],
+  "/portal/roles": [UserRole.ADMIN],
+  "/portal/api-keys": [UserRole.ADMIN],
+  "/portal/developer": [UserRole.ADMIN],
   // Settings is PERSONAL for every staff member (Profile / Notifications /
   // Security); the admin-only "System" tab is gated inside the page itself
   // (visibleTabs filter + `activeTab === "site" && isAdmin`). So the route is
   // all-staff, locking it to ADMIN wrongly denied everyone else their own
   // profile.
-  "/admin/settings": EVERY_ROLE,
+  "/portal/settings": EVERY_ROLE,
   // Admin-only: the page itself wraps in ProtectedRoute[ADMIN] and the layout's
   // "Developer" link is admin-gated, so ALL_STAFF here was the odd one out, a
   // recruiter following a direct link got past the layout check only to hit the
   // page's own guard. Both gates now agree.
-  "/admin/docs": [UserRole.ADMIN],
-  "/admin/help": EVERY_ROLE,
-  "/admin/notifications": EVERY_ROLE,
+  "/portal/docs": [UserRole.ADMIN],
+  "/portal/help": EVERY_ROLE,
+  "/portal/notifications": EVERY_ROLE,
   "/hr": [UserRole.ADMIN, UserRole.HR],
 };

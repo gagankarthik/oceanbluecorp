@@ -1,37 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
-import LayoutWrapper from "@/components/layout/LayoutWrapper";
+import SiteShell from "@/components/site/SiteShell";
 import CookieConsent from "@/components/layout/CookieConsent";
 import { getAnnouncement, getMaintenance } from "@/lib/content";
-import { Suspense } from "react";
 import { jsonLdString } from "@/lib/seo";
 
 // ISR: re-render the layout (which reads the CMS announcement) at most once a
 // minute; content saves call revalidatePath("/", "layout") to push edits live.
 export const revalidate = 60;
 
-// Two families per surface: the public site is IBM Plex Sans (.site scope in
-// globals.css), the admin console Geist; Geist Mono serves both for figures.
-// Self-hosted variable file (latin, OFL), used at 400/500/600 only.
-// next/font/google fails on this family now that Google serves it as one
-// variable file for every weight.
-const plexSans = localFont({
-  src: "../fonts/ibm-plex-sans-latin-var.woff2",
-  variable: "--font-plex-sans",
-  weight: "400 600",
-  display: "swap",
-  fallback: ["system-ui", "sans-serif"],
-});
-
+// General Sans (Fontshare, linked in <head>) for the site; Geist for the console.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0b1a33",
+  themeColor: "#0b2e46",
 };
 
 export const metadata: Metadata = {
@@ -232,25 +218,9 @@ export default async function RootLayout({
     getAnnouncement(),
     getMaintenance(),
   ]);
-  // `scroll-smooth` was removed from <html> when Lenis was added: a Tailwind
-  // utility sets scroll-behavior in the utilities layer, which outranks the
-  // `html:not(.lenis)` guard in globals.css and would have re-introduced the
-  // Lenis conflict on every page. That rule now lives entirely in the guard.
-  // `data-scroll-behavior` stays, smooth scrolling is still in use wherever
-  // Lenis is not, and the attribute is what tells Next to suspend it during
-  // route transitions.
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Runs before first paint: a dismissed announcement never flashes. Keyed like
-            LayoutWrapper (by the text), so a new announcement shows again. */}
-        {announcement.text && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `try{var k=${jsonLdString(`ob.announcement.dismissed:${announcement.text}`)};if(localStorage.getItem(k)==="1"||sessionStorage.getItem(k)==="1")document.documentElement.setAttribute("data-ann-dismissed","")}catch(e){}`,
-            }}
-          />
-        )}
         {/* Favicon (src/app/favicon.ico) and apple-touch-icon (src/app/apple-icon.tsx)
             and the manifest (src/app/manifest.ts) are injected by Next.js from the
             App Router file conventions. */}
@@ -258,29 +228,38 @@ export default async function RootLayout({
             so the browser never connects there itself; a DNS hint covers the
             few direct background images. */}
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="" />
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
         />
       </head>
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} ${plexSans.variable} font-sans antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
       >
-        {/* Skip links are provided per-shell: LayoutWrapper (public → #main-content)
-            and the admin layout (→ #adm-main), so none is needed here. */}
         {/* GDPR / CCPA cookie consent, outside Providers so it always shows, and
             first in the DOM so it is reached before the page (it is fixed to
             the bottom visually). */}
         <CookieConsent />
         <Providers>
-          <LayoutWrapper
-            announcement={announcement.text}
-            announcementHref={announcement.href}
-            announcementScroll={announcement.scroll}
+          <SiteShell
+            announcement={
+              announcement.text
+                ? {
+                    id: `${announcement.tag}|${announcement.text}`,
+                    tag: announcement.tag || undefined,
+                    text: announcement.text,
+                    link: announcement.href ? { href: announcement.href, label: announcement.linkLabel || "Learn more" } : undefined,
+                  }
+                : null
+            }
             maintenance={maintenance}
           >
             {children}
-          </LayoutWrapper>
+          </SiteShell>
         </Providers>
 
       </body>

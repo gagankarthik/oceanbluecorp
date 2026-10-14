@@ -62,8 +62,13 @@ export function RichTextEditor({
   placeholder,
   required,
   className,
+  labelledBy,
+  invalid,
 }: {
   id?: string;
+  /** id of the visible label (a contentEditable can't use <label htmlFor>) */
+  labelledBy?: string;
+  invalid?: boolean;
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
@@ -95,7 +100,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] transition-colors focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]",
+        "overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] transition-colors focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]",
         className,
       )}
     >
@@ -126,6 +131,8 @@ export function RichTextEditor({
         role="textbox"
         aria-multiline="true"
         aria-required={required}
+        aria-labelledby={labelledBy}
+        aria-invalid={invalid || undefined}
         suppressContentEditableWarning
         data-placeholder={placeholder}
         onInput={(e) => onChange(sanitizeHtml((e.currentTarget as HTMLDivElement).innerHTML))}

@@ -13,7 +13,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import {
   UserRole, hasStaffAccess, hasRecruitingAccess, hasPublishingAccess,
-  hasJobEditAccess, staffRolesOf,
+  hasJobEditAccess, staffRolesOf, hasAnyRole, isSameAccount,
 } from "./config";
 import type { Viewer } from "@/lib/bench";
 
@@ -187,6 +187,23 @@ export async function requireJobEditor(req: NextRequest): Promise<Guard> {
   if (!claims) return { ok: false, response: unauthorized() };
   if (!hasJobEditAccess(claims.groups)) return { ok: false, response: forbidden() };
   return { ok: true, claims };
+}
+
+/** Require any of the named roles. For routes whose access is a named set rather than one of the guards above. */
+export async function requireRoles(req: NextRequest, roles: UserRole[]): Promise<Guard> {
+  const claims = await getClaims(req);
+  if (!claims) return { ok: false, response: unauthorized() };
+  if (!hasAnyRole(claims.groups, roles)) return { ok: false, response: forbidden() };
+  return { ok: true, claims };
+}
+
+/** 403 when a user-admin action targets the caller's own account, else null. */
+export function denySelfAction(claims: Claims, target: { id?: string | null; email?: string | null }): NextResponse | null {
+  if (!isSameAccount(claims, target)) return null;
+  return NextResponse.json(
+    { error: "You can't change your own account. Ask another administrator." },
+    { status: 403 },
+  );
 }
 
 // Require the ADMIN role (roles, API keys, site content, etc.).

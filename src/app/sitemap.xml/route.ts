@@ -2,7 +2,7 @@ import { getPublicJobs } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "@/lib/articles";
 import { getLiveArticles } from "@/lib/articles-public";
-import { SOLUTION_SLUGS } from "@/app/solutions/[slug]/content";
+import { services } from "@/lib/site-content";
 
 const BASE = "https://oceanbluecorp.com";
 
@@ -13,18 +13,20 @@ const STATIC: Entry[] = [
   // The logo and share card ride along so image search picks up the redrawn mark.
   { url: BASE, changefreq: "weekly", priority: 1.0, images: [`${BASE}/brand/oceanblue-logo.png`, `${BASE}/opengraph-image`] },
   { url: `${BASE}/about`, changefreq: "monthly", priority: 0.8 },
-  { url: `${BASE}/solutions`, changefreq: "monthly", priority: 0.9 },
-  // One per solution, from the same list that generates the pages.
-  ...SOLUTION_SLUGS.map((slug) => ({ url: `${BASE}/solutions/${slug}`, changefreq: "monthly", priority: 0.85 })),
-  { url: `${BASE}/solutions/engineering`, changefreq: "monthly", priority: 0.85 },
-  { url: `${BASE}/team`, changefreq: "monthly", priority: 0.7 },
+  { url: `${BASE}/services`, changefreq: "monthly", priority: 0.9 },
+  ...services.map((s) => ({ url: `${BASE}/services/${s.slug}`, changefreq: "monthly", priority: 0.85 })),
+  { url: `${BASE}/industries`, changefreq: "monthly", priority: 0.75 },
+  { url: `${BASE}/how-we-work`, changefreq: "monthly", priority: 0.7 },
+  { url: `${BASE}/certifications`, changefreq: "yearly", priority: 0.6 },
   { url: `${BASE}/products`, changefreq: "monthly", priority: 0.75 },
   { url: `${BASE}/developers`, changefreq: "monthly", priority: 0.6 },
-  { url: `${BASE}/brand-kit`, changefreq: "yearly", priority: 0.4, images: [`${BASE}/brand/oceanblue-logo.png`, `${BASE}/brand/oceanblue-logo-reversed.png`, `${BASE}/brand/oceanblue-mark-512.png`] },
+  { url: `${BASE}/brand`, changefreq: "yearly", priority: 0.4, images: [`${BASE}/brand/oceanblue-logo.png`, `${BASE}/brand/oceanblue-logo-reversed.png`, `${BASE}/brand/oceanblue-mark-512.png`] },
+  { url: `${BASE}/resources`, changefreq: "weekly", priority: 0.7 },
+  { url: `${BASE}/resources/media-kit`, changefreq: "yearly", priority: 0.4 },
   { url: `${BASE}/careers`, changefreq: "daily", priority: 0.95 },
-  { url: `${BASE}/careers/search`, changefreq: "daily", priority: 0.9 },
+  { url: `${BASE}/jobs`, changefreq: "daily", priority: 0.9 },
+  { url: `${BASE}/equal-opportunity`, changefreq: "yearly", priority: 0.3 },
   { url: `${BASE}/contact`, changefreq: "monthly", priority: 0.75 },
-  { url: `${BASE}/faq`, changefreq: "monthly", priority: 0.6 },
   { url: `${BASE}/sitemap`, changefreq: "yearly", priority: 0.3 },
   // Security sits above the legal block: procurement reads it, and it is a
   // page we want indexed rather than merely available.
@@ -53,7 +55,7 @@ export async function GET() {
       for (const job of result.data) {
         if (isAcceptingApplications(job)) {
           entries.push({
-            url: `${BASE}/careers/search/${job.id}`,
+            url: `${BASE}/jobs/${job.id}`,
             lastmod: new Date(job.updatedAt || job.createdAt).toISOString(),
             changefreq: "weekly",
             priority: 0.85,

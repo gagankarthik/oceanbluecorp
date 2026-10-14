@@ -401,7 +401,7 @@ export async function POST(request: NextRequest) {
             type: "application_received",
             title: "New Application Received",
             message: `${name} applied for ${job.title}`,
-            link: `/admin/applications`,
+            link: `/portal/applications`,
             relatedId: application.id,
             isRead: false,
             createdAt: now,

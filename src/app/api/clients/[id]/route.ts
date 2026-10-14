@@ -1,7 +1,8 @@
 import { isUrl, normalizeWebsite } from "@/lib/form-validation";
 import { NextRequest, NextResponse } from "next/server";
 import { getClient, updateClient, deleteClient, Client } from "@/lib/aws/dynamodb";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireRoles } from "@/lib/auth/verify";
+import { CLIENT_VENDOR_READ_ROLES, CLIENT_VENDOR_MANAGE_ROLES } from "@/lib/auth/config";
 import { serverError } from "@/lib/api-errors";
 
 // GET /api/clients/[id] - Get a single client
@@ -9,7 +10,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  const auth = await requireRoles(request, CLIENT_VENDOR_READ_ROLES);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
@@ -37,7 +38,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  const auth = await requireRoles(request, CLIENT_VENDOR_MANAGE_ROLES);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
@@ -112,7 +113,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireStaff(request);
+  const auth = await requireRoles(request, CLIENT_VENDOR_MANAGE_ROLES);
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;

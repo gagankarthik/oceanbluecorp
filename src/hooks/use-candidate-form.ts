@@ -9,9 +9,11 @@ import { useFormErrors } from "@/hooks/use-form-errors";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { refreshApplications } from "@/hooks/use-console-data";
 import {
-  LIMITS, check, collectErrors, email as emailRule, maxLen, normalizeWebsite, phone as phoneRule,
+  check, collectErrors, email as emailRule, maxLen, normalizeWebsite, phone as phoneRule,
   required, website,
 } from "@/lib/form-validation";
+import { APPLICATION_TEXT_LIMITS as SERVER } from "@/lib/application-input";
+import { resumeFileError as checkResumeFile } from "@/components/portal/fields/ResumeDrop";
 
 export interface CandidateFormValues {
   firstName: string;
@@ -61,18 +63,21 @@ export interface AttachedResume {
   origin: "record" | "bench";
 }
 
-export const RESUME_MAX_BYTES = 5 * 1024 * 1024;
-export const RESUME_ACCEPT = ".pdf,.doc,.docx";
+export { RESUME_MAX_BYTES, RESUME_ACCEPT } from "@/components/portal/fields/ResumeDrop";
 
-/** Extension, not MIME type: browsers report .doc/.docx inconsistently. */
-export function resumeFileError(file: File): string | null {
-  const name = file.name.toLowerCase();
-  if (![".pdf", ".doc", ".docx"].some((ext) => name.endsWith(ext))) {
-    return "Choose a PDF or Word document (.pdf, .doc or .docx).";
-  }
-  if (file.size > RESUME_MAX_BYTES) return "This file is larger than 5 MB. Choose a smaller copy of the resume.";
-  return null;
-}
+/** Extension and type; see fields/ResumeDrop. */
+export const resumeFileError = checkResumeFile;
+
+/** Client limits are the server's (application-input), so a save never fails on length. */
+export const CANDIDATE_LIMITS = {
+  name: SERVER.firstName,
+  email: SERVER.email,
+  url: SERVER.linkedinUrl,
+  address: SERVER.address,
+  city: SERVER.city,
+  zip: SERVER.zipCode,
+  experience: SERVER.experience,
+} as const;
 
 export function candidateToValues(app: Application): CandidateFormValues {
   const [first, ...rest] = (app.name || "").split(" ");
@@ -108,31 +113,30 @@ export function candidateToValues(app: Application): CandidateFormValues {
 
 export type CandidateField =
   | "firstName" | "lastName" | "email" | "phone" | "linkedinUrl"
-  | "address" | "city" | "zipCode" | "experience" | "notes";
+  | "address" | "city" | "zipCode" | "experience";
 
 export const CANDIDATE_FIELD_IDS: Record<CandidateField, string> = {
   firstName: "cand-first-name", lastName: "cand-last-name", email: "cand-email", phone: "cand-phone",
   linkedinUrl: "cand-linkedin", address: "cand-address", city: "cand-city", zipCode: "cand-zip",
-  experience: "cand-experience", notes: "cand-notes",
+  experience: "cand-experience",
 };
 
 function validateCandidate(v: CandidateFormValues) {
   return collectErrors<CandidateField>({
-    firstName: check(v.firstName, required("Enter the candidate's first name."), maxLen(LIMITS.name)),
-    lastName: check(v.lastName, maxLen(LIMITS.name)),
+    firstName: check(v.firstName, required("Enter the candidate's first name."), maxLen(CANDIDATE_LIMITS.name)),
+    lastName: check(v.lastName, maxLen(CANDIDATE_LIMITS.name)),
     email: check(
       v.email,
       required("Enter the candidate's email, like name@company.com."),
       emailRule("That email doesn't look complete. Use the form name@company.com."),
-      maxLen(LIMITS.email),
+      maxLen(CANDIDATE_LIMITS.email),
     ),
     phone: check(v.phone, phoneRule()),
-    linkedinUrl: check(v.linkedinUrl, website("Enter a LinkedIn address, like linkedin.com/in/jane-smith."), maxLen(LIMITS.url)),
-    address: check(v.address, maxLen(LIMITS.short)),
-    city: check(v.city, maxLen(LIMITS.name)),
-    zipCode: check(v.zipCode, maxLen(10, "Enter a 5-digit ZIP code, or ZIP+4 like 10001-1234.")),
-    experience: check(v.experience, maxLen(LIMITS.notes)),
-    notes: check(v.notes, maxLen(LIMITS.notes)),
+    linkedinUrl: check(v.linkedinUrl, website("Enter a LinkedIn address, like linkedin.com/in/jane-smith."), maxLen(CANDIDATE_LIMITS.url)),
+    address: check(v.address, maxLen(CANDIDATE_LIMITS.address)),
+    city: check(v.city, maxLen(CANDIDATE_LIMITS.city)),
+    zipCode: check(v.zipCode, maxLen(CANDIDATE_LIMITS.zip, "That ZIP code is too long. Use 5 digits, or ZIP+4 like 10001-1234.")),
+    experience: check(v.experience, maxLen(CANDIDATE_LIMITS.experience)),
   });
 }
 

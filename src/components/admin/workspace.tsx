@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Slot } from "radix-ui";
-import { ArrowLeft, BadgeCheck, Check, ChevronDown, CircleDot, Loader2, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
+import { BadgeCheck, Check, ChevronDown, CircleDot, Loader2, RotateCcw, Route, Search, Settings2, Tag, Workflow, Wrench, X } from "lucide-react";
 import { IconBookmark, IconJob, IconLocation, IconShield, IconUser } from "./icons";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -56,7 +56,7 @@ export function Workspace({ className, children }: { className?: string; childre
         // row and the right-hand toolbar controls. With it, the panel fits the
         // viewport and the GRID scrolls horizontally inside its own container,
         // which is where a wide table should scroll.
-        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "flex min-h-[420px] w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
         className,
       )}
     >
@@ -109,20 +109,17 @@ export function WorkspaceTitle({
     <div className={cn("mb-4 flex flex-none flex-wrap items-center justify-between gap-x-6 gap-y-3", className)}>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
-          <h1 className="truncate text-adm-lg font-semibold leading-7 tracking-[-0.02em] text-[var(--adm-ink)]">
+          <h1 className="truncate text-adm-xl font-semibold tracking-tight text-[var(--adm-ink)]">
             {title}
           </h1>
           {info && <InfoTip label={title}>{info}</InfoTip>}
         </div>
-        {meta && <p className="mt-0.5 text-adm-xs text-[var(--adm-ink-mute)]">{meta}</p>}
+        {meta && <p className="mt-0.5 text-adm-base text-[var(--adm-ink-subtle)]">{meta}</p>}
       </div>
       {actions && <div className="flex flex-shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
-
-/** True inside a BrandBand's action slot. */
-const BandContext = React.createContext(false);
 
 /**
  * Toolbar button. One geometry for every control in the workspace chrome.
@@ -153,8 +150,6 @@ export function WorkspaceButton({
   loading?: boolean;
 }) {
   const Comp = asChild ? Slot.Root : "button";
-  // On the cobalt BrandBand a filled or ghost button would vanish, so it inverts.
-  const onBand = React.useContext(BandContext);
   return (
     <Comp
       {...(asChild ? {} : { type: "button" as const })}
@@ -162,20 +157,16 @@ export function WorkspaceButton({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        "inline-flex flex-none select-none items-center justify-center gap-1.5 whitespace-nowrap font-semibold",
-        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-adm-base" : "h-9 rounded-[var(--adm-radius-control)] px-4 text-adm-base",
+        "inline-flex flex-none select-none items-center justify-center gap-2 whitespace-nowrap font-medium",
+        size === "sm" ? "h-8 rounded-[var(--adm-radius-control)] px-3 text-adm-base" : "h-10 rounded-[var(--adm-radius-control)] px-4 text-adm-base",
         "transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-[var(--adm-ease)] not-disabled:active:scale-[0.98]",
         "disabled:cursor-not-allowed disabled:opacity-[var(--adm-opacity-disabled)] [&_svg]:size-4 [&_svg]:flex-none",
         loading && "[&>svg:not([data-spinner])]:hidden",
-        variant === "primary" && (onBand
-          ? "bg-white text-[var(--adm-accent)] not-disabled:hover:bg-white/90 not-disabled:active:bg-white/80"
-          : "bg-[var(--adm-accent)] text-white shadow-[var(--adm-shadow-accent)] not-disabled:hover:bg-[var(--adm-accent-strong)] not-disabled:active:bg-[var(--adm-accent-press)]"),
+        variant === "primary" && "bg-[var(--adm-accent)] text-white not-disabled:hover:bg-[var(--adm-accent-strong)] not-disabled:active:bg-[var(--adm-accent-press)]",
         variant === "secondary" &&
-          "border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)] not-disabled:hover:border-[var(--adm-ink-mute)] not-disabled:hover:bg-[var(--adm-row-hover)] not-disabled:active:bg-[var(--adm-row-press)]",
+          "border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] not-disabled:hover:bg-[var(--adm-row-hover)] not-disabled:active:bg-[var(--adm-row-press)]",
         variant === "danger" && "bg-[var(--adm-danger)] text-white not-disabled:hover:bg-[var(--adm-danger-ink)] not-disabled:active:bg-[var(--adm-danger-ink)]",
-        variant === "ghost" && (onBand
-          ? "text-white/85 not-disabled:hover:bg-white/10 not-disabled:hover:text-white not-disabled:active:bg-white/20"
-          : "text-[var(--adm-ink-mute)] not-disabled:hover:bg-[var(--adm-surface-2)] not-disabled:hover:text-[var(--adm-ink)] not-disabled:active:bg-[var(--adm-row-press)]"),
+        variant === "ghost" && "text-[var(--adm-ink)] not-disabled:hover:bg-[var(--adm-surface-2)] not-disabled:active:bg-[var(--adm-row-press)]",
         className,
       )}
     >
@@ -192,17 +183,8 @@ export function WorkspaceButton({
 // ── Record + form shells ─────────────────────────────────────────────────────
 
 /**
- * Header for a single-record screen (detail or form).
- *
- * Unlike a list screen, a record screen SHOULD state its title: it is the
- * record's own name, and it is the one thing the sidebar and breadcrumb cannot
- * tell you. What it must not do is rebuild the rejected page band, so there is
- * no white fill, no bottom rule and no icon tile, just the back link, the name,
- * its status, and the actions.
- */
-/**
- * The way back from a record or form. One placement everywhere: top-left on
- * the canvas, above the page's header, in AA ink with a full-size target.
+ * The way back from a record or form: top-left above the header, arrow first,
+ * an underline drawn in from the left on hover or focus. Matches site/BackLink.
  */
 export function BackLink({
   label = "Back",
@@ -216,13 +198,30 @@ export function BackLink({
   className?: string;
 }) {
   const cls = cn(
-    "-ml-2 mb-2 inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-2 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]",
+    "group mb-3 inline-flex min-h-10 items-center gap-2 self-start text-adm-base font-medium text-[var(--adm-accent-strong)] transition-colors hover:text-[var(--adm-accent-press)] focus-visible:outline-offset-4",
     className,
   );
   const body = (
     <>
-      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-      {label}
+      <svg
+        aria-hidden
+        viewBox="0 0 16 16"
+        className="size-4 shrink-0 transition-transform duration-300 ease-[var(--adm-ease)] group-hover:-translate-x-1 group-focus-visible:-translate-x-1 motion-reduce:transition-none"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M13 8H3M7 4 3 8l4 4" />
+      </svg>
+      <span className="relative">
+        {label}
+        <span
+          aria-hidden
+          className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-current transition-transform duration-300 ease-[var(--adm-ease)] group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none"
+        />
+      </span>
     </>
   );
   return (
@@ -232,6 +231,10 @@ export function BackLink({
   );
 }
 
+/**
+ * Header for a single-record screen (detail or form), on the canvas like the
+ * portal's page headers: back link, name, status, facts, actions.
+ */
 export function RecordHeader({
   back,
   title,
@@ -252,38 +255,28 @@ export function RecordHeader({
   actions?: React.ReactNode;
   className?: string;
 }) {
-  // On cobalt, like BrandBand. Facts and links are built on the ink tokens, so
-  // the text rows re-point those tokens to white; the status chip keeps its own
-  // colours on a white tab.
-  const onCobalt = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.92)] [--adm-ink-subtle:rgba(255,255,255,0.85)]";
   return (
     <>
-    {/* The way back sits on the canvas, never inside the band, where it read as part of the title block. */}
-    {back && <BackLink label={back.label} href={back.href} onClick={back.onClick} />}
-    <div className={cn("adm-on-band mb-5 flex-none rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] px-5 py-4 text-white", className)}>
-
-      <div className="flex flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-start sm:justify-between">
+      {back && <BackLink label={back.label} href={back.href} onClick={back.onClick} />}
+      <div className={cn("mb-6 flex flex-none flex-col gap-x-6 gap-y-3 sm:flex-row sm:items-start sm:justify-between", className)}>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="min-w-0 break-words text-adm-lg font-semibold leading-7 tracking-[-0.02em]">
+            <h1 className="min-w-0 break-words text-adm-xl font-semibold tracking-tight text-[var(--adm-ink)]">
               {title}
             </h1>
-            {status && <span className="inline-flex rounded-[var(--adm-radius-control)] bg-white p-0.5">{status}</span>}
+            {status}
           </div>
-          {subtitle && <p className="mt-0.5 text-adm-base text-white/90">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-adm-base text-[var(--adm-ink-subtle)]">{subtitle}</p>}
           {meta && (
-            <div className={cn("mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-adm-xs", onCobalt)}>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-adm-xs">
               {meta}
             </div>
           )}
         </div>
         {actions && (
-          <BandContext.Provider value={true}>
-            <div className="flex flex-none items-center gap-2 max-sm:[&>*:last-child]:flex-1">{actions}</div>
-          </BandContext.Provider>
+          <div className="flex flex-none flex-wrap items-center gap-2 max-sm:[&>*:last-child]:flex-1">{actions}</div>
         )}
       </div>
-    </div>
     </>
   );
 }
@@ -327,7 +320,7 @@ export function FormActionBar({
   children: React.ReactNode;
 }) {
   return (
-    <div className="sticky -bottom-5 z-20 -mx-5 -mb-5 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 lg:-bottom-8 lg:-mx-8 lg:-mb-8 lg:px-8">
+    <div className="sticky bottom-0 z-20 -mx-5 -mb-5 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8">
       <p className="text-adm-xs text-[var(--adm-ink-mute)]">
         {message ?? (dirty ? (
           <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
@@ -368,7 +361,7 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
   return (
     <div
       className={cn(
-        "mb-4 flex max-w-full flex-none flex-wrap self-start overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "mb-4 flex max-w-full flex-none flex-wrap self-start overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
         className,
       )}
     >
@@ -404,99 +397,6 @@ export function StatStrip({ items, className }: { items: StatItem[]; className?:
     </div>
   );
 }
-
-export interface BrandStat {
-  label: string;
-  value: React.ReactNode;
-  /** Small line under the figure. */
-  sub?: string;
-  /** Tooltip explaining the figure. */
-  hint?: string;
-  href?: string;
-  onClick?: () => void;
-  /** Marks the cell as the active scope. */
-  selected?: boolean;
-}
-
-/**
- * The console's signature header: a screen's name, its actions and its headline
- * figures on the brand colour. Figures that link or filter are the cells
- * themselves, so the band is a control surface, not a banner.
- */
-export function BrandBand({
-  title,
-  meta,
-  actions,
-  stats = [],
-  size = "md",
-  className,
-}: {
-  title: string;
-  meta?: React.ReactNode;
-  /** Buttons render white on the band; pass secondary WorkspaceButtons. */
-  actions?: React.ReactNode;
-  stats?: BrandStat[];
-  /** "sm" is the list-screen band: one line of figures, no sub line. */
-  size?: "sm" | "md";
-  className?: string;
-}) {
-  const sm = size === "sm";
-  return (
-    <section className={cn("adm-on-band @container flex-none overflow-hidden rounded-[var(--adm-radius-card)] bg-[var(--adm-accent)] text-white", className)}>
-      <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5", sm ? "py-4" : "pb-4 pt-5")}>
-        <div className="min-w-0">
-          <h1 className="truncate text-adm-lg font-semibold leading-7 tracking-[-0.02em] sm:text-adm-lg">{title}</h1>
-          {meta && <div className="mt-0.5 text-adm-xs text-white/90">{meta}</div>}
-        </div>
-        {actions && (
-          <BandContext.Provider value={true}>
-            <div className="flex flex-wrap items-center gap-2">{actions}</div>
-          </BandContext.Provider>
-        )}
-      </div>
-
-      {stats.length > 0 && (
-        <div
-          className={cn(
-            "grid gap-px border-t border-white/15 bg-white/15",
-            sm ? "adm-scroll-hidden auto-cols-[minmax(128px,1fr)] grid-flow-col overflow-x-auto" : "grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-6",
-          )}
-        >
-          {stats.map((s) => {
-            const interactive = !!(s.href || s.onClick);
-            const cls = cn(
-              "adm-band-cell group min-w-0 px-5 text-left transition-colors",
-              sm ? "py-3" : "py-4",
-              // Selection is an underline bar, not just a darker fill (1.3:1 apart).
-              s.selected ? "bg-[var(--adm-accent-strong)] shadow-[inset_0_-3px_0_0_#fff]" : "bg-[var(--adm-accent)]",
-              interactive && "hover:bg-[var(--adm-accent-strong)]",
-            );
-            const body = (
-              <>
-                <span className="block truncate text-adm-xs text-white/90">{s.label}</span>
-                <span
-                  className={cn(
-                    "block font-semibold leading-none tracking-[-0.025em] tabular-nums",
-                    sm ? "mt-1.5 text-adm-lg" : "mt-2 text-adm-xl sm:text-adm-2xl",
-                  )}
-                >
-                  {s.value}
-                </span>
-                {!sm && s.sub && <span className="mt-2 block truncate text-adm-xs text-white/85">{s.sub}</span>}
-              </>
-            );
-            if (s.href) return <Link key={s.label} href={s.href} title={s.hint} aria-current={s.selected ? "true" : undefined} className={cls}>{body}</Link>;
-            if (s.onClick) return <button key={s.label} type="button" title={s.hint} aria-pressed={!!s.selected} onClick={s.onClick} className={cls}>{body}</button>;
-            return <div key={s.label} title={s.hint} aria-current={s.selected ? "true" : undefined} className={cls}>{body}</div>;
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/** White-on-band button styling for a BrandBand's primary action. */
-export const BAND_PRIMARY = "border-transparent text-[var(--adm-accent)]";
 
 /** Shared geometry so a PipelineHeader's labels sit over a PipelineCells row's figures. */
 const PIPE_CELL = "w-14 flex-none text-right";
@@ -810,7 +710,7 @@ export function WorkspaceSearch({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Escape") { onChange(""); ref.current?.blur(); } }}
-        className="h-9 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] pl-9 pr-9 text-adm-base text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
+        className="h-10 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-input)] bg-[var(--adm-surface)] pl-9 pr-9 text-adm-base text-[var(--adm-ink)] transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)] [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button
@@ -906,7 +806,7 @@ export function FilterMenu({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-adm-base font-medium transition-colors sm:px-3",
+            "inline-flex h-10 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-adm-base font-medium transition-colors sm:px-3",
             active
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:bg-[var(--adm-row-hover)]",
@@ -995,7 +895,7 @@ export function FilterPill<V extends string>({
   return (
     <div
       className={cn(
-        "inline-flex h-9 max-w-[260px] flex-none items-stretch rounded-[var(--adm-radius-control)] border text-adm-base transition-colors",
+        "inline-flex h-10 max-w-[260px] flex-none items-stretch rounded-[var(--adm-radius-control)] border text-adm-base transition-colors",
         active
           ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
           : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] hover:border-[var(--adm-ink-mute)]",
@@ -1118,7 +1018,7 @@ export function MenuSelect<V extends string>({
           type="button"
           aria-label={`${label}: ${current?.label ?? ""}`}
           className={cn(
-            "group inline-flex h-9 flex-none items-center gap-2 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-3 text-adm-base font-medium text-[var(--adm-ink)] shadow-[var(--adm-shadow-sm)]",
+            "group inline-flex h-10 flex-none items-center gap-2 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-3 pr-3 text-adm-base font-medium text-[var(--adm-ink)]",
             "transition-[background-color,border-color,box-shadow] duration-150 hover:border-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
             "data-[state=open]:border-[var(--adm-accent)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--adm-focus-ring)]",
             className,
@@ -1217,7 +1117,7 @@ export function GridSelect({
         // at runtime and Tailwind cannot compile an arbitrary class for it.
         style={dot ? { color: dot } : undefined}
         className={cn(
-          "h-9 w-full cursor-pointer appearance-none rounded-[var(--adm-radius-control)] border border-transparent bg-transparent pr-7 text-adm-base",
+          "h-10 w-full cursor-pointer appearance-none rounded-[var(--adm-radius-control)] border border-transparent bg-transparent pr-7 text-adm-base",
           "transition-colors hover:border-[var(--adm-line)] hover:bg-[var(--adm-surface)]",
           "focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]",
           dot ? "pl-7 font-semibold" : "pl-3 font-medium text-[var(--adm-ink-mute)]",
@@ -1290,7 +1190,7 @@ export function DisplayMenu({
           aria-label="Display settings"
           className={cn(
             // A view preference, not a filter: it stays neutral, a dot marks a customised view.
-            "relative grid h-9 w-9 place-items-center rounded-[var(--adm-radius-control)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
+            "relative grid h-10 w-10 place-items-center rounded-[var(--adm-radius-control)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
           )}
         >
           <Settings2 className="h-4 w-4" aria-hidden="true" />

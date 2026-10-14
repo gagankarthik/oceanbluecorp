@@ -106,7 +106,7 @@ export function HeaderSearch({ className }: { className?: string }) {
         aria-label="Search jobs, candidates and contacts"
         title="Search"
         className={cn(
-          "inline-flex h-9 w-9 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink)] hover:bg-[var(--adm-surface-2)] [&_svg]:stroke-2",
+          "inline-flex h-10 w-10 items-center justify-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink)] hover:bg-[var(--adm-surface-2)] [&_svg]:stroke-2",
           className,
         )}
       >
@@ -142,7 +142,7 @@ export function HeaderSearch({ className }: { className?: string }) {
         onKeyDown={onKey}
         placeholder="Search jobs, candidates…"
         aria-label="Search jobs, candidates and contacts"
-        className="h-9 w-full rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-9 pr-9 text-adm-base text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-ink-mute)] focus:!outline-none focus-visible:!outline-none"
+        className="h-10 w-full rounded-full border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-9 pr-9 text-adm-base text-[var(--adm-ink)] placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-ink-mute)] focus:!outline-none focus-visible:!outline-none"
       />
       <button
         type="button"

@@ -45,7 +45,7 @@ import { ListHeader, ListTabs, ListToolbar, MetaStrong, FilterChips, FilterSet, 
  * is useful. The columns are chosen by kind below; everything else is common.
  */
 const ICON_BTN =
-  "adm-hit grid h-8 w-8 place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
+  "adm-hit grid h-8 w-8 place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]";
 
 export function ArticleList({ kind }: { kind: ArticleKind }) {
   const config = ARTICLE_KIND_CONFIG[kind];

@@ -25,19 +25,19 @@ export default async function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px 80px",
-          background: "#07142b",
+          background: "#061a28", // navy-950
           fontFamily: "sans-serif",
           position: "relative",
         }}
       >
-        {/* Brand wash, mirroring the hero's cobalt/cyan mesh */}
+        {/* Brand wash: logo blue (ocean-600) and logo cyan (cyan-500) */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             display: "flex",
             background:
-              "radial-gradient(60% 70% at 12% 8%, rgba(29,78,216,0.55), transparent 62%), radial-gradient(50% 60% at 96% 92%, rgba(42,216,239,0.22), transparent 64%)",
+              "radial-gradient(60% 70% at 12% 8%, rgba(10,114,192,0.55), transparent 62%), radial-gradient(50% 60% at 96% 92%, rgba(12,170,207,0.24), transparent 64%)",
           }}
         />
 
@@ -65,7 +65,7 @@ export default async function OpengraphImage() {
               marginTop: 28,
               fontSize: 28,
               lineHeight: 1.4,
-              color: "rgba(255,255,255,0.72)",
+              color: "#a9d2e3", // tide-300
               maxWidth: 860,
               display: "flex",
             }}
@@ -82,7 +82,7 @@ export default async function OpengraphImage() {
             borderTop: "1px solid rgba(255,255,255,0.16)",
             paddingTop: 26,
             fontSize: 22,
-            color: "rgba(255,255,255,0.6)",
+            color: "#a9d2e3",
             position: "relative",
           }}
         >

@@ -323,7 +323,7 @@ export async function sendNewApplicationNotification(
       </table>
     </div>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/applications"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/applications"
          style="display: inline-block; background: linear-gradient(135 135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
         View Application
       </a>
@@ -348,7 +348,7 @@ Candidate Information:
 ${data.candidatePhone ? `- Phone: ${data.candidatePhone}` : ""}
 - Applied: ${appliedDate}
 
-View the application at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/applications
+View the application at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/applications
 
 Best regards,
 Oceanblue Recruiting System
@@ -496,7 +496,7 @@ export async function sendJobPostedNotification(
 
     <!-- Action Buttons -->
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${h.jobId}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/jobs/${h.jobId}"
          style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 0 8px;">
         View in Admin Panel
       </a>
@@ -551,7 +551,7 @@ ${richTextToPlain(data.requirements) ? `
 ${richTextToPlain(data.requirements)}
 ` : ""}
 
-View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}
+View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/jobs/${data.jobId}
 View Public Posting: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/careers/${data.jobId}
   `;
 
@@ -590,7 +590,7 @@ export async function sendJobUpdatedNotification(
       ${changesHtml}
     </div>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${h.jobId}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/jobs/${h.jobId}"
          style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
         View Job Posting
       </a>
@@ -612,7 +612,7 @@ The job posting ${data.jobTitle}${data.postingId ? ` (${data.postingId})` : ""} 
 Changes Made:
 ${data.changes.length > 0 ? data.changes.map(c => `- ${c}`).join("\n") : "General updates were made to this job posting."}
 
-View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs/${data.jobId}
+View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/jobs/${data.jobId}
 
 Best regards,
 Oceanblue Recruiting System
@@ -944,7 +944,7 @@ export async function sendJobPostingNotificationToHR(
     </div>
     ${excludedText}
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/jobs"
          style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
         View Job Posting
       </a>
@@ -969,7 +969,7 @@ ${jobPosting.description.slice(0, 500)}${jobPosting.description.length > 500 ? "
 
 ${excludedDepartments && excludedDepartments.length > 0 ? `Note: This posting excludes: ${escapeHtml(excludedDepartments.join(", "))}` : ""}
 
-View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/jobs
+View the job posting at: ${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/jobs
   `;
 
   for (const email of hrEmails) {
@@ -1005,7 +1005,7 @@ export async function sendContactNotificationEmail(data: {
   /** Deep-links the email to the enquiry instead of the inbox. */
   contactId?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/admin/contacts${data.contactId ? `/${encodeURIComponent(data.contactId)}` : ""}`;
+  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://oceanbluecorp.com"}/portal/contacts${data.contactId ? `/${encodeURIComponent(data.contactId)}` : ""}`;
   const h = escapeFields(data);
   const htmlBody = `
     ${getEmailHeader()}

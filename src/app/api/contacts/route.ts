@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
           message: isJobSeeker(contact.inquiryType)
             ? `${contact.firstName} ${contact.lastName} is looking for work - ${seekerArea(contact.inquiryType)}`
             : `${contact.firstName} ${contact.lastName} from ${contact.company} - ${contact.inquiryType}`,
-          link: `/admin/contacts/${contact.id}`,
+          link: `/portal/contacts/${contact.id}`,
           relatedId: contact.id,
           isRead: false,
           createdAt: new Date().toISOString(),

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { LEGAL_DOCS } from "@/lib/legal";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { DocPage, DocSection, P, UL, DocTable, RelatedLinks, IconPin, Callout } from "@/components/site/legal/doc";
-import { IconShieldLock, IconSettings, IconExternal, IconMail, type Icon } from "@/components/site/icons";
+import { DocPage, DocSection, P, UL, DocTable, RelatedLinks, Callout } from "@/components/site/legal/doc";
+import CookieSettingsButton from "@/components/site/CookieSettingsButton";
+import { company } from "@/lib/site-content";
 
 export const metadata: Metadata = pageMetadata({
   path: "/cookies",
@@ -26,40 +26,20 @@ const SECTIONS = [
   { id: "contact",           label: "Contact Us" },
 ];
 
-/* Status colours sit on their own tint at the 700 step, so every label clears AA. */
-const TONES = {
-  cobalt: "bg-cobalt-tint text-cobalt",
-  emerald: "bg-success-container text-success",
-  neutral: "bg-paper text-ink-muted",
-} as const;
-
-function CookieCard({ icon: Glyph, title, status, tone, children }: {
-  icon: Icon; title: string; status: string; tone: keyof typeof TONES; children: React.ReactNode;
-}) {
+function CookieCard({ title, status, children }: { title: string; status: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col rounded-xl border border-line bg-white p-5">
-      <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line text-ink">
-          <Glyph size={17} />
-        </span>
-        <p className="type-body font-semibold text-ink">{title}</p>
-      </div>
-      <div className="mt-3 type-body">{children}</div>
-      <p className={cn("mt-4 self-start rounded-full px-2.5 py-0.5 type-caption font-medium", TONES[tone])}>{status}</p>
+    <div className="flex flex-col bg-mist-0 p-5">
+      <p className="font-semibold">{title}</p>
+      <div className="mt-2">{children}</div>
+      <p className="mt-4 self-start bg-mist-100 px-2.5 py-1 text-[14px] text-navy-900">{status}</p>
     </div>
   );
-}
-
-const TYPE_TONE: Record<string, keyof typeof TONES> = { Security: "cobalt", Functional: "emerald", Preference: "emerald" };
-
-function TypeTag({ type }: { type: string }) {
-  return <span className={cn("inline-block rounded-full px-2 py-0.5 type-caption font-medium", TONES[TYPE_TONE[type] ?? "neutral"])}>{type}</span>;
 }
 
 const COOKIE_TABLE = [
   { name: "oidc.user:*", provider: "Oceanblue", purpose: "Keeps staff signed in to the admin console (staff only)", duration: "Until sign out", type: "Security" },
   { name: "cookieConsent, cookieConsentPrefs", provider: "Oceanblue", purpose: "Stores your cookie choice so we do not ask again", duration: "Until cleared", type: "Functional" },
-  { name: "ob.announcement.dismissed:*", provider: "Oceanblue", purpose: "Remembers that you closed an announcement", duration: "Until cleared (session only without consent)", type: "Preference" },
+  { name: "ob-announcement-dismissed:*", provider: "Oceanblue", purpose: "Remembers that you closed an announcement", duration: "Until cleared (session only without consent)", type: "Preference" },
 ];
 
 export default function CookiesPage() {
@@ -68,19 +48,16 @@ export default function CookiesPage() {
   return (
     <DocPage
       title="Cookie Policy"
-      lede={<>This Cookie Policy explains how Oceanblue Solutions, Inc. (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "} <strong className="font-semibold text-ink">oceanbluecorp.com</strong>.</>}
+      lede={<>This Cookie Policy explains how Oceanblue Solutions, Inc. (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar tracking technologies when you visit our website at{" "} <strong className="font-semibold">oceanbluecorp.com</strong>.</>}
       meta={[{ label: "Effective date", value: EFFECTIVE }, { label: "Last updated", value: updated }]}
       toc={SECTIONS}
       history={history}
+      current="/cookies"
       aside={
-        <div className="rounded-xl border border-line bg-paper p-4">
-          <p className="type-label font-semibold text-ink">Questions?</p>
-          <p className="mt-1 type-body-sm text-ink-muted">
-            Contact us at{" "}
-            <a href="mailto:hr@oceanbluecorp.com" className="font-medium text-cobalt underline underline-offset-2">
-              hr@oceanbluecorp.com
-            </a>
-          </p>
+        <div className="bg-mist-100 p-5 text-[15px]">
+          <p className="font-semibold">Your choice</p>
+          <p className="mt-1 text-mist-600">Change what this site may remember on your device.</p>
+          <CookieSettingsButton className="mt-4 inline-flex min-h-11 w-full items-center justify-center bg-ocean-600 px-4 font-medium text-white transition-colors hover:bg-ocean-700" />
         </div>
       }
     >
@@ -112,13 +89,13 @@ export default function CookiesPage() {
 
               <DocSection id="types" number="03" title="Types of Cookies We Use">
                 <P>We categorize the cookies and storage on our website into two types:</P>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <CookieCard icon={IconShieldLock} title="Strictly Necessary" status="Always active" tone="cobalt">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <CookieCard title="Strictly Necessary" status="Always active">
                     <p>
                       Essential for the website to function. They keep staff signed in and remember your cookie choice. You cannot opt out of these without affecting how our website works.
                     </p>
                   </CookieCard>
-                  <CookieCard icon={IconSettings} title="Preferences" status="Optional, requires consent" tone="emerald">
+                  <CookieCard title="Preferences" status="Optional, requires consent">
                     <p>
                       Remember choices you make across visits, such as closing an announcement. Without consent, these choices last only until you close the tab.
                     </p>
@@ -141,11 +118,11 @@ export default function CookiesPage() {
                   rows={COOKIE_TABLE.map((row) => ({
                     key: row.name,
                     cells: [
-                      { node: row.name, className: "font-mono type-caption text-ink" },
+                      { node: row.name, className: "font-mono text-[13px] text-navy-900" },
                       { node: row.provider },
                       { node: row.purpose, className: "hidden lg:table-cell" },
                       { node: row.duration, className: "whitespace-nowrap" },
-                      { node: <TypeTag type={row.type} /> },
+                      { node: row.type },
                     ],
                   }))}
                 />
@@ -164,8 +141,13 @@ export default function CookiesPage() {
                   You have the right to decide whether to accept or reject non-essential cookies. When you first visit our website, you will be presented with a cookie consent banner that allows you to accept all, reject optional cookies, or choose by category.
                 </P>
                 <P>
-                  You can update your cookie preferences at any time by clicking the &ldquo;Cookie Settings&rdquo; link in the footer of our website. Please note that withdrawing your consent will not affect the lawfulness of processing carried out before you withdrew consent.
+                  You can update your cookie preferences at any time with the &ldquo;Cookie settings&rdquo; button in the footer of our website or on this page. Please note that withdrawing your consent will not affect the lawfulness of processing carried out before you withdrew consent.
                 </P>
+                <div>
+                  <CookieSettingsButton className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700">
+                    Change cookie settings
+                  </CookieSettingsButton>
+                </div>
                 <P>
                   Blocking strictly necessary cookies may impair the functionality of our website, including preventing you from logging in or accessing certain features.
                 </P>
@@ -197,10 +179,10 @@ export default function CookiesPage() {
                       href={b.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="plain inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-input bg-white px-4 py-2 type-body-sm font-medium text-ink transition-colors duration-[var(--dur-short)] hover:border-cobalt"
+                      className="plain inline-flex min-h-11 items-center bg-mist-0 px-4 text-[15px] font-medium text-navy-900 transition-colors hover:bg-tide-100 hover:text-ocean-700"
                     >
                       {b.name}
-                      <IconExternal size={13} className="text-ink-subtle" />
+                      <span className="sr-only"> (opens in a new tab)</span>
                     </a>
                   ))}
                 </div>
@@ -244,32 +226,22 @@ export default function CookiesPage() {
                 <P>
                   If you have any questions or concerns about our use of cookies or this Cookie Policy, please contact us:
                 </P>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <a
-                    href="mailto:hr@oceanbluecorp.com"
-                    className="plain group flex items-center gap-3 rounded-xl border border-line bg-white p-4 transition-colors hover:border-ink"
-                  >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-cobalt">
-                      <IconMail size={18} />
-                    </span>
-                    <span>
-                      <span className="block type-caption text-ink-subtle">Email</span>
-                      <span className="block type-body font-medium text-ink">hr@oceanbluecorp.com</span>
-                    </span>
-                  </a>
-                  <div className="flex items-center gap-3 rounded-xl border border-line bg-white p-4">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-cobalt">
-                      <IconPin size={18} />
-                    </span>
-                    <span>
-                      <span className="block type-caption text-ink-subtle">Mailing Address</span>
-                      <span className="block type-body font-medium text-ink">
-                        9775 Fairway Drive, Suite C<br />
-                        Powell, OH 43065
-                      </span>
-                    </span>
+                <dl className="grid gap-2 sm:grid-cols-2">
+                  <div className="bg-mist-0 p-5">
+                    <dt className="text-[14px] text-mist-600">Email</dt>
+                    <dd className="mt-1 font-medium">
+                      <a href={`mailto:${company.email}`}>{company.email}</a>
+                    </dd>
                   </div>
-                </div>
+                  <div className="bg-mist-0 p-5">
+                    <dt className="text-[14px] text-mist-600">Mailing address</dt>
+                    <dd className="mt-1 font-medium">
+                      {company.address[0]}
+                      <br />
+                      {company.address[1]}
+                    </dd>
+                  </div>
+                </dl>
                 <P>
                   For general inquiries unrelated to privacy, please visit our{" "}
                   <Link href="/contact">

@@ -583,7 +583,7 @@ export function DataTable<T>({
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 aria-label="Rows per page"
-                className="h-9 cursor-pointer appearance-none rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-3 pr-7 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+                className="h-10 cursor-pointer appearance-none rounded-[var(--adm-radius-control)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] pl-3 pr-7 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] focus:border-[var(--adm-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
               >
                 {pageSizeOptions.map((n) => (
                   <option key={n} value={n}>{n}</option>

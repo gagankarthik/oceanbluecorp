@@ -1,21 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Plus, SearchX, X } from "lucide-react";
-import type { Article, ArticleKind, ArticleMetric } from "@/lib/aws/dynamodb";
+/* eslint-disable @next/next/no-img-element */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Article, ArticleKind, ArticleMetric, ArticleStatus } from "@/lib/aws/dynamodb";
 import {
   ARTICLE_KIND_CONFIG,
   ARTICLE_SCHEMA,
   ARTICLE_STATUSES,
   SEO_LIMITS,
-  articleStatusLabel,
-  articleStatusTone,
   deriveExcerpt,
   editorialWarnings,
+  isLive,
+  isPending,
   isPublishIntent,
   kindHas,
+  namesAClient,
   NEWS_TYPES,
   publishBlockers,
   readingMinutes,
@@ -25,27 +24,16 @@ import {
 import { editorialGuide } from "@/lib/editorial";
 import { useAuth } from "@/lib/auth";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
-import { fmtDateTime } from "@/lib/format";
-import { AdminFormSkeleton } from "@/components/admin/skeletons";
-import { AdminCard, AdminCardHeader } from "@/components/admin/admin-card";
-import { StatusBadge } from "@/components/admin/status-badge";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { EmptyState } from "@/components/admin/empty-state";
-import { RichTextEditor } from "@/components/admin/rich-text-editor";
-import { Field, FormInput, FormSection, FormSelect, FormTextarea } from "@/components/admin/forms/primitives";
-import { TagInput } from "@/components/admin/forms/tag-input";
-import { EditorialGuide } from "@/components/admin/articles/editorial-guide";
-import {
-  FormActionBar, RecordHeader, WorkspaceButton,
-} from "@/components/admin/workspace";
-import {
-  IconBook, IconBuilding, IconChart, IconEdit, IconEye, IconLayers,
-  IconMessage, IconRadar, IconTrash, IconWarning,
-} from "@/components/admin/icons";
-import { cn } from "@/lib/utils";
-import { FieldWarning, FormErrorBanner } from "@/components/admin/forms/form-alert";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import { check, collectErrors, email, maxLen, phone, required, url, type Rule } from "@/lib/form-validation";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { TagInput } from "@/components/admin/forms/tag-input";
+import { EditorialGuide } from "@/components/admin/articles/editorial-guide";
+import Icon, { type IconName } from "@/components/portal/icons";
+import { useToast } from "@/components/portal/toast";
+import { Badge, Button, ConfirmDialog, EmptyState, ErrorState, FormSkeleton, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
+import { ARTICLE_ICONS, ArticleStatusBadge, fmtDate, fmtRelative } from "@/components/portal/publishing/shared";
+import { CheckRow, Counter, Field, FieldIssues, Select, TextArea, TextInput, inputCls, type Issues } from "@/components/portal/publishing/fields";
 
 /** Plain-text fields with an input on this screen; lengths come from the route schema. */
 type TextField =
@@ -56,41 +44,70 @@ type TextField =
   | "heroImageUrl" | "heroImageAlt" | "authorName" | "authorRole"
   | "seoTitle" | "seoDescription" | "canonicalUrl";
 
+const max = (f: string) => ARTICLE_SCHEMA[f]?.maxLength;
+
+// Where each publishBlockers / editorialWarnings message belongs, so it shows beside its field.
+type Spot =
+  | "title" | "slug" | "excerpt" | "publishedAt" | "datelineCity" | "pressContactEmail" | "body" | "externalUrl"
+  | "challenge" | "approach" | "results" | "metrics" | "quote" | "approvalOnFile"
+  | "seoTitle" | "seoDescription" | "heroImageAlt" | "heroImageUrl" | "authorName" | "category" | "quoteAuthor";
+
+const BLOCKER_SPOTS: [RegExp, Spot[]][] = [
+  [/needs a headline/i, ["title"]],
+  [/URL slug/i, ["slug"]],
+  [/summary/i, ["excerpt"]],
+  [/no publish date/i, ["publishedAt"]],
+  [/dateline/i, ["datelineCity"]],
+  [/media contact/i, ["pressContactEmail"]],
+  [/write the release/i, ["body", "externalUrl"]],
+  [/has no body/i, ["body"]],
+  [/the challenge/i, ["challenge"]],
+  [/actually did/i, ["approach"]],
+  [/its results/i, ["results"]],
+  [/figure/i, ["metrics"]],
+  [/carried by the quote/i, ["quote"]],
+  [/signed off/i, ["approvalOnFile"]],
+];
+const WARNING_SPOTS: [RegExp, Spot[]][] = [
+  [/search title/i, ["seoTitle"]],
+  [/search description/i, ["seoDescription"]],
+  [/alt text/i, ["heroImageAlt"]],
+  [/no hero image/i, ["heroImageUrl"]],
+  [/no author/i, ["authorName"]],
+  [/no category/i, ["category"]],
+  [/unattributed/i, ["quoteAuthor"]],
+  [/baseline/i, ["metrics"]],
+];
+const spotsOf = (msg: string, table: [RegExp, Spot[]][]) => table.find(([re]) => re.test(msg))?.[1] ?? [];
+
+const STATUS_HINT = Object.fromEntries(ARTICLE_STATUSES.map((s) => [s.key, s.hint])) as Record<ArticleStatus, string>;
+
 /**
- * The editor for one piece, in any of the four sections.
- *
- * The kind decides which field groups render (`kindHas`), so a press release
- * never shows a "reading time" and a blog post never shows a client-approval
- * checkbox. The alternative, one form with every field and half of them
- * greyed out, is how a CMS teaches people to ignore its fields.
- *
- * Two things are load-bearing here and are the reason this is not just a form:
- *
- *   - The publish blockers (rail, bottom) are the editorial standard made
- *     mechanical. A case study with no figures, or a client story with no
- *     signature on file, cannot be saved as published, from this screen or
- *     from a fetch call, since /api/articles applies the same list.
- *   - The guide panel puts the house style beside the field it governs, rather
- *     than in a document nobody opens.
+ * The editor for one piece, in any of the four sections. The kind decides
+ * which field groups render (`kindHas`). Publish blockers and editorial
+ * warnings show beside the field they concern and in the Publishing checklist;
+ * /api/articles applies the same blockers.
  */
 export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
   const config = ARTICLE_KIND_CONFIG[kind];
   const guide = editorialGuide(kind);
-  const router = useRouter();
+  const router = usePortalRouter();
+  const notify = useToast();
   const { user } = useAuth();
   const isNew = id === "new";
 
   const [form, setForm] = useState<Partial<Article>>({ kind, status: "draft" });
   const [baseline, setBaseline] = useState<string>("");
   const [loading, setLoading] = useState(!isNew);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<"missing" | "failed" | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  /** Locked once the author edits the slug, so a headline fix cannot move a live URL. */
-  const slugTouched = useRef(false);
+  /** Locked once the slug is edited by hand (or the record exists), so a headline fix can't move a live URL. */
+  const [slugLocked, setSlugLocked] = useState(!isNew);
 
   const set = useCallback(<K extends keyof Article>(key: K, value: Article[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -100,9 +117,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
   useEffect(() => {
     if (isNew) {
-      // A new piece is pre-signed by whoever is writing it. Only blog posts
-      // carry a byline on the site, but recording the author on every kind is
-      // what makes "who wrote this?" answerable a year later.
+      // Pre-signed by whoever writes it; only blog prints a byline.
       const seeded: Partial<Article> = {
         kind,
         status: "draft",
@@ -121,6 +136,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
     (async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const response = await fetch(`/api/articles/${id}`);
         if (response.status === 404) {
           if (!cancelled) setLoadError("missing");
@@ -129,15 +145,10 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
         if (cancelled) return;
-        const loaded: Partial<Article> = {
-          tags: [],
-          services: [],
-          metrics: [],
-          ...data.article,
-        };
+        const loaded: Partial<Article> = { tags: [], services: [], metrics: [], ...data.article };
         setForm(loaded);
         setBaseline(JSON.stringify(loaded));
-        slugTouched.current = true; // an existing slug is a published promise
+        setSlugLocked(true);
       } catch (err) {
         console.error(`Failed to load ${kind}:`, err);
         if (!cancelled) setLoadError("failed");
@@ -145,14 +156,19 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, [id, isNew, kind, user?.name, user?.email]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isNew, kind, user?.name, user?.email, attempt]);
 
   // ── derived ───────────────────────────────────────────────────────────────
 
   const dirty = baseline !== "" && JSON.stringify(form) !== baseline;
-
   useUnsavedChanges(dirty);
+
+  const saved = useMemo<Partial<Article>>(() => (baseline ? JSON.parse(baseline) : {}), [baseline]);
+  const savedLive = !isNew && !!saved.status && isLive(saved as Pick<Article, "status" | "publishedAt">);
+  const savedPending = !isNew && !!saved.status && isPending(saved as Pick<Article, "status" | "publishedAt">);
 
   const blockers = useMemo(() => publishBlockers(form), [form]);
   const warnings = useMemo(() => editorialWarnings(form), [form]);
@@ -161,10 +177,22 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
   const publishIntent = isPublishIntent(form.status);
   const blockedFromPublishing = publishIntent && blockers.length > 0;
 
+  /** Inline issues per field: blockers only while the status would publish; warnings always. */
+  const issues = useMemo(() => {
+    const map: Partial<Record<Spot, Required<Issues>>> = {};
+    const add = (spot: Spot, k: "blockers" | "warnings", msg: string) => {
+      map[spot] ??= { blockers: [], warnings: [] };
+      map[spot]![k].push(msg);
+    };
+    if (publishIntent) blockers.forEach((b) => spotsOf(b, BLOCKER_SPOTS).forEach((s) => add(s, "blockers", b)));
+    warnings.forEach((w) => spotsOf(w, WARNING_SPOTS).forEach((s) => add(s, "warnings", w)));
+    return map;
+  }, [blockers, warnings, publishIntent]);
+  const at = (spot: Spot): Issues | undefined => issues[spot];
+
   // Field-level format and length only; completeness is the blockers' job.
   const { errors, validateAll, revalidate, invalidProps } = useFormErrors(() => {
-    const field = (f: TextField, ...rules: Rule[]) =>
-      check(form[f] as string | undefined, ...rules, maxLen(ARTICLE_SCHEMA[f].maxLength!));
+    const field = (f: TextField, ...rules: Rule[]) => check(form[f] as string | undefined, ...rules, maxLen(ARTICLE_SCHEMA[f].maxLength!));
     const engagement = kindHas(kind, "engagement");
     const quote = kindHas(kind, "quote");
     const press = kindHas(kind, "press");
@@ -183,9 +211,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       datelineCity: press ? field("datelineCity") : undefined,
       externalUrl: press ? field("externalUrl", url()) : undefined,
       pressContactName: press ? field("pressContactName") : undefined,
-      pressContactEmail: press
-        ? field("pressContactEmail", email("Enter an email a journalist can reach, like press@oceanbluecorp.com."))
-        : undefined,
+      pressContactEmail: press ? field("pressContactEmail", email("Enter an email a journalist can reach, like press@oceanbluecorp.com.")) : undefined,
       pressContactPhone: press ? field("pressContactPhone", phone()) : undefined,
       heroImageUrl: field("heroImageUrl", url()),
       heroImageAlt: field("heroImageAlt"),
@@ -197,27 +223,30 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
     });
   });
 
-  const scheduledInPast =
-    form.status === "scheduled" && !!form.publishedAt && new Date(form.publishedAt).getTime() < Date.now();
+  const dateMs = form.publishedAt ? new Date(form.publishedAt).getTime() : NaN;
+  const scheduledInPast = form.status === "scheduled" && Number.isFinite(dateMs) && dateMs < Date.now();
+  const futureDate = Number.isFinite(dateMs) && dateMs > Date.now();
 
   // ── save ──────────────────────────────────────────────────────────────────
 
-  const save = async () => {
+  /** `status` overrides the chosen status, for "save without publishing". */
+  const save = async (status?: ArticleStatus) => {
     if (saving) return;
     setSaveError(null);
     if (!validateAll()) return;
-    if (blockedFromPublishing) {
-      toast.error("Not ready to publish. See the checklist on the right.");
+    const next = status ? { ...form, status } : form;
+    if (isPublishIntent(next.status) && publishBlockers(next).length > 0) {
+      notify("Not ready to publish. See the checklist.", { tone: "error" });
       return;
     }
 
     setSaving(true);
     try {
       const payload = {
-        ...form,
+        ...next,
         kind,
-        slug: form.slug || slugify(form.title ?? ""),
-        excerpt: form.excerpt || deriveExcerpt(form.body),
+        slug: next.slug || slugify(next.title ?? ""),
+        excerpt: next.excerpt || deriveExcerpt(next.body),
       };
       const response = await fetch(isNew ? "/api/articles" : `/api/articles/${id}`, {
         method: isNew ? "POST" : "PATCH",
@@ -227,13 +256,11 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "This could not be saved. Your changes are still here; try again in a moment.");
 
-      const saved: Partial<Article> = { tags: [], services: [], metrics: [], ...data.article };
-      setForm(saved);
-      setBaseline(JSON.stringify(saved));
-      toast.success(isNew ? `${cap(config.noun)} created` : "Saved");
-      if (isNew && data.article?.id) {
-        router.replace(`${config.adminPath}/${data.article.id}`);
-      }
+      const record: Partial<Article> = { tags: [], services: [], metrics: [], ...data.article };
+      setForm(record);
+      setBaseline(JSON.stringify(record));
+      notify(isNew ? `${cap(config.noun)} created` : "Saved");
+      if (isNew && data.article?.id) router.replace(`${config.adminPath}/${data.article.id}`);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "This could not be saved. Your changes are still here; try again in a moment.");
     } finally {
@@ -246,862 +273,735 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
     try {
       const response = await fetch(`/api/articles/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete");
-      toast.success("Deleted");
+      notify("Deleted");
       router.push(config.adminPath);
     } catch {
-      toast.error("Failed to delete");
+      notify("Failed to delete", { tone: "error" });
       setDeleting(false);
     }
   };
 
+  const focusSpot = (spot: Spot) => {
+    const el = document.getElementById(spot === "approvalOnFile" ? "approvalOnFile" : spot);
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.focus({ preventScroll: true });
+  };
+
   // ── states ────────────────────────────────────────────────────────────────
 
-  if (loading) return <AdminFormSkeleton />;
+  const back = { href: config.adminPath, label: config.label };
+
+  if (loading) return <FormSkeleton label={`Loading ${config.noun}`} aside />;
 
   if (loadError) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <AdminCard className="w-full max-w-md">
-          {loadError === "missing" ? (
-            <EmptyState
-              icon={SearchX}
-              title={`This ${config.noun} doesn't exist`}
-              description="It may have been deleted, or the link is out of date."
-              action={
-                <WorkspaceButton variant="primary" onClick={() => router.push(config.adminPath)}>
-                  Back to {config.label}
-                </WorkspaceButton>
-              }
-            />
-          ) : (
-            <EmptyState
-              variant="error"
-              icon={IconWarning}
-              title={`Couldn't open this ${config.noun}`}
-              description="Check your connection and try again."
-              action={
-                <div className="flex flex-wrap justify-center gap-2">
-                  <WorkspaceButton variant="primary" onClick={() => window.location.reload()}>Try again</WorkspaceButton>
-                  <WorkspaceButton onClick={() => router.push(config.adminPath)}>Back to {config.label}</WorkspaceButton>
-                </div>
-              }
-            />
-          )}
-        </AdminCard>
-      </div>
+      <Page>
+        <PageHeader back={back} title={`Edit ${config.noun}`} icon={ARTICLE_ICONS[kind]} section="publishing" />
+        {loadError === "missing" ? (
+          <EmptyState
+            framed
+            icon="search"
+            title={`This ${config.noun} doesn't exist`}
+            body="It may have been deleted, or the link is out of date."
+            primary={{ label: `Back to ${config.label}`, href: config.adminPath, icon: "chevronLeft" }}
+          />
+        ) : (
+          <ErrorState title={`Couldn't open this ${config.noun}`} onRetry={() => setAttempt((n) => n + 1)} />
+        )}
+      </Page>
     );
   }
 
   const publicUrl = `${config.publicPath}/${form.slug || ""}`;
+  const where = savedLive ? "On the site" : savedPending ? `Goes live ${fmtDate(saved.publishedAt)}` : "Not on the site";
+
+  const primaryLabel = (() => {
+    const s = form.status ?? "draft";
+    if (s === "scheduled" || (s === "published" && futureDate)) return isNew ? "Create and schedule" : "Schedule";
+    if (s === "published") return savedLive ? "Save changes" : isNew ? "Create and publish" : "Publish now";
+    if (savedLive) return "Save and take offline";
+    if (s === "in-review") return isNew ? "Create for review" : "Save for review";
+    if (s === "archived") return "Save";
+    return "Save draft";
+  })();
+  // A blocked publish can still keep the work: save under the last non-publishing status.
+  const fallbackStatus: ArticleStatus = !isNew && saved.status && !isPublishIntent(saved.status) ? (saved.status as ArticleStatus) : "draft";
+  const offerFallback = blockedFromPublishing && !savedLive;
+
+  const intents: { key: ArticleStatus; label: string; icon: IconName }[] = [
+    { key: "draft", label: "Draft", icon: "edit" },
+    { key: "in-review", label: "In review", icon: "eye" },
+    { key: "published", label: savedLive ? "Published" : "Publish now", icon: "send" },
+    { key: "scheduled", label: "Schedule", icon: "calendar" },
+    { key: "archived", label: "Archived", icon: "clock" },
+  ];
 
   return (
-    <>
-      <RecordHeader
-        back={{ label: config.label, href: config.adminPath }}
+    <Page width="full" className="max-w-[1360px]">
+      <PageHeader
+        back={back}
+        icon={ARTICLE_ICONS[kind]}
+        section="publishing"
         title={form.title?.trim() || `New ${config.noun}`}
-        subtitle={form.subtitle}
-        status={
-          <StatusBadge
-            tone={articleStatusTone(form.status)}
-            label={articleStatusLabel(form.status)}
-            size="md"
-          />
-        }
-        meta={
-          !isNew ? (
-            <>
-              <span className="min-w-0 break-all font-mono text-adm-xs">{publicUrl}</span>
-              {form.updatedAt && <span>Updated {fmtDateTime(form.updatedAt)}</span>}
-              {form.updatedByName && <span>by {form.updatedByName}</span>}
-            </>
-          ) : undefined
+        meta={!isNew && saved.status ? <ArticleStatusBadge article={saved as Pick<Article, "status" | "publishedAt">} /> : undefined}
+        description={
+          isNew ? (
+            config.purpose
+          ) : (
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+              <span className="break-all font-mono text-adm-xs">{publicUrl}</span>
+              <span>{where}</span>
+              {form.updatedAt && (
+                <span>
+                  Updated {fmtRelative(form.updatedAt).toLowerCase()}
+                  {form.updatedByName ? ` by ${form.updatedByName}` : ""}
+                </span>
+              )}
+            </span>
+          )
         }
         actions={
           !isNew ? (
             <>
-              {form.status === "published" && (
-                <WorkspaceButton asChild>
-                  <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-                    <IconEye className="h-4 w-4" aria-hidden="true" />
-                    View
-                  </a>
-                </WorkspaceButton>
+              {savedLive && (
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-mist-0 px-4 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50"
+                >
+                  <Icon name="external" className="size-[18px]" />
+                  View live
+                </a>
               )}
-              <WorkspaceButton onClick={() => setConfirmDelete(true)}>
-                <IconTrash className="h-4 w-4" aria-hidden="true" />
+              <Button variant="danger" icon="trash" onClick={() => setConfirmDelete(true)}>
                 Delete
-              </WorkspaceButton>
+              </Button>
             </>
           ) : undefined
         }
       />
 
-      <FormErrorBanner message={saveError} onDismiss={() => setSaveError(null)} className="mb-4" />
+      {saveError && (
+        <div role="alert" className="flex items-start gap-3 rounded-xl bg-[#fef3f2] p-4 text-adm-base text-[#b42318] ring-1 ring-inset ring-[#fecdca]">
+          <Icon name="alert" className="mt-0.5 size-[18px] shrink-0" />
+          <p className="min-w-0 flex-1">
+            {saveError} <span className="text-mist-700">Your changes are still here.</span>
+          </p>
+          <button type="button" onClick={() => setSaveError(null)} aria-label="Dismiss" className="grid size-8 shrink-0 place-items-center rounded-md hover:bg-[#fee4e2]">
+            <Icon name="x" className="size-4" />
+          </button>
+        </div>
+      )}
 
       {/* Blur bubbles; revalidate is a no-op until the first save attempt. */}
-      <div
-        onBlur={revalidate}
-        className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]"
-      >
-        {/* ── the piece ──────────────────────────────────────────────────── */}
-        <div className="min-w-0 space-y-4">
-          <FormSection
-            icon={IconEdit}
-            title="Headline and summary"
-            description={guide.premise}
-          >
-            <div className="space-y-4">
-              <Field
-                label="Headline"
-                required
-                htmlFor="title" error={errors.title}
-                helper={`Aim: ${guide.headline.good}`}
-              >
-                <FormInput
+      <div onBlur={revalidate} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px]">
+        {/* ── writing column ─────────────────────────────────────────────── */}
+        <div className="grid min-w-0 gap-6">
+          <Panel>
+            <div className="grid gap-5">
+              <Field id="title" label="Headline" required error={errors.title} issues={at("title")} counter={<Counter value={(form.title || "").length} hard={max("title")} />} helper={`Aim: ${guide.headline.good}`}>
+                <TextInput
                   id="title"
                   {...invalidProps("title")}
                   value={form.title || ""}
                   placeholder="What this piece is, specifically"
-                  onChange={(e) => {
-                    const title = e.target.value;
-                    setForm((prev) => ({
-                      ...prev,
-                      title,
-                      // The slug follows the headline until somebody edits it,
-                      // then it stops. A live URL must not move because a typo
-                      // was fixed in the title three months later.
-                      ...(slugTouched.current ? {} : { slug: slugify(title) }),
-                    }));
-                  }}
+                  className="h-12 text-adm-md font-semibold sm:text-adm-lg"
+                  onChange={(title) =>
+                    setForm((prev) => ({ ...prev, title, ...(slugLocked ? {} : { slug: slugify(title) }) }))
+                  }
                 />
               </Field>
 
               <Field
+                id="slug"
                 label="URL slug"
-                htmlFor="slug" error={errors.slug}
-                hint={`${config.publicPath}/`}
+                publishRequired
+                error={errors.slug}
+                issues={at("slug")}
+                aside={
+                  slugLocked ? (
+                    <span className="inline-flex items-center gap-1 text-adm-xs text-mist-600">
+                      <Icon name="key" className="size-3.5" />
+                      Locked
+                      {isNew && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSlugLocked(false);
+                            set("slug", slugify(form.title || ""));
+                          }}
+                          className="ml-1 rounded px-1 font-medium text-ocean-700 hover:underline"
+                        >
+                          Follow headline
+                        </button>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-adm-xs text-mist-600">
+                      <Icon name="refresh" className="size-3.5" />
+                      Follows the headline
+                    </span>
+                  )
+                }
+                helper={isNew ? "Set once. Changing it after publication breaks every existing link." : "Changing this breaks links already pointing at the old address."}
+              >
+                <div className="flex min-w-0 items-stretch rounded-lg ring-1 ring-inset ring-mist-300 focus-within:ring-2 focus-within:ring-ocean-600">
+                  <span className="hidden max-w-[45%] shrink-0 items-center truncate rounded-l-lg border-r border-mist-200 bg-mist-50 px-3 font-mono text-adm-xs text-mist-600 sm:flex">
+                    {config.publicPath}/
+                  </span>
+                  <input
+                    id="slug"
+                    {...invalidProps("slug")}
+                    value={form.slug || ""}
+                    placeholder="url-slug"
+                    onChange={(e) => {
+                      setSlugLocked(true);
+                      set("slug", slugify(e.target.value));
+                    }}
+                    className="h-10 min-w-0 flex-1 rounded-lg bg-mist-0 px-3 font-mono text-adm-base text-navy-900 placeholder:text-mist-400 focus:outline-none sm:rounded-l-none"
+                  />
+                </div>
+              </Field>
+
+              <Field id="subtitle" label="Deck" error={errors.subtitle} counter={<Counter value={(form.subtitle || "").length} hard={max("subtitle")} />} helper="One line under the headline. Who this is for and what they leave with.">
+                <TextInput id="subtitle" {...invalidProps("subtitle")} value={form.subtitle || ""} onChange={(v) => set("subtitle", v)} />
+              </Field>
+
+              <Field
+                id="excerpt"
+                label="Summary"
+                publishRequired
+                error={errors.excerpt}
+                issues={at("excerpt")}
+                counter={<Counter value={(form.excerpt || "").length} hard={max("excerpt")} />}
                 helper={
-                  isNew
-                    ? "Set once. Changing it after publication breaks every existing link."
-                    : "Changing this breaks links already pointing at the old address."
+                  <>
+                    The card text on the index and, unless you set one below, the search description.{" "}
+                    {!form.excerpt && form.body && (
+                      <button type="button" onClick={() => set("excerpt", deriveExcerpt(form.body))} className="font-medium text-ocean-700 hover:underline">
+                        Start from the first lines of the body
+                      </button>
+                    )}
+                  </>
                 }
               >
-                <FormInput
-                  id="slug"
-                  {...invalidProps("slug")}
-                  value={form.slug || ""}
-                  placeholder="url-slug"
-                  onChange={(e) => {
-                    slugTouched.current = true;
-                    set("slug", slugify(e.target.value));
-                  }}
-                />
+                <TextArea id="excerpt" {...invalidProps("excerpt")} rows={3} value={form.excerpt || ""} onChange={(v) => set("excerpt", v)} placeholder="One or two sentences a stranger could act on." />
               </Field>
-
-              <Field
-                label="Deck"
-                htmlFor="subtitle" error={errors.subtitle}
-                helper="One line under the headline. Who this is for and what they leave with."
-              >
-                <FormInput
-                  id="subtitle"
-                  {...invalidProps("subtitle")}
-                  value={form.subtitle || ""}
-                  onChange={(e) => set("subtitle", e.target.value)}
-                />
-              </Field>
-
-              <Field
-                label="Summary"
-                required
-                htmlFor="excerpt" error={errors.excerpt}
-                hint={`${(form.excerpt || "").length}/${SEO_LIMITS.description}`}
-                helper="The card text on the index AND the description in a search result. Write it, do not settle for the generated one."
-              >
-                <FormTextarea
-                  id="excerpt"
-                  {...invalidProps("excerpt")}
-                  rows={3}
-                  value={form.excerpt || ""}
-                  onChange={(e) => set("excerpt", e.target.value)}
-                  placeholder="One or two sentences a stranger could act on."
-                />
-              </Field>
-              {!form.excerpt && form.body && (
-                <button
-                  type="button"
-                  onClick={() => set("excerpt", deriveExcerpt(form.body))}
-                  className="rounded-[6px] text-adm-xs font-semibold text-[var(--adm-accent)] transition-colors hover:text-[var(--adm-accent-strong)] hover:underline"
-                >
-                  Start from the first lines of the body
-                </button>
-              )}
             </div>
-          </FormSection>
+          </Panel>
 
-          {/* Engagement facts, case studies and customer stories */}
           {kindHas(kind, "engagement") && (
-            <FormSection
-              icon={IconBuilding}
-              title="The engagement"
-              description="Scanned before a word of the body is read. Leave the client name blank to publish it anonymised."
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field
-                  label="Client"
-                  htmlFor="clientName" error={errors.clientName}
-                  helper="Only with written approval. Otherwise leave blank and describe them in the body."
-                >
-                  <FormInput
-                    id="clientName"
-                    {...invalidProps("clientName")}
-                    value={form.clientName || ""}
-                    placeholder="Named, or blank for “a Fortune 500 payer”"
-                    onChange={(e) => set("clientName", e.target.value)}
-                  />
+            <Panel title="The engagement" description="Scanned before a word of the body is read. Leave the client blank to publish anonymised.">
+              <div className="grid gap-5 md:grid-cols-2">
+                <Field id="clientName" label="Client" error={errors.clientName} counter={<Counter value={(form.clientName || "").length} hard={max("clientName")} />} helper="Only with written approval. Otherwise leave blank.">
+                  <TextInput id="clientName" {...invalidProps("clientName")} value={form.clientName || ""} placeholder="Named, or blank for anonymised" onChange={(v) => set("clientName", v)} />
                 </Field>
-                <Field label="Industry" htmlFor="industry" error={errors.industry}>
-                  <FormInput
-                    id="industry"
-                    {...invalidProps("industry")}
-                    value={form.industry || ""}
-                    placeholder="Healthcare payer, Manufacturing, Public sector…"
-                    onChange={(e) => set("industry", e.target.value)}
-                  />
+                <Field id="industry" label="Industry" error={errors.industry} helper="Groups the list by industry.">
+                  <TextInput id="industry" {...invalidProps("industry")} value={form.industry || ""} placeholder="Healthcare payer, Manufacturing…" onChange={(v) => set("industry", v)} />
                 </Field>
-                <Field label="Engagement" htmlFor="engagement" error={errors.engagement} helper="Shape and length, in a phrase.">
-                  <FormInput
-                    id="engagement"
-                    {...invalidProps("engagement")}
-                    value={form.engagement || ""}
-                    placeholder="18-month managed team"
-                    onChange={(e) => set("engagement", e.target.value)}
-                  />
+                <Field id="engagement" label="Engagement" error={errors.engagement} helper="Shape and length, in a phrase.">
+                  <TextInput id="engagement" {...invalidProps("engagement")} value={form.engagement || ""} placeholder="18-month managed team" onChange={(v) => set("engagement", v)} />
                 </Field>
-                <Field label="Client logo URL" htmlFor="clientLogoUrl" error={errors.clientLogoUrl}>
-                  <FormInput
-                    id="clientLogoUrl"
-                    {...invalidProps("clientLogoUrl")}
-                    type="url"
-                    value={form.clientLogoUrl || ""}
-                    placeholder="https://…"
-                    onChange={(e) => set("clientLogoUrl", e.target.value)}
-                  />
+                <Field id="clientLogoUrl" label="Client logo URL" error={errors.clientLogoUrl} helper="An https:// image address.">
+                  <TextInput id="clientLogoUrl" {...invalidProps("clientLogoUrl")} type="url" value={form.clientLogoUrl || ""} placeholder="https://…" onChange={(v) => set("clientLogoUrl", v)} />
                 </Field>
-                <Field label="What we delivered" fullWidth htmlFor="services">
-                  <TagInput
-                    id="services"
-                    value={form.services || []}
-                    onChange={(v) => set("services", v)}
-                    placeholder="Contract search, SAP rollout…"
-                    suggestions={config.categories}
-                    max={6}
-                  />
+                <Field id="services" label="What we delivered" className="md:col-span-2" counter={<Counter value={(form.services || []).length} hard={6} />} helper="Up to six. Enter or comma adds one.">
+                  <TagInput id="services" value={form.services || []} onChange={(v) => set("services", v)} placeholder="Contract search, SAP rollout…" suggestions={config.categories} max={6} />
                 </Field>
               </div>
-            </FormSection>
+            </Panel>
           )}
 
-          {/* Challenge / approach / results, case studies */}
           {kindHas(kind, "story") && (
-            <FormSection
-              icon={IconLayers}
-              title="Challenge, approach, results"
-              description="The three sections a buyer reads in that order. Each one is the case study; the body below is only the framing."
-            >
-              <div className="space-y-5">
-                <Field
-                  label="The challenge"
-                  required
-                  helper="The business problem and what it was costing them. Not “they needed developers”."
-                >
-                  <RichTextEditor
-                    value={form.challenge || ""}
-                    onChange={(html) => set("challenge", html)}
-                    placeholder="What was going wrong, and what it cost."
-                  />
-                </Field>
-                <Field
-                  label="Our approach"
-                  required
-                  helper="What we did, in order, including the decisions and the trade-offs. Specific enough that a competitor could copy it."
-                >
-                  <RichTextEditor
-                    value={form.approach || ""}
-                    onChange={(html) => set("approach", html)}
-                    placeholder="What we actually did."
-                  />
-                </Field>
-                <Field
-                  label="The results"
-                  required
-                  helper="The figures above, in prose, against their baseline. No new metrics here."
-                >
-                  <RichTextEditor
-                    value={form.results || ""}
-                    onChange={(html) => set("results", html)}
-                    placeholder="What changed, measured."
-                  />
-                </Field>
+            <Panel title="Challenge, approach, results" description="The three sections a buyer reads in that order. The body below is only the framing.">
+              <div className="grid gap-6">
+                {(
+                  [
+                    ["challenge", "The challenge", "The business problem and what it was costing them. Not “they needed developers”.", "What was going wrong, and what it cost."],
+                    ["approach", "Our approach", "What we did, in order, with the decisions and trade-offs.", "What we actually did."],
+                    ["results", "The results", "The figures, in prose, against their baseline. No new metrics here.", "What changed, measured."],
+                  ] as const
+                ).map(([key, label, helper, placeholder]) => (
+                  <Field key={key} labelId={`${key}-label`} label={label} publishRequired issues={at(key)} helper={helper}>
+                    <RichTextEditor id={key} labelledBy={`${key}-label`} value={form[key] || ""} onChange={(html) => set(key, html)} placeholder={placeholder} className="rounded-lg" />
+                  </Field>
+                ))}
               </div>
-            </FormSection>
+            </Panel>
           )}
 
-          {/* Metrics */}
           {kindHas(kind, "metrics") && (
-            <FormSection
-              icon={IconChart}
+            <Panel
               title="The figures"
-              description="Two or three, at the top of the page. Each one states what it is measured against, a percentage with no baseline is a hope, not a result."
+              description="Two or three, each against what it is measured. A percentage with no baseline is a hope, not a result."
+              action={<span className="text-adm-xs tabular-nums text-mist-500">{(form.metrics || []).length}/6</span>}
             >
-              <MetricRows
-                metrics={form.metrics || []}
-                onChange={(metrics) => set("metrics", metrics)}
-              />
-            </FormSection>
+              <MetricRows metrics={form.metrics || []} onChange={(metrics) => set("metrics", metrics)} required={kind === "case-study"} />
+              {at("metrics") && (
+                <div className="mt-3">
+                  <FieldIssues {...at("metrics")!} />
+                </div>
+              )}
+            </Panel>
           )}
 
-          {/* Quote */}
           {kindHas(kind, "quote") && (
-            <FormSection
-              icon={IconMessage}
+            <Panel
               title={kind === "customer-story" ? "In their words" : "The client's words"}
-              description={
-                kind === "customer-story"
-                  ? "The quote is the page. Edit for length, never for meaning."
-                  : "One quote, from the person who signed the contract."
-              }
+              description={kind === "customer-story" ? "The quote is the page. Edit for length, never for meaning." : "One quote, from the person who signed the contract."}
             >
-              <div className="space-y-4">
-                <Field label="Quote" required={kind === "customer-story"} htmlFor="quote" error={errors.quote}>
-                  <FormTextarea
-                    id="quote"
-                    {...invalidProps("quote")}
-                    rows={3}
-                    value={form.quote || ""}
-                    onChange={(e) => set("quote", e.target.value)}
-                    placeholder="Their sentence, as they said it."
-                  />
+              <div className="grid gap-5">
+                <Field id="quote" label="Quote" publishRequired={kind === "customer-story"} error={errors.quote} issues={at("quote")} counter={<Counter value={(form.quote || "").length} hard={max("quote")} />}>
+                  <TextArea id="quote" {...invalidProps("quote")} rows={3} value={form.quote || ""} onChange={(v) => set("quote", v)} placeholder="Their sentence, as they said it." className="text-adm-base italic" />
                 </Field>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Said by" htmlFor="quoteAuthor" error={errors.quoteAuthor} helper="A named person. Anonymous quotes persuade nobody.">
-                    <FormInput
-                      id="quoteAuthor"
-                      {...invalidProps("quoteAuthor")}
-                      value={form.quoteAuthor || ""}
-                      onChange={(e) => set("quoteAuthor", e.target.value)}
-                    />
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Field id="quoteAuthor" label="Said by" error={errors.quoteAuthor} issues={at("quoteAuthor")} helper="A named person. Anonymous quotes persuade nobody.">
+                    <TextInput id="quoteAuthor" {...invalidProps("quoteAuthor")} value={form.quoteAuthor || ""} onChange={(v) => set("quoteAuthor", v)} />
                   </Field>
-                  <Field label="Their title" htmlFor="quoteAuthorRole" error={errors.quoteAuthorRole}>
-                    <FormInput
-                      id="quoteAuthorRole"
-                      {...invalidProps("quoteAuthorRole")}
-                      value={form.quoteAuthorRole || ""}
-                      placeholder="VP Engineering, Acme Health"
-                      onChange={(e) => set("quoteAuthorRole", e.target.value)}
-                    />
+                  <Field id="quoteAuthorRole" label="Their title" error={errors.quoteAuthorRole}>
+                    <TextInput id="quoteAuthorRole" {...invalidProps("quoteAuthorRole")} value={form.quoteAuthorRole || ""} placeholder="VP Engineering, Acme Health" onChange={(v) => set("quoteAuthorRole", v)} />
                   </Field>
                 </div>
-
-                {/* Approval. The one control on this screen that can cost an
-                    account, so it is a deliberate act with a note attached and
-                    not a checkbox someone ticks on the way past. */}
-                <div
-                  className={cn(
-                    "rounded-[12px] border p-4",
-                    form.approvalOnFile
-                      ? "border-[var(--adm-success-line)] bg-[var(--adm-success-soft)]"
-                      : "border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)]",
-                  )}
-                >
-                  <label className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={!!form.approvalOnFile}
-                      onChange={(e) => set("approvalOnFile", e.target.checked)}
-                      className="adm-hit mt-0.5 h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
-                    />
-                    <span>
-                      <span className="block text-adm-base font-semibold text-[var(--adm-ink)]">
-                        {form.clientName || "The client"} has approved this in writing
-                      </span>
-                      <span className="block text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
-                        {guide.signoff} Until this is ticked, the piece cannot be published.
-                      </span>
-                    </span>
-                  </label>
-                  <div className="mt-3">
-                    <FormInput
-                      value={form.approvalNote || ""}
-                      placeholder="Who approved it, when, and where the email lives"
-                      onChange={(e) => set("approvalNote", e.target.value)}
-                    />
-                  </div>
-                </div>
               </div>
-            </FormSection>
+            </Panel>
           )}
 
-          {/* Press release details */}
-          {kindHas(kind, "press") && (
-            <FormSection
-              icon={IconRadar}
-              title="Release details"
-              description="The parts a journalist needs before they will run it: what kind of announcement this is, where it is datelined, and who answers the phone."
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Announcement type" htmlFor="newsType">
-                  <FormSelect
-                    id="newsType"
-                    value={form.newsType || "press-release"}
-                    onChange={(e) => set("newsType", e.target.value)}
-                  >
-                    {NEWS_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </FormSelect>
-                </Field>
-                <Field
-                  label="Dateline city"
-                  required
-                  htmlFor="datelineCity" error={errors.datelineCity}
-                  helper="The date half comes from the publish date, so the two can never disagree."
-                >
-                  <FormInput
-                    id="datelineCity"
-                    {...invalidProps("datelineCity")}
-                    value={form.datelineCity || ""}
-                    placeholder="COLUMBUS, Ohio"
-                    onChange={(e) => set("datelineCity", e.target.value)}
-                  />
-                </Field>
-                <Field
-                  label="Coverage link"
-                  fullWidth
-                  htmlFor="externalUrl" error={errors.externalUrl}
-                  helper="For “In the press”: link out to whoever wrote it rather than restating their story here."
-                >
-                  <FormInput
-                    id="externalUrl"
-                    {...invalidProps("externalUrl")}
-                    type="url"
-                    value={form.externalUrl || ""}
-                    placeholder="https://…"
-                    onChange={(e) => set("externalUrl", e.target.value)}
-                  />
-                </Field>
-                <Field label="Media contact" htmlFor="pressContactName" error={errors.pressContactName}>
-                  <FormInput
-                    id="pressContactName"
-                    {...invalidProps("pressContactName")}
-                    value={form.pressContactName || ""}
-                    onChange={(e) => set("pressContactName", e.target.value)}
-                  />
-                </Field>
-                <Field
-                  label="Contact email"
-                  required
-                  htmlFor="pressContactEmail" error={errors.pressContactEmail}
-                  helper="A journalist on deadline who cannot reach anyone writes the story without us."
-                >
-                  <FormInput
-                    id="pressContactEmail"
-                    {...invalidProps("pressContactEmail")}
-                    type="email"
-                    value={form.pressContactEmail || ""}
-                    onChange={(e) => set("pressContactEmail", e.target.value)}
-                  />
-                </Field>
-                <Field label="Contact phone" htmlFor="pressContactPhone" error={errors.pressContactPhone}>
-                  <FormInput
-                    id="pressContactPhone"
-                    {...invalidProps("pressContactPhone")}
-                    type="tel"
-                    value={form.pressContactPhone || ""}
-                    onChange={(e) => set("pressContactPhone", e.target.value)}
-                  />
-                </Field>
-              </div>
-            </FormSection>
-          )}
-
-          {/* Body */}
-          <FormSection
-            icon={IconBook}
+          <Panel
             title={kind === "news" ? "The release" : "The piece"}
             description={guide.length}
             action={
               words > 0 ? (
-                <span className="flex-none text-adm-xs tabular-nums text-[var(--adm-ink-subtle)]">
+                <span className="text-adm-xs tabular-nums text-mist-500">
                   {words.toLocaleString()} words · {minutes} min read
                 </span>
-              ) : undefined
+              ) : (
+                <Button size="sm" variant="secondary" icon="layers" onClick={() => set("body", guide.template)}>
+                  Start from the template
+                </Button>
+              )
             }
           >
+            <span id="body-label" className="sr-only">
+              {kind === "news" ? "The release" : "Body"}
+            </span>
             <RichTextEditor
+              id="body"
+              labelledBy="body-label"
               value={form.body || ""}
               onChange={(html) => set("body", html)}
-              placeholder={
-                kind === "news"
-                  ? "Lead paragraph first: who, what, when, where, why, in 40 words."
-                  : "Open at the reader's problem, in their words."
-              }
-              className="[&>div:last-child]:min-h-[420px]"
+              placeholder={kind === "news" ? "Lead paragraph first: who, what, when, where, why, in 40 words." : "Open at the reader's problem, in their words."}
+              className="rounded-lg [&>div:last-child]:min-h-[420px] [&>div:last-child]:text-adm-base"
             />
-          </FormSection>
+            {at("body") && (
+              <div className="mt-2">
+                <FieldIssues {...at("body")!} />
+              </div>
+            )}
+          </Panel>
         </div>
 
-        {/* ── rail ───────────────────────────────────────────────────────── */}
-        <div className="min-w-0 space-y-4">
-          {/* Publishing */}
-          <AdminCard>
-            <AdminCardHeader title="Publishing" />
-            <div className="space-y-4 p-4">
-              <Field label="Status" htmlFor="status" helper={statusHint(form.status)}>
-                <FormSelect
-                  id="status"
-                  value={form.status || "draft"}
-                  onChange={(e) => set("status", e.target.value as Article["status"])}
-                >
-                  {ARTICLE_STATUSES.map((s) => (
-                    <option key={s.key} value={s.key}>{s.label}</option>
-                  ))}
-                </FormSelect>
-              </Field>
+        {/* ── settings panel (stacks under the writing column below lg) ─── */}
+        <aside aria-label="Settings" className="grid min-w-0 gap-6">
+          <Panel title="Publishing" description={where}>
+            <div className="grid gap-5">
+              <fieldset className="grid gap-2">
+                <legend className="mb-2 text-adm-base font-medium text-navy-900">Status</legend>
+                <div role="radiogroup" aria-label="Status" className="grid grid-cols-2 gap-2">
+                  {intents.map((o) => {
+                    const on = (form.status ?? "draft") === o.key;
+                    return (
+                      <button
+                        key={o.key}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => set("status", o.key)}
+                        className={`flex min-h-10 items-center gap-2 rounded-lg px-3 text-left text-adm-base font-medium ring-1 ring-inset transition-colors duration-150 ${
+                          on ? "bg-ocean-50 text-ocean-700 ring-2 ring-ocean-600" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
+                        } ${o.key === "archived" ? "col-span-2" : ""}`}
+                      >
+                        <Icon name={o.icon} className="size-4 shrink-0" />
+                        {o.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-adm-xs text-mist-600">{STATUS_HINT[(form.status ?? "draft") as ArticleStatus]}</p>
+              </fieldset>
 
               <Field
-                label="Publish date"
-                htmlFor="publishedAt"
+                id="publishedAt"
+                label={form.status === "scheduled" ? "Goes live on" : "Publish date"}
+                publishRequired={form.status === "scheduled"}
+                issues={at("publishedAt")}
                 helper={
-                  form.status === "scheduled"
-                    ? "It appears on the site the moment this passes. Nothing else needs to happen."
-                    : "Leave blank to stamp it when you publish."
+                  scheduledInPast
+                    ? undefined
+                    : form.status === "scheduled"
+                      ? "It appears on the site the moment this passes. Nothing else needs to happen."
+                      : form.status === "published" && futureDate
+                        ? "In the future, so it stays off the site until then."
+                        : "Leave blank to stamp it when you publish. Your local time."
                 }
               >
-                <FormInput
+                <input
                   id="publishedAt"
                   type="datetime-local"
                   value={toLocalInput(form.publishedAt)}
                   onChange={(e) => set("publishedAt", fromLocalInput(e.target.value))}
+                  className={`${inputCls} h-10`}
                 />
-                <FieldWarning>
-                  {scheduledInPast ? "This time has already passed, so it goes live as soon as you save." : null}
-                </FieldWarning>
+                {scheduledInPast && (
+                  <p className="flex gap-1.5 text-adm-xs font-medium text-[#b54708]">
+                    <Icon name="alert" className="mt-px size-3.5 shrink-0" />
+                    This time has already passed, so it goes live as soon as you save.
+                  </p>
+                )}
               </Field>
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={!!form.featured}
-                  onChange={(e) => set("featured", e.target.checked)}
-                  className="adm-hit h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
-                />
-                <span className="text-adm-base font-medium text-[var(--adm-ink)]">
-                  Feature at the top of {config.label}
-                </span>
-              </label>
+              <CheckRow id="featured" checked={!!form.featured} onChange={(v) => set("featured", v)} label={`Feature at the top of ${config.label}`} hint="Pins it to the top of the public index." />
 
-              {/* The checklist. Ordered blockers first, then the things a
-                  reviewer would mention but would not hold the piece for,
-                  mixing the two teaches people to skip all of it. */}
-              {blockers.length > 0 && (
-                <div
-                  role={publishIntent ? "alert" : undefined}
-                  className="rounded-[12px] border border-[var(--adm-warning-line)] bg-[var(--adm-warning-soft)] p-3"
-                >
-                  <p className="text-adm-xs font-medium text-[var(--adm-warning-ink)]">
-                    Before it can go out
+              <div id="checklist" className="grid gap-3 border-t border-mist-200 pt-4">
+                {blockers.length > 0 && (
+                  <div role={publishIntent ? "alert" : undefined} className="rounded-lg bg-[#fffaeb] p-3 ring-1 ring-inset ring-[#fedf89]">
+                    <p className="text-adm-xs font-semibold text-[#b54708]">
+                      Before it can go out · {blockers.length}
+                    </p>
+                    <ChecklistItems items={blockers} table={BLOCKER_SPOTS} onPick={focusSpot} tone="block" />
+                  </div>
+                )}
+                {warnings.length > 0 && (
+                  <div className="rounded-lg bg-mist-50 p-3 ring-1 ring-inset ring-mist-200">
+                    <p className="text-adm-xs font-semibold text-mist-700">Worth fixing · {warnings.length}</p>
+                    <ChecklistItems items={warnings} table={WARNING_SPOTS} onPick={focusSpot} tone="warn" />
+                  </div>
+                )}
+                {blockers.length === 0 && warnings.length === 0 && (
+                  <p className="flex items-center gap-2 rounded-lg bg-[#ecfdf3] p-3 text-adm-base font-medium text-[#067647] ring-1 ring-inset ring-[#abefc6]">
+                    <Icon name="check" className="size-4" />
+                    Nothing outstanding. Ready to publish.
                   </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {blockers.map((b) => (
-                      <li key={b} className="flex gap-1.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
-                        <span aria-hidden className="mt-1.5 h-1 w-1 flex-none rounded-full bg-[var(--adm-warning)]" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {warnings.length > 0 && (
-                <div className="rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] p-3">
-                  <p className="text-adm-xs font-medium text-[var(--adm-ink-mute)]">
-                    Worth fixing
-                  </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {warnings.map((w) => (
-                      <li key={w} className="flex gap-1.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
-                        <span aria-hidden className="mt-1.5 h-1 w-1 flex-none rounded-full bg-[var(--adm-ink-subtle)]" />
-                        {w}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {blockers.length === 0 && warnings.length === 0 && (
-                <p className="rounded-[12px] border border-[var(--adm-success-line)] bg-[var(--adm-success-soft)] p-3 text-adm-xs font-medium text-[var(--adm-success-ink)]">
-                  Nothing outstanding. Ready to publish.
-                </p>
-              )}
+                )}
+              </div>
             </div>
-          </AdminCard>
+          </Panel>
 
-          {/* Presentation */}
-          <AdminCard>
-            <AdminCardHeader title="Presentation" />
-            <div className="space-y-4 p-4">
-              <Field label="Hero image URL" htmlFor="heroImageUrl" error={errors.heroImageUrl}>
-                <FormInput
-                  id="heroImageUrl"
-                  {...invalidProps("heroImageUrl")}
-                  type="url"
-                  value={form.heroImageUrl || ""}
-                  placeholder="https://…"
-                  onChange={(e) => set("heroImageUrl", e.target.value)}
+          {namesAClient(kind) && (
+            <Panel title="Client sign-off" description={guide.signoff}>
+              <div className={`grid gap-3 rounded-lg p-3 ring-1 ring-inset ${form.approvalOnFile ? "bg-[#ecfdf3] ring-[#abefc6]" : "bg-[#fffaeb] ring-[#fedf89]"}`}>
+                <CheckRow
+                  id="approvalOnFile"
+                  checked={!!form.approvalOnFile}
+                  onChange={(v) => set("approvalOnFile", v)}
+                  label={`${form.clientName || "The client"} has approved this in writing`}
+                  hint="Until this is ticked, the piece cannot be published."
                 />
+                <Field id="approvalNote" label="Approval note" counter={<Counter value={(form.approvalNote || "").length} hard={max("approvalNote")} />}>
+                  <TextInput id="approvalNote" value={form.approvalNote || ""} placeholder="Who approved it, when, and where the email lives" onChange={(v) => set("approvalNote", v)} />
+                </Field>
+              </div>
+              {at("approvalOnFile") && (
+                <div className="mt-2">
+                  <FieldIssues {...at("approvalOnFile")!} />
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {kindHas(kind, "press") && (
+            <Panel title="Release details" description="What a journalist needs before they will run it.">
+              <div className="grid gap-5">
+                <Field id="newsType" label="Announcement type" helper={NEWS_TYPES.find((t) => t.value === (form.newsType || "press-release"))?.hint}>
+                  <Select id="newsType" value={form.newsType || "press-release"} onChange={(v) => set("newsType", v)}>
+                    {NEWS_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field id="datelineCity" label="Dateline city" publishRequired error={errors.datelineCity} issues={at("datelineCity")} helper="The date half comes from the publish date.">
+                  <TextInput id="datelineCity" {...invalidProps("datelineCity")} value={form.datelineCity || ""} placeholder="COLUMBUS, Ohio" onChange={(v) => set("datelineCity", v)} />
+                </Field>
+                <Field id="externalUrl" label="Coverage link" error={errors.externalUrl} issues={at("externalUrl")} helper="For “In the press”: link to whoever wrote it. Needed when the release has no body.">
+                  <TextInput id="externalUrl" {...invalidProps("externalUrl")} type="url" value={form.externalUrl || ""} placeholder="https://…" onChange={(v) => set("externalUrl", v)} />
+                </Field>
+                <div className="grid gap-5 border-t border-mist-200 pt-4">
+                  <p className="text-adm-base font-semibold text-navy-900">Media contact</p>
+                  <Field id="pressContactName" label="Name" error={errors.pressContactName}>
+                    <TextInput id="pressContactName" {...invalidProps("pressContactName")} value={form.pressContactName || ""} onChange={(v) => set("pressContactName", v)} />
+                  </Field>
+                  <Field id="pressContactEmail" label="Email" publishRequired error={errors.pressContactEmail} issues={at("pressContactEmail")} helper="A journalist on deadline who can't reach anyone writes the story without us.">
+                    <TextInput id="pressContactEmail" {...invalidProps("pressContactEmail")} type="email" autoComplete="off" value={form.pressContactEmail || ""} onChange={(v) => set("pressContactEmail", v)} />
+                  </Field>
+                  <Field id="pressContactPhone" label="Phone" error={errors.pressContactPhone}>
+                    <TextInput id="pressContactPhone" {...invalidProps("pressContactPhone")} type="tel" value={form.pressContactPhone || ""} onChange={(v) => set("pressContactPhone", v)} />
+                  </Field>
+                </div>
+              </div>
+            </Panel>
+          )}
+
+          <Panel title="Presentation">
+            <div className="grid gap-5">
+              <Field id="heroImageUrl" label="Hero image URL" error={errors.heroImageUrl} issues={at("heroImageUrl")}>
+                <TextInput id="heroImageUrl" {...invalidProps("heroImageUrl")} type="url" value={form.heroImageUrl || ""} placeholder="https://…" onChange={(v) => set("heroImageUrl", v)} />
               </Field>
+              <HeroPreview key={form.heroImageUrl || ""} src={form.heroImageUrl || ""} alt={form.heroImageAlt || ""} />
               <Field
+                id="heroImageAlt"
                 label="Image description"
-                htmlFor="heroImageAlt" error={errors.heroImageAlt}
-                helper="What the image shows, for a reader who cannot see it."
+                error={errors.heroImageAlt}
+                issues={at("heroImageAlt")}
+                counter={<Counter value={(form.heroImageAlt || "").length} hard={max("heroImageAlt")} />}
+                helper="What the image shows, for a reader who can't see it."
               >
-                <FormInput
-                  id="heroImageAlt"
-                  {...invalidProps("heroImageAlt")}
-                  value={form.heroImageAlt || ""}
-                  onChange={(e) => set("heroImageAlt", e.target.value)}
-                />
+                <TextInput id="heroImageAlt" {...invalidProps("heroImageAlt")} value={form.heroImageAlt || ""} onChange={(v) => set("heroImageAlt", v)} />
               </Field>
 
               {config.categories.length > 0 && (
-                <Field label="Category" htmlFor="category">
-                  <FormSelect
-                    id="category"
-                    value={form.category || ""}
-                    onChange={(e) => set("category", e.target.value)}
-                  >
+                <Field id="category" label="Category" issues={at("category")}>
+                  <Select id="category" value={form.category || ""} onChange={(v) => set("category", v)}>
                     <option value="">Not categorised</option>
                     {config.categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
-                  </FormSelect>
+                  </Select>
                 </Field>
               )}
 
-              <Field label="Tags" htmlFor="tags" helper="Three to six. They are how a reader finds the next piece.">
-                <TagInput
-                  id="tags"
-                  value={form.tags || []}
-                  onChange={(v) => set("tags", v)}
-                  placeholder="hiring, sap, cloud…"
-                  max={8}
-                />
+              <Field id="tags" label="Tags" counter={<Counter value={(form.tags || []).length} hard={8} />} helper="Up to eight. They are how a reader finds the next piece.">
+                <TagInput id="tags" value={form.tags || []} onChange={(v) => set("tags", v)} placeholder="hiring, sap, cloud…" max={8} />
               </Field>
 
-              <Field label="Author" htmlFor="authorName" error={errors.authorName} helper="A real colleague. “The team” is not a byline.">
-                <FormInput
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                <Field
                   id="authorName"
-                  {...invalidProps("authorName")}
-                  value={form.authorName || ""}
-                  onChange={(e) => set("authorName", e.target.value)}
-                />
-              </Field>
-              <Field label="Their role" htmlFor="authorRole" error={errors.authorRole}>
-                <FormInput
-                  id="authorRole"
-                  {...invalidProps("authorRole")}
-                  value={form.authorRole || ""}
-                  placeholder="Principal Recruiter"
-                  onChange={(e) => set("authorRole", e.target.value)}
-                />
-              </Field>
+                  label={kind === "blog" ? "Author" : "Internal author"}
+                  error={errors.authorName}
+                  issues={at("authorName")}
+                  helper={kind === "blog" ? "A real colleague. “The team” is not a byline." : `Kept for the record; ${config.plural} print no byline.`}
+                >
+                  <TextInput id="authorName" {...invalidProps("authorName")} value={form.authorName || ""} onChange={(v) => set("authorName", v)} />
+                </Field>
+                <Field id="authorRole" label="Their role" error={errors.authorRole}>
+                  <TextInput id="authorRole" {...invalidProps("authorRole")} value={form.authorRole || ""} placeholder="Principal Recruiter" onChange={(v) => set("authorRole", v)} />
+                </Field>
+              </div>
             </div>
-          </AdminCard>
+          </Panel>
 
-          {/* SEO */}
-          <AdminCard>
-            <AdminCardHeader title="Search and sharing" />
-            <div className="space-y-4 p-4">
+          <Panel title="Search and sharing">
+            <div className="grid gap-5">
+              <SearchSnippet
+                title={form.seoTitle || form.title || `New ${config.noun}`}
+                path={publicUrl}
+                description={form.seoDescription || form.excerpt || ""}
+                noIndex={!!form.noIndex}
+              />
               <Field
+                id="seoTitle"
                 label="Search title"
-                htmlFor="seoTitle" error={errors.seoTitle}
-                hint={`${(form.seoTitle || form.title || "").length}/${SEO_LIMITS.title}`}
+                error={errors.seoTitle}
+                issues={at("seoTitle")}
+                counter={<Counter value={(form.seoTitle || form.title || "").length} soft={SEO_LIMITS.title} hard={max("seoTitle")} />}
                 helper="Leave blank to use the headline."
               >
-                <FormInput
-                  id="seoTitle"
-                  {...invalidProps("seoTitle")}
-                  value={form.seoTitle || ""}
-                  placeholder={form.title || ""}
-                  onChange={(e) => set("seoTitle", e.target.value)}
-                />
+                <TextInput id="seoTitle" {...invalidProps("seoTitle")} value={form.seoTitle || ""} placeholder={form.title || ""} onChange={(v) => set("seoTitle", v)} />
               </Field>
               <Field
+                id="seoDescription"
                 label="Search description"
-                htmlFor="seoDescription" error={errors.seoDescription}
-                hint={`${(form.seoDescription || form.excerpt || "").length}/${SEO_LIMITS.description}`}
+                error={errors.seoDescription}
+                issues={at("seoDescription")}
+                counter={<Counter value={(form.seoDescription || form.excerpt || "").length} soft={SEO_LIMITS.description} hard={max("seoDescription")} />}
                 helper="Leave blank to use the summary."
               >
-                <FormTextarea
-                  id="seoDescription"
-                  {...invalidProps("seoDescription")}
-                  rows={3}
-                  value={form.seoDescription || ""}
-                  placeholder={form.excerpt || ""}
-                  onChange={(e) => set("seoDescription", e.target.value)}
-                />
+                <TextArea id="seoDescription" {...invalidProps("seoDescription")} rows={3} value={form.seoDescription || ""} placeholder={form.excerpt || ""} onChange={(v) => set("seoDescription", v)} />
               </Field>
-              <Field
-                label="Canonical URL"
-                htmlFor="canonicalUrl" error={errors.canonicalUrl}
-                helper="Only if this was published somewhere else first."
-              >
-                <FormInput
-                  id="canonicalUrl"
-                  {...invalidProps("canonicalUrl")}
-                  type="url"
-                  value={form.canonicalUrl || ""}
-                  onChange={(e) => set("canonicalUrl", e.target.value)}
-                />
+              <Field id="canonicalUrl" label="Canonical URL" error={errors.canonicalUrl} helper="Only if this was published somewhere else first.">
+                <TextInput id="canonicalUrl" {...invalidProps("canonicalUrl")} type="url" value={form.canonicalUrl || ""} placeholder="https://…" onChange={(v) => set("canonicalUrl", v)} />
               </Field>
-              <label className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={!!form.noIndex}
-                  onChange={(e) => set("noIndex", e.target.checked)}
-                  className="adm-hit mt-0.5 h-4 w-4 flex-none rounded-[4px] accent-[var(--adm-accent)]"
-                />
-                <span className="text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
-                  Keep out of search results. For a page that exists only to be linked to directly.
-                </span>
-              </label>
+              <CheckRow id="noIndex" checked={!!form.noIndex} onChange={(v) => set("noIndex", v)} label="Keep out of search results" hint="For a page that exists only to be linked to directly." />
             </div>
-          </AdminCard>
+          </Panel>
 
-          <EditorialGuide
-            kind={kind}
-            bodyIsEmpty={!form.body?.trim()}
-            onInsertTemplate={() => set("body", guide.template)}
-          />
+          <EditorialGuide kind={kind} bodyIsEmpty={!form.body?.trim()} onInsertTemplate={() => set("body", guide.template)} />
+        </aside>
+      </div>
+
+      {/* Sticky action bar: floats over the page bottom, never pads the page. */}
+      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-mist-0/95 px-4 py-3 shadow-lg ring-1 ring-mist-200 backdrop-blur">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-adm-base">
+          {dirty ? (
+            <span className="inline-flex items-center gap-2 font-medium text-[#b54708]">
+              <span aria-hidden className="size-2 rounded-full bg-[#f79009]" />
+              Unsaved changes
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 text-mist-600">
+              <Icon name="check" className="size-4 text-[#067647]" />
+              {isNew ? "Not saved yet" : "All changes saved"}
+            </span>
+          )}
+          {blockedFromPublishing && (
+            <button
+              type="button"
+              onClick={() => document.getElementById("checklist")?.scrollIntoView({ block: "center", behavior: "smooth" })}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-md font-medium text-[#b54708] hover:underline"
+            >
+              <Icon name="alert" className="size-4" />
+              {blockers.length} to settle before publishing
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" onClick={() => (dirty ? setConfirmLeave(true) : router.push(config.adminPath))}>
+            Cancel
+          </Button>
+          {offerFallback && (
+            <Button variant="secondary" disabled={saving} onClick={() => save(fallbackStatus)}>
+              {fallbackStatus === "in-review" ? "Save, keep in review" : "Save draft"}
+            </Button>
+          )}
+          <Button icon={publishIntent ? (form.status === "scheduled" || futureDate ? "calendar" : "send") : "check"} loading={saving} disabled={blockedFromPublishing} onClick={() => save()}>
+            {primaryLabel}
+          </Button>
         </div>
       </div>
 
-      <FormActionBar
-        dirty={dirty}
-        message={
-          blockedFromPublishing
-            ? (
-              <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--adm-warning)]" />
-                {blockers.length} thing{blockers.length === 1 ? "" : "s"} to settle before publishing
-              </span>
-            )
-            : undefined
-        }
-      >
-        <WorkspaceButton onClick={() => (dirty ? setConfirmLeave(true) : router.push(config.adminPath))}>Cancel</WorkspaceButton>
-        <WorkspaceButton loading={saving}
-          variant="primary"
-          onClick={save}
-          disabled={saving || blockedFromPublishing}
-        >
-          {isNew ? `Create ${config.noun}` : publishIntent ? "Save and publish" : "Save"}
-        </WorkspaceButton>
-      </FormActionBar>
-
-      <ConfirmDialog
-        open={confirmDelete}
-        title={`Delete this ${config.noun}?`}
-        body={
-          form.status === "published"
-            ? `This is live. Deleting it breaks every link pointing at ${publicUrl}. Archiving keeps the URL working.`
-            : "This cannot be undone."
-        }
-        busy={deleting}
-        onConfirm={performDelete}
-        onCancel={() => setConfirmDelete(false)}
-      />
-      <ConfirmDialog
-        open={confirmLeave}
-        title="Discard unsaved changes?"
-        body={`Your edits to this ${config.noun} have not been saved.`}
-        confirmLabel="Discard"
-        onConfirm={() => router.push(config.adminPath)}
-        onCancel={() => setConfirmLeave(false)}
-      />
-    </>
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Delete this ${config.noun}?`}
+          body={savedLive ? `This is live. Deleting it breaks every link pointing at ${publicUrl}. Archiving keeps the URL working.` : "This cannot be undone."}
+          confirmLabel="Delete"
+          busy={deleting}
+          onConfirm={performDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+      {confirmLeave && (
+        <ConfirmDialog
+          title="Discard unsaved changes?"
+          body={`Your edits to this ${config.noun} have not been saved.`}
+          confirmLabel="Discard"
+          onConfirm={() => router.push(config.adminPath)}
+          onCancel={() => setConfirmLeave(false)}
+        />
+      )}
+    </Page>
   );
 }
 
-// ── metrics editor ───────────────────────────────────────────────────────────
+// ── pieces ───────────────────────────────────────────────────────────────────
 
-/**
- * The proof points, as rows.
- *
- * Three fields per row, not two, because the third is the one that makes a
- * figure mean anything: "38% faster" is a claim, "38% faster, against their
- * 2025 average" is a result. Capped at six to match the route's normaliser, a
- * results band of ten numbers is a table nobody reads.
- */
-function MetricRows({
-  metrics,
-  onChange,
-}: {
-  metrics: ArticleMetric[];
-  onChange: (metrics: ArticleMetric[]) => void;
-}) {
-  const update = (index: number, patch: Partial<ArticleMetric>) =>
-    onChange(metrics.map((m, i) => (i === index ? { ...m, ...patch } : m)));
+/** Checklist rows; each jumps to the field it concerns when there is one. */
+function ChecklistItems({ items, table, onPick, tone }: { items: string[]; table: [RegExp, Spot[]][]; onPick: (s: Spot) => void; tone: "block" | "warn" }) {
+  return (
+    <ul className="mt-2 grid gap-1">
+      {items.map((msg) => {
+        const spot = spotsOf(msg, table)[0];
+        const dot = <span aria-hidden className={`mt-[7px] size-1.5 shrink-0 rounded-full ${tone === "block" ? "bg-[#f79009]" : "bg-mist-400"}`} />;
+        return (
+          <li key={msg}>
+            {spot ? (
+              <button type="button" onClick={() => onPick(spot)} className="flex w-full gap-2 rounded-md px-1 py-1 text-left text-adm-xs leading-relaxed text-navy-900 hover:bg-mist-0/70 hover:underline">
+                {dot}
+                {msg}
+              </button>
+            ) : (
+              <p className="flex gap-2 px-1 py-1 text-adm-xs leading-relaxed text-navy-900">
+                {dot}
+                {msg}
+              </p>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function HeroPreview({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!/^https:\/\/\S+$/i.test(src.trim())) {
+    return (
+      <div className="grid aspect-[16/9] place-items-center rounded-lg bg-mist-50 text-center border border-dashed border-mist-300">
+        <span className="grid justify-items-center gap-1 px-4 text-adm-xs text-mist-500">
+          <Icon name="image" className="size-6 text-mist-400" />
+          {src.trim() ? "Use an https:// address to preview" : "The hero image previews here"}
+        </span>
+      </div>
+    );
+  }
+  return failed ? (
+    <p className="flex gap-1.5 rounded-lg bg-[#fef3f2] p-3 text-adm-xs font-medium text-[#b42318] ring-1 ring-inset ring-[#fecdca]">
+      <Icon name="alert" className="mt-px size-3.5 shrink-0" />
+      That address didn&apos;t load as an image. Check the link.
+    </p>
+  ) : (
+    <img src={src} alt={alt} onError={() => setFailed(true)} className="aspect-[16/9] w-full rounded-lg bg-mist-100 object-cover ring-1 ring-mist-200" />
+  );
+}
+
+/** Roughly how a search result shows the page. */
+function SearchSnippet({ title, path, description, noIndex }: { title: string; path: string; description: string; noIndex: boolean }) {
+  const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
+  return (
+    <div className="grid gap-0.5 rounded-lg bg-mist-50 p-3 ring-1 ring-inset ring-mist-200">
+      <p className="flex items-center justify-between gap-2 text-adm-xs font-medium text-mist-500">
+        Search preview
+        {noIndex && <Badge tone="amber">Hidden from search</Badge>}
+      </p>
+      <p className="mt-1 truncate text-adm-xs text-mist-600">oceanbluecorp.com{path.replace(/\/+$/, "").replace(/\//g, " › ")}</p>
+      <p className="line-clamp-2 break-words text-adm-md leading-snug text-ocean-700">{clip(title, SEO_LIMITS.title)}</p>
+      <p className="line-clamp-3 break-words text-adm-base text-mist-700">{description ? clip(description, SEO_LIMITS.description) : <span className="text-mist-400">Write a summary to fill this in.</span>}</p>
+    </div>
+  );
+}
+
+/** Proof points: label, value, baseline. Capped at six to match the route's normaliser. */
+function MetricRows({ metrics, onChange, required: needed }: { metrics: ArticleMetric[]; onChange: (metrics: ArticleMetric[]) => void; required: boolean }) {
+  const update = (index: number, patch: Partial<ArticleMetric>) => onChange(metrics.map((m, i) => (i === index ? { ...m, ...patch } : m)));
 
   return (
-    <div className="space-y-3">
-      {metrics.length === 0 && (
-        <p className="rounded-[12px] border border-dashed border-[var(--adm-line-strong)] p-4 text-center text-adm-xs text-[var(--adm-ink-subtle)]">
-          No figures yet. A case study without them is a brochure.
-        </p>
-      )}
-
-      {metrics.map((metric, i) => (
-        <div
-          key={i}
-          className="grid gap-2 rounded-[12px] border border-[var(--adm-line-soft)] p-3 sm:grid-cols-[1fr_9rem_1fr_auto] sm:rounded-none sm:border-0 sm:p-0"
-        >
-          <FormInput
-            aria-label={`Metric ${i + 1} label`}
-            value={metric.label}
-            placeholder="Time to fill"
-            onChange={(e) => update(i, { label: e.target.value })}
-          />
-          <FormInput
-            aria-label={`Metric ${i + 1} value`}
-            value={metric.value}
-            placeholder="38% faster"
-            className="font-semibold tabular-nums"
-            onChange={(e) => update(i, { value: e.target.value })}
-          />
-          <FormInput
-            aria-label={`Metric ${i + 1} baseline`}
-            value={metric.note || ""}
-            placeholder="vs. their 2025 average"
-            onChange={(e) => update(i, { note: e.target.value })}
-          />
-          <button
-            type="button"
-            onClick={() => onChange(metrics.filter((_, index) => index !== i))}
-            aria-label={`Remove metric ${i + 1}`}
-            className="grid h-9 w-9 place-items-center self-center justify-self-end rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors duration-150 hover:bg-[var(--adm-danger-soft)] hover:text-[var(--adm-danger-ink)] sm:justify-self-auto"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-      ))}
-
-      {metrics.length < 6 && (
-        <WorkspaceButton onClick={() => onChange([...metrics, { label: "", value: "" }])}>
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          Add a figure
-        </WorkspaceButton>
+    <div id="metrics" tabIndex={-1} className="grid gap-3 focus:outline-none">
+      {metrics.length === 0 ? (
+        <EmptyState
+          compact
+          icon="chart"
+          title="No figures yet"
+          body={needed ? "A case study needs at least one. Without them it is a brochure." : "Optional for a customer story, but one number makes the quote land."}
+          primary={{ label: "Add a figure", icon: "plus", onClick: () => onChange([{ label: "", value: "" }]) }}
+        />
+      ) : (
+        <>
+          <div className="hidden grid-cols-[minmax(0,1fr)_9rem_minmax(0,1fr)_2.5rem] gap-2 px-0.5 text-adm-xs font-medium text-mist-600 sm:grid">
+            <span>Label</span>
+            <span>Value</span>
+            <span>Measured against</span>
+            <span />
+          </div>
+          {metrics.map((metric, i) => (
+            <div key={i} className="grid gap-2 rounded-lg p-3 ring-1 ring-inset ring-mist-200 sm:grid-cols-[minmax(0,1fr)_9rem_minmax(0,1fr)_2.5rem] sm:p-0 sm:ring-0">
+              <TextInput aria-label={`Figure ${i + 1} label`} value={metric.label} placeholder="Time to fill" onChange={(v) => update(i, { label: v })} />
+              <TextInput aria-label={`Figure ${i + 1} value`} value={metric.value} placeholder="38% faster" className="font-semibold tabular-nums" onChange={(v) => update(i, { value: v })} />
+              <TextInput aria-label={`Figure ${i + 1} baseline`} value={metric.note || ""} placeholder="vs. their 2025 average" onChange={(v) => update(i, { note: v })} />
+              <Button variant="ghost" icon="trash" label={`Remove figure ${i + 1}`} onClick={() => onChange(metrics.filter((_, index) => index !== i))} className="justify-self-end sm:justify-self-auto" />
+            </div>
+          ))}
+          {metrics.length < 6 && (
+            <div>
+              <Button variant="secondary" icon="plus" onClick={() => onChange([...metrics, { label: "", value: "" }])}>
+                Add a figure
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1111,14 +1011,7 @@ function MetricRows({
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const statusHint = (status?: string) =>
-  ARTICLE_STATUSES.find((s) => s.key === status)?.hint ?? "";
-
-/**
- * ISO ⇄ the `datetime-local` input's format, which is local time with no zone.
- * Converting through the local offset rather than slicing the ISO string keeps
- * an author in a different timezone from scheduling a piece for the wrong hour.
- */
+/** ISO ⇄ `datetime-local` (local time, no zone), through the local offset. */
 function toLocalInput(iso?: string): string {
   if (!iso) return "";
   const d = new Date(iso);

@@ -148,11 +148,11 @@ export function JobPreviewDrawer({
             <div className="flex flex-shrink-0 items-center justify-end gap-2 border-t border-[var(--adm-line)] px-5 py-3">
               {canEdit && (
                 <WorkspaceButton asChild>
-                  <Link href={`/admin/jobs/${job.id}/edit${query}`}><IconEdit aria-hidden="true" />Edit</Link>
+                  <Link href={`/portal/jobs/${job.id}/edit${query}`}><IconEdit aria-hidden="true" />Edit</Link>
                 </WorkspaceButton>
               )}
               <WorkspaceButton asChild variant="primary">
-                <Link href={`/admin/jobs/${job.id}${query}`}>Open job</Link>
+                <Link href={`/portal/jobs/${job.id}${query}`}>Open job</Link>
               </WorkspaceButton>
             </div>
           </>

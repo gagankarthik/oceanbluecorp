@@ -18,7 +18,7 @@ import {
 import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 
-/* RecordBar: the candidate's identity band. Hierarchy, top to bottom: name and
+/* RecordBar: the candidate's identity card. Hierarchy, top to bottom: name and
    stage, the role they applied for, contact, then owner and rating as labelled
    facts. Three labelled actions (Email, Edit profile, More); the one filled
    action on the page is the stage move in StageTrack below. */
@@ -34,10 +34,7 @@ export type RecordBarProps = {
   onEmail: () => void;
 };
 
-/** The bar sits on the cobalt record band, so its ink-token text re-points to white. */
-const ON_COBALT = "[--adm-ink:#fff] [--adm-ink-mute:rgba(255,255,255,0.9)] [--adm-ink-subtle:rgba(255,255,255,0.72)]";
-
-const MENU = "rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
+const MENU = "rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
 const MENU_LABEL = "px-2 pb-1 pt-1.5 text-adm-xs font-medium text-[var(--adm-ink-mute)]";
 const ITEM = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
@@ -63,33 +60,28 @@ export function RecordBar({
           <Avatar name={candidate.name} email={candidate.email} size="lg" className="hidden sm:flex" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="truncate text-adm-xl font-semibold leading-8 tracking-[-0.02em] text-white">
+              <h1 className="truncate text-adm-xl font-semibold leading-8 tracking-tight text-[var(--adm-ink)]">
                 {candidate.name || "Unnamed candidate"}
               </h1>
-              {/* Chips are tinted for a white surface, so each sits on a white tab. */}
-              <span className="inline-flex rounded-[8px] bg-white p-0.5"><StatusBadge status={candidate.status} size="md" /></span>
-              {pool && (
-                <span className="inline-flex rounded-[8px] bg-white p-0.5">
-                  <StatusBadge tone={pool === "internal" ? "blue" : "emerald"} label={POOL_LABEL[pool]} size="md" />
-                </span>
-              )}
+              <StatusBadge status={candidate.status} size="md" />
+              {pool && <StatusBadge tone={pool === "internal" ? "blue" : "emerald"} label={POOL_LABEL[pool]} size="md" />}
             </div>
 
             {candidate.jobTitle && (
-              <p className="mt-1 text-adm-base text-white">
-                <span className="text-white/90">Applied for </span>
+              <p className="mt-1 text-adm-base text-[var(--adm-ink)]">
+                <span className="text-[var(--adm-ink-subtle)]">Applied for </span>
                 {candidate.jobId ? (
-                  <Link href={`/admin/jobs/${candidate.jobId}`} className="font-medium underline-offset-4 hover:underline">
+                  <Link href={`/portal/jobs/${candidate.jobId}`} className="font-medium text-[var(--adm-accent-strong)] underline-offset-4 hover:underline">
                     {candidate.jobTitle}
                   </Link>
                 ) : (
                   <span className="font-medium">{candidate.jobTitle}</span>
                 )}
-                {candidate.jobDepartment && <span className="text-white/90"> · {candidate.jobDepartment}</span>}
+                {candidate.jobDepartment && <span className="text-[var(--adm-ink-subtle)]"> · {candidate.jobDepartment}</span>}
               </p>
             )}
 
-            <div className={cn("mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-adm-xs text-white", ON_COBALT)}>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-adm-xs text-[var(--adm-ink-mute)]">
               {candidate.email && (
                 <a
                   href={`mailto:${candidate.email}`}
@@ -136,7 +128,7 @@ export function RecordBar({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={6} className={cn("w-64", MENU)}>
               {candidate.jobId && (
-                <DropdownMenuItem onClick={() => router.push(`/admin/jobs/${candidate.jobId}`)} className={ITEM}>
+                <DropdownMenuItem onClick={() => router.push(`/portal/jobs/${candidate.jobId}`)} className={ITEM}>
                   <IconJob className="mr-2 h-4 w-4 text-[var(--adm-ink-mute)]" aria-hidden="true" />View job posting
                 </DropdownMenuItem>
               )}
@@ -175,12 +167,12 @@ export function RecordBar({
       </div>
 
       {/* Row 2: who owns it and how it rates, as labelled facts. */}
-      <dl className={cn("mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/25 pt-3 text-adm-xs", ON_COBALT)}>
+      <dl className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[var(--adm-line-soft)] pt-3 text-adm-xs">
         <div className="flex items-center gap-2">
-          <dt className="text-white/90">Owner</dt>
+          <dt className="text-[var(--adm-ink-subtle)]">Owner</dt>
           <dd>
             {candidate.ownership ? (
-              <span className="inline-flex items-center gap-1.5 font-medium text-white">
+              <span className="inline-flex items-center gap-1.5 font-medium text-[var(--adm-ink)]">
                 <IconUserCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 {candidate.ownershipName || "Claimed"}
               </span>
@@ -189,7 +181,7 @@ export function RecordBar({
                 type="button"
                 onClick={onClaim}
                 disabled={ownerSaving}
-                className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-white px-3 font-medium text-[var(--adm-danger-ink)] hover:bg-white/90"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[6px] border border-[var(--adm-danger-line)] bg-[var(--adm-danger-soft)] px-3 font-medium text-[var(--adm-danger-ink)] hover:bg-[var(--adm-surface)]"
               >
                 <IconUserCheck className="h-3.5 w-3.5" aria-hidden="true" />Unclaimed, claim
               </button>
@@ -197,10 +189,10 @@ export function RecordBar({
           </dd>
         </div>
         <div className="flex items-center gap-2">
-          <dt className="text-white/90">Rating</dt>
+          <dt className="text-[var(--adm-ink-subtle)]">Rating</dt>
           <dd className="flex items-center gap-1.5">
             <StarRating rating={candidate.rating || 0} onRate={onRate} size="md" />
-            <span className="tabular-nums text-white/90">{candidate.rating ? `${candidate.rating}/5` : "Not rated"}</span>
+            <span className="tabular-nums text-[var(--adm-ink-mute)]">{candidate.rating ? `${candidate.rating}/5` : "Not rated"}</span>
           </dd>
         </div>
       </dl>

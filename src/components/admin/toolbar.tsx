@@ -39,7 +39,7 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
         value={value}
         onChange={(e) => onChange(e.target.value)}
         {...props}
-        className="h-9 w-full rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-8 text-adm-base transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
+        className="h-10 w-full rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] pl-9 pr-8 text-adm-base transition-colors placeholder:text-[var(--adm-ink-subtle)] focus:border-[var(--adm-accent)] focus:bg-[var(--adm-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--adm-focus-ring)]"
       />
       {value && (
         <button
@@ -97,7 +97,7 @@ export function FilterMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3 text-adm-base font-medium transition-colors",
+            "inline-flex h-10 items-center gap-1.5 rounded-[var(--adm-radius-control)] border px-3 text-adm-base font-medium transition-colors",
             active
               ? "border-[var(--adm-accent)] bg-[var(--adm-accent-soft)] text-[var(--adm-accent)]"
               : "border-[var(--adm-line-control)] bg-[var(--adm-surface)] text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)]",
@@ -126,7 +126,7 @@ export function FilterMenu<V extends string>({
       <DropdownMenuContent
         align="start"
         sideOffset={4}
-        className="min-w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="min-w-48 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {options.map((o) => {
           const selected = o.value === value;
@@ -182,7 +182,7 @@ export function ViewMenu<V extends string>({
         <button
           type="button"
           className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
+            "inline-flex h-10 items-center gap-1.5 rounded-[var(--adm-radius-control)] border border-[var(--adm-line-control)] bg-[var(--adm-surface)] px-3 text-adm-base font-medium text-[var(--adm-ink-mute)] transition-colors hover:bg-[var(--adm-row-hover)] data-[state=open]:bg-[var(--adm-row-hover)]",
             className,
           )}
         >
@@ -191,7 +191,7 @@ export function ViewMenu<V extends string>({
           <ChevronDown className="h-3.5 w-3.5 text-[var(--adm-ink-subtle)]" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
+      <DropdownMenuContent align="end" className="w-40 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-pop)]">
         {options.map(({ value: v, label, icon: Icon }) => {
           const active = v === value;
           return (

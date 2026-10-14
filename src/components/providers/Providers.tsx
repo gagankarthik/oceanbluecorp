@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 const AppProviders = dynamic(() => import("./AppProviders"));
 const PublicToaster = dynamic(() => import("sonner").then((m) => m.Toaster), { ssr: false });
 
-const isAppSurface = (path: string | null) => !!path && (path.startsWith("/admin") || path.startsWith("/auth"));
+const isAppSurface = (path: string | null) => !!path && (path.startsWith("/portal") || path.startsWith("/auth"));
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

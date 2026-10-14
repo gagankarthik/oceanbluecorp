@@ -1,8 +1,8 @@
 // Which job statuses the public sees. Pure: shared by the listing, the job
-// page, the apply check and the sitemap, which used to disagree ("open" jobs
-// were listed but refused applications).
+// page, the apply check, the sitemap and the partner feed. Only "active" is
+// public; "open" stays an internal status (owner's call, 2026-10-14).
 
-export const PUBLIC_JOB_STATUSES = ["active", "open"] as const;
+export const PUBLIC_JOB_STATUSES = ["active"] as const;
 
 export type PublicJobStatus = (typeof PUBLIC_JOB_STATUSES)[number];
 
@@ -33,7 +33,7 @@ export function isAcceptingApplications(
 export type JobCategory = "state" | "open";
 
 /** The console list each category lives on. One detail route serves both. */
-export const JOB_LIST_HREF = { state: "/admin/state-roles", open: "/admin/open-roles" } as const;
+export const JOB_LIST_HREF = { state: "/portal/state-roles", open: "/portal/open-roles" } as const;
 export const JOB_LIST_LABEL = { state: "State roles", open: "Open roles" } as const;
 
 /** Records from before the split carry no category; they are all state roles. */

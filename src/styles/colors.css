@@ -1,0 +1,95 @@
+/*
+ * Oceanblue color master
+ * ----------------------
+ * Every color on the site comes from this file. The two brand blues are
+ * taken straight from the logo (#0A72C0 and #0CAACF); everything else is
+ * built around them.
+ *
+ * Components use either the chapter fields (whole-section colours) or the
+ * semantic roles at the bottom. Never hard-code hex values in components.
+ *
+ * Scales run from surface to sea floor:
+ *   mist   cool neutral: paper grounds
+ *   tide   pale shallows: the lightest coloured field
+ *   cyan   logo cyan (500 is the logo value): action on dark fields
+ *   ocean  logo blue (600 is the logo value): the brand block and the action
+ *   navy   deep water: dark fields and running ink
+ *   buoy   status only (flags, warnings inside product UI)
+ */
+
+@theme {
+  /* Mist: cool neutral */
+  --color-mist-0: #ffffff;
+  --color-mist-50: #f5f8fa;
+  --color-mist-100: #eaf1f4;
+  --color-mist-200: #dbe5ea;
+  --color-mist-300: #c3d0d8;
+  --color-mist-400: #98a9b4;
+  --color-mist-500: #6e8291;
+  --color-mist-600: #4b6273;
+  --color-mist-700: #3a4e5d;
+
+  /* Tide: pale shallows */
+  --color-tide-100: #e1f0f6;
+  --color-tide-200: #c9e4ef;
+  --color-tide-300: #a9d2e3;
+  --color-tide-400: #7db8d0;
+  --color-tide-700: #2f6880;
+  --color-tide-800: #24536a;
+
+  /* Cyan: logo cyan (500) */
+  --color-cyan-100: #c9eef7;
+  --color-cyan-200: #97ddef;
+  --color-cyan-300: #5cc8e3;
+  --color-cyan-400: #2ab7d8;
+  --color-cyan-500: #0caacf;
+  --color-cyan-600: #0889aa;
+  --color-cyan-700: #0a6e89;
+
+  /* Ocean: logo blue (600) */
+  --color-ocean-50: #eaf4fb;
+  --color-ocean-100: #d2e8f7;
+  --color-ocean-200: #a6d0ef;
+  --color-ocean-300: #6fb2e3;
+  --color-ocean-400: #3794d4;
+  --color-ocean-500: #1580c8;
+  --color-ocean-600: #0a72c0;
+  --color-ocean-700: #085c9c;
+  --color-ocean-800: #0a4b7d;
+  --color-ocean-900: #0c3e66;
+
+  /* Navy: deep water (900 is the ink) */
+  --color-navy-600: #22587a;
+  --color-navy-700: #1c4763;
+  --color-navy-800: #153a52;
+  --color-navy-900: #0b2e46;
+  --color-navy-950: #061a28;
+
+  /* Buoy: status only */
+  --color-buoy-300: #f8c55a;
+  --color-buoy-400: #f5b83d;
+  --color-buoy-500: #e99a16;
+
+  /* Chapter fields: one per section, floor to ceiling */
+  --color-field-paper: var(--color-mist-50);
+  --color-field-mist: var(--color-mist-100);
+  --color-field-shallow: var(--color-tide-200);
+  --color-field-cyan: var(--color-cyan-500);
+  --color-field-brand: var(--color-ocean-600);
+  --color-field-deep: var(--color-navy-900);
+  --color-field-abyss: var(--color-navy-950);
+
+  /* Semantic roles */
+  --color-canvas: var(--color-field-paper);
+  --color-raised: var(--color-mist-0);
+  --color-ink: var(--color-navy-900);
+  --color-muted: var(--color-mist-600);
+  --color-accent: var(--color-ocean-600);
+  --color-action: var(--color-navy-900);
+  --color-link: var(--color-ocean-700);
+  --color-on-field: var(--color-mist-0);
+  --color-on-field-soft: var(--color-ocean-100);
+  --color-on-deep: var(--color-mist-50);
+  --color-on-deep-soft: var(--color-tide-300);
+  --color-flag: var(--color-buoy-400);
+}

@@ -55,7 +55,7 @@ DynamoDB tables (region: us-east-2):
 - `oceanblue-candidates` (GSI: email-index, userId-index)
 - `oceanblue-contacts`
 - `oceanblue-content` holds **two** record types, told apart by `recordType`:
-  the CMS blocks behind `/admin/content` (no `recordType`), and the published
+  the CMS blocks behind `/portal/content` (no `recordType`), and the published
   articles — blog, case studies, news, customer stories — behind a further
   `kind` discriminator (`recordType: "article"`). Every read on either side
   filters on it; see the ARTICLES section in `dynamodb.ts`.
@@ -72,7 +72,7 @@ AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores
   - `RECRUITING_ROLES` (admin, hr, recruiter, sales) — what `requireStaff` guards:
     candidates, applications, resumes, pipeline, CRM, job deletion. **Excludes MEDIA.**
   - `PUBLISHING_ROLES` (admin, hr, media) — `requirePublisher`, `/api/articles`,
-    and the four `/admin/<section>` routes.
+    and the four `/portal/<section>` routes.
   - `JOB_EDIT_ROLES` (admin, hr, sales, **media**) — `canEditJobs()`, guarded by
     `requireJobEditor`. A recruiter reads postings without editing them; media
     writes them, because a posting is public copy before it is a requisition.
@@ -86,21 +86,24 @@ AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores
     applications attached to it.
   Media additionally gets `requireSignedIn` routes (own profile, avatar,
   notifications, help directory) and nothing else.
-- **Invite flow**: an admin invites a teammate from `/admin/users` (email + role). `/api/users/invite` calls Cognito `AdminCreateUser` (Cognito emails a temporary password) and assigns the role group. On first sign-in Cognito raises `NEW_PASSWORD_REQUIRED`; the sign-in page collects full name, phone, and a new password, and `/api/auth/complete-invite` answers the challenge + sets those attributes.
+- **Invite flow**: an admin invites a teammate from `/portal/users` (email + role). `/api/users/invite` calls Cognito `AdminCreateUser` (Cognito emails a temporary password) and assigns the role group. On first sign-in Cognito raises `NEW_PASSWORD_REQUIRED`; the sign-in page collects full name, phone, and a new password, and `/api/auth/complete-invite` answers the challenge + sets those attributes.
 
 ### Key Directories
 ```
 src/
 ├── app/                 # Next.js App Router pages
 │   ├── api/            # API routes (jobs, applications, contacts, resume, articles)
-│   ├── admin/          # Admin panel (jobs, applications, contacts, users, settings,
+│   ├── portal/         # Staff console (replaced /admin, which redirects here). List
+│   │                   # views at portal/<section>; detail/editor screens in
+│   │                   # portal/(console)/ (jobs, applications, contacts, users, settings,
 │   │                   # and the four publishing sections: blog, case-studies,
 │   │                   # news, customer-stories)
 │   └── auth/           # Authentication pages (signin, callback, signout), invite-only, no sign-up
 ├── components/
 │   ├── ui/             # shadcn/ui primitives (dropdown, sheet, tooltip, checkbox)
 │   ├── site/           # Public website components
-│   ├── admin/          # Console components
+│   ├── portal/         # Portal shell and UI kit
+│   ├── admin/          # Console detail/editor components, used under portal/(console)
 │   └── providers/      # Context providers (wraps AuthProvider)
 ├── lib/
 │   ├── seo.ts          # pageMetadata, breadcrumbs, jsonLdString for every public page
@@ -127,3 +130,13 @@ Copy `.env.example` to `.env.local`. Key variables:
 
 ### Deployment
 AWS Amplify deployment configured in `amplify.yml`. Environment variables injected during build phase.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

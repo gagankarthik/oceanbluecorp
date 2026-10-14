@@ -1,94 +1,51 @@
 import Image from "next/image";
-import PageHero from "@/components/landing/PageHero";
-import { IMG } from "@/components/landing/media";
-import { CONTAINER, ClosingCta, SECTION_Y } from "@/components/site/sections";
-import {
-  IconLock, IconServer, IconShieldLock, IconKey, IconSettings, IconTeam, IconUser, IconLogout, IconClock, type Icon, type IconProps,
-} from "@/components/site/icons";
+import FaqList from "@/components/site/FaqList";
+import { faqsFor } from "@/lib/faqs";
+import Link from "next/link";
+import PageHero from "@/components/site/PageHero";
+import Closing from "@/components/site/Closing";
+import { company } from "@/lib/site-content";
 
-/* ── A note on what this page may say ──────────────────────────────────────
-   Every claim below is either verifiable in this repository (the response
-   headers in next.config.ts, the Cognito invite-only auth model, the role
-   hierarchy in lib/auth/config.ts, the us-east-2 region in the AWS config) or
-   is a documented property of the AWS service being used.
+/* What this page may say: every claim is verifiable in this repo (headers in
+   next.config.ts, invite-only Cognito auth, roles in lib/auth/config.ts, the
+   us-east-2 region) or is a documented property of the AWS service used.
+   Three absences are stated on purpose: no SOC 2 or ISO 27001, no third-party
+   penetration test, and delivery staff outside the US can reach client data.
+   Add no certification, audit or response-time commitment until it is a fact. */
 
-   Three things are stated as absences on purpose, because a procurement
-   reviewer will find them anyway and finding them here is far better than
-   finding them after a claim has been made:
-
-     · Oceanblue holds no SOC 2 or ISO 27001 certification.
-     · No third-party penetration test has been carried out.
-     · Delivery staff outside the United States can access client data.
-
-   Do not add a certification, an audit, or a response-time commitment to this
-   page until it is a fact someone can be held to. ─────────────────────────── */
-
-function Glyph({ children, ...p }: IconProps & { children: React.ReactNode }) {
-  const { size = 16, ...rest } = p;
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
-      {children}
-    </svg>
-  );
-}
-
-/** Residency: a globe with its meridian. */
-const IconGlobe = (p: IconProps) => (
-  <Glyph {...p}>
-    <circle cx="12" cy="12" r="8.5" />
-    <path d="M3.5 12h17M12 3.5c2.3 2.4 3.5 5.2 3.5 8.5s-1.2 6.1-3.5 8.5c-2.3-2.4-3.5-5.2-3.5-8.5s1.2-6.1 3.5-8.5Z" />
-  </Glyph>
-);
-
-/** Vulnerability reporting: a bug. */
-const IconBug = (p: IconProps) => (
-  <Glyph {...p}>
-    <rect x="8" y="8" width="8" height="11" rx="4" />
-    <path d="M9.5 8a2.5 2.5 0 0 1 5 0M12 11v8M8 12.5H4.5M19.5 12.5H16M8.5 16.5 5.5 18.5M15.5 16.5l3 2M8.5 9.5 5.5 7.5M15.5 9.5l3-2" />
-  </Glyph>
-);
-
-const protections: { title: string; body: string; icon: Icon }[] = [
+const protections = [
   {
-    icon: IconLock,
     title: "Encrypted in transit",
     body: "Every connection to this site and its APIs is HTTPS. Strict-Transport-Security is set for two years with subdomains included and preload requested, so browsers refuse to fall back to an unencrypted connection.",
   },
   {
-    icon: IconServer,
     title: "Encrypted at rest",
     body: "Application data is held in Amazon DynamoDB and Amazon S3, both of which encrypt stored data by default using AWS-managed keys.",
   },
   {
-    icon: IconShieldLock,
     title: "Hardened responses",
     body: "The site sets X-Frame-Options, X-Content-Type-Options, Referrer-Policy and Permissions-Policy on every response, which closes off clickjacking, MIME sniffing, referrer leakage and unrequested access to camera, microphone, location and payment APIs.",
   },
   {
-    icon: IconKey,
     title: "No credentials in the browser",
     body: "AWS credentials and table names are read on the server only. The client bundle is checked to ensure the AWS SDK never ships to the browser.",
   },
 ];
 
-const accessControls: { title: string; body: string; icon: Icon }[] = [
+const accessControls = [
   {
-    icon: IconSettings,
     title: "No public sign-up",
     body: "There is no self-service registration. Every account is created by an administrator who sets the person's role at the point of invitation.",
   },
   {
-    icon: IconTeam,
-    title: "Four roles, least privilege",
-    body: "Accounts are Admin, HR, Recruiter or Sales. A person authenticated but not placed in a staff group has no access at all rather than a default level of it.",
+    title: "Five roles, least privilege",
+    body: "Accounts are Admin, HR, Recruiter, Sales or Media, and each role reaches only what its work needs. A person authenticated but not placed in a staff group has no access at all rather than a default level of it.",
   },
   {
-    icon: IconUser,
     title: "Managed authentication",
     body: "Sign-in runs through Amazon Cognito. Passwords are never stored by this application, and a new joiner must set their own password on first sign-in before they can reach anything.",
   },
   {
-    icon: IconLogout,
     title: "Access ends with the engagement",
     body: "Accounts are removed by an administrator when someone leaves the company or rolls off an account.",
   },
@@ -101,200 +58,201 @@ const certifications = [
   { name: "City of Columbus MBE", logo: "/logos/certifications/mbe.png", w: 707, h: 353, cls: "h-12" },
 ];
 
-const H2 = "type-headline font-semibold text-ink";
+const jumps = [
+  ["#protection", "How data is protected"],
+  ["#access", "Who can reach client data"],
+  ["#residency", "Where data lives"],
+  ["#certifications", "Certifications"],
+  ["#report", "Reporting a vulnerability"],
+];
+
+const H2 = "display text-[clamp(2rem,3.4vw,3.25rem)]";
+const delay = (d: number) => ({ "--d": d }) as React.CSSProperties;
 
 export default function SecurityPage() {
+  const reportHref = `mailto:${company.email}?subject=Security%20report`;
   return (
     <>
       <PageHero
-        eyebrow="Security"
-        title="How we handle your data, stated plainly."
-        subtitle="What we encrypt, who can reach client information, where it is stored, and how to tell us if you find a problem."
-        image={IMG.serviceSolutions}
+        cells={[{ photo: "keyboard" }, { tone: "bg-navy-900" }, { photo: "console" }, { tone: "bg-tide-200" }, { photo: "lattice" }]}
+        lines={["How we handle", "your data."]}
+        standfirst="What we encrypt, who can reach client information, where it is stored, and how to tell us if you find a problem."
+        side={
+          <ul className="grid gap-1">
+            {jumps.map(([href, label]) => (
+              <li key={href}>
+                <a href={href} className="text-navy-900 underline decoration-navy-900/30 underline-offset-4 hover:decoration-navy-900">
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        }
       />
 
-      {/* Opening position. Leads with the limits rather than burying them. */}
-      <section data-tone="white" className={`bg-white ${SECTION_Y}`}>
-        <div className={`${CONTAINER} reveal grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16`}>
-          <h2 className={H2}>Our position</h2>
-          <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-            <p className="measure type-body-lg text-ink">
-              We place engineers inside client systems and we run managed
-              services on client infrastructure, so the honest answer to most
-              security questions is that your controls govern your estate and
-              ours govern ours. This page covers ours.
+      {/* Leads with the limits rather than burying them */}
+      <section aria-labelledby="position" className="bg-field-paper">
+        <div className="gutter grid gap-8 pb-20 md:pb-24 lg:grid-cols-12">
+          <h2 id="position" className={`side ${H2}`} data-reveal>
+            Our position
+          </h2>
+          <div className="axis grid gap-6 md:grid-cols-2 md:gap-10" data-reveal>
+            <p className="text-lead leading-snug">
+              We place engineers inside client systems and we run managed services on client infrastructure, so the honest answer to most security
+              questions is that your controls govern your estate and ours govern ours. This page covers ours.
             </p>
-            <p className="measure type-body text-ink-muted">
-              Where we hold a certification we say so. Where we do not, we say
-              that too, further down this page. A security page that only lists
-              strengths is not useful to anyone evaluating a supplier, and the
-              gaps are the part you would find in diligence anyway.
+            <p className="leading-relaxed text-mist-600">
+              Where we hold a certification we say so. Where we do not, we say that too, further down this page. A security page that only lists
+              strengths is not useful to anyone evaluating a supplier, and the gaps are the part you would find in diligence anyway.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Protection: four controls in a hairline grid. */}
-      <section data-tone="paper" className={`bg-paper ${SECTION_Y}`}>
-        <div className={CONTAINER}>
-          <h2 className={`reveal ${H2}`}>How data is protected.</h2>
-          <ul className="reveal mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:mt-12 md:grid-cols-2">
-            {protections.map((p) => (
-              <li key={p.title} className="bg-white p-7 sm:p-9">
-                <span className="flex size-11 items-center justify-center rounded-xl border border-line text-cobalt">
-                  <p.icon size={20} />
-                </span>
-                <h3 className="mt-5 type-title-lg font-semibold text-ink">{p.title}</h3>
-                <p className="mt-2 max-w-[54ch] type-body text-ink-muted">{p.body}</p>
+      <section id="protection" aria-labelledby="protection-h" className="scroll-mt-24 bg-field-mist">
+        <div className="gutter py-20 md:py-24">
+          <h2 id="protection-h" className={H2} data-reveal>
+            How data is protected
+          </h2>
+          <ul className="mt-10 grid gap-2 md:grid-cols-2">
+            {protections.map((p, i) => (
+              <li key={p.title} className="bg-mist-0 p-7 md:p-9" data-reveal style={delay(i % 2)}>
+                <p className="font-mono text-[14px] text-ocean-700">{String(i + 1).padStart(2, "0")}</p>
+                <h3 className="mt-3 text-[clamp(1.25rem,1.6vw,1.5rem)] font-semibold">{p.title}</h3>
+                <p className="mt-2 max-w-[54ch] leading-relaxed text-mist-600">{p.body}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* Access: the heading holds its column while the rows scroll past. */}
-      <section data-tone="white" className={`bg-white ${SECTION_Y}`}>
-        <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16`}>
-          <div className="lg:sticky lg:top-28 lg:self-start">
-            <h2 className={`reveal ${H2}`}>Who can reach client data.</h2>
+      <section id="access" aria-labelledby="access-h" className="scroll-mt-24 bg-field-paper">
+        <div className="gutter grid gap-10 py-20 md:py-24 lg:grid-cols-12">
+          <div className="side">
+            <h2 id="access-h" className={`lg:sticky lg:top-28 ${H2}`} data-reveal>
+              Who can reach client data
+            </h2>
           </div>
-          <ul className="reveal divide-y divide-line border-y border-line">
+          <ul className="axis divide-y divide-mist-200 border-y border-mist-200">
             {accessControls.map((a) => (
-              <li key={a.title} className="grid gap-3 py-7 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] sm:gap-8">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-cobalt">
-                    <a.icon size={18} />
-                  </span>
-                  <h3 className="type-title font-semibold text-ink">{a.title}</h3>
-                </div>
-                <p className="type-body text-ink-muted">{a.body}</p>
+              <li key={a.title} className="grid gap-2 py-7 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-8" data-reveal>
+                <h3 className="text-[20px] font-semibold leading-snug">{a.title}</h3>
+                <p className="leading-relaxed text-mist-600">{a.body}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* Residency. The section most suppliers soften; stated directly here. */}
-      <section data-tone="paper" className={`bg-paper ${SECTION_Y}`}>
-        <div className={`${CONTAINER} reveal grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16`}>
-          <div>
-            <span className="flex size-12 items-center justify-center rounded-xl border border-line bg-white text-cobalt">
-              <IconGlobe size={22} />
-            </span>
-            <h2 className={`mt-6 max-w-[16ch] ${H2}`}>Where data lives, and who reaches it.</h2>
-          </div>
-          <div className="space-y-5 type-body text-ink-muted">
+      <section id="residency" aria-labelledby="residency-h" className="scroll-mt-24 bg-navy-900 text-mist-50">
+        <div className="gutter grid gap-10 py-20 md:py-24 lg:grid-cols-12">
+          <h2 id="residency-h" className={`side ${H2}`} data-reveal>
+            Where data lives, and who reaches it
+          </h2>
+          <div className="axis grid max-w-[68ch] gap-5 leading-relaxed text-tide-300" data-reveal>
             <p>
-              Application data is stored and processed in Amazon Web Services in
-              the <strong className="font-semibold text-ink">US East (Ohio) region</strong>, us-east-2.
+              Application data is stored and processed in Amazon Web Services in the{" "}
+              <strong className="font-semibold text-white">US East (Ohio) region</strong>, us-east-2.
             </p>
             <p>
-              We operate delivery centres in India and the United Kingdom, and
-              named personnel in those locations can access client data where
-              their role on an engagement requires it. Access follows the same
-              role model as everyone else, and the scope of it is agreed in the
-              Master Service Agreement before work starts.
+              We operate delivery centres in India and the United Kingdom, and named personnel in those locations can access client data where their
+              role on an engagement requires it. Access follows the same role model as everyone else, and the scope of it is agreed in the Master
+              Service Agreement before work starts.
             </p>
             <p>
-              If your programme requires US-only personnel or data handling, say
-              so during scoping. It is a constraint we can staff to, but it has
-              to be agreed up front rather than assumed.
+              If your programme requires US-only personnel or data handling, say so during scoping. It is a constraint we can staff to, but it has to
+              be agreed up front rather than assumed.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Certifications, correctly labelled, with the absences beside them. */}
-      <section data-tone="white" className={`bg-white ${SECTION_Y}`}>
-        <div className={`${CONTAINER} reveal grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16`}>
-          <div>
-            <h2 className={`max-w-[16ch] ${H2}`}>Certifications we hold.</h2>
-            <p className="mt-6 max-w-[46ch] type-body text-ink-muted">
-              These are supplier-diversity certifications. They speak to
-              ownership and procurement eligibility, not to information
-              security, and we do not present them as security credentials.
+      <section id="certifications" aria-labelledby="certs-h" className="scroll-mt-24 bg-field-paper">
+        <div className="gutter grid gap-10 py-20 md:py-24 lg:grid-cols-12">
+          <div className="side" data-reveal>
+            <h2 id="certs-h" className={H2}>
+              Certifications we hold
+            </h2>
+            <p className="mt-4 max-w-[40ch] text-mist-600">
+              These are supplier-diversity certifications. They speak to ownership and procurement eligibility, not to information security, and we
+              do not present them as security credentials.
             </p>
+            <Link href="/certifications" className="mt-5 inline-block font-medium text-ocean-700 underline underline-offset-4">
+              About our certifications
+            </Link>
           </div>
-          <div>
-            <ul className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+          <div className="axis" data-reveal>
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {certifications.map((c) => (
-                <li key={c.name} className="flex h-28 items-center justify-center bg-white px-4">
+                <li key={c.name} className="flex h-28 items-center justify-center bg-mist-0 px-4">
                   <Image src={c.logo} alt={c.name} width={c.w} height={c.h} className={`${c.cls} w-auto max-w-full object-contain`} />
                 </li>
               ))}
             </ul>
 
-            {/* The absences, stated rather than omitted. */}
-            <div className="mt-8 rounded-r-xl border-l-2 border-cobalt bg-paper px-6 py-5">
-              <p className="type-body font-semibold text-ink">What we do not hold</p>
-              <p className="mt-2 max-w-[58ch] type-body text-ink-muted">
-                Oceanblue is not SOC 2 audited and does not hold ISO 27001. We
-                have not commissioned a third-party penetration test. If your
-                procurement process requires either, tell us early and we will
-                tell you honestly whether we can meet the timeline rather than
-                let it surface late in the process.
+            {/* The absences, stated rather than omitted */}
+            <div className="mt-8 border-l-2 border-ocean-600 bg-mist-100 px-6 py-5">
+              <p className="font-semibold">What we do not hold</p>
+              <p className="mt-2 max-w-[58ch] leading-relaxed text-mist-700">
+                Oceanblue is not SOC 2 audited and does not hold ISO 27001. We have not commissioned a third-party penetration test. If your
+                procurement process requires either, tell us early and we will tell you honestly whether we can meet the timeline rather than let it
+                surface late in the process.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Disclosure + incident history: the action wide, the record narrow. */}
-      <section data-tone="paper" className={`bg-paper ${SECTION_Y}`}>
-        <div className={`${CONTAINER} reveal grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]`}>
-          <div className="rounded-2xl border border-line bg-white p-7 sm:p-10">
-            <span className="flex size-12 items-center justify-center rounded-xl border border-line text-cobalt">
-              <IconBug size={22} />
-            </span>
-            <h2 className={`mt-6 max-w-[16ch] ${H2}`}>Reporting a vulnerability.</h2>
-            <p className="mt-6 max-w-[52ch] type-body text-ink-muted">
-              If you have found a security problem in this site or any Ocean
-              Blue system, email{" "}
-              <a href="mailto:hr@oceanbluecorp.com?subject=Security%20report" className="font-semibold text-cobalt underline underline-offset-4">
-                hr@oceanbluecorp.com
+      <section id="report" aria-labelledby="report-h" className="scroll-mt-24 bg-field-mist">
+        <div className="gutter grid gap-2 py-20 md:py-24 lg:grid-cols-12">
+          <div className="bg-mist-0 p-7 sm:p-10 lg:col-span-7" data-reveal>
+            <h2 id="report-h" className={H2}>
+              Reporting a vulnerability
+            </h2>
+            <p className="mt-6 max-w-[56ch] leading-relaxed">
+              If you have found a security problem in this site or any Oceanblue system, email{" "}
+              <a href={reportHref} className="text-ocean-700 underline underline-offset-4">
+                {company.email}
               </a>{" "}
               with &ldquo;Security report&rdquo; in the subject line.
             </p>
-            <p className="mt-5 max-w-[52ch] type-body text-ink-muted">
-              Include what you found, where, and the steps to reproduce it. We
-              will confirm receipt and keep you updated as we work through it.
-              We ask that you give us a reasonable window to fix the issue
-              before publishing it, and that you avoid accessing or altering
-              data that is not your own while testing.
+            <p className="mt-5 max-w-[56ch] leading-relaxed">
+              Include what you found, where, and the steps to reproduce it. We will confirm receipt and keep you updated as we work through it. We
+              ask that you give us a reasonable window to fix the issue before publishing it, and that you avoid accessing or altering data that is
+              not your own while testing.
             </p>
-            <p className="mt-5 max-w-[52ch] type-body text-ink-subtle">
-              We do not run a paid bug bounty. We will credit you if you would
-              like to be named.
-            </p>
+            <p className="mt-5 max-w-[56ch] text-mist-600">We do not run a paid bug bounty. We will credit you if you would like to be named.</p>
+            <a
+              href={reportHref}
+              className="mt-8 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+            >
+              Send a security report
+            </a>
           </div>
 
-          <div className="rounded-2xl border border-line bg-white p-7 sm:p-10">
-            <span className="flex size-10 items-center justify-center rounded-lg border border-line text-cobalt">
-              <IconClock size={20} />
-            </span>
-            <h2 className="mt-5 type-title-lg font-semibold text-ink">Incident history</h2>
-            <p className="mt-4 max-w-[46ch] type-body text-ink-muted">
-              We have not disclosed a security incident affecting client or
-              candidate data. If that changes, the incident and its resolution
-              will be recorded here with dates.
+          <div className="bg-mist-0 p-7 sm:p-10 lg:col-span-5" data-reveal style={delay(1)}>
+            <h2 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-semibold">Incident history</h2>
+            <p className="mt-4 max-w-[46ch] leading-relaxed text-mist-600">
+              We have not disclosed a security incident affecting client or candidate data. If that changes, the incident and its resolution will be
+              recorded here with dates.
             </p>
-            <p className="mt-6 max-w-[46ch] border-t border-line pt-6 type-body-sm text-ink-subtle">
-              For live availability of the AWS services this product runs on,
-              see the{" "}
-              <a href="/status" className="font-semibold text-cobalt underline underline-offset-4">
+            <p className="mt-6 max-w-[46ch] border-t border-mist-200 pt-6 text-[15px] text-mist-600">
+              For live availability of the AWS services this product runs on, see the{" "}
+              <Link href="/status" className="text-ocean-700 underline underline-offset-4">
                 status page
-              </a>
+              </Link>
               .
             </p>
           </div>
         </div>
       </section>
 
-      <ClosingCta
-        title="Send us your security questionnaire."
-        sub="We would rather answer it early and tell you where we fall short than discover the mismatch after a contract is drafted."
-        primary={{ href: "/contact", label: "Talk to us" }}
-        secondary={{ href: "/privacy", label: "Read the privacy policy" }}
+      <FaqList title="Security questions" items={faqsFor("Security and data")} here="/security" />
+
+      <Closing
+        lines={["Send us your", "security questionnaire"]}
+        sentence="We would rather answer it early and tell you where we fall short than discover the mismatch after a contract is drafted."
+        action="Talk to us"
       />
     </>
   );

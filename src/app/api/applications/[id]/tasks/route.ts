@@ -116,7 +116,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               type: "task_assigned",
               title: "Task assigned to you",
               message: `${who}: ${assigned.text} (${candidate})`,
-              link: `/admin/candidates/${id}`,
+              link: `/portal/candidates/${id}`,
               relatedId: id,
               recipientId: assigned.assigneeId,
               isRead: false,
