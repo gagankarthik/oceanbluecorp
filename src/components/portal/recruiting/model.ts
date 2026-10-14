@@ -33,7 +33,7 @@ export const STAGE_TONE: Record<Stage, Tone> = {
   pending: "grey",
   reviewing: "cyan",
   submitted: "blue",
-  interview: "blue",
+  interview: "violet",
   offered: "amber",
   hired: "green",
   rejected: "red",
@@ -44,9 +44,9 @@ export const STAGE_TONE: Record<Stage, Tone> = {
 /** Dot colours for board columns and selects. */
 export const STAGE_DOT: Record<Stage, string> = {
   pending: "#99a2af",
-  reviewing: "#6fb2e3",
-  submitted: "#3794d4",
-  interview: "#0a72c0",
+  reviewing: "#06aed4",
+  submitted: "#0a72c0",
+  interview: "#7a5af8",
   offered: "#eda100",
   hired: "#1baf7a",
   rejected: "#d03b3b",

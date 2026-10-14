@@ -23,7 +23,32 @@ export type Column<T> = {
   defaultHidden?: boolean;
   /** false leaves the column off the phone card (still in the table from md) */
   card?: boolean;
+  /** Numbers and money: right-aligned on tabular figures */
+  numeric?: boolean;
 };
+
+type Density = "compact" | "default" | "relaxed";
+// Row heights 44 / 56 / 68 (DESIGN_SYSTEM §2.5); td height acts as a min-height
+const ROW_H: Record<Density, string> = { compact: "h-11 py-1.5", default: "h-14 py-2", relaxed: "h-[68px] py-3" };
+const DENSITIES: { v: Density; l: string }[] = [
+  { v: "compact", l: "Compact" },
+  { v: "default", l: "Default" },
+  { v: "relaxed", l: "Relaxed" },
+];
+const PER_PAGE = [10, 25, 50];
+
+/** Page numbers with gaps: 1 … 4 5 6 … 12 */
+function pageList(current: number, pages: number): (number | null)[] {
+  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i);
+  const set = new Set([0, pages - 1, current - 1, current, current + 1].filter((p) => p >= 0 && p < pages));
+  const sorted = [...set].sort((a, b) => a - b);
+  const out: (number | null)[] = [];
+  sorted.forEach((p, i) => {
+    if (i && p - sorted[i - 1] > 1) out.push(null);
+    out.push(p);
+  });
+  return out;
+}
 
 export type Filter<T> = {
   key: string;
@@ -135,7 +160,7 @@ export default function DataTable<T extends { id: string }>({
   const [open, setOpen] = useState<T | null>(null);
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(pageSize);
-  const [dense, setDense] = useState(false);
+  const [density, setDensity] = useState<Density>("default");
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(columns.filter((c) => c.defaultHidden).map((c) => c.key)));
   const [menu, setMenu] = useState(false);
   const menuRef = useOutsideClose(menu, () => setMenu(false));
@@ -153,18 +178,19 @@ export default function DataTable<T extends { id: string }>({
   useEffect(() => {
     if (!prefsKey) return;
     try {
-      const p = JSON.parse(window.localStorage.getItem(prefsKey) ?? "null") as { perPage?: number; hidden?: string[] } | null;
-      if (p && [10, 25, 50].includes(p.perPage ?? 0)) setPerPage(p.perPage!);
+      const p = JSON.parse(window.localStorage.getItem(prefsKey) ?? "null") as { perPage?: number; hidden?: string[]; density?: Density } | null;
+      if (p && PER_PAGE.includes(p.perPage ?? 0)) setPerPage(p.perPage!);
       if (p && Array.isArray(p.hidden)) setHidden(new Set(p.hidden.filter((k) => columns.some((c) => c.key === k))));
+      if (p?.density && p.density in ROW_H) setDensity(p.density);
     } catch {}
     setPrefsLoaded(true);
   }, [prefsKey]);
   useEffect(() => {
     if (!prefsKey || !prefsLoaded) return;
     try {
-      window.localStorage.setItem(prefsKey, JSON.stringify({ perPage, hidden: [...hidden] }));
+      window.localStorage.setItem(prefsKey, JSON.stringify({ perPage, hidden: [...hidden], density }));
     } catch {}
-  }, [prefsKey, prefsLoaded, perPage, hidden]);
+  }, [prefsKey, prefsLoaded, perPage, hidden, density]);
 
   const shown = columns.filter((c) => !hidden.has(c.key));
   const getValue = (c: Column<T>, r: T) => (c.value ? c.value(r) : ((r as Record<string, unknown>)[c.key] as string | number | undefined));
@@ -200,6 +226,11 @@ export default function DataTable<T extends { id: string }>({
   const current = Math.min(page, pages - 1);
   const visible = filtered.slice(current * perPage, current * perPage + perPage);
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id));
+  const someVisibleSelected = !allVisibleSelected && visible.some((r) => selected.has(r.id));
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someVisibleSelected;
+  }, [someVisibleSelected]);
 
   const chips = [
     ...(query ? [{ key: "__q", label: `Search: “${query}”`, clear: () => setQuery("") }] : []),
@@ -234,7 +265,7 @@ export default function DataTable<T extends { id: string }>({
     downloadCsv(exportName, shown.map((c) => String(c.header)), filtered.map((r) => shown.map((c) => getValue(c, r))));
   }
 
-  const cellPad = dense ? "px-4 py-2" : "px-4 py-3.5";
+  const cellPad = `px-4 ${ROW_H[density]}`;
   const hasRowEnd = !!renderDetail || !!rowMenu;
   const rowEnd = (r: T) => {
     const openRow = () => renderDetail && setOpen(r);
@@ -339,36 +370,16 @@ export default function DataTable<T extends { id: string }>({
                 </ul>
                 <div className="my-2.5 h-px bg-mist-200" />
                 <p className="px-1 text-[12px] font-semibold text-mist-500">Density</p>
-                <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-lg bg-mist-100 p-1">
-                  {[
-                    { v: false, l: "Comfortable" },
-                    { v: true, l: "Compact" },
-                  ].map((o) => (
+                <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg bg-mist-100 p-1">
+                  {DENSITIES.map((o) => (
                     <button
-                      key={o.l}
+                      key={o.v}
                       type="button"
-                      onClick={() => setDense(o.v)}
-                      aria-pressed={dense === o.v}
-                      className={`rounded-md py-1.5 text-[13px] font-medium ${dense === o.v ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600"}`}
+                      onClick={() => setDensity(o.v)}
+                      aria-pressed={density === o.v}
+                      className={`rounded-md py-1.5 text-[13px] font-medium ${density === o.v ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600"}`}
                     >
                       {o.l}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-3 px-1 text-[12px] font-semibold text-mist-500">Rows per page</p>
-                <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg bg-mist-100 p-1">
-                  {[10, 25, 50].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => {
-                        setPerPage(n);
-                        setPage(0);
-                      }}
-                      aria-pressed={perPage === n}
-                      className={`rounded-md py-1.5 text-[13px] font-medium tabular-nums ${perPage === n ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600"}`}
-                    >
-                      {n}
                     </button>
                   ))}
                 </div>
@@ -522,24 +533,37 @@ export default function DataTable<T extends { id: string }>({
                 <tr className="border-b border-mist-200 bg-mist-50 text-[12px] font-medium text-mist-600">
                   {selectable && (
                     <th scope="col" className="w-10 px-4 py-3">
-                      <input type="checkbox" aria-label="Select all on this page" checked={allVisibleSelected} onChange={toggleAll} className="size-4 accent-ocean-600" />
+                      <input ref={selectAllRef} type="checkbox" aria-label="Select all on this page" checked={allVisibleSelected} onChange={toggleAll} className="size-4 accent-ocean-600" />
                     </th>
                   )}
-                  {shown.map((c) => (
-                    <th key={c.key} scope="col" aria-sort={sort?.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : undefined} className={`px-4 py-3 font-medium ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}>
-                      {c.sortable ? (
-                        <button type="button" onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-navy-900">
-                          {c.header}
-                          <Icon
-                            name="chevronDown"
-                            className={`size-3.5 transition-transform ${sort?.key === c.key ? "text-navy-900" : "opacity-40"} ${sort?.key === c.key && sort.dir === -1 ? "rotate-180" : ""}`}
-                          />
-                        </button>
-                      ) : (
-                        c.header
-                      )}
-                    </th>
-                  ))}
+                  {shown.map((c) => {
+                    const sorted = sort?.key === c.key;
+                    return (
+                      <th
+                        key={c.key}
+                        scope="col"
+                        aria-sort={sorted ? (sort.dir === 1 ? "ascending" : "descending") : undefined}
+                        className={`px-4 py-3 font-medium ${c.numeric ? "text-right" : ""} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
+                      >
+                        {c.sortable ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleSort(c.key)}
+                            className={`group/sort inline-flex items-center gap-1 rounded hover:text-navy-900 ${c.numeric ? "flex-row-reverse" : ""} ${sorted ? "text-navy-900" : ""}`}
+                          >
+                            {c.header}
+                            {/* Arrow only on the sorted column; a hint on hover elsewhere */}
+                            <Icon
+                              name="chevronDown"
+                              className={`size-3.5 transition-[transform,opacity] ${sorted ? "opacity-100" : "opacity-0 group-hover/sort:opacity-50 group-focus-visible/sort:opacity-50"} ${sorted && sort.dir === 1 ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                        ) : (
+                          c.header
+                        )}
+                      </th>
+                    );
+                  })}
                   {hasRowEnd && (
                     <th scope="col" className="w-12 px-4 py-3">
                       <span className="sr-only">Actions</span>
@@ -551,8 +575,16 @@ export default function DataTable<T extends { id: string }>({
                 {visible.map((r) => (
                   <tr
                     key={r.id}
-                    className={`border-b border-mist-100 transition-colors last:border-0 hover:bg-mist-50 ${renderDetail ? "cursor-pointer" : ""} ${selected.has(r.id) ? "bg-ocean-50/60" : ""}`}
+                    className={`border-b border-mist-100 transition-colors last:border-0 hover:bg-mist-50 ${renderDetail ? "cursor-pointer focus-visible:bg-mist-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600" : ""} ${selected.has(r.id) ? "bg-ocean-50/60" : ""}`}
                     onClick={() => renderDetail && setOpen(r)}
+                    // Keyboard reaches the same detail as a click
+                    tabIndex={renderDetail ? 0 : undefined}
+                    onKeyDown={(e) => {
+                      if (renderDetail && e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        setOpen(r);
+                      }
+                    }}
                   >
                     {selectable && (
                       <td className={cellPad} onClick={(e) => e.stopPropagation()}>
@@ -560,7 +592,7 @@ export default function DataTable<T extends { id: string }>({
                       </td>
                     )}
                     {shown.map((c) => (
-                      <td key={c.key} className={`${cellPad} align-middle text-navy-900 ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}>
+                      <td key={c.key} className={`${cellPad} align-middle text-navy-900 ${c.numeric ? "text-right tabular-nums" : ""} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}>
                         {c.cell ? c.cell(r) : String(getValue(c, r) ?? "")}
                       </td>
                     ))}
@@ -578,31 +610,67 @@ export default function DataTable<T extends { id: string }>({
       )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-[13px] text-mist-600">
-        <span>{filtered.length === 0 ? "0 results" : `${current * perPage + 1}–${Math.min(filtered.length, (current + 1) * perPage)} of ${filtered.length}`}</span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={current === 0}
-            aria-label="Previous page"
-            className="grid size-8 place-items-center rounded-md ring-1 ring-inset ring-mist-300 hover:bg-mist-50 disabled:opacity-40"
-          >
-            <Icon name="chevronLeft" className="size-4" />
-          </button>
-          <span className="px-2 tabular-nums">
-            {current + 1} / {pages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
-            disabled={current >= pages - 1}
-            aria-label="Next page"
-            className="grid size-8 place-items-center rounded-md ring-1 ring-inset ring-mist-300 hover:bg-mist-50 disabled:opacity-40"
-          >
-            <Icon name="chevronRight" className="size-4" />
-          </button>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-[13px] text-mist-600">
+        <div className="flex items-center gap-4">
+          <span className="tabular-nums">{filtered.length === 0 ? "0 results" : `${current * perPage + 1}–${Math.min(filtered.length, (current + 1) * perPage)} of ${filtered.length}`}</span>
+          <label className="hidden items-center gap-2 sm:flex">
+            Rows
+            <select
+              value={perPage}
+              onChange={(e) => {
+                setPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              className="h-8 rounded-md bg-mist-0 px-2 text-[13px] tabular-nums text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-2 focus:outline-ocean-600"
+            >
+              {PER_PAGE.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
+        {pages > 1 && (
+          <nav aria-label="Pagination" className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={current === 0}
+              aria-label="Previous page"
+              className="grid size-8 place-items-center rounded-md text-navy-900 hover:bg-mist-100 disabled:opacity-40"
+            >
+              <Icon name="chevronLeft" className="size-4" />
+            </button>
+            {pageList(current, pages).map((p, i) =>
+              p === null ? (
+                <span key={`gap${i}`} aria-hidden className="w-6 text-center">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  aria-label={`Page ${p + 1}`}
+                  aria-current={p === current ? "page" : undefined}
+                  className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-navy-900 text-white" : "text-navy-900 hover:bg-mist-100"}`}
+                >
+                  {p + 1}
+                </button>
+              ),
+            )}
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
+              disabled={current >= pages - 1}
+              aria-label="Next page"
+              className="grid size-8 place-items-center rounded-md text-navy-900 hover:bg-mist-100 disabled:opacity-40"
+            >
+              <Icon name="chevronRight" className="size-4" />
+            </button>
+          </nav>
+        )}
       </div>
 
       {renderDetail && open && (

@@ -57,16 +57,16 @@ export function StageChevrons({
 
   return (
     <div ref={scroller} className="scroll-thin min-w-0 overflow-x-auto">
-      <ol aria-label={label} className="flex min-w-[540px] py-0.5">
+      <ol aria-label={label} className="flex w-max py-0.5">
         {stages.map((s, i) => {
           const on = i === idx;
           const past = idx > i;
           const c = stageColor(s.key);
-          const bg = on ? c : past ? `color-mix(in srgb, ${c} 24%, #fff)` : undefined;
+          const bg = on ? c : past ? `color-mix(in srgb, ${c} 18%, #fff)` : undefined;
           const ink = on ? inkOn(c) : past ? NAVY : undefined;
           const status = on ? "current stage" : past ? "done" : "not reached";
           return (
-            <li key={s.key} className={`min-w-0 flex-1 ${i ? "-ml-[3px]" : ""}`}>
+            <li key={s.key} className={`shrink-0 ${i ? "-ml-[3px]" : ""}`}>
               <button
                 type="button"
                 onClick={() => !on && onSelect?.(s.key)}
@@ -80,7 +80,7 @@ export function StageChevrons({
               >
                 <span
                   style={{ clipPath: chevron(i === 0), background: bg, color: ink }}
-                  className={`flex h-full items-center justify-center gap-1.5 text-[13px] transition-[filter,background-color] ${i ? "pl-4 pr-3" : "pl-3 pr-3"} ${
+                  className={`flex h-full items-center justify-center gap-1.5 whitespace-nowrap text-[13px] transition-[filter,background-color] ${i ? "pl-5 pr-4" : "pl-3.5 pr-4"} ${
                     on
                       ? "font-semibold"
                       : past
@@ -88,8 +88,12 @@ export function StageChevrons({
                         : "bg-mist-100 font-medium text-mist-600 group-enabled:group-hover:bg-mist-200 group-enabled:group-hover:text-navy-900"
                   }`}
                 >
-                  {past && <Icon name="check" className="size-3.5 shrink-0" />}
-                  <span className="truncate">{s.label}</span>
+                  {past ? (
+                    <Icon name="check" className="size-3.5 shrink-0" />
+                  ) : (
+                    !on && <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: c }} />
+                  )}
+                  {s.label}
                 </span>
               </button>
             </li>

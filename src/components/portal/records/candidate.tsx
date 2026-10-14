@@ -54,16 +54,17 @@ export function StageTrack({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {rejected ? (
-          <span role="status" className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#fef3f2] px-3 text-[13px] font-medium text-[#b42318] ring-1 ring-inset ring-[#f3c4bf]">
-            <Icon name="alert" className="size-4" />
-            Rejected. Pick a stage to reopen.
+          <span role="status" title="Pick a stage to reopen" className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#fef3f2] px-2.5 text-[13px] font-medium text-[#b42318] ring-1 ring-inset ring-[#f3c4bf]">
+            <Icon name="alert" className="size-3.5" />
+            Rejected
+            <span className="sr-only">. Pick a stage to reopen.</span>
           </span>
         ) : (
           <>
             {hired ? (
-              <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#ecfdf3] px-3 text-[13px] font-medium text-[#067647] ring-1 ring-inset ring-[#abefc6]">
-                <Icon name="check" className="size-4" />
-                Hired{daysInStage ? <span className="tabular-nums">, {daysInStage}d ago</span> : " today"}
+              <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#ecfdf3] px-2.5 text-[13px] font-medium text-[#067647] ring-1 ring-inset ring-[#abefc6]">
+                <Icon name="check" className="size-3.5" />
+                <span className="tabular-nums">{daysInStage ? `Hired ${daysInStage}d ago` : "Hired today"}</span>
               </span>
             ) : staleOffer ? (
               <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#fffaeb] px-2.5 text-[13px] font-medium tabular-nums text-[#b54708] ring-1 ring-inset ring-[#fedf89]">
@@ -75,7 +76,7 @@ export function StageTrack({
                 <span className="text-[13px] tabular-nums text-mist-600">{daysInStage === 0 ? "Moved today" : `${daysInStage}d in stage`}</span>
               )
             )}
-            <Button size="sm" variant="ghost" icon="x" onClick={() => onStage("rejected")} disabled={saving}>
+            <Button size="sm" variant="ghost" icon="x" className="text-[#b42318]! hover:bg-[#fef3f2]!" onClick={() => onStage("rejected")} disabled={saving}>
               Reject
             </Button>
             {next && (

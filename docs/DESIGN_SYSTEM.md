@@ -224,7 +224,7 @@ The product owner's UI/UX rules, each mapped to what enforces it here.
 **Reuse `src/components/ui/` (shadcn) for base primitives, do not fork parallel admin
 copies.** The ui library is themed to navy `--primary` + cyan `--ring`; the admin language
 is cobalt + slate, so apply a cobalt override class at the admin call site (see
-`PageHeaderButton` and the `checkboxCobalt` const in `data-table.tsx` for the pattern).
+`PageHeaderButton` and the `checkboxCobalt` pattern).
 Admin-specific atoms that have **no** ui equivalent live in `src/components/portal/console/`.
 
 | Atom | Source | Notes |
@@ -247,7 +247,7 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/port
 | `AdminCard` / `AdminCardHeader` | `admin-card.tsx` | The canonical surface. |
 | `SearchInput`, `FilterToggle`, `ViewSwitcher`, `BulkBar` | `toolbar.tsx` | The list-page toolbar kit. |
 | `FilterChips` | `filter-chips.tsx` | Active filters stay visible & dismissible. |
-| `DataTable<T>` | `data-table.tsx` | Sortable, selectable, paginated table with built-in loading skeletons and `EmptyState`. Numbers right-aligned; secondary columns `hideBelow`. |
+| `DataTable<T>` | `portal/DataTable.tsx` | Sortable, selectable table: numbered pages, rows-per-page in the footer, density 44/56/68 saved per table, keyboard-openable rows, `numeric` columns right-aligned, secondary columns `hideBelow`. |
 | `AssigneePicker` | `forms/primitives.tsx` | Search + chip multi-select. |
 | `AdminDialog` | `admin-dialog.tsx` | Every console modal. Radix Dialog: focus trap, Escape, scrim click, focus return, labelled by its title. Sizes `sm/md/lg/xl`, a `footer` slot, `actions` in the header, `busy` blocks dismissal. A form in the body pairs with a footer submit via `form="id"`. Guard unsaved work by gating `onOpenChange(false)` behind a "Discard changes?" `ConfirmDialog`. |
 | `ConfirmDialog` | `confirm-dialog.tsx` | Confirmations on `AdminDialog` (`alertdialog`), Cancel focused first, `WorkspaceButton` `danger` for destructive. |

@@ -425,7 +425,7 @@ export default function ApplicationsView() {
             items={[
               { label: "Edit", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/applications`) },
               // Reversible from the undo toast, so not styled as danger
-              ...(!TERMINAL.has(a.status) ? [{ label: "Reject", icon: "x" as const, onSelect: () => void move(a, "rejected") }] : []),
+              ...(!TERMINAL.has(a.status) ? [{ label: "Reject", icon: "x" as const, danger: true, onSelect: () => void move(a, "rejected") }] : []),
               { kind: "separator" },
               {
                 label: "Delete",
@@ -458,7 +458,7 @@ export default function ApplicationsView() {
     if (nxt || !TERMINAL.has(a.status)) items.push({ kind: "separator" });
     if (nxt) items.push({ label: `Move to ${STAGE_LABEL[nxt]}`, icon: "chevronRight", onSelect: () => void move(a, nxt) });
     // Reversible from the undo toast, so not styled as danger.
-    if (!TERMINAL.has(a.status)) items.push({ label: "Reject", icon: "x", onSelect: () => void move(a, "rejected") });
+    if (!TERMINAL.has(a.status)) items.push({ label: "Reject", icon: "x", danger: true, onSelect: () => void move(a, "rejected") });
     items.push({ kind: "separator" }, { label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleteIds([a.id]) });
     return items;
   };

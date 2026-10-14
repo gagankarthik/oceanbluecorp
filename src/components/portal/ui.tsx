@@ -96,7 +96,7 @@ export function StatCard({
   );
 }
 
-export type Tone = "blue" | "green" | "amber" | "red" | "grey" | "navy" | "cyan";
+export type Tone = "blue" | "green" | "amber" | "red" | "grey" | "navy" | "cyan" | "violet";
 
 const toneStyles: Record<Tone, string> = {
   blue: "bg-ocean-50 text-ocean-700 ring-ocean-200",
@@ -106,6 +106,7 @@ const toneStyles: Record<Tone, string> = {
   grey: "bg-mist-100 text-mist-700 ring-mist-300",
   navy: "bg-navy-900 text-white ring-navy-900",
   cyan: "bg-cyan-100 text-navy-900 ring-cyan-200",
+  violet: "bg-[#f4f3ff] text-[#5925dc] ring-[#d9d6fe]",
 };
 
 export function Badge({ children, tone = "grey", dot = false }: { children: React.ReactNode; tone?: Tone; dot?: boolean }) {
