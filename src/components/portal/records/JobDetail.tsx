@@ -5,7 +5,7 @@ import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials, RECRUITING_ROLES } from "@/lib/auth";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useResource } from "@/hooks/use-resource";
-import { refreshApplications } from "@/hooks/use-console-data";
+import { refreshApplications, refreshJobs } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { downloadCsv } from "@/lib/csv";
@@ -14,10 +14,13 @@ import { jobLocationLabel } from "@/lib/workplace";
 import { JOB_STATUS_COPY } from "@/lib/job-options";
 import { SALARY_PERIODS } from "@/components/admin/theme";
 import { usePageCrumb, useNavSection } from "@/components/admin/admin-provider";
-import { Avatar, Badge, Button, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
+import { Avatar, Badge, Button, ConfirmDialog, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
 import { useToast } from "@/components/portal/toast";
 import { StageSelect } from "@/components/portal/fields";
-import { BOARD, STAGE_DOT, STAGE_LABEL, JOB_TYPE_LABEL, type Stage } from "@/components/portal/recruiting/model";
+import {
+  BOARD, STAGE_DOT, STAGE_LABEL, JOB_STATUS_TONE, JOB_TYPE_LABEL, daysUntil, publicJobPath, type Stage,
+} from "@/components/portal/recruiting/model";
+import { jobMenuItems } from "@/components/portal/recruiting/bits";
 import Icon from "@/components/portal/icons";
 import { CandidateEditDrawer } from "./CandidateEditDrawer";
 import { ActionMenu } from "./Menu";
@@ -62,6 +65,8 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   const [stageFilter, setStageFilter] = useState<Stage | "all">("all");
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [moving, setMoving] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Applicants first when there are some, the posting when there are none; media gets the posting only.
   const activeTab: Tab = !canPrice ? "info" : storedTab ?? (applications.length > 0 ? "applicants" : "info");
@@ -97,13 +102,31 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   };
 
   // The public careers page, not this console URL: the link a candidate can open.
-  const publicUrl = () => `${window.location.origin}/careers/search/${jobId}`;
+  const publicUrl = () => `${window.location.origin}${publicJobPath(jobId)}`;
   const shareLink = async () => {
     try {
       await navigator.clipboard.writeText(publicUrl());
       notify("Public link copied. Anyone with it can view this posting.");
     } catch {
       notify("Couldn't copy the link. Open the public posting and copy its address instead.", { tone: "error" });
+    }
+  };
+
+  const remove = async () => {
+    setDeleting(true);
+    try {
+      const r = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
+      if (!r.ok) throw new Error();
+      void refreshJobs();
+      // A posting's applications go with it.
+      void refreshApplications();
+      notify("Job deleted");
+      setConfirmDelete(false);
+      router.push(back.href);
+    } catch {
+      notify("Couldn't delete the job. Try again.", { tone: "error" });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -148,6 +171,10 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   const editHref = `/portal/jobs/${jobId}/edit${category === "open" ? "?category=open" : ""}`;
   const statusCopy = JOB_STATUS_COPY[job.status];
   const live = isPubliclyOpen(job.status);
+  // Deadlines only warn while the role is being worked: overdue and today red, three days amber.
+  const due = job.status === "active" || job.status === "open" ? daysUntil(job.submissionDueDate) : null;
+  const dueTone = due === null ? "" : due <= 0 ? "font-semibold text-[#b42318]" : due <= 3 ? "font-semibold text-[#b54708]" : "";
+  const dueNote = due === null || due > 3 ? "" : due < 0 ? "overdue" : due === 0 ? "due today" : `in ${due} day${due === 1 ? "" : "s"}`;
 
   const details: { label: string; value?: React.ReactNode }[] = [
     ...(canPrice
@@ -167,7 +194,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
         </span>
       ) : undefined,
     },
-    { label: "Deadline", value: job.submissionDueDate ? <span className="tabular-nums">{fmtDate(job.submissionDueDate)}</span> : undefined },
+    { label: "Deadline", value: job.submissionDueDate ? <span className={`tabular-nums ${dueTone}`}>{fmtDate(job.submissionDueDate)}{dueNote && ` · ${dueNote}`}</span> : undefined },
     { label: "Created", value: <span className="tabular-nums">{fmtDate(job.createdAt)}</span> },
     { label: "Posted by", value: job.postedByName },
   ];
@@ -184,15 +211,24 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
     { key: "info" as Tab, label: "About the job", icon: "resume" as const },
   ].filter((t) => canPrice || t.key === "info");
 
-  const menu = [
-    live
-      ? { label: "Copy public link", icon: "external" as const, onSelect: () => void shareLink() }
-      : { label: "Copy public link", icon: "external" as const, onSelect: () => {}, disabled: true, hint: "Set the role to Active to share it." },
-    ...(live ? [{ label: "View public posting", icon: "eye" as const, onSelect: () => window.open(publicUrl(), "_blank", "noopener") }] : []),
-    ...(canManageApplicants && filteredApps.length > 0
-      ? [{ label: `Export ${filteredApps.length} applicant${filteredApps.length === 1 ? "" : "s"}`, icon: "download" as const, onSelect: exportApplicants }]
-      : []),
-  ];
+  // Every page action in one menu; the API still enforces each one.
+  const menu = jobMenuItems({
+    job,
+    go: (href) => router.push(href),
+    onDelete: () => setConfirmDelete(true),
+    canEdit,
+    // requireStaff: deleting removes the role's applications too.
+    canDelete: canPrice,
+    canAddApplicant: canManageApplicants,
+    extra: [
+      live
+        ? { label: "Copy public link", icon: "external", onSelect: () => void shareLink() }
+        : { label: "Copy public link", icon: "external", onSelect: () => {}, disabled: true, hint: "Set the role to Active to share it." },
+      ...(canManageApplicants && filteredApps.length > 0
+        ? [{ label: `Export ${filteredApps.length} applicant${filteredApps.length === 1 ? "" : "s"}`, icon: "download" as const, onSelect: exportApplicants }]
+        : []),
+    ],
+  });
 
   const posting = job.description || hasRequirements || hasResponsibilities || job.clientNotes ? (
     <div className="grid gap-6 p-5">
@@ -325,7 +361,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
         back={back}
         icon={category === "open" ? "briefcase" : "capitol"}
         title={job.title}
-        meta={<Badge tone={live ? "green" : job.status === "open" ? "blue" : job.status === "closed" ? "grey" : "amber"} dot>{statusCopy?.label ?? job.status}</Badge>}
+        meta={<Badge tone={JOB_STATUS_TONE[job.status] ?? "grey"} dot>{statusCopy?.label ?? job.status}</Badge>}
         description={
           <FactLine
             items={[
@@ -337,21 +373,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
             ]}
           />
         }
-        actions={
-          <>
-            <ActionMenu items={menu} />
-            {canEdit && (
-              <Button variant="secondary" icon="edit" href={editHref}>
-                Edit
-              </Button>
-            )}
-            {canManageApplicants && (
-              <Button icon="plus" href={`/portal/applications/new?jobId=${jobId}`}>
-                Add applicant
-              </Button>
-            )}
-          </>
-        }
+        actions={<ActionMenu label="Job actions" items={menu} />}
       />
 
       {canPrice && applications.length > 0 && (
@@ -412,6 +434,17 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
           {canPrice && <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />}
         </aside>
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete this job?"
+          body="This is permanent. The posting and every application attached to it are removed."
+          confirmLabel="Delete job"
+          busy={deleting}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => void remove()}
+        />
+      )}
 
       <CandidateEditDrawer
         open={!!editingApp}

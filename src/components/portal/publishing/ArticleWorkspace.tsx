@@ -7,7 +7,8 @@ import DataTable, { TableTabs, type Column } from "@/components/portal/DataTable
 import Icon, { type IconName } from "@/components/portal/icons";
 import Link from "next/link";
 import { Badge, BarList, KeyValue } from "@/components/portal/ui";
-import { Button, EmptyState, ErrorState, InsightsSheet, Page, PageHeader, Panel } from "@/components/portal/kit";
+import { Button, EmptyState, ErrorState, InsightsSheet, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 import { BarChart, DonutChart, StackedBar } from "@/components/portal/charts";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
@@ -84,6 +85,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
   const { role } = useSession();
   const editable = canEdit(role);
   const notify = useToast();
+  const router = usePortalRouter();
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -348,13 +350,8 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          {editable && (
-            <Button icon="edit" href={editUrl(a)}>
-              Edit {config.noun}
-            </Button>
-          )}
-          {isLive(a) && (
+        {isLive(a) && (
+          <div className="flex flex-wrap gap-2">
             <a
               href={publicUrl(a)}
               target="_blank"
@@ -364,9 +361,9 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
               <Icon name="globe" className="size-4" />
               View live
             </a>
-          )}
-          {isLive(a) && <CopyLinkButton path={publicUrl(a)} />}
-        </div>
+            <CopyLinkButton path={publicUrl(a)} />
+          </div>
+        )}
 
         {editable && (
           <div className="grid gap-3 border-t border-mist-200 pt-5">
@@ -391,6 +388,28 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
         )}
       </div>
     );
+  };
+
+  const rowMenu = (row: Article, openDetail: () => void): MenuEntry[] => {
+    const a = byId.get(row.id) ?? row;
+    const items: MenuEntry[] = [{ label: "Open", icon: "eye", onSelect: openDetail }];
+    if (editable) items.push({ label: "Edit", icon: "edit", onSelect: () => router.push(editUrl(a)) });
+    if (isLive(a)) items.push({ label: "Preview on site", icon: "globe", onSelect: () => window.open(publicUrl(a), "_blank", "noopener,noreferrer") });
+    if (editable) {
+      items.push({ kind: "separator" });
+      if (a.status !== "archived") items.push({ label: "Archive", icon: "clock", disabled: busy, onSelect: () => void apply([a.id], { status: "archived" }, "archived") });
+      items.push({
+        label: "Delete",
+        icon: "trash",
+        danger: true,
+        disabled: busy,
+        onSelect: () => {
+          closeDetail.current = null;
+          setPendingDelete(a);
+        },
+      });
+    }
+    return items;
   };
 
   // ── render ────────────────────────────────────────────────────────────────
@@ -602,6 +621,16 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
             filters={[{ key: "facet", label: facet.label, options: byFacet.map((d) => d.label).sort(), value: facet.value }]}
             detailTitle={(a) => a.title}
             renderDetail={detail}
+            detailActions={
+              editable
+                ? (a) => (
+                    <Button size="sm" variant="secondary" icon="edit" href={editUrl(a)}>
+                      Edit
+                    </Button>
+                  )
+                : undefined
+            }
+            rowMenu={rowMenu}
           />
         )}
       </section>

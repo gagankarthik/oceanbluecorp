@@ -66,12 +66,14 @@ interface PipelinePanelProps {
   defaultPayRate?: number;
   /** Told when the candidate's stage was advanced by a recorded event. */
   onStatusAdvanced?: (status: string) => void;
+  /** Bump to re-read the records, e.g. after the record page saved one. */
+  refreshKey?: number;
 }
 
 export function PipelinePanel({
   applicationId, candidateName, jobId, jobTitle,
   defaultClientId, defaultClientName, defaultVendorId, defaultVendorName, defaultBillRate, defaultPayRate,
-  onStatusAdvanced,
+  onStatusAdvanced, refreshKey,
 }: PipelinePanelProps) {
   const notify = useToast();
   const [records, setRecords] = useState<PipelineRecord[]>([]);
@@ -101,7 +103,7 @@ export function PipelinePanel({
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshKey]);
 
   const submissions = useMemo(() => records.filter((r): r is Submission => r.kind === "submission"), [records]);
   const unattached = useMemo(() => records.filter((r) => r.kind !== "submission" && !r.submissionId), [records]);
@@ -477,7 +479,7 @@ function PlacementLine({ placement, onEdit, onDelete }: RowHandlers & { placemen
 
 /* ── Record editor ── */
 
-interface DrawerDefaults {
+export interface DrawerDefaults {
   clientId?: string;
   clientName?: string;
   vendorId?: string;
@@ -550,7 +552,7 @@ function initialValues(record: PipelineRecord | null, parent: Submission | null,
 
 const FORM_ID = "pipeline-record-form";
 
-function PipelineRecordDrawer({
+export function PipelineRecordDrawer({
   kind, record, parentSubmission, applicationId, candidateName, jobId, jobTitle, defaults, onClose, onSaved,
 }: {
   kind: PipelineKind;

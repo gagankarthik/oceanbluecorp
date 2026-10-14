@@ -11,8 +11,9 @@ import { BOARD, FLOW, STAGE_LABEL, buckets, countIn, locationOf, reachedAt, stag
 import { BoardView, FilterBar, SavedViewsMenu, nextStage, type SavedSearch } from "@/components/portal/recruiting/applications-views";
 import {
   Avatar, Badge, Button, ConfirmDialog, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
-  Segmented, StatCard,
+  Segmented, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
 import { refreshApplications, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
@@ -83,6 +84,7 @@ function fromLegacy(st: LegacyState): ListState {
 
 export default function ApplicationsView() {
   const notify = useToast();
+  const router = usePortalRouter();
   const { user } = useAuth();
   const me = useMemo(() => ({ id: user?.id, name: user?.name }), [user?.id, user?.name]);
 
@@ -289,7 +291,7 @@ export default function ApplicationsView() {
       },
     },
     { key: "location", header: "Location", sortable: true, card: false, hideBelow: "xl", value: (a) => locationOf(a) },
-    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="text-[13px]">{a.ownershipName}</span> : <span className="text-[13px] italic text-mist-500">Unassigned</span>) },
+    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="text-[13px]">{a.ownershipName}</span> : <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>) },
     { key: "source", header: "Source", sortable: true, card: false, defaultHidden: true, value: (a) => a.source ?? "" },
     { key: "hireType", header: "Hire type", sortable: true, card: false, defaultHidden: true, value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
@@ -377,7 +379,7 @@ export default function ApplicationsView() {
             { k: "Location", v: locationOf(a) || "—" },
             { k: "Applied", v: fmtDate(a.appliedAt) },
             { k: "Source", v: a.source || "—" },
-            { k: "Owner", v: a.ownershipName || "Unassigned" },
+            { k: "Owner", v: a.ownershipName || <span className="font-medium text-[#b42318]">Unassigned</span> },
             { k: "Work authorization", v: a.workAuthorization || "—" },
             { k: "Hire type", v: hireTypeLabel(a.hireType) || "—" },
           ]}
@@ -406,18 +408,13 @@ export default function ApplicationsView() {
             </ol>
           </section>
         )}
-        {/* The next step and the full record lead; everyday actions sit quietly below */}
+        {/* The next step leads (the full record sits in the sheet header); everyday actions sit quietly below */}
         <div className="grid gap-3 border-t border-mist-200 pt-5">
-          <div className="grid grid-cols-2 gap-2">
-            {nxt && (
-              <Button icon="chevronRight" onClick={() => void move(a, nxt)}>
-                Move to {STAGE_LABEL[nxt]}
-              </Button>
-            )}
-            <Button variant="secondary" icon="external" href={`/portal/candidates/${a.id}`} className={nxt ? "" : "col-span-2"}>
-              Open full record
+          {nxt && (
+            <Button icon="chevronRight" onClick={() => void move(a, nxt)}>
+              Move to {STAGE_LABEL[nxt]}
             </Button>
-          </div>
+          )}
           <div className="flex flex-wrap items-center gap-1">
             <Button variant="ghost" size="sm" icon="edit" href={`/portal/applications/${a.id}/edit?return=/portal/applications`}>Edit</Button>
             <Button variant="ghost" size="sm" icon="mail" href={`mailto:${a.email}`}>Email</Button>
@@ -441,6 +438,26 @@ export default function ApplicationsView() {
         </div>
       </div>
     );
+  };
+
+  const headerActions = (a: Row) => (
+    <Button size="sm" variant="secondary" icon="external" href={`/portal/candidates/${a.id}`}>Open full record</Button>
+  );
+
+  const rowMenu = (a: Row, openDetail: () => void): MenuEntry[] => {
+    const nxt = nextStage(a.status);
+    const items: MenuEntry[] = [
+      { label: "Open", icon: "eye", onSelect: openDetail },
+      { label: "Open full record", icon: "external", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
+      { label: "Edit", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/applications`) },
+      { label: "Email", icon: "mail", disabled: !a.email, onSelect: () => (window.location.href = `mailto:${a.email}`) },
+    ];
+    if (nxt || !TERMINAL.has(a.status)) items.push({ kind: "separator" });
+    if (nxt) items.push({ label: `Move to ${STAGE_LABEL[nxt]}`, icon: "chevronRight", onSelect: () => void move(a, nxt) });
+    // Reversible from the undo toast, so not styled as danger.
+    if (!TERMINAL.has(a.status)) items.push({ label: "Reject", icon: "x", onSelect: () => void move(a, "rejected") });
+    items.push({ kind: "separator" }, { label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleteIds([a.id]) });
+    return items;
   };
 
   const q = table.query.trim().toLowerCase();
@@ -606,6 +623,8 @@ export default function ApplicationsView() {
             )}
             detailTitle={(a) => a.name || a.email}
             renderDetail={(a, close) => detail(rows.find((r) => r.id === a.id) ?? a, close)}
+            detailActions={headerActions}
+            rowMenu={rowMenu}
           />
         )}
       </>
@@ -667,7 +686,7 @@ export default function ApplicationsView() {
       {body}
 
       {view === "board" && open && (
-        <Drawer title={open.name || open.email} onClose={() => setOpenId(null)}>
+        <Drawer title={open.name || open.email} onClose={() => setOpenId(null)} actions={headerActions(open)}>
           {detail(open)}
         </Drawer>
       )}

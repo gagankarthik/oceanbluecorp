@@ -8,7 +8,10 @@ import { downloadCsv } from "@/lib/csv";
 import { useResource } from "@/hooks/use-resource";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
-import { Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
+import {
+  Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, StatCard, usePortalRouter,
+} from "@/components/portal/kit";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 import { DonutChart, SERIES, TrendChart } from "@/components/portal/charts";
 import { GoneNotice, InlineDelete, SegmentChips, errorText, send, useToast, weekBuckets } from "@/components/portal/relationships/shared";
 import {
@@ -24,6 +27,7 @@ import {
   contactName,
   contactStatusMeta,
   dropContact,
+  replyHref,
   saveContactNotes,
   saveContactStatus,
   syncContact,
@@ -33,6 +37,8 @@ import {
 } from "@/components/portal/relationships/contact";
 
 const KEY = "/api/contacts";
+/** An unanswered enquiry older than this reads as waiting too long. */
+const WAITING_MS = 2 * 86_400_000;
 const typeOf = (c: Contact) => (isJobSeeker(c.inquiryType) ? "Job seekers" : c.inquiryType || "Other");
 
 function DrawerBody({
@@ -71,10 +77,7 @@ function DrawerBody({
       </section>
       <ContactFacts c={c} />
       <ContactNotes c={c} onSave={onNotes} />
-      <div className="flex flex-wrap items-start justify-between gap-3 border-t border-mist-200 pt-5">
-        <Button href={`/portal/contacts/${c.id}`} variant="ghost" icon="external">
-          Open full record
-        </Button>
+      <div className="flex flex-wrap items-start justify-end gap-3 border-t border-mist-200 pt-5">
         <InlineDelete label="Delete enquiry" warning="This enquiry is removed permanently. This cannot be undone." busy={busy === "delete"} onConfirm={() => void run("delete", onDelete)} />
       </div>
     </div>
@@ -87,6 +90,9 @@ export default function ContactsView() {
   const [tab, setTab] = useState<"all" | ContactStatus>("all");
   const [segment, setSegment] = useState("All");
   const toast = useToast();
+  const router = usePortalRouter();
+  const [confirmDelete, setConfirmDelete] = useState<Contact | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const setStatus = async (ids: string[], status: ContactStatus) => {
     const before = new Map(contacts.filter((c) => ids.includes(c.id)).map((c) => [c.id, c.status]));
@@ -129,6 +135,32 @@ export default function ContactsView() {
     } catch (e) {
       toast.error(errorText(e, "Couldn't delete the enquiry. Try again."));
     }
+  };
+
+  const rowMenu = (c: Contact, openDetail: () => void): MenuEntry[] => [
+    { label: "Open", icon: "eye", onSelect: openDetail },
+    { label: "Open full record", icon: "external", onSelect: () => router.push(`/portal/contacts/${c.id}`) },
+    {
+      label: "Reply by email",
+      icon: "send",
+      onSelect: () => {
+        // Replying marks the enquiry responded, as in the drawer.
+        if (c.status !== "responded") void setStatus([c.id], "responded");
+        window.location.href = replyHref(c);
+      },
+    },
+    ...(c.status !== "responded" ? [{ label: "Mark responded", icon: "check" as const, onSelect: () => void setStatus([c.id], "responded") }] : []),
+    { kind: "separator" },
+    ...(c.status !== "archived" ? [{ label: "Archive", icon: "layers" as const, onSelect: () => void setStatus([c.id], "archived") }] : []),
+    { label: "Delete", icon: "trash", danger: true, onSelect: () => setConfirmDelete(c) },
+  ];
+
+  const confirmRemove = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    await remove(confirmDelete, () => undefined);
+    setDeleting(false);
+    setConfirmDelete(null);
   };
 
   // ?search=<name> deep link; the table is keyed on it so it mounts filtered.
@@ -221,7 +253,13 @@ export default function ContactsView() {
       sortable: true,
       value: (c) => new Date(c.createdAt).getTime(),
       cell: (c) => (
-        <time dateTime={c.createdAt} className={`whitespace-nowrap tabular-nums ${c.status === "new" ? "font-medium text-navy-900" : "text-mist-600"}`} title={fmtDateTime(c.createdAt)}>
+        <time
+          dateTime={c.createdAt}
+          className={`whitespace-nowrap tabular-nums ${
+            c.status !== "new" ? "text-mist-600" : Date.now() - new Date(c.createdAt).getTime() > WAITING_MS ? "font-medium text-[#b54708]" : "font-medium text-navy-900"
+          }`}
+          title={fmtDateTime(c.createdAt)}
+        >
           {fmtRelative(c.createdAt)}
         </time>
       ),
@@ -354,6 +392,8 @@ export default function ContactsView() {
                   </>
                 )}
                 detailTitle={(c) => contactName(c)}
+                detailActions={(c) => <Button size="sm" variant="secondary" icon="external" href={`/portal/contacts/${c.id}`}>Open full record</Button>}
+                rowMenu={rowMenu}
                 renderDetail={(r, close) => {
                   const live = contacts.find((x) => x.id === r.id);
                   return live ? (
@@ -371,6 +411,16 @@ export default function ContactsView() {
               />
             )}
           </section>
+        )}
+        {confirmDelete && (
+          <ConfirmDialog
+            title="Delete this enquiry?"
+            body={`The enquiry from ${contactName(confirmDelete)} is removed permanently. This cannot be undone.`}
+            confirmLabel="Delete"
+            busy={deleting}
+            onCancel={() => setConfirmDelete(null)}
+            onConfirm={() => void confirmRemove()}
+          />
         )}
       </Page>
     </RoleGate>

@@ -10,7 +10,8 @@ import { useResource } from "@/hooks/use-resource";
 import { useJobSummaries } from "@/hooks/use-console-data";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
-import { Avatar, Button, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
+import type { MenuEntry } from "@/components/portal/records/Menu";
+import { Avatar, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
 import { BarChart, StackedBar } from "@/components/portal/charts";
 import Select from "@/components/portal/Select";
 import Icon from "@/components/portal/icons";
@@ -167,41 +168,40 @@ function ClientForm({ editing, onClose, onSaved }: { editing: Client | null; onC
   );
 }
 
-function ClientDetail({ c, jobs, jobsLoading, jobsError, onEdit, onDelete }: { c: Client; jobs: Job[]; jobsLoading: boolean; jobsError: boolean; onEdit: () => void; onDelete: () => Promise<void> }) {
+function ClientDetail({ c, jobs, jobsLoading, jobsError, onDelete }: { c: Client; jobs: Job[]; jobsLoading: boolean; jobsError: boolean; onDelete: () => Promise<void> }) {
   const [deleting, setDeleting] = useState(false);
   const site = safeHttpUrl(c.websiteUrl);
   return (
     <div className="grid gap-6">
       <RecordHead name={c.name} sub={domainOf(c.websiteUrl)} badges={<ActiveBadge active={c.status === "active"} />} />
 
-      <div className="flex flex-wrap gap-2">
-        <Button icon="edit" onClick={onEdit}>
-          Edit client
-        </Button>
-        {site && (
-          <a
-            href={site}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-mist-0 px-4 text-[14px] font-medium text-navy-900 ring-1 ring-inset ring-mist-300 transition-colors hover:bg-mist-50"
-          >
-            <Icon name="globe" className="size-[18px]" />
-            Website
-            <Icon name="external" className="size-4 text-mist-500" />
-            <span className="sr-only">(opens in a new tab)</span>
-          </a>
-        )}
-        {c.email && (
-          <Button href={`mailto:${c.email}`} variant="secondary" icon="mail">
-            Email
-          </Button>
-        )}
-        {c.phone && (
-          <Button href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} variant="secondary" icon="phone">
-            Call
-          </Button>
-        )}
-      </div>
+      {(site || c.email || c.phone) && (
+        <div className="flex flex-wrap gap-2">
+          {site && (
+            <a
+              href={site}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-mist-0 px-4 text-[14px] font-medium text-navy-900 ring-1 ring-inset ring-mist-300 transition-colors hover:bg-mist-50"
+            >
+              <Icon name="globe" className="size-[18px]" />
+              Website
+              <Icon name="external" className="size-4 text-mist-500" />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          )}
+          {c.email && (
+            <Button href={`mailto:${c.email}`} variant="secondary" icon="mail">
+              Email
+            </Button>
+          )}
+          {c.phone && (
+            <Button href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} variant="secondary" icon="phone">
+              Call
+            </Button>
+          )}
+        </div>
+      )}
 
       <RecordStats
         items={[
@@ -249,6 +249,23 @@ export default function ClientsView() {
   const [form, setForm] = useState<{ editing: Client | null } | null>(null);
   const preset = useTablePreset();
   const toast = useToast();
+  const [confirmDelete, setConfirmDelete] = useState<Client | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const rowMenu = (c: Client, openDetail: () => void): MenuEntry[] => [
+    { label: "Open", icon: "eye", onSelect: openDetail },
+    { label: "Edit", icon: "edit", onSelect: () => setForm({ editing: c }) },
+    { kind: "separator" },
+    { label: "Delete", icon: "trash", danger: true, onSelect: () => setConfirmDelete(c) },
+  ];
+
+  const confirmRemove = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    await remove(confirmDelete, () => undefined);
+    setDeleting(false);
+    setConfirmDelete(null);
+  };
 
   const remove = async (c: Client, close: () => void) => {
     try {
@@ -463,6 +480,12 @@ export default function ClientsView() {
                   searchPlaceholder="Search name, website, email or city"
                   emptyTitle="No clients match your filters"
                   detailTitle={(c) => c.name}
+                  detailActions={(c) => (
+                    <Button size="sm" variant="secondary" icon="edit" onClick={() => setForm({ editing: clients.find((x) => x.id === c.id) ?? c })}>
+                      Edit
+                    </Button>
+                  )}
+                  rowMenu={rowMenu}
                   renderDetail={(r, close) => {
                     const live = clients.find((x) => x.id === r.id);
                     return live ? (
@@ -471,7 +494,6 @@ export default function ClientsView() {
                         jobs={(jobsRes.jobs ?? []).filter((j) => j.clientId === live.id)}
                         jobsLoading={jobsRes.isLoading}
                         jobsError={!!jobsRes.error && !jobsRes.jobs}
-                        onEdit={() => setForm({ editing: live })}
                         onDelete={() => remove(live, close)}
                       />
                     ) : (
@@ -484,6 +506,17 @@ export default function ClientsView() {
           </>
         )}
       </Page>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete this client?"
+          body={`${confirmDelete.name} is removed permanently. Roles that name it keep their copy of the name. This cannot be undone.`}
+          confirmLabel="Delete"
+          busy={deleting}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => void confirmRemove()}
+        />
+      )}
 
       {form && (
         <ClientForm

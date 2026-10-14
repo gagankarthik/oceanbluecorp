@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { Job, Client, Vendor, SalaryPeriod } from "@/lib/aws/dynamodb";
-import { JOB_LIST_HREF, JOB_LIST_LABEL, jobCategory, type JobCategory } from "@/lib/job-status";
+import { JOB_LIST_HREF, JOB_LIST_LABEL, isPastDeadline, jobCategory, type JobCategory } from "@/lib/job-status";
 import { fmtDate } from "@/lib/format";
 import { US_STATES, normalizeState, SALARY_PERIODS } from "@/components/admin/theme";
 import { jobLocationLabel, workplaceOf, WORKPLACE_LABEL, type Workplace } from "@/lib/workplace";
@@ -21,6 +21,7 @@ import {
   AddClientDialog, AddVendorDialog, Choice, Field, FormBanner, LocationInput, MarginPreview, MoneyInput, NativeSelect,
   PartnerPicker, RangeInput, StaffMultiPicker, StaffPicker, TextArea, TextInput, type NewVendorInput, type StaffPerson,
 } from "@/components/portal/fields";
+import Icon from "@/components/portal/icons";
 import { RequiredProgress, StepCard, StepList, StepRail, jumpToStep, useActiveStep, type StepInfo, type StepState } from "./form-steps";
 
 // Kept for existing imports; the lists live in lib/job-options.
@@ -130,6 +131,21 @@ export function jobToFormData(job: Job): JobFormData {
   };
 }
 
+/**
+ * A new draft seeded from another role: every field copied, title marked as a copy.
+ * Id, posting ID, dates, applicants and history are not form fields, so the new
+ * record gets its own; a deadline already past is dropped.
+ */
+export function duplicateFormData(job: Job): JobFormData {
+  const d = jobToFormData(job);
+  return {
+    ...d,
+    title: `Copy of ${d.title}`.slice(0, JOB_TEXT_LIMITS.title),
+    status: "draft",
+    submissionDueDate: isPastDeadline(job) ? "" : d.submissionDueDate,
+  };
+}
+
 /** Build API payload from form data */
 export function formDataToPayload(data: JobFormData) {
   return {
@@ -199,6 +215,8 @@ interface JobFormProps {
   onAddClient: (clientData: { name: string; websiteUrl: string; email: string; phone: string }) => Promise<Client>;
   onAddVendor: (vendorData: NewVendorInput) => Promise<Vendor>;
   formId?: string;
+  /** Shown above the first step, e.g. "Duplicated from …". */
+  notice?: React.ReactNode;
 }
 
 type OptionalStep = "pay" | "client" | "team";
@@ -213,7 +231,7 @@ const SUMMARY_K = "w-20 shrink-0 text-mist-500";
  * puts the role on the careers site, and crossing Active either way asks first.
  */
 export function JobForm({
-  mode, initialData, job, clients, vendors, hrUsers, submitting, serverError, onDismissError, onSubmit, onAddClient, onAddVendor, formId = "job-form",
+  mode, initialData, job, clients, vendors, hrUsers, submitting, serverError, onDismissError, onSubmit, onAddClient, onAddVendor, formId = "job-form", notice,
 }: JobFormProps) {
   const { user } = useAuth();
   const seed = initialData || DEFAULT_JOB_FORM;
@@ -449,6 +467,12 @@ export function JobForm({
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
         <form id={formId} noValidate onSubmit={handleFormSubmit} onBlur={revalidate} className="grid min-w-0 gap-6">
           <FormBanner message={serverError} onDismiss={onDismissError} />
+          {notice && (
+            <p className="flex items-start gap-2.5 rounded-xl bg-ocean-50 px-4 py-3 text-[14px] text-navy-900 ring-1 ring-inset ring-ocean-200">
+              <Icon name="copy" className="mt-0.5 size-4 shrink-0 text-ocean-700" />
+              <span className="min-w-0">{notice}</span>
+            </p>
+          )}
 
           <StepCard id="step-role" step={1} title="Role" description="What the job is called and how it is worked." state={stepState("step-role")} required>
             <div className="grid gap-5">

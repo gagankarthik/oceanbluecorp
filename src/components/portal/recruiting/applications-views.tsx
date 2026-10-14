@@ -182,6 +182,7 @@ export function BoardView({
                           <span className="block truncate text-[12px] text-mist-600">{a.jobTitle || "No position"}</span>
                           <span className={`block text-[12px] ${stale ? "font-medium text-[#b54708]" : "text-mist-500"}`}>
                             {TERMINAL.has(a.status) ? fmtDate(a.appliedAt) : `${daysInStage(a)}d in stage`}
+                            {!TERMINAL.has(a.status) && !a.ownership && !a.ownershipName && <span className="font-medium text-[#b42318]"> · Unassigned</span>}
                           </span>
                         </span>
                       </button>

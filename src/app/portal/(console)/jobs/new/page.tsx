@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Client, Job, Vendor } from "@/lib/aws/dynamodb";
 import {
-  JobForm, JobFormData, DEFAULT_JOB_FORM, formDataToPayload, createVendorFromForm, type AssigneeUser,
+  JobForm, JobFormData, DEFAULT_JOB_FORM, duplicateFormData, formDataToPayload, createVendorFromForm, type AssigneeUser,
 } from "@/components/portal/records/JobForm";
 import { JobCreatedDialog } from "@/components/portal/records/JobCreatedDialog";
 import { jobCategory, JOB_LIST_HREF as LIST_HREF } from "@/lib/job-status";
@@ -17,9 +17,12 @@ import { useToast } from "@/components/portal/toast";
 export default function NewJobPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; from?: string }>;
 }) {
-  const category = jobCategory(use(searchParams));
+  const params = use(searchParams);
+  const category = jobCategory(params);
+  // ?from=<id>: Duplicate seeds the form from that role.
+  const fromId = params.from;
   useNavSection(LIST_HREF[category]);
   const { user } = useAuth();
   const router = useRouter();
@@ -27,7 +30,9 @@ export default function NewJobPage({
   // Stable identity: JobForm re-seeds from initialData whenever it changes.
   // Bumped by "Create another" so the form re-seeds empty.
   const [formKey, setFormKey] = useState(0);
-  const initialData = useMemo(() => ({ ...DEFAULT_JOB_FORM, category }), [category]);
+  const [source, setSource] = useState<Job | null>(null);
+  const [loadingSource, setLoadingSource] = useState(!!fromId);
+  const initialData = useMemo(() => (source ? duplicateFormData(source) : { ...DEFAULT_JOB_FORM, category }), [source, category]);
   const [created, setCreated] = useState<Job | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -65,6 +70,19 @@ export default function NewJobPage({
   useEffect(() => {
     if (usersError) notify("Couldn't load the assignee list. Refresh to try again.", { tone: "error" });
   }, [usersError, notify]);
+
+  useEffect(() => {
+    if (!fromId) return;
+    let on = true;
+    fetch(`/api/jobs/${encodeURIComponent(fromId)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => on && d?.job && setSource(d.job))
+      .catch(() => on && notify("Couldn't load the role to duplicate. Starting from a blank form.", { tone: "error" }))
+      .finally(() => on && setLoadingSource(false));
+    return () => {
+      on = false;
+    };
+  }, [fromId, notify]);
 
   const handleSubmit = async (data: JobFormData) => {
     if (submitting) return;
@@ -107,7 +125,7 @@ export default function NewJobPage({
   };
 
   // Hold the skeleton rather than flashing an editable form the redirect is about to take away.
-  if (isRecruiter) return <FormSkeleton label="Loading job form" sections={3} />;
+  if (isRecruiter || loadingSource) return <FormSkeleton label="Loading job form" sections={3} />;
 
   return (
     <>
@@ -121,6 +139,7 @@ export default function NewJobPage({
         submitting={submitting}
         serverError={serverError}
         onDismissError={() => setServerError(null)}
+        notice={source ? <>Duplicated from <strong className="font-semibold">{source.title}</strong>. It saves as a new role; applicants and history stay with the original.</> : undefined}
         onSubmit={handleSubmit}
         onAddClient={handleAddClient}
         onAddVendor={async (vendorData) => {
@@ -134,6 +153,8 @@ export default function NewJobPage({
         listHref={LIST_HREF[created?.category === "open" ? "open" : category]}
         onCreateAnother={() => {
           setCreated(null);
+          // Another role starts blank, not as a second copy.
+          setSource(null);
           setFormKey((k) => k + 1);
           window.scrollTo({ top: 0 });
         }}

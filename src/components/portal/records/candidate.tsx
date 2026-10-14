@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ActivityEntry, Application, NoteEntry, TaskEntry } from "@/lib/aws/dynamodb";
-import { hireTypeLabel, PIPELINE_STAGES, type AppStatus } from "@/components/admin/theme";
+import { hireTypeLabel, PIPELINE_STAGES, workAuthMeta, type AppStatus } from "@/components/admin/theme";
 import { POOL_LABEL, POOL_META, poolOf } from "@/lib/bench";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { dueState, fmtDue, parseDue, postTaskOp, type TaskOp } from "./tasks";
@@ -13,6 +13,7 @@ import { RatingInput, StaffPicker, TextInput, useStaff } from "@/components/port
 import { STAGE_DOT, STAGE_LABEL, STAGE_TONE, type Stage } from "@/components/portal/recruiting/model";
 import Icon, { type IconName } from "@/components/portal/icons";
 import { FactRows } from "./parts";
+import { StageChevrons } from "@/components/portal/StageChevrons";
 
 export type CandidateDetail = Application & { jobDepartment?: string; jobLocation?: string; jobType?: string };
 
@@ -26,7 +27,10 @@ export function StageBadge({ status }: { status: string }) {
 
 /* ── Stage track ───────────────────────────────────────────────────────────── */
 
-/** The pipeline as one segmented row, plus the record's one filled action: Move to next. */
+/** Days an offer can sit before it reads as stale. */
+const OFFER_STALE_DAYS = 7;
+
+/** The pipeline as a chevron chain, plus the record's one filled action: Move to next. */
 export function StageTrack({
   status,
   saving,
@@ -39,51 +43,37 @@ export function StageTrack({
   onStage: (s: AppStatus) => void;
 }) {
   const rejected = status === "rejected";
+  const hired = status === "hired";
   const idx = PIPELINE_STAGES.findIndex((s) => s.key === status);
   const next = !rejected && idx >= 0 ? PIPELINE_STAGES[idx + 1] : undefined;
+  const staleOffer = status === "offered" && daysInStage !== null && daysInStage >= OFFER_STALE_DAYS;
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-      <div className="scroll-thin min-w-0 flex-1 overflow-x-auto">
-        <ol aria-label="Hiring pipeline" className="flex min-w-[520px]">
-          {PIPELINE_STAGES.map((s, i) => {
-            const on = !rejected && i === idx;
-            const past = !rejected && idx > i;
-            return (
-              <li key={s.key} className="flex-1 [&+&]:-ml-px">
-                <button
-                  type="button"
-                  onClick={() => onStage(s.key)}
-                  disabled={saving || on}
-                  aria-current={on ? "step" : undefined}
-                  title={on ? s.label : `Move to ${s.label}`}
-                  className={`relative flex h-9 w-full items-center justify-center gap-1.5 px-2 text-[13px] font-medium ring-1 ring-inset transition-colors disabled:cursor-default ${
-                    i === 0 ? "rounded-l-lg" : ""
-                  } ${i === PIPELINE_STAGES.length - 1 ? "rounded-r-lg" : ""} ${
-                    on
-                      ? "z-10 bg-ocean-600 text-white ring-ocean-600"
-                      : past
-                        ? "bg-ocean-50 text-ocean-800 ring-mist-200 hover:bg-ocean-100"
-                        : "bg-mist-0 text-mist-700 ring-mist-300 hover:bg-mist-50 hover:text-navy-900"
-                  }`}
-                >
-                  {past && <Icon name="check" className="size-3.5 shrink-0" />}
-                  <span className="truncate">{s.label}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+    <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="min-w-0 flex-1">
+        <StageChevrons stages={PIPELINE_STAGES} current={status} disabled={saving} onSelect={(k) => onStage(k as AppStatus)} />
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {rejected ? (
-          <span className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#fef3f2] px-3 text-[13px] font-medium text-[#b42318]">
+          <span role="status" className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#fef3f2] px-3 text-[13px] font-medium text-[#b42318] ring-1 ring-inset ring-[#f3c4bf]">
             <Icon name="alert" className="size-4" />
             Rejected. Pick a stage to reopen.
           </span>
         ) : (
           <>
-            {daysInStage !== null && (
-              <span className="text-[13px] tabular-nums text-mist-600">{daysInStage === 0 ? "Moved today" : `${daysInStage}d in stage`}</span>
+            {hired ? (
+              <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#ecfdf3] px-3 text-[13px] font-medium text-[#067647] ring-1 ring-inset ring-[#abefc6]">
+                <Icon name="check" className="size-4" />
+                Hired{daysInStage ? <span className="tabular-nums">, {daysInStage}d ago</span> : " today"}
+              </span>
+            ) : staleOffer ? (
+              <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#fffaeb] px-2.5 text-[13px] font-medium tabular-nums text-[#b54708] ring-1 ring-inset ring-[#fedf89]">
+                <Icon name="alert" className="size-3.5" />
+                Offer out {daysInStage}d
+              </span>
+            ) : (
+              daysInStage !== null && (
+                <span className="text-[13px] tabular-nums text-mist-600">{daysInStage === 0 ? "Moved today" : `${daysInStage}d in stage`}</span>
+              )
             )}
             <Button size="sm" variant="ghost" icon="x" onClick={() => onStage("rejected")} disabled={saving}>
               Reject
@@ -100,16 +90,47 @@ export function StageTrack({
   );
 }
 
+/* ── Work authorization ─────────────────────────────────────────────────────── */
+
+/** Green when free to work, amber when the employer must sponsor or transfer. */
+function WorkAuthValue({ value }: { value: string }) {
+  const meta = workAuthMeta(value);
+  if (!meta) return <>{value}</>;
+  return (
+    <Badge tone={meta.sponsorship === "none" ? "green" : "amber"} dot>
+      {value}
+      {meta.sponsorship === "transfer" ? " · transfer" : meta.sponsorship === "required" ? " · sponsorship" : ""}
+    </Badge>
+  );
+}
+
+const VISA_WARN_DAYS = 90;
+
+/** Red once lapsed, amber inside 90 days. */
+function VisaExpiry({ iso }: { iso: string }) {
+  const t = new Date(iso).getTime();
+  const days = Number.isNaN(t) ? null : Math.ceil((t - Date.now()) / 86400000);
+  const date = <span className="tabular-nums">{fmtDate(iso)}</span>;
+  if (days === null || days > VISA_WARN_DAYS) return date;
+  const lapsed = days < 0;
+  return (
+    <span className={`inline-flex flex-wrap items-center gap-x-1.5 font-medium ${lapsed ? "text-[#b42318]" : "text-[#b54708]"}`}>
+      {date}
+      <span className="text-[12px] tabular-nums">{lapsed ? "Expired" : days === 0 ? "Expires today" : `in ${days}d`}</span>
+    </span>
+  );
+}
+
 /* ── Overview: applicant details ───────────────────────────────────────────── */
 
 export function ApplicantDetails({ candidate, onEdit }: { candidate: Application; onEdit: () => void }) {
   const [showEmpty, setShowEmpty] = useState(false);
   const fields: { label: string; value?: React.ReactNode }[] = [
-    { label: "Work authorization", value: candidate.workAuthorization },
+    { label: "Work authorization", value: candidate.workAuthorization ? <WorkAuthValue value={candidate.workAuthorization} /> : undefined },
     { label: "Type of hire", value: hireTypeLabel(candidate.hireType) },
     { label: "Source", value: candidate.source },
-    { label: "Visa expiry", value: candidate.visaExpiry ? fmtDate(candidate.visaExpiry) : undefined },
-    { label: "Sponsorship", value: candidate.visaSponsorshipRequired ? "Required" : undefined },
+    { label: "Visa expiry", value: candidate.visaExpiry ? <VisaExpiry iso={candidate.visaExpiry} /> : undefined },
+    { label: "Sponsorship", value: candidate.visaSponsorshipRequired ? <Badge tone="amber" dot>Required</Badge> : undefined },
     {
       label: "LinkedIn",
       // Only an http(s) address becomes a link; anything else would be an unsafe href.
@@ -161,6 +182,9 @@ export function ApplicantDetails({ candidate, onEdit }: { candidate: Application
   );
 }
 
+const RATING_TONE = (n: number) => (n >= 4 ? "green" : n === 3 ? "amber" : "red") as "green" | "amber" | "red";
+const RATING_WORD = (n: number) => (n >= 4 ? "Strong" : n === 3 ? "Mixed" : "Weak");
+
 /* ── Rail ──────────────────────────────────────────────────────────────────── */
 
 export function RecordRail({
@@ -172,6 +196,7 @@ export function RecordRail({
   onRelease,
   onRate,
   onViewResume,
+  onOpenTasks,
 }: {
   candidate: CandidateDetail;
   isOwner: boolean;
@@ -181,8 +206,12 @@ export function RecordRail({
   onRelease: () => void;
   onRate: (n: number) => void;
   onViewResume: () => void;
+  onOpenTasks?: () => void;
 }) {
   const head = "text-[12px] font-semibold text-mist-500";
+  const open = (candidate.tasks || []).filter((t) => !t.done);
+  const overdue = open.filter((t) => dueState(t.dueAt) === "overdue").length;
+  const dueToday = open.filter((t) => dueState(t.dueAt) === "today").length;
   return (
     <section className="min-w-0 divide-y divide-mist-200 rounded-xl bg-mist-0 ring-1 ring-mist-200">
       {candidate.jobTitle && (
@@ -221,13 +250,32 @@ export function RecordRail({
             )}
           </div>
         ) : (
-          <Button variant="secondary" icon="userCheck" loading={ownerSaving} onClick={onClaim} className="mt-2 w-full">
-            Unclaimed. Claim it
-          </Button>
+          <div className="mt-2 grid gap-2.5 rounded-lg bg-[#fef3f2] p-3 ring-1 ring-inset ring-[#f3c4bf]">
+            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-[#b42318]">
+              <Icon name="alert" className="size-4 shrink-0" />
+              Unclaimed. No one owns this candidate.
+            </p>
+            <Button icon="userCheck" loading={ownerSaving} onClick={onClaim} className="w-full">
+              Claim it
+            </Button>
+          </div>
         )}
       </div>
+      {(overdue > 0 || dueToday > 0) && (
+        <div className="p-5">
+          <h2 className={head}>Follow-ups</h2>
+          <button type="button" onClick={onOpenTasks} className="mt-2 flex min-h-9 flex-wrap items-center gap-2 text-left" aria-label={`Open tasks: ${[overdue && `${overdue} overdue`, dueToday && `${dueToday} due today`].filter(Boolean).join(", ")}`}>
+            {overdue > 0 && <Badge tone="red" dot>{overdue} overdue</Badge>}
+            {dueToday > 0 && <Badge tone="amber" dot>{dueToday} due today</Badge>}
+            <Icon name="chevronRight" className="size-4 text-mist-500" />
+          </button>
+        </div>
+      )}
       <div className="p-5">
-        <h2 className={head}>Rating</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className={head}>Rating</h2>
+          {!!candidate.rating && <Badge tone={RATING_TONE(candidate.rating)}>{RATING_WORD(candidate.rating)}</Badge>}
+        </div>
         <div className="mt-1">
           <RatingInput value={candidate.rating || 0} onChange={onRate} label="Candidate rating" showValue />
         </div>
@@ -502,9 +550,11 @@ const DUE_CLS = { overdue: "text-[#b42318] font-medium", today: "text-[#b54708] 
 
 function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; meId: string; busy: boolean; onToggle: () => void; onDelete: () => void }) {
   const state = task.done ? "none" : dueState(task.dueAt);
+  const unassigned = !task.assigneeId && !task.assigneeName;
   const assignee = task.assigneeId === meId ? "You" : task.assigneeName || "Unassigned";
+  const accent = state === "overdue" ? "shadow-[inset_3px_0_0_#d03b3b] bg-[#fef3f2]/50" : state === "today" ? "shadow-[inset_3px_0_0_#eda100]" : "";
   return (
-    <li className="flex items-start gap-3 px-5 py-3.5">
+    <li className={`flex items-start gap-3 px-5 py-3.5 ${accent}`}>
       <button
         type="button"
         role="checkbox"
@@ -528,7 +578,7 @@ function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; me
               {fmtDue(task.dueAt)}
             </span>
           )}
-          <span className="inline-flex items-center gap-1">
+          <span className={`inline-flex items-center gap-1 ${unassigned ? "font-medium text-[#b42318]" : ""}`}>
             <Icon name="userCheck" className="size-3.5" />
             {assignee}
           </span>

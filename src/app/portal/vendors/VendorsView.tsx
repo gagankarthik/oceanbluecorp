@@ -9,7 +9,8 @@ import { useResource } from "@/hooks/use-resource";
 import { useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
-import { Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
+import type { MenuEntry } from "@/components/portal/records/Menu";
+import { Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
 import { BarChart, DonutChart } from "@/components/portal/charts";
 import Select from "@/components/portal/Select";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, LinkedRoles, errorText, inputCls, send, useDiscardGuard, useToast } from "@/components/portal/relationships/shared";
@@ -154,7 +155,7 @@ function VendorForm({ editing, leads, leadsLoading, onClose, onSaved }: { editin
   );
 }
 
-function VendorDetail({ v, jobs, jobsLoading, jobsError, onEdit, onDelete }: { v: Vendor; jobs: Job[]; jobsLoading: boolean; jobsError: boolean; onEdit: () => void; onDelete: () => Promise<void> }) {
+function VendorDetail({ v, jobs, jobsLoading, jobsError, onDelete }: { v: Vendor; jobs: Job[]; jobsLoading: boolean; jobsError: boolean; onDelete: () => Promise<void> }) {
   const [deleting, setDeleting] = useState(false);
   return (
     <div className="grid gap-6">
@@ -163,22 +164,19 @@ function VendorDetail({ v, jobs, jobsLoading, jobsError, onEdit, onDelete }: { v
         sub={v.contactPerson || v.email || "No contact on file"}
         badges={
           <>
-            <Badge tone="blue">Lead: {v.vendorLeadName || "Unassigned"}</Badge>
+            <Badge tone={v.vendorLeadName ? "blue" : "red"}>Lead: {v.vendorLeadName || "Unassigned"}</Badge>
             <Badge>{leadLabel(v.vendorLeadRole)}</Badge>
           </>
         }
       />
 
-      <div className="flex flex-wrap gap-2">
-        <Button icon="edit" onClick={onEdit}>
-          Edit vendor
-        </Button>
-        {v.email && (
+      {v.email && (
+        <div className="flex flex-wrap gap-2">
           <Button href={`mailto:${v.email}`} variant="secondary" icon="mail">
             Email contact
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <RecordStats
         items={[
@@ -227,6 +225,8 @@ export default function VendorsView() {
   const [form, setForm] = useState<{ editing: Vendor | null } | null>(null);
   const preset = useTablePreset();
   const toast = useToast();
+  const [confirmDelete, setConfirmDelete] = useState<Vendor | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Only HR and admin teammates may own a vendor relationship.
   const leads = useMemo<Lead[]>(
@@ -237,6 +237,21 @@ export default function VendorsView() {
         .sort((a, b) => a.name.localeCompare(b.name)),
     [directory.users],
   );
+
+  const rowMenu = (v: Vendor, openDetail: () => void): MenuEntry[] => [
+    { label: "Open", icon: "eye", onSelect: openDetail },
+    { label: "Edit", icon: "edit", onSelect: () => setForm({ editing: v }) },
+    { kind: "separator" },
+    { label: "Delete", icon: "trash", danger: true, onSelect: () => setConfirmDelete(v) },
+  ];
+
+  const confirmRemove = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    await remove(confirmDelete, () => undefined);
+    setDeleting(false);
+    setConfirmDelete(null);
+  };
 
   const remove = async (v: Vendor, close: () => void) => {
     try {
@@ -314,7 +329,7 @@ export default function VendorsView() {
             </span>
           </span>
         ) : (
-          <span className="text-mist-400">–</span>
+          <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>
         ),
     },
     { key: "createdAt", header: "Added", sortable: true, hideBelow: "xl", value: (v) => new Date(v.createdAt).getTime(), cell: (v) => <span className="tabular-nums text-mist-700">{fmtDate(v.createdAt)}</span> },
@@ -434,6 +449,12 @@ export default function VendorsView() {
                   searchPlaceholder="Search vendor, contact, email or lead"
                   emptyTitle="No vendors match your filters"
                   detailTitle={(v) => v.name}
+                  detailActions={(v) => (
+                    <Button size="sm" variant="secondary" icon="edit" onClick={() => setForm({ editing: vendors.find((x) => x.id === v.id) ?? v })}>
+                      Edit
+                    </Button>
+                  )}
+                  rowMenu={rowMenu}
                   renderDetail={(r, close) => {
                     const live = vendors.find((x) => x.id === r.id);
                     return live ? (
@@ -442,7 +463,6 @@ export default function VendorsView() {
                         jobs={(jobsRes.jobs ?? []).filter((j) => j.vendorId === live.id)}
                         jobsLoading={jobsRes.isLoading}
                         jobsError={!!jobsRes.error && !jobsRes.jobs}
-                        onEdit={() => setForm({ editing: live })}
                         onDelete={() => remove(live, close)}
                       />
                     ) : (
@@ -455,6 +475,17 @@ export default function VendorsView() {
           </>
         )}
       </Page>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete this vendor?"
+          body={`${confirmDelete.name} is removed permanently. Roles that name it keep their copy of the name. This cannot be undone.`}
+          confirmLabel="Delete"
+          busy={deleting}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => void confirmRemove()}
+        />
+      )}
 
       {form && (
         <VendorForm

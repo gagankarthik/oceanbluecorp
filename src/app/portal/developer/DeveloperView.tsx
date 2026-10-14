@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_ACCESS_LEVELS, DEFAULT_ACCESS_LEVEL, accessLevelMeta, type ApiAccessLevel, type ApiScope } from "@/lib/api-scopes";
 import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
 import { LIMITS } from "@/lib/form-validation";
@@ -11,6 +11,7 @@ import DataTable, { type Column, type Filter } from "@/components/portal/DataTab
 import Icon from "@/components/portal/icons";
 import Select from "@/components/portal/Select";
 import { RoleGate } from "@/components/portal/session";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 import {
   Badge,
   Button,
@@ -73,8 +74,13 @@ function KeyDetail({
   onAccess,
   onRename,
   onRevoke,
+  startEditing,
+  onEditStarted,
 }: {
   k: ApiKeyRow;
+  /** Set from the sheet header or the row menu's Edit; consumed once. */
+  startEditing?: boolean;
+  onEditStarted?: () => void;
   onToggle: () => Promise<void>;
   onAccess: (l: ApiAccessLevel) => Promise<void>;
   onRename: (p: { name: string; description: string }) => Promise<boolean>;
@@ -85,6 +91,13 @@ function KeyDetail({
   const [name, setName] = useState(k.name);
   const [description, setDescription] = useState(k.description ?? "");
   const [nameError, setNameError] = useState<string>();
+  useEffect(() => {
+    if (!startEditing) return;
+    setName(k.name);
+    setDescription(k.description ?? "");
+    setEditing(true);
+    onEditStarted?.();
+  }, [startEditing, onEditStarted, k.name, k.description]);
   const run = (kind: "toggle" | "access", fn: () => Promise<void>) => {
     setBusy(kind);
     void fn().finally(() => setBusy(null));
@@ -128,7 +141,7 @@ function KeyDetail({
           </div>
         </div>
       ) : (
-        <div className="flex items-start justify-between gap-3">
+        <div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <KeyStatus active={k.isActive} />
@@ -141,9 +154,6 @@ function KeyDetail({
             <p className="mt-3 font-mono text-[13px] text-mist-700">{k.keyPreview}</p>
             <p className="mt-2 text-[14px] text-mist-700">{k.description || <span className="text-mist-500">No description</span>}</p>
           </div>
-          <Button variant="secondary" size="sm" icon="edit" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
         </div>
       )}
 
@@ -395,6 +405,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiKeyRow | null>(null);
   const [revokeBusy, setRevokeBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const toast = useToast();
 
   const switchTab = (t: Tab) => {
@@ -407,6 +418,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
     } catch {}
   };
 
+  const clearEdit = useMemo(() => () => setEditId(null), []);
   const patchLocal = (id: string, p: Partial<ApiKeyRow>) => setData((d) => ({ ...d, apiKeys: (d?.apiKeys ?? []).map((k) => (k.id === id ? { ...k, ...p } : k)) }));
 
   const toggle = async (k: ApiKeyRow) => {
@@ -456,6 +468,21 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
     }
   };
 
+  const rowMenu = (k: ApiKeyRow, openDetail: () => void): MenuEntry[] => [
+    { label: "Open", icon: "eye", onSelect: openDetail },
+    {
+      label: "Edit",
+      icon: "edit",
+      onSelect: () => {
+        setEditId(k.id);
+        openDetail();
+      },
+    },
+    { label: k.isActive ? "Disable" : "Enable", icon: k.isActive ? "x" : "check", onSelect: () => void toggle(k) },
+    { kind: "separator" },
+    { label: "Revoke", icon: "trash", danger: true, onSelect: () => setRevoking(k) },
+  ];
+
   const active = keys.filter((k) => k.isActive).length;
   const writers = keys.filter((k) => k.isActive && k.accessLevel === "write").length;
   const recent = keys.filter((k) => k.lastUsedAt && Date.now() - new Date(k.lastUsedAt).getTime() < 30 * 86_400_000).length;
@@ -480,7 +507,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
       sortable: true,
       value: (k) => (k.lastUsedAt ? new Date(k.lastUsedAt).getTime() : 0),
       cell: (k) => (
-        <span className={`tabular-nums ${k.lastUsedAt ? "font-medium text-navy-900" : "text-mist-500"}`} title={k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : undefined}>
+        <span className={`tabular-nums ${k.lastUsedAt ? "font-medium text-navy-900" : "font-medium text-[#b54708]"}`} title={k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : undefined}>
           {k.lastUsedAt ? fmtRelative(k.lastUsedAt) : "Never"}
         </span>
       ),
@@ -562,6 +589,12 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
               emptyTitle="No keys match your filters"
               initialSort={{ key: "lastUsedAt", dir: -1 }}
               detailTitle={(k) => k.name}
+              detailActions={(k) => (
+                <Button size="sm" variant="secondary" icon="edit" onClick={() => setEditId(k.id)}>
+                  Edit
+                </Button>
+              )}
+              rowMenu={rowMenu}
               renderDetail={(r) => {
                 const live = keys.find((x) => x.id === r.id);
                 return live ? (
@@ -572,6 +605,8 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
                     onAccess={(l) => changeAccess(live, l)}
                     onRename={(p) => rename(live, p)}
                     onRevoke={() => setRevoking(live)}
+                    startEditing={editId === live.id}
+                    onEditStarted={clearEdit}
                   />
                 ) : (
                   <GoneNotice noun="key" />

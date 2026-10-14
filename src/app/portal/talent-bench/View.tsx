@@ -11,7 +11,9 @@ import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, tally, type Stag
 import { STATE_NAME, hireTypeLabel, stateOf } from "@/components/admin/theme";
 import {
   Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, Segmented, StatCard,
+  usePortalRouter,
 } from "@/components/portal/kit";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
 import { refreshApplications, useApplicationSummaries, useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -41,7 +43,8 @@ function daysOnBench(a: Application): number | null {
   const t = new Date(a.createdAt || a.appliedAt).getTime();
   return Number.isNaN(t) ? null : Math.max(0, Math.floor((Date.now() - t) / 86_400_000));
 }
-const isIdle = (a: Application) => (daysOnBench(a) ?? 0) >= 30;
+const IDLE_DAYS = 30;
+const isIdle = (a: Application) => (daysOnBench(a) ?? 0) >= IDLE_DAYS;
 
 const EMPTY: Record<Pool, { title: string; body: string }> = {
   all: { title: "No candidates on the bench yet", body: "Hired candidates join the Talent Bench automatically. Add the people you are sourcing to your own pool." },
@@ -51,6 +54,7 @@ const EMPTY: Record<Pool, { title: string; body: string }> = {
 
 export default function TalentBenchView() {
   const notify = useToast();
+  const router = usePortalRouter();
   const { role } = useSession();
   const { isAdmin } = permissionsFor(role);
   const { user } = useAuth();
@@ -200,7 +204,7 @@ export default function TalentBenchView() {
     { key: "appId", header: "App ID", card: false, defaultHidden: true, value: (a) => a.applicationId || a.id.slice(0, 8) },
     { key: "skills", header: "Skills", hideBelow: "md", value: (a) => [a.skills?.join(", "), a.searchText].filter(Boolean).join(" "), cell: (a) => (a.skills?.length ? <Tags items={a.skills.slice(0, 3).concat(a.skills.length > 3 ? [`+${a.skills.length - 3}`] : [])} /> : <span className="text-mist-400">&mdash;</span>) },
     { key: "location", header: "Location", sortable: true, hideBelow: "lg", value: (a) => locationOf(a) },
-    { key: "age", header: "On bench", sortable: true, hideBelow: "xl", value: (a) => daysOnBench(a) ?? -1, cell: (a) => { const d = daysOnBench(a); return d === null ? <span className="text-mist-400">&mdash;</span> : <span className={`tabular-nums ${d > 90 ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>; } },
+    { key: "age", header: "On bench", sortable: true, hideBelow: "xl", value: (a) => daysOnBench(a) ?? -1, cell: (a) => { const d = daysOnBench(a); return d === null ? <span className="text-mist-400">&mdash;</span> : <span className={`tabular-nums ${d >= IDLE_DAYS ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>; } },
     { key: "rating", header: "Rating", sortable: true, card: false, hideBelow: "md", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
     { key: "hireType", header: "Hire type", sortable: true, card: false, hideBelow: "xl", value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
@@ -276,7 +280,7 @@ export default function TalentBenchView() {
         <div className="flex flex-wrap items-center gap-2">
           <StageBadge stage={a.status} />
           <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge>
-          {d !== null && <span className="text-[13px] text-mist-600">{d} days on the bench</span>}
+          {d !== null && <span className={`text-[13px] ${d >= IDLE_DAYS ? "font-medium text-[#b54708]" : "text-mist-600"}`}>{d} days on the bench</span>}
         </div>
         <KeyValue
           items={[
@@ -305,8 +309,7 @@ export default function TalentBenchView() {
             <p className="mt-2 whitespace-pre-line rounded-lg bg-mist-50 p-3 text-[14px]">{a.notes}</p>
           </section>
         )}
-        <div className="grid gap-3 border-t border-mist-200 pt-5">
-          <Button icon="external" href={`/portal/candidates/${a.id}`}>Open full record</Button>
+        <div className="border-t border-mist-200 pt-5">
           <div className="flex flex-wrap items-center gap-1">
             <Button variant="ghost" size="sm" icon="edit" href={`/portal/applications/${a.id}/edit?return=/portal/talent-bench`}>Edit profile</Button>
             {a.resumeId && <Button variant="ghost" size="sm" icon="download" onClick={() => void downloadResume(a.resumeId!)}>Resume</Button>}
@@ -318,6 +321,17 @@ export default function TalentBenchView() {
       </div>
     );
   };
+
+  const rowMenu = (a: Row, openDetail: () => void): MenuEntry[] => [
+    { label: "Open", icon: "eye", onSelect: openDetail },
+    { label: "Open full record", icon: "external", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
+    { label: "Edit profile", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/talent-bench`) },
+    ...(a.resumeId ? [{ label: "Download resume", icon: "download" as const, onSelect: () => void downloadResume(a.resumeId!) }] : []),
+    { label: "Email", icon: "mail", disabled: !a.email, onSelect: () => (window.location.href = `mailto:${a.email}`) },
+    { kind: "separator" },
+    // Undo toast, nothing deleted.
+    { label: "Remove from bench", icon: "x", danger: true, onSelect: () => void removeFromBench(a) },
+  ];
 
   const counts: Record<Pool, number> = { all: rows.length, internal: 0, external: 0 };
   for (const a of rows) counts[poolOf(a)] += 1;
@@ -416,6 +430,8 @@ export default function TalentBenchView() {
           emptyTitle="No candidates match your filters"
           detailTitle={(a) => a.name || a.email}
           renderDetail={(a) => detail(rows.find((r) => r.id === a.id) ?? a)}
+          detailActions={(a) => <Button size="sm" variant="secondary" icon="external" href={`/portal/candidates/${a.id}`}>Open full record</Button>}
+          rowMenu={rowMenu}
           renderGrid={
             layout === "cards"
               ? (page, open) => (
@@ -551,7 +567,7 @@ function BenchCards({
             <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-mist-100 pt-3">
               <span className="flex items-center gap-2">
                 <StarInput value={a.rating || 0} onChange={(n) => onRate(a, n)} label={`Rating for ${a.name}`} />
-                {age !== null && <span className={`text-[12px] tabular-nums ${age > 90 ? "font-medium text-[#b54708]" : "text-mist-500"}`} title="Days on bench">{age}d</span>}
+                {age !== null && <span className={`text-[12px] tabular-nums ${age >= IDLE_DAYS ? "font-medium text-[#b54708]" : "text-mist-500"}`} title="Days on bench">{age}d</span>}
               </span>
               <span className="flex items-center">
                 <Button variant="ghost" icon="eye" label="View details" onClick={() => onOpen(a)} />

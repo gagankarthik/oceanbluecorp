@@ -67,6 +67,22 @@ export const JOB_STATUSES: { value: JobStatus; label: string; public?: boolean }
 ];
 export const jobStatusLabel = (s: string) => JOB_STATUSES.find((x) => x.value === s)?.label ?? (s === "paused" ? "Paused" : s);
 
+/** Table cells and badges: the status without its qualifier. Selects keep the full label. */
+const JOB_STATUS_SHORT: Record<string, string> = { draft: "Draft", open: "Open", active: "Active", "on-hold": "On hold", closed: "Closed", paused: "Paused" };
+export const jobStatusShort = (s: string) => JOB_STATUS_SHORT[s] ?? s;
+
+export const JOB_STATUS_TONE: Record<string, Tone> = { draft: "grey", open: "blue", active: "green", "on-hold": "amber", paused: "amber", closed: "red" };
+export const JOB_STATUS_DOT: Record<string, string> = { draft: "#99a2af", open: "#3794d4", active: "#1baf7a", "on-hold": "#eda100", paused: "#eda100", closed: "#d03b3b" };
+
+/** The public posting a candidate opens; only Active roles resolve. */
+export const publicJobPath = (id: string) => `/jobs/${id}`;
+
+/** New-role form prefilled from another role. */
+export const duplicateJobHref = (j: { id: string; category?: string | null }) => `/portal/jobs/new?from=${j.id}${j.category === "open" ? "&category=open" : ""}`;
+
+/** Whole days until the end of an ISO date's day: 0 today, negative once past. */
+export const daysUntil = (iso?: string) => (iso ? Math.ceil((new Date(iso.slice(0, 10) + "T23:59:59").getTime() - Date.now()) / DAY) - 1 : null);
+
 /** Candidates still in play on a role (not hired or rejected); the summary's stage split, else the total. */
 export function inPlayCount(j: Job): number {
   if (!j.pipeline) return j.applicationsCount ?? 0;

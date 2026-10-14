@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
+import type { Application, BenchType, Job, PipelineRecord, Submission } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePageCrumb } from "@/components/admin/admin-provider";
 import { refreshApplications, useJobSummaries } from "@/hooks/use-console-data";
@@ -17,7 +17,7 @@ import { EmailComposer } from "./EmailComposer";
 import { ActionMenu, type MenuEntry } from "./Menu";
 import { FactLine, RecordTabs } from "./parts";
 import { JobFitCard } from "./JobFitCard";
-import { PipelinePanel } from "./PipelinePanel";
+import { PipelinePanel, PipelineRecordDrawer } from "./PipelinePanel";
 import { ResumeAnalysisPanel, ResumeAnalysisSkeleton } from "./ResumeAnalysis";
 import { ResumeAnalysisEditDrawer } from "./ResumeAnalysisEditDrawer";
 import { ActivityTab, ApplicantDetails, NotesTab, RecordRail, StageBadge, StageTrack, TasksTab, type CandidateDetail as Detail } from "./candidate";
@@ -52,6 +52,9 @@ export function CandidateDetail({ id }: { id: string }) {
   const editOpen = !!editing;
   /** The linked requisition, for the pipeline panel's client/vendor/rate defaults. */
   const [jobDetail, setJobDetail] = useState<Job | null>(null);
+  /** The record form a stage move opens: Submitted asks for the submission, Interview for the interview. */
+  const [stageForm, setStageForm] = useState<{ kind: "submission" | "interview"; parent: Submission | null } | null>(null);
+  const [pipelineVersion, setPipelineVersion] = useState(0);
   /** One unattended retry per visit, not per render, and not a loop. */
   const autoRetried = useRef(false);
 
@@ -167,6 +170,8 @@ export function CandidateDetail({ id }: { id: string }) {
     try {
       const updated = await patch({ status: stage });
       setCandidate((p) => (p ? { ...p, ...updated } : p));
+      if (stage === "submitted") setStageForm({ kind: "submission", parent: null });
+      else if (stage === "interview") void openInterviewForm();
       if (offerUndo) {
         notify(`${candidate.name || "Candidate"} moved to ${statusMeta[stage]?.label ?? stage}`, {
           undo: () => {
@@ -181,6 +186,22 @@ export function CandidateDetail({ id }: { id: string }) {
     } finally {
       setStatusSaving(false);
     }
+  };
+
+  /** Hangs the interview off the latest live submission, when there is one. */
+  const openInterviewForm = async () => {
+    let parent: Submission | null = null;
+    try {
+      const res = await fetch(`/api/pipeline?applicationId=${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const records: PipelineRecord[] = (await res.json()).records || [];
+        parent =
+          records
+            .filter((r): r is Submission => r.kind === "submission" && r.status !== "rejected" && r.status !== "withdrawn")
+            .sort((a, b) => (b.occurredAt || "").localeCompare(a.occurredAt || ""))[0] ?? null;
+      }
+    } catch { /* recorded unattached */ }
+    setStageForm({ kind: "interview", parent });
   };
 
   const handleRating = async (rating: number) => {
@@ -439,6 +460,7 @@ export function CandidateDetail({ id }: { id: string }) {
           <>
             <StageBadge status={candidate.status} />
             {pool && <Badge tone={pool === "internal" ? "blue" : "green"}>{POOL_LABEL[pool]}</Badge>}
+            {!candidate.ownership && <Badge tone="red" dot>Unclaimed</Badge>}
           </>
         }
         description={
@@ -552,6 +574,7 @@ export function CandidateDetail({ id }: { id: string }) {
               defaultBillRate={jobDetail?.clientBillRate}
               defaultPayRate={jobDetail?.payRate}
               onStatusAdvanced={(status) => setCandidate((p) => (p ? { ...p, status: status as Detail["status"] } : p))}
+              refreshKey={pipelineVersion}
             />
           )}
 
@@ -593,9 +616,36 @@ export function CandidateDetail({ id }: { id: string }) {
             onRelease={() => void handleRelease()}
             onRate={(n) => void handleRating(n)}
             onViewResume={() => void handleViewResume()}
+            onOpenTasks={() => setActiveTab("tasks")}
           />
         </div>
       </div>
+
+      {/* Opened by a move to Submitted or Interview; cancelling keeps the move. */}
+      {stageForm && (
+        <PipelineRecordDrawer
+          key={stageForm.kind}
+          kind={stageForm.kind}
+          record={null}
+          parentSubmission={stageForm.parent}
+          applicationId={id}
+          candidateName={candidate.name}
+          jobId={candidate.jobId}
+          jobTitle={candidate.jobTitle}
+          defaults={{
+            clientId: jobDetail?.clientId, clientName: jobDetail?.clientName,
+            vendorId: jobDetail?.vendorId, vendorName: jobDetail?.vendorName,
+            billRate: jobDetail?.clientBillRate, payRate: jobDetail?.payRate,
+          }}
+          onClose={() => setStageForm(null)}
+          onSaved={(advanced) => {
+            setStageForm(null);
+            setPipelineVersion((v) => v + 1);
+            if (advanced) setCandidate((p) => (p ? { ...p, status: advanced as Detail["status"] } : p));
+            void refreshRecord();
+          }}
+        />
+      )}
 
       <EmailComposer
         open={emailOpen}

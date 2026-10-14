@@ -8,8 +8,8 @@ import Icon from "@/components/portal/icons";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  Avatar, Button, ConfirmDialog, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader,
-  Panel, Skeleton, StatCard, StatusBadge,
+  Badge, Button, ConfirmDialog, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader,
+  Panel, Skeleton, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
 import { refreshApplications, refreshJobs, useJobSummaries } from "@/hooks/use-console-data";
 import { downloadCsv } from "@/lib/csv";
@@ -19,9 +19,10 @@ import { DAY } from "@/lib/pipeline";
 import { renderRichText } from "@/lib/rich-text";
 import { formatSalary } from "@/lib/salary";
 import { jobLocationLabel, workplaceOf, WORKPLACE_LABEL } from "@/lib/workplace";
-import { InlineSelect, KpiButton, StageBadge } from "./bits";
+import { AvatarStack, JobStatusSelect, KpiButton, StageBadge, jobMenuItems } from "./bits";
 import {
-  JOB_STATUSES, JOB_TYPE_LABEL, PIPELINE, STAGE_DOT, STAGE_LABEL, assigneesOf, buckets, countIn, jobStatusLabel, needsCandidates, permissionsFor, tally,
+  JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, PIPELINE, STAGE_DOT, STAGE_LABEL, assigneesOf, buckets, countIn, daysUntil, duplicateJobHref,
+  jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, tally,
 } from "./model";
 
 const COPY: Record<JobCategory, { title: string; noun: string; icon: "capitol" | "briefcase"; description: string; post: string; query: string }> = {
@@ -29,12 +30,10 @@ const COPY: Record<JobCategory, { title: string; noun: string; icon: "capitol" |
   open: { title: "Open Roles", noun: "open role", icon: "briefcase", description: "Commercial client requisitions.", post: "Post an open role", query: "?category=open" },
 };
 
-const JOB_DOT: Record<string, string> = { draft: "#99a2af", open: "#3794d4", active: "#1baf7a", "on-hold": "#eda100", closed: "#d03b3b", paused: "#eda100" };
 const LIVE = jobStatusLabel("active");
 const DUE_WEEK = "Due this week";
 const NO_CANDIDATES = "No candidates";
 
-const daysUntil = (iso?: string) => (iso ? Math.ceil((new Date(iso.slice(0, 10) + "T23:59:59").getTime() - Date.now()) / DAY) - 1 : null);
 const isLive = (j: Job) => isPubliclyOpen(j.status);
 const dueThisWeek = (j: Job) => {
   const d = daysUntil(j.submissionDueDate);
@@ -43,19 +42,25 @@ const dueThisWeek = (j: Job) => {
 
 type TableState = { query: string; filters: Record<string, string> };
 
+// Roles still being worked; a deadline on a draft or closed role is history, not a warning.
+const isWorking = (j: Job) => j.status === "active" || j.status === "open";
+const RED = "text-[#b42318]";
+const AMBER = "text-[#b54708]";
+
+/** Overdue and today red, within three days amber. */
 function DueCell({ job }: { job: Job }) {
   const d = daysUntil(job.submissionDueDate);
   if (d === null) return <span className="text-mist-400">&mdash;</span>;
-  const urgent = isLive(job) && d >= 0 && d <= 3;
+  if (!isWorking(job)) return <span className="text-mist-600">{fmtDate(job.submissionDueDate)}</span>;
+  const tone = d <= 0 ? RED : d <= 3 ? AMBER : "";
+  const note = d < 0 ? `Overdue by ${-d} day${d === -1 ? "" : "s"}` : d === 0 ? "Due today" : `In ${d} day${d === 1 ? "" : "s"}`;
   return (
     <span className="flex flex-col">
-      <span className={urgent ? "font-semibold text-[#b42318]" : ""}>{fmtDate(job.submissionDueDate)}</span>
-      {isLive(job) && d >= 0 && (
-        <span className={`flex items-center gap-1 text-[12px] ${urgent ? "text-[#b42318]" : "text-mist-500"}`}>
-          {urgent && <Icon name="alert" className="size-3.5" />}
-          {d === 0 ? "Due today" : `In ${d} day${d === 1 ? "" : "s"}`}
-        </span>
-      )}
+      <span className={tone ? `font-semibold ${tone}` : ""}>{fmtDate(job.submissionDueDate)}</span>
+      <span className={`flex items-center gap-1 text-[12px] ${tone || "text-mist-500"}`}>
+        {tone && <Icon name={d <= 0 ? "alert" : "timer"} className="size-3.5" />}
+        {note}
+      </span>
     </span>
   );
 }
@@ -134,7 +139,7 @@ function DeadlineList({ jobs, onPick }: { jobs: Job[]; onPick: (j: Job) => void 
       {due.slice(0, 7).map(({ j, d }) => (
         <li key={j.id}>
           <button type="button" onClick={() => onPick(j)} className="grid min-h-10 w-full grid-cols-[3rem_1fr] items-center gap-3 rounded-lg p-2 text-left transition-colors duration-150 hover:bg-mist-50">
-            <span className={`rounded-md py-1 text-center text-[12px] font-semibold tabular-nums ${d <= 3 ? "bg-[#fef3f2] text-[#b42318]" : "bg-ocean-50 text-ocean-700"}`}>{d === 0 ? "Today" : `${d}d`}</span>
+            <span className={`rounded-md py-1 text-center text-[12px] font-semibold tabular-nums ${d === 0 ? "bg-[#fef3f2] text-[#b42318]" : d <= 3 ? "bg-[#fffaeb] text-[#b54708]" : "bg-ocean-50 text-ocean-700"}`}>{d === 0 ? "Today" : `${d}d`}</span>
             <span className="min-w-0">
               <span className="block truncate text-[14px] font-medium text-navy-900">{j.title}</span>
               <span className="block truncate text-[12px] text-mist-600">{[j.postingId, fmtDate(j.submissionDueDate)].filter(Boolean).join(", ")}</span>
@@ -149,6 +154,7 @@ function DeadlineList({ jobs, onPick }: { jobs: Job[]; onPick: (j: Job) => void 
 export default function JobsView({ category }: { category: JobCategory }) {
   const copy = COPY[category];
   const notify = useToast();
+  const router = usePortalRouter();
   const { role } = useSession();
   const { canEditJobs, canPrice } = permissionsFor(role);
 
@@ -222,23 +228,6 @@ export default function JobsView({ category }: { category: JobCategory }) {
     else void applyStatus(job, status);
   };
 
-  const duplicate = async (job: Job) => {
-    setBusy(job.id);
-    try {
-      const r = await fetch(`/api/jobs/${job.id}/duplicate`, { method: "POST" });
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Couldn't duplicate the job. Try again.");
-      }
-      await refreshJobs();
-      notify(`${job.title} duplicated as a draft`);
-    } catch (e) {
-      notify(e instanceof Error ? e.message : "Couldn't duplicate the job. Try again.", { tone: "error" });
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const remove = async () => {
     if (!deleteId) return;
     setBusy(deleteId);
@@ -293,19 +282,9 @@ export default function JobsView({ category }: { category: JobCategory }) {
             key: "assignees",
             header: "Assignees",
             sortable: true,
-            card: false,
             hideBelow: "lg" as const,
             value: (j: Job) => assigneesOf(j).join(", "),
-            cell: (j: Job) => {
-              const names = assigneesOf(j);
-              if (!names.length) return <span className="text-[13px] italic text-mist-500">Unassigned</span>;
-              return (
-                <span className="flex items-center gap-2" title={names.join(", ")}>
-                  <Avatar name={names[0]} size="sm" />
-                  <span className="truncate text-[13px]">{names.length === 1 ? names[0] : `${names[0].split(" ")[0]} +${names.length - 1}`}</span>
-                </span>
-              );
-            },
+            cell: (j: Job) => <AvatarStack names={assigneesOf(j)} />,
           },
           { key: "client", header: "Client", sortable: true, card: false, hideBelow: "lg" as const, value: (j: Job) => j.clientName ?? "", cell: (j: Job) => <span className="text-mist-700">{j.clientName || "—"}</span> },
         ]
@@ -329,7 +308,15 @@ export default function JobsView({ category }: { category: JobCategory }) {
     { key: "due", header: "Deadline", sortable: true, hideBelow: "md", value: (j) => j.submissionDueDate ?? "", cell: (j) => <DueCell job={j} /> },
     ...(canPrice
       ? [
-          { key: "applicants", header: "Applicants", sortable: true, hideBelow: "md" as const, className: "text-center", value: (j: Job) => j.applicationsCount || 0, cell: (j: Job) => <span className="tabular-nums">{j.applicationsCount || 0}</span> },
+          { key: "applicants", header: "Applicants", sortable: true, hideBelow: "md" as const, className: "text-center", value: (j: Job) => j.applicationsCount || 0, cell: (j: Job) =>
+            needsCandidates(j) ? (
+              <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${RED}`} title="Live with no candidates in play">
+                <Icon name="alert" className="size-3.5" />
+                {j.applicationsCount || 0}
+              </span>
+            ) : (
+              <span className="tabular-nums">{j.applicationsCount || 0}</span>
+            ) },
           { key: "pipeline", header: "Pipeline by stage", card: false, hideBelow: "xl" as const, value: () => "", cell: (j: Job) => <PipelineCells job={j} /> },
         ]
       : []),
@@ -340,17 +327,17 @@ export default function JobsView({ category }: { category: JobCategory }) {
       value: (j) => jobStatusLabel(j.status),
       cell: (j) =>
         canEditJobs ? (
-          <InlineSelect
+          <JobStatusSelect
             value={j.status}
-            width="w-48"
             label={`Status for ${j.title}`}
-            dot={JOB_DOT[j.status]}
             disabled={pending.has(j.id)}
             options={JOB_STATUSES.some((s) => s.value === j.status) ? JOB_STATUSES : [...JOB_STATUSES, { value: j.status, label: jobStatusLabel(j.status) }]}
-            onChange={(v) => changeStatus(j, v as Job["status"])}
+            onChange={(v) => changeStatus(j, v)}
           />
         ) : (
-          <StatusBadge status={jobStatusLabel(j.status)} />
+          <Badge tone={JOB_STATUS_TONE[j.status] ?? "grey"} dot>
+            {jobStatusShort(j.status)}
+          </Badge>
         ),
     },
     { key: "created", header: "Posted", sortable: true, card: false, hideBelow: "xl", value: (j) => j.createdAt, cell: (j) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(j.createdAt)}</span> },
@@ -395,11 +382,25 @@ export default function JobsView({ category }: { category: JobCategory }) {
       query={copy.query}
       canEdit={canEditJobs}
       canPrice={canPrice}
-      busy={busy === job.id}
-      onDuplicate={duplicate}
+      onDuplicate={(j) => router.push(duplicateJobHref(j))}
       onDelete={(j) => setDeleteId(j.id)}
     />
   );
+  // Sheet header: the full record one click away, beside the close button.
+  const openJobAction = (job: Job) => (
+    <Button size="sm" variant="secondary" icon="external" href={`/portal/jobs/${job.id}${copy.query}`}>
+      Open job
+    </Button>
+  );
+  const rowMenu = (j: Job, open: () => void) =>
+    jobMenuItems({
+      job: j,
+      go: (href) => router.push(href),
+      onOpen: open,
+      onDelete: () => setDeleteId(j.id),
+      canEdit: canEditJobs,
+      canDelete: canPrice,
+    });
   const pickedJob = picked ? jobs.find((j) => j.id === picked) : undefined;
 
   const canPost = canEditJobs && !(res.jobs && jobs.length === 0);
@@ -538,6 +539,8 @@ export default function JobsView({ category }: { category: JobCategory }) {
           }
           detailTitle={(j) => j.title}
           renderDetail={(j) => detailFor(j)}
+          detailActions={(j) => openJobAction(j)}
+          rowMenu={rowMenu}
         />
       </>
     );
@@ -561,7 +564,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
       {body}
 
       {pickedJob && (
-        <Drawer title={pickedJob.title} onClose={() => setPicked(null)}>
+        <Drawer title={pickedJob.title} onClose={() => setPicked(null)} actions={openJobAction(pickedJob)}>
           {detailFor(pickedJob)}
         </Drawer>
       )}
@@ -603,7 +606,6 @@ function JobDetail({
   query,
   canEdit,
   canPrice,
-  busy,
   onDuplicate,
   onDelete,
 }: {
@@ -611,7 +613,6 @@ function JobDetail({
   query: string;
   canEdit: boolean;
   canPrice: boolean;
-  busy: boolean;
   onDuplicate: (j: Job) => void;
   onDelete: (j: Job) => void;
 }) {
@@ -633,7 +634,7 @@ function JobDetail({
   const wp = workplaceOf(job);
   const pay = job.salary ? formatSalary(job.salary) : null;
   const total = job.applicationsCount ?? 0;
-  const facts = [
+  const facts: { k: string; v: React.ReactNode }[] = [
     { k: "Job ID", v: job.postingId },
     { k: "Client", v: canPrice ? job.clientName : undefined },
     { k: "Vendor", v: canPrice ? job.vendorName : undefined },
@@ -643,15 +644,17 @@ function JobDetail({
     { k: "Salary", v: pay },
     { k: "Pay / bill", v: canPrice && (job.payRate || job.clientBillRate) ? `$${job.payRate ?? "—"} / $${job.clientBillRate ?? "—"} per hour` : undefined },
     { k: "Department", v: job.department },
-    { k: "Assignees", v: canPrice ? assigneesOf(job).join(", ") || "Unassigned" : undefined },
-    { k: "Deadline", v: job.submissionDueDate ? fmtDate(job.submissionDueDate) : undefined },
+    { k: "Assignees", v: canPrice ? <AvatarStack names={assigneesOf(job)} max={5} /> : undefined },
+    { k: "Deadline", v: job.submissionDueDate ? <DueCell job={job} /> : undefined },
     { k: "Posted", v: fmtDate(job.publishedAt ?? job.createdAt) },
-  ].filter((f): f is { k: string; v: string } => !!f.v);
+  ].filter((f) => !!f.v);
 
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={jobStatusLabel(job.status)} />
+        <Badge tone={JOB_STATUS_TONE[job.status] ?? "grey"} dot>
+          {jobStatusShort(job.status)}
+        </Badge>
         {!isPubliclyOpen(job.status) && <span className="text-[13px] text-mist-600">Not on the careers site</span>}
       </div>
       <KeyValue items={facts} />
@@ -693,9 +696,8 @@ function JobDetail({
         )}
       </section>
       <div className="flex flex-wrap gap-2 border-t border-mist-200 pt-5">
-        <Button icon="external" href={`/portal/jobs/${job.id}${query}`}>Open job page</Button>
         {canEdit && <Button variant="secondary" icon="edit" href={`/portal/jobs/${job.id}/edit${query}`}>Edit</Button>}
-        {canEdit && <Button variant="secondary" icon="layers" loading={busy} onClick={() => onDuplicate(job)}>Duplicate</Button>}
+        {canEdit && <Button variant="secondary" icon="copy" onClick={() => onDuplicate(job)}>Duplicate</Button>}
         {canPrice && <Button variant="secondary" icon="plus" href={`/portal/applications/new?jobId=${job.id}`}>Add applicant</Button>}
         {canPrice && <Button variant="danger" icon="trash" className="sm:ml-auto" onClick={() => onDelete(job)}>Delete</Button>}
       </div>

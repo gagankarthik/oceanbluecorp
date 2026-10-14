@@ -8,6 +8,7 @@ import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import { fieldCls } from "@/components/portal/recruiting/bits";
 import { buckets, countIn, tally } from "@/components/portal/recruiting/model";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 import {
   Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KeyValue, Modal, Page, PageHeader, Panel, PanelSkeleton, ProgressBar, Spinner,
   TableSkeleton,
@@ -467,6 +468,21 @@ export default function ResumesView() {
             searchPlaceholder="Search file, candidate or uploader"
             emptyTitle={statusKey ? `No ${statusOptions.find((o) => o.value === statusKey)?.label.toLowerCase()} files` : "No files match"}
             detailTitle={(r) => r.fileName}
+            detailActions={(r) => <Button size="sm" variant="secondary" icon="eye" onClick={() => void openPreview(r)}>{isPdf(r.fileType) ? "Preview" : "Open file"}</Button>}
+            rowMenu={(r, openDetail): MenuEntry[] => {
+              const row = list.find((x) => x.id === r.id) ?? r;
+              const canIndex = !row.indexed && !isExtra(row) && !row.indexing;
+              return [
+                { label: "Open", icon: "eye", onSelect: openDetail },
+                { label: isPdf(row.fileType) ? "Preview" : "Open file", icon: "external", onSelect: () => void openPreview(row) },
+                { label: "Download", icon: "download", onSelect: () => void download(row) },
+                ...(canIndex
+                  ? [{ label: isFailed(row) ? "Retry making searchable" : "Make searchable", icon: "search" as const, disabled: rowIndexing || jobBusy, onSelect: () => void indexOne(row) }]
+                  : []),
+                { kind: "separator" },
+                { label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleteRow(row) },
+              ];
+            }}
             renderDetail={(r) => {
               const row = list.find((x) => x.id === r.id) ?? r;
               return (
@@ -485,8 +501,7 @@ export default function ResumesView() {
                   />
                   {isFailed(row) && serverFailures.get(row.fileKey) && <p className="rounded-lg bg-[#fef3f2] p-3 text-[13px] text-[#b42318]">{serverFailures.get(row.fileKey)}</p>}
                   <div className="flex flex-wrap gap-2 border-t border-mist-200 pt-5">
-                    <Button icon="eye" onClick={() => void openPreview(row)}>{isPdf(row.fileType) ? "Preview" : "Open"}</Button>
-                    <Button variant="secondary" icon="download" onClick={() => void download(row)}>Download</Button>
+                    <Button icon="download" onClick={() => void download(row)}>Download</Button>
                     {!row.indexed && !isExtra(row) && (
                       <Button variant="secondary" icon="search" loading={row.indexing} disabled={rowIndexing || jobBusy} onClick={() => void indexOne(row)}>Make searchable</Button>
                     )}

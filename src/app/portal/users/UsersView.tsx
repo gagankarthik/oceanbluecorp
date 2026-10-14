@@ -15,6 +15,7 @@ import {
   Avatar,
   Badge,
   Button,
+  ConfirmDialog,
   EmptyState,
   ErrorState,
   InsightsSheet,
@@ -30,6 +31,7 @@ import {
 } from "@/components/portal/kit";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, SegmentChips, ViewTabs, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
 import { canAccess, nav, roles, type Role } from "@/lib/portal/roles";
+import type { MenuEntry } from "@/components/portal/records/Menu";
 
 /** Cognito role names, as /api/users returns them. Media is the portal's marketing role. */
 type StaffRole = "admin" | "hr" | "sales" | "recruiter" | "media";
@@ -433,6 +435,8 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
   const [roleFilter, setRoleFilter] = useState("All");
   const [focus, setFocus] = useState<Focus>(null);
   const [inviting, setInviting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
   const switchTab = (t: Tab) => {
@@ -481,6 +485,30 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
     } catch (e) {
       toast.error(errorText(e, "Couldn't delete the user. Try again."));
     }
+  };
+
+  // Same self-account and Admin/HR rules as the detail sheet.
+  const rowMenu = (u: User, openDetail: () => void): MenuEntry[] => {
+    const items: MenuEntry[] = [{ label: "Open", icon: "eye", onSelect: openDetail }];
+    if (!canManage(u)) return items;
+    items.push(
+      { kind: "separator" },
+      { kind: "label", label: "Change role" },
+      ...allowedRoles.map((r): MenuEntry => ({ label: roleLabel(r), checked: u.role === r, onSelect: () => void (u.role !== r && changeRole(u, r)) })),
+    );
+    items.push({ kind: "separator" });
+    if (u.status === "active") items.push({ label: "Deactivate", icon: "x", onSelect: () => void setStatus(u, "inactive") });
+    else if (u.status === "inactive") items.push({ label: "Reactivate", icon: "check", onSelect: () => void setStatus(u, "active") });
+    items.push({ label: "Delete", icon: "trash", danger: true, onSelect: () => setConfirmDelete(u) });
+    return items;
+  };
+
+  const confirmRemove = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    await remove(confirmDelete);
+    setDeleting(false);
+    setConfirmDelete(null);
   };
 
   const count = (s: Status) => users.filter((u) => u.status === s).length;
@@ -645,6 +673,7 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
               searchPlaceholder="Search name or email"
               emptyTitle="No users match your filters"
               detailTitle={(u) => u.name || u.email}
+              rowMenu={rowMenu}
               renderDetail={(r) => {
                 const live = users.find((x) => x.id === r.id);
                 if (!live) return <GoneNotice noun="user" />;
@@ -666,6 +695,16 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
         )}
       </Page>
 
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete this user?"
+          body={`${confirmDelete.name || confirmDelete.email} loses their account and access permanently. This cannot be undone.`}
+          confirmLabel="Delete"
+          busy={deleting}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => void confirmRemove()}
+        />
+      )}
       {inviting && (
         <InviteForm
           existing={users}

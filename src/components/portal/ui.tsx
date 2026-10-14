@@ -120,9 +120,12 @@ export function Badge({ children, tone = "grey", dot = false }: { children: Reac
 /** Maps common status words to a tone so every page colours them the same way */
 export function statusTone(status: string): Tone {
   const s = status.toLowerCase();
-  if (/(filled|hired|placed|published|active|won|approved|live|signed|healthy|completed|success)/.test(s)) return "green";
-  if (/(interview|submitted|review|scheduled|in progress|scheduled|pending|draft|proposal|invited|negotiat)/.test(s)) return "amber";
-  if (/(rejected|lost|closed|suspended|expired|withdrawn|failed|archived|declined|revoked)/.test(s)) return "red";
+  // Deliberate pauses and unstarted work are neutral, never green or red.
+  if (/(inactive|disabled|archived|draft|on hold|paused)/.test(s)) return "grey";
+  if (/(filled|hired|placed|published|active|won|approved|live|signed|healthy|completed|success|responded)/.test(s)) return "green";
+  if (/scheduled/.test(s)) return "blue";
+  if (/(interview|submitted|review|in progress|pending|proposal|invited|negotiat|due soon)/.test(s)) return "amber";
+  if (/(rejected|lost|closed|suspended|expired|withdrawn|failed|declined|revoked|overdue)/.test(s)) return "red";
   if (/(new|open|sourcing|screening|available|lead|prospect)/.test(s)) return "blue";
   return "grey";
 }

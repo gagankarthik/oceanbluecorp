@@ -461,7 +461,7 @@ function Overview({
             />
             <AttentionRow label="Offers awaiting response" hint={`No answer for ${OFFER_STALE_DAYS}+ days`} value={offersAtRisk} tone="red" href="/portal/applications?status=offered" />
             <AttentionRow label="Stalled candidates" hint={`In progress, no stage change for ${STALE_DAYS}+ days`} value={stalled} tone="amber" href="/portal/applications?saved=stale" />
-            <AttentionRow label="Unassigned candidates" hint="In progress, nobody owns them" value={unassigned} tone="amber" href="/portal/applications?status=inprogress&owner=unassigned" />
+            <AttentionRow label="Unassigned candidates" hint="In progress, nobody owns them" value={unassigned} tone="red" href="/portal/applications?status=inprogress&owner=unassigned" />
           </div>
         </Panel>
         <MyTasks />

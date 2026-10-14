@@ -3,12 +3,15 @@
 import { useEffect } from "react";
 import { useToast } from "../toast";
 import Icon from "../icons";
-import { Badge } from "../ui";
+import { Avatar, Badge } from "../ui";
+import type { MenuEntry } from "../records/Menu";
 import { KpiRow as KitKpiRow } from "../kit/layout";
 import { Modal as KitModal } from "../kit/overlay";
 import { ErrorState as KitErrorState } from "../kit/states";
 import { ListPageSkeleton } from "../kit/skeletons";
-import { STAGE_DOT, STAGE_LABEL, STAGE_TONE, type Stage } from "./model";
+import {
+  JOB_STATUS_DOT, STAGE_DOT, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
+} from "./model";
 
 /** Kit Modal; kept for existing imports. */
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -310,4 +313,107 @@ export function StarInput({ value, onChange, label }: { value: number; onChange:
       ))}
     </span>
   );
+}
+
+/** Overlapping initials, three at most then "+N"; red "Unassigned" when empty. */
+export function AvatarStack({ names, max = 3 }: { names: string[]; max?: number }) {
+  if (!names.length) return <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>;
+  const shown = names.slice(0, max);
+  const extra = names.length - shown.length;
+  return (
+    <span className="inline-flex items-center" title={names.join(", ")}>
+      <span className="sr-only">{names.join(", ")}</span>
+      {shown.map((n, i) => (
+        <span key={`${n}-${i}`} className={`rounded-full ring-2 ring-white ${i ? "-ml-2" : ""}`}>
+          <Avatar name={n} size="sm" />
+        </span>
+      ))}
+      {extra > 0 && (
+        <span aria-hidden className="-ml-2 grid size-7 place-items-center rounded-full bg-mist-200 text-[11px] font-semibold tabular-nums text-navy-900 ring-2 ring-white">
+          +{extra}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Job status select that reads short ("Active") but lists the full labels when opened. */
+export function JobStatusSelect({
+  value,
+  options,
+  onChange,
+  label,
+  disabled,
+}: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: JobStatus) => void;
+  label: string;
+  disabled?: boolean;
+}) {
+  return (
+    <span
+      onClick={(e) => e.stopPropagation()}
+      className={`relative inline-flex h-8 max-w-full items-center gap-1.5 rounded-md pl-2.5 pr-7 text-[13px] font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 has-[:focus-visible]:bg-mist-0 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ocean-600 ${disabled ? "opacity-50" : ""}`}
+    >
+      <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "#99a2af" }} />
+      <span aria-hidden className="whitespace-nowrap">{jobStatusShort(value)}</span>
+      <Icon name="chevronDown" className="pointer-events-none absolute right-2 size-3.5 text-mist-500" />
+      <select
+        value={value}
+        aria-label={label}
+        title={jobStatusLabel(value)}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value as JobStatus)}
+        className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0 focus:outline-none disabled:cursor-default"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </span>
+  );
+}
+
+/**
+ * One action set for a role, used by the list rows and the job page: Open, Edit,
+ * Add applicant, Duplicate, Preview, then Delete. Items the viewer can't use are left out.
+ */
+export function jobMenuItems({
+  job,
+  go,
+  onOpen,
+  onDelete,
+  canEdit,
+  canDelete,
+  canAddApplicant,
+  extra = [],
+}: {
+  job: { id: string; status: string; category?: string };
+  go: (href: string) => void;
+  onOpen?: () => void;
+  onDelete: () => void;
+  canEdit: boolean;
+  /** requireStaff: deleting removes the role's applications too. */
+  canDelete: boolean;
+  canAddApplicant?: boolean;
+  /** Page-specific items placed before Delete. */
+  extra?: MenuEntry[];
+}): MenuEntry[] {
+  const q = job.category === "open" ? "?category=open" : "";
+  const live = job.status === "active";
+  const items: MenuEntry[] = [
+    ...(onOpen ? [{ label: "Open", icon: "eye" as const, onSelect: onOpen }] : []),
+    ...(canEdit ? [{ label: "Edit", icon: "edit" as const, onSelect: () => go(`/portal/jobs/${job.id}/edit${q}`) }] : []),
+    ...(canAddApplicant ? [{ label: "Add applicant", icon: "plus" as const, onSelect: () => go(`/portal/applications/new?jobId=${job.id}`) }] : []),
+    ...(canEdit ? [{ label: "Duplicate", icon: "copy" as const, onSelect: () => go(duplicateJobHref(job)) }] : []),
+    live
+      ? { label: "Preview", icon: "globe" as const, onSelect: () => window.open(publicJobPath(job.id), "_blank", "noopener") }
+      : { label: "Preview", icon: "globe" as const, onSelect: () => {}, disabled: true, hint: "Only Active roles are on the website" },
+    ...extra,
+  ];
+  if (canDelete) items.push({ kind: "separator" }, { label: "Delete", icon: "trash", danger: true, onSelect: onDelete });
+  return items;
 }

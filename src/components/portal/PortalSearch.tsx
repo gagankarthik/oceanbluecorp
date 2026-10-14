@@ -4,6 +4,9 @@ import { useEffect, useId, useImperativeHandle, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Icon, { type IconName } from "./icons";
 import { StatusBadge } from "./ui";
+import { StageBadge } from "./recruiting/bits";
+import { jobStatusLabel } from "./recruiting/model";
+import { ContactStatusBadge, type ContactStatus } from "./relationships/contact";
 
 type Hit = { type: "job" | "application" | "contact" | "candidate"; id: string; title: string; subtitle: string; link: string; status?: string };
 
@@ -203,7 +206,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
                     </span>
                     {h.status ? (
                       <span className="hidden shrink-0 sm:inline-flex">
-                        <StatusBadge status={h.status} />
+                        <HitStatus type={h.type} status={h.status} />
                       </span>
                     ) : (
                       <span className="shrink-0 text-[12px] text-mist-500">{TYPE[h.type].label}</span>
@@ -217,4 +220,11 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
       </div>
     </>
   );
+}
+
+/** Each record type keeps the colours its own list uses. */
+function HitStatus({ type, status }: { type: Hit["type"]; status: string }) {
+  if (type === "application" || type === "candidate") return <StageBadge stage={status} />;
+  if (type === "contact") return <ContactStatusBadge status={status as ContactStatus} />;
+  return <StatusBadge status={type === "job" ? jobStatusLabel(status) : status} />;
 }
