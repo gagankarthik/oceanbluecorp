@@ -2,6 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/** Share text and targets for a posting; the portal's "Role published" dialog uses the same ones. */
+export function shareTargets(url: string, title: string) {
+  const text = `${title} at Oceanblue Solutions`;
+  const enc = encodeURIComponent;
+  return {
+    text,
+    targets: [
+      { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}` },
+      { label: "Email", href: `mailto:?subject=${enc(text)}&body=${enc(`${text}\n${url}`)}` },
+      { label: "X", href: `https://x.com/intent/post?text=${enc(text)}&url=${enc(url)}` },
+    ],
+  };
+}
+
 /** Shares the public address of the posting, never the host it happens to be viewed on. */
 export default function ShareJob({ url, title }: { url: string; title: string }) {
   const [open, setOpen] = useState(false);
@@ -20,7 +34,7 @@ export default function ShareJob({ url, title }: { url: string; title: string })
     };
   }, [open]);
 
-  const text = `${title} at Oceanblue Solutions`;
+  const { text, targets } = shareTargets(url, title);
 
   async function share() {
     // Phones: the system share sheet; elsewhere, a short menu
@@ -44,13 +58,6 @@ export default function ShareJob({ url, title }: { url: string; title: string })
       window.prompt("Copy this link", url);
     }
   }
-
-  const enc = encodeURIComponent;
-  const targets = [
-    { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}` },
-    { label: "Email", href: `mailto:?subject=${enc(text)}&body=${enc(`${text}\n${url}`)}` },
-    { label: "X", href: `https://x.com/intent/post?text=${enc(text)}&url=${enc(url)}` },
-  ];
 
   return (
     <div ref={ref} className="relative">

@@ -100,8 +100,8 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
               </li>
             ))}
           </ul>
-          <figure className="mt-2" data-reveal>
-            <div className="aspect-[16/7] overflow-hidden bg-mist-200">
+          <figure className="mx-auto mt-2 max-w-2xl" data-reveal>
+            <div className="aspect-[16/9] overflow-hidden bg-mist-200">
               <iframe
                 title="Map showing Oceanblue Solutions on Fairway Drive, Powell, Ohio"
                 src="https://www.openstreetmap.org/export/embed.html?bbox=-83.1085%2C40.1480%2C-83.0875%2C40.1600&layer=mapnik&marker=40.1540%2C-83.0980"
@@ -109,7 +109,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
                 loading="lazy"
               />
             </div>
-            <figcaption className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-small">
+            <figcaption className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-1 text-small">
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${company.address[0]}, ${company.address[1]}`)}`}
                 className="font-medium text-ocean-700 underline underline-offset-4"

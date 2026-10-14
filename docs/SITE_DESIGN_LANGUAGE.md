@@ -218,6 +218,19 @@ answers the pointer; under reduced motion it draws one static frame.
   action is "Find a job" / "Apply now".
 - Mobile first: design at 375px. The hero stacks; tiles go to two columns, then one.
 
+## 7a. Job posting
+
+`src/components/site/JobPostingView.tsx` draws a posting: title block (back
+link, title, Job ID, apply button), About the role / What you will do / What you
+bring on the axis, and the facts aside (Job ID, location, workplace, type, pay
+when shown, practice, posted, closing date, skills as square chips). The public
+page (`/jobs/[slug]`) passes its live controls in slots; the portal job editor's
+Review step renders the same component with `preview`: static controls, empty
+prompts, and the site's body type set on the wrapper so it escapes `.adm-scope`.
+`preview="phone"` also forces the phone layout and the phone ends of the type
+scale, for a frame narrower than the viewport. Pay prints only when the posting opts in
+(`showPay`); commercial fields never reach the component.
+
 ## 8. Principles we check against
 
 Jakob, Hick, Fitts, Miller, Von Restorff (one accent), Doherty (server-rendered

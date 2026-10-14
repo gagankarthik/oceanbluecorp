@@ -1,8 +1,10 @@
 "use client";
 
 import type { RateUnit } from "@/lib/aws/dynamodb";
-import { isNumber, payOverBillWarning, toNumber } from "@/lib/form-validation";
-import { RATE_UNIT_LABELS, formatRate, grossMarginPct } from "@/lib/pipeline-records";
+import { isNumber, toNumber } from "@/lib/form-validation";
+import { RATE_UNIT_LABELS, formatRate } from "@/lib/pipeline-records";
+import { DEFAULT_TARGET_MARGIN_PCT, fmtPct, marginStatus, placementFee, type MarginTone } from "@/lib/margin";
+import Icon, { type IconName } from "../icons";
 import { Field, NativeSelect, TextInput } from "./base";
 
 export const RATE_UNITS: RateUnit[] = ["hourly", "daily", "weekly", "monthly", "annual"];
@@ -113,23 +115,59 @@ export function RangeInput({
   );
 }
 
-/** Live gross margin for a bill and pay pair, plus the pay-over-bill warning. */
-export function MarginPreview({ bill, pay, unit }: { bill: string; pay: string; unit?: RateUnit }) {
+const TONE: Record<MarginTone, { box: string; icon: IconName }> = {
+  success: { box: "bg-status-success-soft text-status-success ring-status-success-line", icon: "check" },
+  warning: { box: "bg-status-warning-soft text-status-warning ring-status-warning-line", icon: "alert" },
+  danger: { box: "bg-status-danger-soft text-status-danger ring-status-danger-line", icon: "alert" },
+};
+
+/**
+ * Live margin for a bill and pay pair, judged against the job's target
+ * (default 20%): on target, below target, or loss. Markup sits beside it.
+ */
+export function MarginPreview({
+  bill,
+  pay,
+  unit,
+  targetMarginPct = DEFAULT_TARGET_MARGIN_PCT,
+}: {
+  bill: string;
+  pay: string;
+  unit?: RateUnit;
+  targetMarginPct?: number;
+}) {
   const b = moneyValue(bill);
   const p = moneyValue(pay);
-  if (b === undefined || p === undefined || b <= 0) return null;
-  const pct = grossMarginPct({ billRate: b, payRate: p });
-  if (pct === null) return null;
-  const loss = !!payOverBillWarning(pay, bill);
+  const s = marginStatus(b, p, targetMarginPct);
+  if (!s || b === undefined || p === undefined) return null;
+  const tone = TONE[s.tone];
+  const spread = unit ? formatRate(b - p, unit) : `$${(b - p).toFixed(2)}/hr`;
   return (
-    <p
-      role="status"
-      className={`rounded-lg px-3.5 py-2.5 text-adm-base font-medium tabular-nums ring-1 ring-inset ${
-        loss ? "bg-status-danger-soft text-status-danger ring-status-danger-line" : "bg-status-success-soft text-status-success ring-status-success-line"
-      }`}
-    >
-      Gross margin {pct.toFixed(1)}% · {unit ? formatRate(b - p, unit) : `$${(b - p).toFixed(2)}`} per {unit ? "unit" : "hour"}
-      {loss && <span className="mt-0.5 block font-normal">Pay is above the bill rate, so this placement would run at a loss.</span>}
+    <div role="status" className={`flex items-start gap-2.5 rounded-lg px-3.5 py-2.5 text-adm-base tabular-nums ring-1 ring-inset ${tone.box}`}>
+      <Icon name={tone.icon} className="mt-0.5 size-4 shrink-0" />
+      <p className="min-w-0">
+        <span className="font-medium">{s.label}</span>
+        {" · "}Margin {s.marginPct.toFixed(1)}%
+        {s.markupPct !== null && <> · Markup {s.markupPct.toFixed(1)}%</>}
+        {" · "}{spread}
+        {s.tone === "danger" && <span className="mt-0.5 block">Pay is at or above the bill rate, so this placement would run at a loss.</span>}
+      </p>
+    </div>
+  );
+}
+
+/** Placement fee on an annual role: fee % of the salary midpoint. */
+export function FeePreview({ feePct, min, max }: { feePct: string; min: string; max: string }) {
+  const pct = moneyValue(feePct.replace(/%/g, ""));
+  const fee = placementFee(pct, moneyValue(min), moneyValue(max));
+  if (fee === null || pct === undefined) return null;
+  return (
+    <p role="status" className="flex items-center gap-2.5 rounded-lg bg-mist-50 px-3.5 py-2.5 text-adm-base tabular-nums text-navy-900 ring-1 ring-inset ring-mist-200">
+      <Icon name="dollar" className="size-4 shrink-0 text-mist-600" />
+      <span>
+        <span className="font-medium">Fee ≈ {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(fee)}</span>
+        {" · "}{fmtPct(pct)} of the salary midpoint
+      </span>
     </p>
   );
 }

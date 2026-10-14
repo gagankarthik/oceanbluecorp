@@ -16,6 +16,19 @@ export const JOB_TYPE_OPTIONS: { value: Job["type"]; label: string }[] = [
   { value: "managed-teams", label: "Managed teams" },
 ];
 
+// Public wording of each type on the careers site; "remote" is legacy.
+const PUBLIC_TYPE_LABEL: Record<string, string> = {
+  "full-time": "Full-time",
+  "part-time": "Part-time",
+  contract: "Contract",
+  "contract-to-hire": "Contract to hire",
+  "direct-hire": "Direct hire",
+  "managed-teams": "Managed teams",
+  remote: "Remote",
+};
+
+export const jobTypeLabel = (type: string) => PUBLIC_TYPE_LABEL[type] || type;
+
 /** Each status in words a recruiter can act on; only Active is public (job-status.ts). */
 export const JOB_STATUS_COPY: Record<Job["status"], { label: string; detail: string; public: boolean }> = {
   draft: { label: "Draft", detail: "Off the careers site. Finish it before publishing.", public: false },

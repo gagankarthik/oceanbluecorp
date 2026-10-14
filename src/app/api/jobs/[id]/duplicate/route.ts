@@ -48,6 +48,7 @@ export async function POST(
       updatedAt: undefined,
       applicationsCount: 0, // Reset application count
       notificationSentAt: undefined, // Reset notification status
+      sourceContactId: undefined, // The copy was not made from the enquiry
     };
 
     const result = await createJob(duplicatedJob);

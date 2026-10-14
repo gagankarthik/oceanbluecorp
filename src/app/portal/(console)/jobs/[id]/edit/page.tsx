@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useAuth, canEditJobs, canSeeJobCommercials } from "@/lib/auth";
 import type { Job, Client, Vendor } from "@/lib/aws/dynamodb";
 import {
-  JobForm, JobFormData, jobToFormData, formDataToPayload, createVendorFromForm,
+  JobForm, JobFormData, jobToFormData, formDataToPayload, createVendorFromForm, clearJobDraft, jobDraftKey,
 } from "@/components/portal/records/JobForm";
+import { refreshJobs } from "@/hooks/use-console-data";
 import type { AssigneeUser } from "@/components/portal/records/JobForm";
 import { EmptyState, ErrorState, FormSkeleton, Page, PageHeader } from "@/components/portal/kit";
 import { useNavSection } from "@/components/portal/console/provider";
@@ -92,7 +93,7 @@ export default function EditJobPage({
     setSubmitting(true);
     setServerError(null);
     try {
-      const payload = formDataToPayload(data);
+      const payload = formDataToPayload(data, { canPrice });
       const res = await fetch(`/api/jobs/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -100,6 +101,8 @@ export default function EditJobPage({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Your changes could not be saved. Try again in a moment.");
+      clearJobDraft(draftKey);
+      void refreshJobs();
       router.push(`/portal/jobs/${id}`);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Your changes could not be saved. Try again in a moment.");
@@ -107,6 +110,18 @@ export default function EditJobPage({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const draftKey = user?.id ? jobDraftKey(user.id, `edit.${id}`) : undefined;
+
+  // Draft records save in place as you type; the form never calls this for a live or open role.
+  const handleAutosave = async (data: JobFormData) => {
+    const res = await fetch(`/api/jobs/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...formDataToPayload(data, { canPrice }), status: "draft" }),
+    });
+    if (!res.ok) throw new Error("Autosave failed");
   };
 
   const handleAddClient = async (clientData: {
@@ -130,7 +145,7 @@ export default function EditJobPage({
     // The record's own list once known, else the link's hint: never a fixed "state roles".
     const category = jobCategory(job ?? hint);
     return (
-      <Page width="narrow">
+      <Page>
         <PageHeader back={{ href: JOB_LIST_HREF[category], label: JOB_LIST_LABEL[category] }} title="Edit role" />
         {loadFailed ? (
           <ErrorState title="Couldn't load this job posting" message="Check your connection and try again." onRetry={() => setAttempt((n) => n + 1)} />
@@ -159,6 +174,8 @@ export default function EditJobPage({
       serverError={serverError}
       onDismissError={() => setServerError(null)}
       onSubmit={handleSubmit}
+      draftKey={draftKey}
+      onAutosave={handleAutosave}
       onAddClient={handleAddClient}
       onAddVendor={async (vendorData) => {
         const vendor = await createVendorFromForm(vendorData);

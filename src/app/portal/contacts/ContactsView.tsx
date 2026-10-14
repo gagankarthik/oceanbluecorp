@@ -7,7 +7,9 @@ import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import { useResource } from "@/hooks/use-resource";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
-import { RoleGate } from "@/components/portal/session";
+import { RoleGate, useSession } from "@/components/portal/session";
+import { permissionsFor } from "@/components/portal/recruiting/model";
+import { canCreateRoleFromContact } from "@/lib/job-from-contact";
 import {
   Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
@@ -91,6 +93,7 @@ export default function ContactsView() {
   const [segment, setSegment] = useState("All");
   const toast = useToast();
   const router = usePortalRouter();
+  const { canEditJobs } = permissionsFor(useSession().role);
   const [confirmDelete, setConfirmDelete] = useState<Contact | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -150,6 +153,9 @@ export default function ContactsView() {
       },
     },
     ...(c.status !== "responded" ? [{ label: "Mark responded", icon: "check" as const, onSelect: () => void setStatus([c.id], "responded") }] : []),
+    ...(canEditJobs && canCreateRoleFromContact(c)
+      ? [{ label: "Create role from enquiry", icon: "briefcase" as const, onSelect: () => router.push(`/portal/jobs/new?fromContact=${encodeURIComponent(c.id)}`) }]
+      : []),
     { kind: "separator" },
     ...(c.status !== "archived" ? [{ label: "Archive", icon: "layers" as const, onSelect: () => void setStatus([c.id], "archived") }] : []),
     { label: "Delete", icon: "trash", danger: true, onSelect: () => setConfirmDelete(c) },

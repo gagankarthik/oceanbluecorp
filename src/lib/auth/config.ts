@@ -100,9 +100,9 @@ export const JOB_COMMERCIAL_ROLES: UserRole[] = RECRUITING_ROLES;
  * that belongs on this list and is not added to it is a leak.
  */
 export const JOB_COMMERCIAL_FIELDS = [
-  "clientId", "clientName", "clientNotes",
+  "clientId", "clientName", "clientNotes", "sourceContactId",
   "vendorId", "vendorName",
-  "clientBillRate", "payRate",
+  "clientBillRate", "payRate", "feePct", "targetMarginPct",
   "recruitmentManagerId", "recruitmentManagerName", "recruitmentManagerEmail",
   "assignedToIds", "assignedToNames", "assignedToEmails",
   "assignedToId", "assignedToName",

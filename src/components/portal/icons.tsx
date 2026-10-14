@@ -342,6 +342,12 @@ const paths = {
       <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" />
     </>
   ),
+  lock: (
+    <>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+      <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2" />
+    </>
+  ),
   board: (
     <>
       <rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5" />

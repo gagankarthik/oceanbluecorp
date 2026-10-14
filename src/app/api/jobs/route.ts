@@ -10,7 +10,7 @@ import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isPastDeadline, isAcceptingApplications } from "@/lib/job-status";
 import { jobLocationLabel } from "@/lib/workplace";
-import { jobInputError, parseSalary, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
+import { FEE_PCT_MAX, TARGET_MARGIN_PCT_MAX, jobInputError, parsePct, parseSalary, parseSkills, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
 import { notifyJobIndexing } from "@/lib/google-indexing";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
@@ -125,6 +125,11 @@ export async function POST(request: NextRequest) {
     if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
     const { type, workplace } = splitLegacyRemote(body);
     const salary = parseSalary(body.salary ?? null);
+    const skills = parseSkills(body.skills ?? null);
+    const pct = (field: "feePct" | "targetMarginPct", max: number) => {
+      const r = parsePct(body[field] ?? null, field, max);
+      return r.ok && r.value !== null ? r.value : undefined;
+    };
 
     // Every posting carries an OB-ID; one without it can't be referenced by staff or partners.
     const postingIdResult = await getNextPostingId();
@@ -144,6 +149,8 @@ export async function POST(request: NextRequest) {
       requirements: typeof body.requirements === "string" ? sanitizeRichText(body.requirements) : (body.requirements || []),
       responsibilities: typeof body.responsibilities === "string" ? sanitizeRichText(body.responsibilities) : (body.responsibilities || []),
       salary: salary.ok && salary.value ? salary.value : undefined,
+      skills: skills.ok && skills.value.length ? skills.value : undefined,
+      showPay: body.showPay === true ? true : undefined,
       status,
       submissionDueDate: body.submissionDueDate,
       createdAt: new Date().toISOString(),
@@ -165,8 +172,12 @@ export async function POST(request: NextRequest) {
       // Commercial half of the record, recruiting roles only.
       clientId: commercial(body.clientId),
       clientName: commercial(body.clientName),
+      sourceContactId: commercial(typeof body.sourceContactId === "string" ? body.sourceContactId.trim() || undefined : undefined),
+      clientNotes: commercial(typeof body.clientNotes === "string" ? body.clientNotes.trim() || undefined : undefined),
       clientBillRate: commercial(body.clientBillRate),
       payRate: commercial(body.payRate),
+      feePct: commercial(pct("feePct", FEE_PCT_MAX)),
+      targetMarginPct: commercial(pct("targetMarginPct", TARGET_MARGIN_PCT_MAX)),
       vendorId: commercial(body.vendorId) || undefined,
       vendorName: commercial(body.vendorName) || undefined,
       recruitmentManagerId: commercial(body.recruitmentManagerId),

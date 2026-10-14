@@ -221,8 +221,51 @@ too: "Case studies", "Customer stories"). Numbers are `tabular-nums`.
 | `ActionMenu` | `records/Menu.tsx` | Radix overflow menu, horizontal ⋯ trigger, "More actions". |
 | Icons | `icons.tsx` | One set; icon-only buttons carry `aria-label` and `title`. |
 | Toasts | `toast.tsx` | `useToast()(message, { tone, undo })`; reversible actions offer Undo. |
+| `MarginPreview` / `FeePreview` | `fields/money.tsx` | Margin judged against the job's `targetMarginPct` (default 20, `src/lib/margin.ts`): at or above target `status-success` + check, positive but short `status-warning` + alert "Below target (20%)", zero or below `status-danger` + alert "Loss". Markup on pay sits beside margin on bill; never green for merely positive. `FeePreview`: `feePct` of the annual salary midpoint, "Fee ≈ $X". Commercial: render only for `canPrice`. |
 
 ## 4. Patterns
+
+### Job editor (`records/JobForm.tsx`)
+
+`/portal/jobs/new` and `/portal/jobs/[id]/edit`. A simple stepped flow, centred
+in `Page width="narrow"`, one panel with no boxes inside it.
+
+- **Steps**: Basics → Posting → Pay and deadline → Internal (recruiting roles
+  only; media has four steps) → Review. `Stepper` (`form-steps.tsx`) joins the
+  markers with a track from lg; below lg it reads "Step n of N" with a bar.
+  Steps already reached are clickable; nothing skips past a step with a blocking
+  error. `?step=n` keeps the place on refresh. A step change moves focus to its
+  heading.
+- **Actions**: Back (ghost) and Next (primary) in a sticky footer. Save draft is
+  the one secondary, in the header, on every step. Publish appears only on
+  Review, with a plain "Save as internal (not on website)" link beside it. Edit
+  mode: Save changes in the header (secondary) and as the Review primary; status
+  is a neutral menu beside the title and applies on save.
+- **Fields**: about five per step. Basics: title, practice (grouped), job type,
+  workplace beside role type (State / Open, defaulting to the list the form was
+  opened from), city, state. Posting: the three public sections, an "Insert
+  template" link (`lib/job-templates.ts`, fills only empty sections), skills.
+  Pay and deadline: apply-by, basis (follows the job type until a figure is
+  typed), range, "Show pay on posting" (off by default). Internal: client,
+  vendor, then bill and pay with `MarginPreview` (contract) or fee with
+  `FeePreview` (permanent); notes, manager and assignees under "Add more details".
+- **Validation**: `useFormErrors(…, ids, { touched: true })` checks a field
+  when it is left and clears its error on change; Next runs `validateSome` for
+  that step only. Untouched required fields say "Required" in mist.
+- **Review**: up to three suggestions from `lib/job-quality.ts` (plain lines
+  with an icon, each opens its step and field), then the posting drawn by the
+  site's `JobPostingView` in a URL-bar frame at 80%. The module loads only when
+  Review opens.
+- **Autosave**: quiet "Saved 2:14 pm" in the header (`aria-live`). New roles
+  back up to localStorage (`portal.jobDraft.<user>.<category>`) with a one-line
+  Restore / Discard on return; draft records PUT in place after 1.5s; live and
+  open records only back up locally.
+- **Starts**: "Copy an existing role" link beside the title (last 20 from the
+  cached job list, `?from=`); `?fromContact=` seeds title, client and an
+  internal note from an enquiry (`jobDraftFromContact`).
+- **After saving**: a confirm that names the suggestions left before going
+  live, then `JobCreatedDialog` with Copy link, Share on LinkedIn and Find
+  matches now (starts the saved bench ranking for the job).
 
 ### PageHeader (`kit/layout.tsx`)
 
@@ -319,6 +362,17 @@ Five roles, ADMIN > HR > (RECRUITER = SALES), and MEDIA beside them (see
    admin.
 
 Always mirror the check in the API route.
+
+Job fields follow the same split. `JOB_COMMERCIAL_FIELDS` (`config.ts`) lists
+what media never reads or writes: rates, `feePct`, `targetMarginPct`, client,
+client notes, `sourceContactId`, vendor and assignees. `skills` and `showPay`
+are public-side: media edits them, and the careers site shows the salary only
+when `showPay` is true (`toCandidateJob`, `toFeedJob`, `jobPostingJsonLd` in
+`src/lib/job-jsonld.ts`). "Create role from enquiry" sits in the contacts row
+menu and the contact record ⋯ menu for hiring enquiries only, and opens
+`/portal/jobs/new?fromContact=<id>`; the draft (`jobDraftFromContact`,
+`src/lib/job-from-contact.ts`) puts the enquiry in internal client notes, never
+public copy.
 
 ---
 

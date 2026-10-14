@@ -78,7 +78,7 @@ export function jobToPayload(job: Job): JobPayload {
     responsibilities: job.responsibilities,
     location: job.location,
     employment_type: job.type,
-    skills: [],
+    skills: job.skills ?? [],
   };
 }
 

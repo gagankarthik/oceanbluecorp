@@ -5,7 +5,7 @@ export {
 } from "./base";
 export { LocationInput, type LocationValue } from "./LocationInput";
 export { WorkAuthInput, workAuthNote, type WorkAuthValue } from "./WorkAuthInput";
-export { MoneyInput, RateInput, RangeInput, MarginPreview, moneyValue, RATE_UNITS } from "./money";
+export { MoneyInput, RateInput, RangeInput, MarginPreview, FeePreview, moneyValue, RATE_UNITS } from "./money";
 export { StaffPicker, StaffMultiPicker, useStaff, type StaffPerson } from "./StaffPicker";
 export { StageSelect, stageOptions } from "./StageSelect";
 export { RatingInput } from "./RatingInput";

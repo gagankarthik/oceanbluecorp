@@ -13,6 +13,7 @@ import type { ApiScope } from "@/lib/api-scopes";
 import { apiKeyPreview, hashApiKey } from "@/lib/api-key-hash";
 import type { Workplace } from "@/lib/workplace";
 import { PUBLIC_JOB_STATUSES, isPubliclyOpen, type JobCategory } from "@/lib/job-status";
+import { salaryIfShown } from "@/lib/job-jsonld";
 import { emailKeyOf, nameKeyOf } from "@/lib/application-input";
 
 // Read environment variables directly every time (no caching)
@@ -733,6 +734,8 @@ export interface Job {
   clientId?: string; // FK to oceanblue-clients
   clientName?: string; // Denormalized for display
   clientNotes?: string; // Quick note about client
+  /** Enquiry (oceanblue-contacts id) the role was created from. Internal. */
+  sourceContactId?: string;
 
   // State (separate from location)
   state?: string;
@@ -740,6 +743,15 @@ export interface Job {
   // Rates
   clientBillRate?: number; // Client Bill Rate ($)
   payRate?: number; // Pay Rate ($)
+  /** Placement fee as % of annual salary, for direct-hire/annual roles. Commercial. */
+  feePct?: number;
+  /** Margin the role should clear; absent = DEFAULT_TARGET_MARGIN_PCT (20). Commercial. */
+  targetMarginPct?: number;
+
+  /** Public skills list; also sent to the matching engine. */
+  skills?: string[];
+  /** Publish the salary range on the careers site and in JSON-LD. Absent = hidden. */
+  showPay?: boolean;
 
   // Assignments - Recruitment Manager
   recruitmentManagerId?: string; // HR user ID
@@ -771,6 +783,7 @@ export type PublicJob = Pick<
   | "id" | "postingId" | "title" | "department" | "location" | "state" | "type" | "workplace"
   | "description" | "requirements" | "responsibilities" | "salary" | "status"
   | "submissionDueDate" | "createdAt" | "updatedAt" | "applicationsCount" | "category"
+  | "skills" | "showPay"
 >;
 
 export function toPublicJob(job: Job): PublicJob {
@@ -793,18 +806,21 @@ export function toPublicJob(job: Job): PublicJob {
     updatedAt: job.updatedAt,
     applicationsCount: job.applicationsCount,
     category: job.category,
+    skills: job.skills,
+    showPay: job.showPay,
   };
 }
 
 /**
- * What a job seeker may see: the public projection without salary. The owner
- * publishes no pay or compensation on the careers pages, the anonymous API or
- * Google Jobs. Media and staff still read it through toPublicJob / the record.
+ * What a job seeker may see: the public projection, with the salary only when
+ * the posting opts in (`showPay`). Same rule on the careers pages, the
+ * anonymous API and Google Jobs. Staff and media read the record/toPublicJob.
  */
-export type CandidateJob = Omit<PublicJob, "salary">;
+export type CandidateJob = PublicJob;
 export function toCandidateJob(job: Job): CandidateJob {
-  const { salary: _salary, ...rest } = toPublicJob(job);
-  return rest;
+  const { salary: _salary, showPay: _showPay, ...rest } = toPublicJob(job);
+  const salary = salaryIfShown(job);
+  return salary ? { ...rest, salary, showPay: true } : rest;
 }
 
 // Partner-feed projection, served by the key-authenticated /api/v1 routes.
@@ -819,7 +835,7 @@ export type FeedJob = Pick<
   | "id" | "postingId" | "title" | "department" | "location" | "state" | "type" | "workplace"
   | "description" | "requirements" | "responsibilities" | "salary" | "status"
   | "submissionDueDate" | "clientName" | "vendorName" | "postedByName"
-  | "createdAt" | "updatedAt"
+  | "createdAt" | "updatedAt" | "skills"
 >;
 
 export function toFeedJob(job: Job): FeedJob {
@@ -835,7 +851,8 @@ export function toFeedJob(job: Job): FeedJob {
     description: job.description,
     requirements: job.requirements,
     responsibilities: job.responsibilities,
-    salary: job.salary,
+    // Same pay rule as the careers site: only when the posting opts in.
+    salary: salaryIfShown(job),
     status: job.status,
     submissionDueDate: job.submissionDueDate,
     clientName: job.clientName,
@@ -843,6 +860,7 @@ export function toFeedJob(job: Job): FeedJob {
     postedByName: job.postedByName,
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
+    skills: job.skills,
   };
 }
 

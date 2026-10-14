@@ -6,7 +6,7 @@ import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isAcceptingApplications } from "@/lib/job-status";
 import { notifyJobIndexing } from "@/lib/google-indexing";
-import { jobInputError, parseSalary, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
+import { FEE_PCT_MAX, TARGET_MARGIN_PCT_MAX, jobInputError, parsePct, parseSalary, parseSkills, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
 
 /**
  * GET /api/jobs/[id]
@@ -121,6 +121,11 @@ export async function PUT(
       const publishedAt = publishedAtFor(body.status, existingJob.data);
       if (publishedAt) updates.publishedAt = publishedAt;
     }
+    if (body.skills !== undefined) {
+      const skills = parseSkills(body.skills);
+      if (skills.ok) updates.skills = skills.value;
+    }
+    if (body.showPay !== undefined) updates.showPay = body.showPay === true;
     if (body.submissionDueDate !== undefined) updates.submissionDueDate = body.submissionDueDate;
     if (body.state !== undefined) updates.state = body.state;
     if (body.category !== undefined) updates.category = body.category === "open" ? "open" : "state";
@@ -131,6 +136,13 @@ export async function PUT(
       if (body.clientName !== undefined) updates.clientName = body.clientName;
       if (body.clientBillRate !== undefined) updates.clientBillRate = body.clientBillRate;
       if (body.payRate !== undefined) updates.payRate = body.payRate;
+      if (body.clientNotes !== undefined) updates.clientNotes = typeof body.clientNotes === "string" ? body.clientNotes.trim() : "";
+      // null is stored, so a cleared percentage actually clears.
+      for (const [field, max] of [["feePct", FEE_PCT_MAX], ["targetMarginPct", TARGET_MARGIN_PCT_MAX]] as const) {
+        if (body[field] === undefined) continue;
+        const pct = parsePct(body[field], field, max);
+        if (pct.ok) updates[field] = pct.value as number | undefined;
+      }
       if (body.vendorId !== undefined) updates.vendorId = body.vendorId;
       if (body.vendorName !== undefined) updates.vendorName = body.vendorName;
       if (body.recruitmentManagerId !== undefined) updates.recruitmentManagerId = body.recruitmentManagerId;

@@ -49,7 +49,10 @@ All AWS services configured in `src/lib/aws/`:
 - **s3.ts** - Resume file uploads with presigned URLs
 
 DynamoDB tables (region: us-east-2):
-- `oceanblue-jobs` (GSI: status-index)
+- `oceanblue-jobs` (GSI: status-index). Optional `skills[]` and `showPay`
+  (public; salary reaches the careers site, feed and JSON-LD only when
+  `showPay` is true, via `salaryIfShown` in `src/lib/job-jsonld.ts`), plus the
+  commercial `feePct`, `targetMarginPct` and `sourceContactId`.
 - `oceanblue-applications` (GSI: userId-index, jobId-index)
 - `oceanblue-resumes` (GSI: userId-index)
 - `oceanblue-candidates` (GSI: email-index, userId-index)
@@ -78,7 +81,9 @@ AWS Cognito (credentials sign-in via `/api/auth/signin`; `oidc-client-ts` stores
     writes them, because a posting is public copy before it is a requisition.
   - `JOB_COMMERCIAL_ROLES` (= `RECRUITING_ROLES`) — `canSeeJobCommercials()`.
     Who may read or set the commercial half of a job record: bill rate, pay
-    rate, client, vendor, recruitment manager, assignees
+    rate, placement fee % (`feePct`), target margin % (`targetMarginPct`,
+    default 20), client, client notes, source enquiry (`sourceContactId`),
+    vendor, recruitment manager, assignees
     (`JOB_COMMERCIAL_FIELDS`). **Media is excluded**, so it edits a posting it
     cannot price: `/api/jobs` and `/api/jobs/[id]` hand it `toPublicJob` (at any
     status, so it can open its own drafts) and drop those fields from anything

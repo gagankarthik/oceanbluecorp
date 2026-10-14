@@ -5,6 +5,7 @@ import { isAcceptingApplications } from "@/lib/job-status";
 import { displayTitle, workMode } from "@/lib/careers";
 import { jobPlace } from "@/lib/workplace";
 import { richTextToPlain } from "@/lib/rich-text";
+import { jobTypeLabel } from "@/lib/job-options";
 
 /** A row on the public job board; the slug is the posting id. */
 export type Job = {
@@ -23,17 +24,7 @@ export type Job = {
   closes?: string;
 };
 
-const TYPE_LABEL: Record<string, string> = {
-  "full-time": "Full-time",
-  "part-time": "Part-time",
-  contract: "Contract",
-  "contract-to-hire": "Contract to hire",
-  "direct-hire": "Direct hire",
-  "managed-teams": "Managed teams",
-  remote: "Remote",
-};
-
-export const jobTypeLabel = (type: string) => TYPE_LABEL[type] || type;
+export { jobTypeLabel };
 
 const SUMMARY_CHARS = 220;
 

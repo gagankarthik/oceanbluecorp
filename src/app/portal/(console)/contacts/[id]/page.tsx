@@ -3,6 +3,9 @@
 import { use, useCallback, useState } from "react";
 import type { Contact } from "@/lib/aws/dynamodb";
 import { isJobSeeker, seekerArea } from "@/lib/contact";
+import { canCreateRoleFromContact } from "@/lib/job-from-contact";
+import { useSession } from "@/components/portal/session";
+import { permissionsFor } from "@/components/portal/recruiting/model";
 import { fmtDateTime, fmtRelative } from "@/lib/format";
 import { safeHttpUrl } from "@/lib/portal/format";
 import { useResource } from "@/hooks/use-resource";
@@ -123,6 +126,7 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
   const key = `/api/contacts/${id}`;
   const router = usePortalRouter();
   const toast = useToast();
+  const { canEditJobs } = permissionsFor(useSession().role);
   const { data, error, isLoading, isValidating, reload } = useResource<{ contact?: Contact }>(key);
   const contact = data?.contact;
   const notFound = (error as (Error & { status?: number }) | undefined)?.status === 404;
@@ -218,6 +222,9 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
       ? { label: "Restore from archive", icon: "refresh", onSelect: () => void setStatus("read") }
       : { label: "Archive", icon: "layers", onSelect: () => void setStatus("archived") },
     { label: "Copy email", icon: "copy", onSelect: () => void copyEmail() },
+    ...(canEditJobs && canCreateRoleFromContact(contact)
+      ? [{ label: "Create role from enquiry", icon: "briefcase" as const, onSelect: () => router.push(`/portal/jobs/new?fromContact=${encodeURIComponent(contact.id)}`) }]
+      : []),
     { kind: "separator" },
     { label: "Delete enquiry", icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ];

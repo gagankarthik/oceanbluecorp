@@ -31,6 +31,8 @@ const TEXT_LIMITS: Record<string, number> = {
   state: 100,
   submissionDueDate: 40,
   postedByName: 200,
+  clientNotes: 5_000,
+  sourceContactId: 100,
   description: 50_000,
   requirements: 50_000,
   responsibilities: 50_000,
@@ -111,7 +113,56 @@ export function jobInputError(
     const salary = parseSalary(body.salary);
     if (!salary.ok) return salary.error;
   }
+  if (body.skills !== undefined) {
+    const skills = parseSkills(body.skills);
+    if (!skills.ok) return skills.error;
+  }
+  if (body.showPay !== undefined && body.showPay !== null && typeof body.showPay !== "boolean") {
+    return "showPay must be true or false";
+  }
+  for (const [field, max] of [["feePct", FEE_PCT_MAX], ["targetMarginPct", TARGET_MARGIN_PCT_MAX]] as const) {
+    if (body[field] === undefined) continue;
+    const pct = parsePct(body[field], field, max);
+    if (!pct.ok) return pct.error;
+  }
   return null;
+}
+
+export const SKILLS_MAX = 25;
+export const SKILL_MAX_CHARS = 40;
+export const FEE_PCT_MAX = 100;
+export const TARGET_MARGIN_PCT_MAX = 90;
+
+/**
+ * Skills as stored: trimmed, blanks dropped, deduped case-insensitively (first
+ * spelling wins). Accepts an array or "React, Node" text. `null` clears.
+ */
+export function parseSkills(raw: unknown): { ok: true; value: string[] } | { ok: false; error: string } {
+  if (raw === null || raw === "") return { ok: true, value: [] };
+  const items = typeof raw === "string" ? raw.split(/[,\n]/) : raw;
+  if (!Array.isArray(items)) return { ok: false, error: "skills must be a list of text" };
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (typeof item !== "string") return { ok: false, error: "skills must be a list of text" };
+    const skill = item.trim().replace(/\s+/g, " ");
+    if (!skill) continue;
+    if (skill.length > SKILL_MAX_CHARS) return { ok: false, error: `Each skill must be ${SKILL_MAX_CHARS} characters or fewer` };
+    const key = skill.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(skill);
+  }
+  if (out.length > SKILLS_MAX) return { ok: false, error: `List ${SKILLS_MAX} skills or fewer` };
+  return { ok: true, value: out };
+}
+
+/** A percentage in [0, max]; "15%" reads as 15. `null`/"" clears. */
+export function parsePct(raw: unknown, field: string, max: number): { ok: true; value: number | null } | { ok: false; error: string } {
+  if (raw === null || (typeof raw === "string" && !raw.replace(/%/g, "").trim())) return { ok: true, value: null };
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw.replace(/%/g, "").trim()) : NaN;
+  if (!Number.isFinite(n) || n < 0 || n > max) return { ok: false, error: `${field} must be a number from 0 to ${max}` };
+  return { ok: true, value: n };
 }
 
 /** When a write takes a posting live for the first time, the moment it did. */
