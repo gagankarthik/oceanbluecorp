@@ -258,14 +258,15 @@ export { KpiRow } from "../kit/layout";
 /** Segmented tabs for the working area */
 export function ViewTabs<T extends string>({ tabs, value, onChange, label }: { tabs: { id: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void; label: string }) {
   return (
-    <div role="tablist" aria-label={label} className="flex max-w-full gap-1 overflow-x-auto rounded-xl bg-mist-100 p-1">
+    // Sized to its tabs, same track and pills as the kit's Segmented
+    <div role="tablist" aria-label={label} className="inline-flex w-fit max-w-full shrink-0 justify-self-start scroll-strip rounded-lg bg-mist-100 p-1">
       {tabs.map((t) => (
         <button
           key={t.id}
           role="tab"
           aria-selected={value === t.id}
           onClick={() => onChange(t.id)}
-          className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-[14px] font-medium transition-colors duration-150 ${
+          className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
             value === t.id ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600 hover:text-navy-900"
           }`}
         >

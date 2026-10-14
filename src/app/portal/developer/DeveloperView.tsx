@@ -360,7 +360,7 @@ function Reference() {
           </ul>
         </Panel>
         <Panel title="Example">
-          <pre className="scroll-thin overflow-x-auto rounded-lg bg-navy-900 p-4 font-mono text-[12px] leading-relaxed text-tide-200">
+          <pre className="scroll-thin overflow-x-auto overflow-y-hidden rounded-lg bg-navy-900 p-4 font-mono text-[12px] leading-relaxed text-tide-200">
             {`curl -H "x-api-key: obk_live_…" \\\n  "${SITE_URL}/api/v1/jobs?status=active&limit=20"`}
           </pre>
         </Panel>

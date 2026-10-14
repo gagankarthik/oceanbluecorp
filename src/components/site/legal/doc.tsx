@@ -156,7 +156,7 @@ export function RelatedLinks({ links }: { links: { href: string; label: string }
 /** A plain table: hairline rows, scrolls sideways on phones */
 export function DocTable({ head, rows }: { head: { label: string; className?: string }[]; rows: { key: string; cells: { node: React.ReactNode; className?: string }[] }[] }) {
   return (
-    <div className="overflow-x-auto bg-mist-0">
+    <div className="overflow-x-auto overflow-y-hidden bg-mist-0">
       <table className="w-full text-left text-[15px]">
         <thead>
           <tr className="bg-mist-100">

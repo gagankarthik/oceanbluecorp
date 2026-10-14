@@ -467,7 +467,7 @@ export function StageStrip({
       <div
         role="group"
         aria-label="Pipeline stages"
-        className={cn("adm-scroll-hidden flex flex-none overflow-x-auto border-b border-[var(--adm-line)] bg-[var(--adm-surface)]", className)}
+        className={cn(" flex flex-none scroll-strip border-b border-[var(--adm-line)] bg-[var(--adm-surface)]", className)}
       >
         {items.map((s, i) => {
           const selected = s.key === value;
@@ -502,7 +502,7 @@ export function StageStrip({
       role="group"
       aria-label="Pipeline stages"
       className={cn(
-        "adm-scroll-hidden flex overflow-x-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
+        " flex scroll-strip rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
         className,
       )}
     >

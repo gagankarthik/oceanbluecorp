@@ -56,7 +56,7 @@ export function StageChevrons({
   }, [idx]);
 
   return (
-    <div ref={scroller} className="scroll-thin min-w-0 overflow-x-auto">
+    <div ref={scroller} className=" min-w-0 scroll-strip">
       <ol aria-label={label} className="flex w-max py-0.5">
         {stages.map((s, i) => {
           const on = i === idx;

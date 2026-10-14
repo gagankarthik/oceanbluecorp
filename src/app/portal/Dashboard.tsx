@@ -48,7 +48,7 @@ function TabbedPanel({ tabs, className = "" }: { tabs: { id: string; label: stri
   const tab = tabs.find((t) => t.id === active) ?? tabs[0];
   return (
     <section aria-label="More insights" className={`flex min-w-0 flex-col rounded-xl bg-mist-0 ring-1 ring-mist-200 ${className}`}>
-      <div role="tablist" aria-label="More insights" className="scroll-thin flex gap-1 overflow-x-auto border-b border-mist-200 px-3 pt-2">
+      <div role="tablist" aria-label="More insights" className=" flex gap-1 scroll-strip border-b border-mist-200 px-3 pt-2">
         {tabs.map((t) => (
           <button
             key={t.id}

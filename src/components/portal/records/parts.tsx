@@ -43,7 +43,7 @@ export function RecordTabs<K extends string>({
         </select>
         <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
       </div>
-      <div role="tablist" aria-label={label} className="scroll-thin hidden gap-1 overflow-x-auto border-b border-mist-200 sm:flex">
+      <div role="tablist" aria-label={label} className=" hidden gap-1 scroll-strip border-b border-mist-200 sm:flex">
         {tabs.map((t) => {
           const on = t.key === value;
           return (

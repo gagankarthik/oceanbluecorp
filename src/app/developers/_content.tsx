@@ -23,7 +23,7 @@ export function CodeBlock({ lang = "bash", children }: { lang?: string; children
         </button>
       </div>
       {/* Long lines scroll inside the block, never the page */}
-      <pre className="max-w-full overflow-x-auto whitespace-pre p-5 font-mono text-[14px] leading-relaxed">{children}</pre>
+      <pre className="max-w-full overflow-x-auto overflow-y-hidden whitespace-pre p-5 font-mono text-[14px] leading-relaxed">{children}</pre>
     </div>
   );
 }

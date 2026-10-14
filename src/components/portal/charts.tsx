@@ -478,7 +478,7 @@ export function Heatmap({
   return (
     <figure>
       <figcaption className="sr-only">{title}</figcaption>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-hidden">
         <table className="border-separate border-spacing-[3px] text-[11px]" onPointerLeave={() => setHover(null)}>
           <thead>
             <tr>

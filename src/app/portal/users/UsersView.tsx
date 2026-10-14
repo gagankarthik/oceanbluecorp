@@ -274,7 +274,7 @@ function RolesPanel() {
       </div>
 
       <Panel title="Who can open each screen" description="Read from the same access rules the portal enforces. Change a teammate's role from the Users tab." padded={false}>
-        <div className="scroll-thin overflow-x-auto">
+        <div className="scroll-thin overflow-x-auto overflow-y-hidden">
           <table className="w-full min-w-[36rem] border-collapse text-[14px]">
             <thead>
               <tr className="border-b border-mist-200 bg-mist-50 text-[12px] text-mist-600">

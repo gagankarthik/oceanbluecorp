@@ -377,7 +377,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
       />
 
       {canPrice && applications.length > 0 && (
-        <div role="group" aria-label="Applicants by stage" className="scroll-thin flex gap-2 overflow-x-auto pb-1">
+        <div role="group" aria-label="Applicants by stage" className=" flex gap-2 scroll-strip pb-1">
           {[{ key: "all" as const, label: "All", count: applications.length }, ...BOARD.map((s) => ({ key: s, label: STAGE_LABEL[s], count: counts[s] || 0 }))].map((s) => {
             const on = activeTab === "applicants" && stageFilter === s.key;
             return (

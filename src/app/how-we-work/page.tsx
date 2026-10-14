@@ -92,7 +92,7 @@ export default function HowWeWorkPage() {
             <ManyIntoOne />
           </div>
           {/* Oceanblue's column is the filled one; the alternative stays muted */}
-          <div className="mt-10 overflow-x-auto" data-reveal>
+          <div className="mt-10 overflow-x-auto overflow-y-hidden" data-reveal>
             <table className="w-full min-w-[40rem] border-collapse text-left">
               <caption className="sr-only">Several vendors compared with Oceanblue</caption>
               <thead>
@@ -155,7 +155,7 @@ export default function HowWeWorkPage() {
             title="Engagement models"
             intro="Five ways to work with us, from one specialist on your team to a team that owns the outcome."
           />
-          <div className="mt-14 overflow-x-auto" data-reveal>
+          <div className="mt-14 overflow-x-auto overflow-y-hidden" data-reveal>
             <table className="w-full min-w-[40rem] border-collapse text-left">
               <thead>
                 <tr className="border-b-2 border-navy-900">

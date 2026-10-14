@@ -128,7 +128,7 @@ export function BoardView({
 
   return (
     // Scrolls inside its own box; on phones one column fills the screen and snaps.
-    <div className="scroll-thin min-w-0 snap-x snap-mandatory overflow-x-auto pb-2 md:snap-none">
+    <div className="scroll-thin min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden pb-2 md:snap-none">
       <div className="flex w-max gap-4">
         {BOARD.filter((st) => !focus || st === focus).map((stage) => {
           const items = rows.filter((a) => a.status === stage);

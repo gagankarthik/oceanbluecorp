@@ -172,7 +172,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
 /** Static reference table; scrolls inside itself on phones. */
 function DocTable({ headers, rows }: { headers: string[]; rows: (string | React.ReactNode)[][] }) {
   return (
-    <div className="scroll-thin max-w-full overflow-x-auto rounded-xl ring-1 ring-mist-200">
+    <div className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden rounded-xl ring-1 ring-mist-200">
       <table className="w-full min-w-[520px] border-collapse text-[14px]">
         <thead>
           <tr className="border-b border-mist-200 bg-mist-50 text-[12px] text-mist-600">
@@ -219,7 +219,7 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="scroll-thin max-w-full overflow-x-auto whitespace-pre p-4 font-mono text-[12px] leading-relaxed text-mist-0">{children}</pre>
+      <pre className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden whitespace-pre p-4 font-mono text-[12px] leading-relaxed text-mist-0">{children}</pre>
     </div>
   );
 }

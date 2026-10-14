@@ -527,7 +527,7 @@ export default function DataTable<T extends { id: string }>({
           </ul>
 
           {/* Tablets and up: the table */}
-          <div className="scroll-thin relative hidden overflow-x-auto md:block">
+          <div className="scroll-thin relative hidden overflow-x-auto overflow-y-hidden md:block">
             <table className="w-full min-w-[44rem] border-collapse text-left text-[14px]">
               <thead>
                 <tr className="border-b border-mist-200 bg-mist-50 text-[12px] font-medium text-mist-600">
@@ -698,7 +698,7 @@ export function TableTabs<T extends string>({
   options: { value: T; label: string; count?: number }[];
 }) {
   return (
-    <div role="tablist" aria-label={label} className="scroll-thin -mb-px flex overflow-x-auto">
+    <div role="tablist" aria-label={label} className=" -mb-px flex scroll-strip">
       {options.map((o) => {
         const on = o.value === value;
         return (
