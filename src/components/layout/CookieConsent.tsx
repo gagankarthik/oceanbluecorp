@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const BTN = "inline-flex min-h-11 items-center justify-center px-6 text-[15px] font-medium transition-colors active:scale-[0.98]";
-const PRIMARY = `${BTN} bg-ocean-600 text-white hover:bg-ocean-700`;
-const SECONDARY = `${BTN} text-navy-900 ring-2 ring-inset ring-navy-900 hover:bg-navy-900 hover:text-white`;
-const GHOST = `${BTN} text-ocean-700 underline-offset-4 hover:underline`;
+const BTN = "inline-flex min-h-11 items-center justify-center px-6 text-[15px] font-medium active:scale-[0.98]";
+const PRIMARY = `${BTN} bg-ocean-600 text-white btn-fill btn-fill-ocean`;
+const SECONDARY = `${BTN} text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline`;
+const GHOST = `${BTN} transition-colors text-ocean-700 underline-offset-4 hover:underline`;
 
 function Glyph({ d, className = "size-4" }: { d: string; className?: string }) {
   return (

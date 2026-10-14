@@ -149,7 +149,7 @@ export default async function JobPage({ params }: Props) {
           <a
             href="#apply"
             data-after-lines
-            className="mt-6 inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+            className="mt-6 inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
           >
             Apply for this role
           </a>
@@ -199,13 +199,13 @@ export default async function JobPage({ params }: Props) {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href="/contact?for=work"
-              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap bg-cyan-500 px-6 font-medium text-navy-950 transition-colors hover:bg-cyan-300"
+              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap bg-cyan-500 px-6 font-medium text-navy-950 btn-fill btn-fill-cyan"
             >
               Tell us what you are looking for
             </Link>
             <a
               href={`mailto:${company.email}?subject=${encodeURIComponent("Resume")}`}
-              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap px-6 font-medium text-white ring-2 ring-inset ring-white/70 transition-colors hover:bg-white hover:text-navy-950"
+              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap px-6 font-medium text-white ring-2 ring-inset ring-white/70 btn-fill btn-fill-outline-light"
             >
               Email your resume
             </a>

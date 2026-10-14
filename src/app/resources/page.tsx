@@ -73,7 +73,7 @@ export default async function ResourcesPage() {
           <div className="lg:col-span-4 lg:col-start-9 lg:justify-self-end" data-reveal>
             <Link
               href="/resources/media-kit"
-              className="inline-flex min-h-12 items-center bg-cyan-500 px-6 font-medium text-navy-950 transition-colors hover:bg-cyan-300 active:scale-[0.98]"
+              className="inline-flex min-h-12 items-center bg-cyan-500 px-6 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
             >
               Open the media kit
             </Link>

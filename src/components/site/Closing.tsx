@@ -39,13 +39,13 @@ export default function Closing({
         <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
           <Link
             href="/contact"
-            className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-white px-7 font-medium text-navy-950 transition-colors hover:bg-cyan-100 active:scale-[0.98]"
+            className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-white px-7 font-medium text-navy-950 btn-fill btn-fill-white active:scale-[0.98]"
           >
             {action}
           </Link>
           <a
             href={company.tel}
-            className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-navy-900 px-7 font-medium text-white transition-colors hover:bg-navy-950 active:scale-[0.98]"
+            className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-navy-900 px-7 font-medium text-white btn-fill btn-fill-navy active:scale-[0.98]"
           >
             Call {company.phoneShort}
           </a>

@@ -57,7 +57,7 @@ export default function CookiesPage() {
         <div className="bg-mist-100 p-5 text-[15px]">
           <p className="font-semibold">Your choice</p>
           <p className="mt-1 text-mist-600">Change what this site may remember on your device.</p>
-          <CookieSettingsButton className="mt-4 inline-flex min-h-11 w-full items-center justify-center bg-ocean-600 px-4 font-medium text-white transition-colors hover:bg-ocean-700" />
+          <CookieSettingsButton className="mt-4 inline-flex min-h-11 w-full items-center justify-center bg-ocean-600 px-4 font-medium text-white btn-fill btn-fill-ocean" />
         </div>
       }
     >
@@ -144,7 +144,7 @@ export default function CookiesPage() {
                   You can update your cookie preferences at any time with the &ldquo;Cookie settings&rdquo; button in the footer of our website or on this page. Please note that withdrawing your consent will not affect the lawfulness of processing carried out before you withdrew consent.
                 </P>
                 <div>
-                  <CookieSettingsButton className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700">
+                  <CookieSettingsButton className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean">
                     Change cookie settings
                   </CookieSettingsButton>
                 </div>

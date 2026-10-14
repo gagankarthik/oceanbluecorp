@@ -88,7 +88,7 @@ export default async function CareersPage() {
           <div className="grid gap-4">
             <Link
               href="/jobs"
-              className="inline-flex min-h-12 w-fit items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+              className="inline-flex min-h-12 w-fit items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
             >
               Find a job
             </Link>
@@ -160,7 +160,7 @@ export default async function CareersPage() {
               </p>
               <Link
                 href="/contact?for=work"
-                className="mt-5 inline-flex min-h-12 items-center bg-white px-5 font-medium text-navy-950 transition-colors hover:bg-cyan-100 active:scale-[0.98]"
+                className="mt-5 inline-flex min-h-12 items-center bg-white px-5 font-medium text-navy-950 btn-fill btn-fill-white active:scale-[0.98]"
               >
                 Talk to a recruiter
               </Link>
@@ -342,13 +342,13 @@ export default async function CareersPage() {
           <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row" data-reveal>
             <Link
               href="/jobs"
-              className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-white px-7 font-medium text-navy-950 transition-colors hover:bg-cyan-100 active:scale-[0.98]"
+              className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-white px-7 font-medium text-navy-950 btn-fill btn-fill-white active:scale-[0.98]"
             >
               View open positions
             </Link>
             <Link
               href="/contact"
-              className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-navy-900 px-7 font-medium text-white transition-colors hover:bg-navy-950 active:scale-[0.98]"
+              className="inline-flex min-h-13 items-center justify-center whitespace-nowrap bg-navy-900 px-7 font-medium text-white btn-fill btn-fill-navy active:scale-[0.98]"
             >
               Get in touch
             </Link>

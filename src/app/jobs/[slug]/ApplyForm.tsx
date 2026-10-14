@@ -164,7 +164,7 @@ export default function ApplyForm({ jobId, title }: { jobId: string; title: stri
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white transition-colors hover:bg-ocean-700 active:translate-y-px disabled:opacity-60"
+          className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white btn-fill btn-fill-ocean active:translate-y-px disabled:opacity-60"
         >
           {busy ? "Sending…" : "Submit application"}
         </button>

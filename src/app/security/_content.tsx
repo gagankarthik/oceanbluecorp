@@ -224,7 +224,7 @@ export default function SecurityPage() {
             <p className="mt-5 max-w-[56ch] text-mist-600">We do not run a paid bug bounty. We will credit you if you would like to be named.</p>
             <a
               href={reportHref}
-              className="mt-8 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+              className="mt-8 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
             >
               Send a security report
             </a>

@@ -86,13 +86,13 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(o.address.join(", "))}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-10 items-center bg-ocean-600 px-4 text-[15px] font-medium text-white transition-colors hover:bg-ocean-700"
+                    className="inline-flex min-h-10 items-center bg-ocean-600 px-4 text-[15px] font-medium text-white btn-fill btn-fill-ocean"
                   >
                     Get directions
                   </a>
                   <a
                     href={`mailto:${company.email}?subject=${encodeURIComponent(`Enquiry for our ${o.city} team`)}`}
-                    className="inline-flex min-h-10 items-center bg-mist-100 px-4 text-[15px] font-medium text-navy-900 transition-colors hover:bg-tide-200"
+                    className="inline-flex min-h-10 items-center bg-mist-100 px-4 text-[15px] font-medium text-navy-900 btn-fill btn-fill-mist"
                   >
                     Email this team
                   </a>

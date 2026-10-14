@@ -212,7 +212,7 @@ export default function Footer() {
                 <li key={p.label}>
                   <a
                     href={p.href}
-                    className="inline-flex min-h-10 items-center gap-2 bg-navy-800 px-4 font-medium text-white transition-colors hover:bg-navy-700"
+                    className="inline-flex min-h-10 items-center gap-2 bg-navy-800 px-4 font-medium text-white btn-fill btn-fill-deep"
                   >
                     <svg aria-hidden viewBox="0 0 16 16" className="size-4 text-cyan-300" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <rect x="3" y="7" width="10" height="7" rx="1.2" />

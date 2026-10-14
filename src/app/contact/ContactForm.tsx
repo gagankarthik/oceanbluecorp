@@ -239,14 +239,14 @@ export default function ContactForm({ initialPath = "hiring" }: { initialPath?: 
           <p className="mt-4 max-w-[52ch]">{COPY[sent].done.body}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             {sent === "work" && (
-              <Link href="/jobs" className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700">
+              <Link href="/jobs" className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean">
                 Browse open jobs
               </Link>
             )}
             <button
               type="button"
               onClick={() => setSent(null)}
-              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white"
+              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
             >
               Send another message
             </button>
@@ -294,7 +294,7 @@ export default function ContactForm({ initialPath = "hiring" }: { initialPath?: 
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white transition-colors hover:bg-ocean-700 active:translate-y-px disabled:opacity-60"
+              className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white btn-fill btn-fill-ocean active:translate-y-px disabled:opacity-60"
             >
               {busy ? "Sending…" : "Send message"}
             </button>

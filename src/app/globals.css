@@ -1031,6 +1031,40 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 .site .on-dark :focus-visible,
 .site .on-dark:focus-visible { outline-color: var(--color-border-focus-inverse); }
 
+/* Buttons: on hover and keyboard focus a fill sweeps in from the left.
+   A background layer over the element's own colour, so no size change and
+   it clips to any radius; inset rings paint above it. Variants name the
+   resting look and set the fill (and the label ink where it must flip). */
+.btn-fill {
+  background-image: linear-gradient(var(--btn-fill), var(--btn-fill));
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 0% 100%;
+  transition: background-size var(--dur-medium) ease-in, color var(--dur-medium) ease-in;
+}
+.btn-fill:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+  background-size: 100% 100%;
+  transition-timing-function: ease-out;
+}
+.btn-fill:is(:disabled, [aria-disabled="true"]) { transition: none; }
+
+.btn-fill-ocean   { --btn-fill: var(--color-ocean-700); }  /* white: 5.0 → 7.0:1 */
+.btn-fill-navy    { --btn-fill: var(--color-navy-950); }   /* white: 14.1 → 17.7:1 */
+.btn-fill-deep    { --btn-fill: var(--color-navy-700); }   /* navy-800, white: 11.9 → 9.9:1 */
+.btn-fill-cyan    { --btn-fill: var(--color-cyan-300); }   /* navy-950: 6.5 → 9.1:1 */
+.btn-fill-white   { --btn-fill: var(--color-cyan-100); }   /* navy-950: 17.7 → 14.4:1 */
+.btn-fill-mist    { --btn-fill: var(--color-tide-200); }   /* navy-900: 12.3 → 10.6:1 */
+.btn-fill-quiet   { --btn-fill: var(--color-tide-100); }   /* white, navy-900: 14.1 → 12.1:1 */
+.btn-fill-glass   { --btn-fill: color-mix(in srgb, var(--color-mist-0) 12%, transparent); }
+.btn-fill-outline { --btn-fill: var(--color-navy-900); }   /* navy-900 ↔ white: 14.1:1 */
+.btn-fill-outline-light { --btn-fill: var(--color-mist-0); } /* white ↔ navy-950: 17.7:1 */
+.btn-fill-outline:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) { color: var(--color-mist-0); }
+.btn-fill-outline-light:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) { color: var(--color-navy-950); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-fill { transition: none; }
+}
+
 /* Page-load sequence for heroes */
 @keyframes site-rise {
   from { opacity: 0; transform: translateY(12px); }

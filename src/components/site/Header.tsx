@@ -258,8 +258,8 @@ export default function Header() {
             <>
               <Link
                 href="/jobs"
-                className={`hidden min-h-11 items-center gap-2 px-4 text-[15px] font-medium transition-colors active:scale-[0.98] md:inline-flex ${
-                  pathname.startsWith("/jobs") ? "bg-navy-900 text-white" : "text-navy-900 ring-2 ring-inset ring-navy-900 hover:bg-navy-900 hover:text-white"
+                className={`hidden min-h-11 items-center gap-2 px-4 text-[15px] font-medium active:scale-[0.98] md:inline-flex ${
+                  pathname.startsWith("/jobs") ? "bg-navy-900 text-white" : "text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
                 }`}
               >
                 <svg aria-hidden viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -270,7 +270,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/contact"
-                className="hidden min-h-11 items-center bg-ocean-600 px-5 text-[15px] font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98] sm:inline-flex"
+                className="hidden min-h-11 items-center bg-ocean-600 px-5 text-[15px] font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98] sm:inline-flex"
               >
                 Contact us
               </Link>
@@ -334,7 +334,7 @@ export default function Header() {
               <div className="mt-6 grid gap-3">
                 <Link
                   href={active.feature.cta.href}
-                  className="flex min-h-11 items-center justify-center bg-cyan-500 px-4 text-[15px] font-medium text-navy-950 transition-colors hover:bg-cyan-300"
+                  className="flex min-h-11 items-center justify-center bg-cyan-500 px-4 text-[15px] font-medium text-navy-950 btn-fill btn-fill-cyan"
                 >
                   {active.feature.cta.label}
                 </Link>
@@ -394,15 +394,15 @@ export default function Header() {
           <div className="gutter mt-6 grid gap-3">
             {!staff && (
               <>
-                <Link href="/jobs" className="flex min-h-12 items-center justify-center bg-navy-900 font-medium text-white">
+                <Link href="/jobs" className="flex min-h-12 items-center justify-center bg-navy-900 font-medium text-white btn-fill btn-fill-navy">
                   Find a job
                 </Link>
-                <Link href="/contact" className="flex min-h-12 items-center justify-center bg-ocean-600 font-medium text-white">
+                <Link href="/contact" className="flex min-h-12 items-center justify-center bg-ocean-600 font-medium text-white btn-fill btn-fill-ocean">
                   Contact us
                 </Link>
               </>
             )}
-            <a href={company.tel} className="flex min-h-12 items-center justify-center bg-mist-100 font-medium">
+            <a href={company.tel} className="flex min-h-12 items-center justify-center bg-mist-100 font-medium btn-fill btn-fill-mist">
               Call {company.phoneShort}
             </a>
           </div>

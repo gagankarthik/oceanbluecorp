@@ -269,7 +269,7 @@ export default function StatusContent() {
                   onClick={() => void load(true)}
                   disabled={refreshing}
                   aria-busy={refreshing}
-                  className="inline-flex min-h-11 items-center px-4 text-[15px] font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center px-4 text-[15px] font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline disabled:opacity-50"
                 >
                   {refreshing ? "Checking…" : "Refresh"}
                 </button>
@@ -306,7 +306,7 @@ export default function StatusContent() {
                 <button
                   type="button"
                   onClick={() => void load(true)}
-                  className="mt-6 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+                  className="mt-6 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
                 >
                   Try again
                 </button>

@@ -81,7 +81,7 @@ export default function ServicesOverview() {
 
                   <Link
                     href={`/services#${id}`}
-                    className="mt-8 inline-flex min-h-12 w-fit items-center bg-cyan-500 px-5 font-medium text-navy-950 transition-colors hover:bg-cyan-300 active:scale-[0.98]"
+                    className="mt-8 inline-flex min-h-12 w-fit items-center bg-cyan-500 px-5 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
                   >
                     {c.cta}
                   </Link>

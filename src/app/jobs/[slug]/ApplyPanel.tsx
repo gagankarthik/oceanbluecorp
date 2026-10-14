@@ -37,7 +37,7 @@ export default function ApplyPanel({ jobId, title }: { jobId: string; title: str
             onClick={() => setOpen(true)}
             aria-expanded={false}
             aria-controls="apply"
-            className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+            className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
           >
             Start your application
           </button>

@@ -54,7 +54,7 @@ export default function DataDeletionPage() {
           </p>
           <a
             href={`mailto:${DELETE_EMAIL}?subject=${SUBJECT}&body=${BODY}`}
-            className="mt-8 inline-flex min-h-12 max-w-full items-center bg-cyan-500 px-6 font-medium text-navy-950 transition-colors hover:bg-cyan-300 active:scale-[0.98]"
+            className="mt-8 inline-flex min-h-12 max-w-full items-center bg-cyan-500 px-6 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
           >
             Email {DELETE_EMAIL}
           </a>

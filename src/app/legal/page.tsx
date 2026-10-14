@@ -121,13 +121,13 @@ export default function Legal() {
           <div className="flex flex-wrap gap-3 lg:col-span-4 lg:col-start-9 lg:justify-end" data-reveal>
             <Link
               href="/contact"
-              className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+              className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
             >
               Contact us
             </Link>
             <a
               href={`mailto:${company.email}`}
-              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white"
+              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
             >
               Email us
             </a>

@@ -269,7 +269,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             <button
               type="button"
               onClick={() => setShown((n) => n + PAGE)}
-              className="inline-flex min-h-12 items-center bg-navy-900 px-7 font-medium text-white transition-colors hover:bg-navy-950 active:scale-[0.98]"
+              className="inline-flex min-h-12 items-center bg-navy-900 px-7 font-medium text-white btn-fill btn-fill-navy active:scale-[0.98]"
             >
               Load {Math.min(PAGE, results.length - shown)} more
             </button>

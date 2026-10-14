@@ -59,7 +59,7 @@ export default async function JobsPage() {
             </div>
             <a
               href={`mailto:${company.email}?subject=Resume`}
-              className="inline-flex min-h-12 items-center justify-center bg-cyan-500 px-6 font-medium text-navy-950 transition-colors hover:bg-cyan-300 active:scale-[0.98]"
+              className="inline-flex min-h-12 items-center justify-center bg-cyan-500 px-6 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
             >
               Send your resume
             </a>

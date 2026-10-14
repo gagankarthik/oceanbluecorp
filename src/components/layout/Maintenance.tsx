@@ -50,13 +50,13 @@ export default function Maintenance({
           <div data-after-lines className="mt-10 flex flex-wrap gap-3">
             <a
               href={company.tel}
-              className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+              className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
             >
               Call {company.phoneShort}
             </a>
             <a
               href={`mailto:${company.email}`}
-              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white"
+              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
             >
               Email us
             </a>

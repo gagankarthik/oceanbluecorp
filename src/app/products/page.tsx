@@ -57,7 +57,7 @@ function Facts({ items, tone = "light" }: { items: { k: string; v: string }[]; t
 
 function VisitLink({ href, label, className }: { href: string; label: string; className: string }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={`inline-flex min-h-12 items-center gap-2 px-6 font-medium transition-colors active:scale-[0.98] ${className}`}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={`inline-flex min-h-12 items-center gap-2 px-6 font-medium btn-fill active:scale-[0.98] ${className}`}>
       {label}
       <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6">
         <path d="M6 3h7v7M13 3 4 12" />
@@ -135,11 +135,11 @@ export default function ProductsPage() {
           <div className="mt-12 flex flex-wrap gap-3">
             <Link
               href="/contact"
-              className="inline-flex min-h-12 items-center bg-cyan-500 px-6 font-medium text-navy-950 transition-colors hover:bg-cyan-300 active:scale-[0.98]"
+              className="inline-flex min-h-12 items-center bg-cyan-500 px-6 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
             >
               Ask for a Blue-IQ demo
             </Link>
-            <VisitLink href="https://www.blue-iq.ai/" label="Visit Blue-IQ" className="bg-white/10 text-white hover:bg-white/20" />
+            <VisitLink href="https://www.blue-iq.ai/" label="Visit Blue-IQ" className="bg-white/10 text-white btn-fill-glass" />
           </div>
         </div>
       </section>
@@ -168,7 +168,7 @@ export default function ProductsPage() {
                 ))}
               </ul>
             </div>
-            <VisitLink href="https://www.inytes.com/" label="Visit Inytes" className="mt-12 bg-ocean-600 text-white hover:bg-ocean-700" />
+            <VisitLink href="https://www.inytes.com/" label="Visit Inytes" className="mt-12 bg-ocean-600 text-white btn-fill-ocean" />
           </div>
         </div>
       </section>

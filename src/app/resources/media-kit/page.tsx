@@ -129,7 +129,7 @@ export default function MediaKitPage() {
                         key={f.label}
                         href={f.href}
                         download
-                        className="inline-flex min-h-10 items-center gap-2 bg-ocean-600 px-4 text-[15px] font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+                        className="inline-flex min-h-10 items-center gap-2 bg-ocean-600 px-4 text-[15px] font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
                       >
                         <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6">
                           <path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10" />

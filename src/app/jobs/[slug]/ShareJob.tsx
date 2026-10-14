@@ -59,7 +59,7 @@ export default function ShareJob({ url, title }: { url: string; title: string })
         onClick={share}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex min-h-12 w-full items-center justify-center gap-2 bg-mist-0 px-6 font-medium text-navy-900 ring-1 ring-inset ring-mist-300 transition-colors hover:bg-tide-100"
+        className="flex min-h-12 w-full items-center justify-center gap-2 bg-mist-0 px-6 font-medium text-navy-900 ring-1 ring-inset ring-mist-300 btn-fill btn-fill-quiet"
       >
         <svg aria-hidden viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="15" cy="4.5" r="2.2" />

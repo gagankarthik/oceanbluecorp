@@ -122,13 +122,13 @@ export default function Home() {
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
                   href="/contact"
-                  className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
                 >
                   Talk to us
                 </Link>
                 <Link
                   href="/jobs"
-                  className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline active:scale-[0.98]"
                 >
                   Find a job
                 </Link>
@@ -325,13 +325,13 @@ export default function Home() {
               <div className="mt-10 flex flex-wrap gap-3">
                 <Link
                   href="/contact"
-                  className="inline-flex min-h-12 items-center bg-white px-6 font-medium text-navy-950 transition-colors hover:bg-cyan-100 active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center bg-white px-6 font-medium text-navy-950 btn-fill btn-fill-white active:scale-[0.98]"
                 >
                   Talk to us
                 </Link>
                 <Link
                   href="/how-we-work"
-                  className="inline-flex min-h-12 items-center px-6 font-medium text-white ring-2 ring-inset ring-white transition-colors hover:bg-white hover:text-navy-950 active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center px-6 font-medium text-white ring-2 ring-inset ring-white btn-fill btn-fill-outline-light active:scale-[0.98]"
                 >
                   How we work
                 </Link>
