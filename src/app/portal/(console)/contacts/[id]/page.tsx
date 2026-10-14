@@ -53,8 +53,8 @@ function Detail({ icon, label, children }: { icon: IconName; label: string; chil
     <div className="flex min-w-0 items-start gap-3 py-2.5">
       <Icon name={icon} className="mt-0.5 size-4 shrink-0 text-mist-500" />
       <div className="min-w-0">
-        <dt className="text-[12px] font-medium text-mist-500">{label}</dt>
-        <dd className="break-words text-[14px] text-navy-900">{children}</dd>
+        <dt className="text-adm-xs font-medium text-mist-500">{label}</dt>
+        <dd className="break-words text-adm-base text-navy-900">{children}</dd>
       </div>
     </div>
   );
@@ -254,8 +254,8 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 gap-6">
-          <Panel title="Message" action={<span className="text-[13px] tabular-nums text-mist-600">{fmtRelative(contact.createdAt)}</span>}>
-            <p className="mb-3 text-[13px] text-mist-600">{seeker ? `Looking for work in ${seekerArea(contact.inquiryType)}` : `${contact.inquiryType} enquiry`}</p>
+          <Panel title="Message" action={<span className="text-adm-base tabular-nums text-mist-600">{fmtRelative(contact.createdAt)}</span>}>
+            <p className="mb-3 text-adm-base text-mist-600">{seeker ? `Looking for work in ${seekerArea(contact.inquiryType)}` : `${contact.inquiryType} enquiry`}</p>
             <ContactMessage c={contact} />
           </Panel>
           <Panel title="Notes" description="Only staff see these">

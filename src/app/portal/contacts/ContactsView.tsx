@@ -223,8 +223,8 @@ export default function ContactsView() {
           <span className="flex min-w-0 items-center gap-3">
             <Avatar name={contactName(c)} size="sm" />
             <span className="min-w-0">
-              <span className={`flex items-center gap-1.5 truncate ${unread ? "font-semibold" : "font-medium"}`}>
-                {unread && <span aria-hidden className="size-2 shrink-0 rounded-full bg-ocean-600" />}
+              {/* Unread reads as bold plus the New status column; no dot */}
+              <span className={`flex items-center truncate ${unread ? "font-semibold" : "font-medium"}`}>
                 <span className="truncate">{contactName(c)}</span>
                 {unread && <span className="sr-only">(unread)</span>}
               </span>
