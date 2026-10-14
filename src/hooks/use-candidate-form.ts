@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { Application, BenchType, Job } from "@/lib/aws/dynamodb";
 import type { DuplicateMatch } from "@/lib/application-input";
-import { normalizeState, type AppStatus } from "@/components/admin/theme";
+import { normalizeState, type AppStatus } from "@/components/portal/console/theme";
 import { poolOf } from "@/lib/bench";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";

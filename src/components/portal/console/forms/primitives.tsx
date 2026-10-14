@@ -5,7 +5,7 @@ import type { IconComponent } from "../icons";
 import { Search, X } from "lucide-react";
 import { IconAlert } from "../icons";
 import { cn } from "@/lib/utils";
-import { Avatar } from "@/components/admin/avatar";
+import { Avatar } from "@/components/portal/console/avatar";
 
 // ── Section wrapper ────────────────────────────────────────────────────────────
 // A calm, scannable card section: tinted icon chip + title (+ optional description)

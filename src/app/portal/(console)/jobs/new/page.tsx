@@ -9,7 +9,7 @@ import {
 } from "@/components/portal/records/JobForm";
 import { JobCreatedDialog } from "@/components/portal/records/JobCreatedDialog";
 import { jobCategory, JOB_LIST_HREF as LIST_HREF } from "@/lib/job-status";
-import { useNavSection } from "@/components/admin/admin-provider";
+import { useNavSection } from "@/components/portal/console/provider";
 import { refreshJobs, useUserDirectory } from "@/hooks/use-console-data";
 import { FormSkeleton } from "@/components/portal/kit";
 import { useToast } from "@/components/portal/toast";

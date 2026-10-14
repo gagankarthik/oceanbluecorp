@@ -85,7 +85,7 @@ export default function ProductsPage() {
       <section id="blue-iq" aria-labelledby="blue-iq-title" className="scroll-mt-24 bg-field-paper">
         <div className="gutter grid gap-12 pb-24 md:pb-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <img src="/logos/products/Blue-iq.png" alt="Blue-IQ. Parse smarter. Hire faster." width={1280} height={480} className="h-auto w-full max-w-[22rem] mix-blend-multiply" />
+            <img src="/logos/products/blue-iq.svg" alt="Blue-IQ" width={283} height={74} className="h-auto w-full max-w-[15rem]" />
             <div className="mt-10">
               <Facts items={blueIqFacts} tone="mist" />
             </div>

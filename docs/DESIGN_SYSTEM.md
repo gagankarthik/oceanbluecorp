@@ -225,19 +225,19 @@ The product owner's UI/UX rules, each mapped to what enforces it here.
 copies.** The ui library is themed to navy `--primary` + cyan `--ring`; the admin language
 is cobalt + slate, so apply a cobalt override class at the admin call site (see
 `PageHeaderButton` and the `checkboxCobalt` const in `data-table.tsx` for the pattern).
-Admin-specific atoms that have **no** ui equivalent live in `src/components/admin/`.
+Admin-specific atoms that have **no** ui equivalent live in `src/components/portal/console/`.
 
 | Atom | Source | Notes |
 |---|---|---|
 | Button | `WorkspaceButton` (`workspace.tsx`) | The one console button: `primary` (one per view), default, `ghost`, `danger`, and `asChild` for links. Never fork a button. |
 | Checkbox | `ui/checkbox.tsx` | Supports `indeterminate` (DataTable select-all); pass the cobalt override class. |
 | DropdownMenu / Sheet / Tooltip | `ui/*` | Use these; don't recreate. Inputs and selects are the form primitives below; cards are `AdminCard`. |
-| `EmptyState` | `admin/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
+| `EmptyState` | `portal/console/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
 | `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
-| `StatusBadge` | `admin/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted pill; the label is always rendered, so status never rests on colour alone. Tones: stages in progress use neutral or cobalt steps; success only for good outcomes (Hired, Active), danger for Rejected, warning only where action is needed; Closed is neutral (ended, not rejected). |
-| `PeriodSwitcher` | `admin/charts.tsx` | The segmented control (date ranges, small view toggles). |
-| `StarRating` | `admin/star-rating.tsx` | , |
-| Form controls | `admin/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
+| `StatusBadge` | `portal/console/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted pill; the label is always rendered, so status never rests on colour alone. Tones: stages in progress use neutral or cobalt steps; success only for good outcomes (Hired, Active), danger for Rejected, warning only where action is needed; Closed is neutral (ended, not rejected). |
+| `PeriodSwitcher` | `portal/console/charts.tsx` | The segmented control (date ranges, small view toggles). |
+| `StarRating` | `portal/console/star-rating.tsx` | , |
+| Form controls | `portal/console/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
 
 ## 4. Patterns (components composed to solve a problem)
 
@@ -332,7 +332,7 @@ Strategy for dashboards (implemented in `/admin`):
 ## 7. Governance & maintenance (design-ops layer)
 
 **Decision rule.** Anything visual used (or usable) on 2+ screens belongs in
-`src/components/admin/` and consumes `--adm-*` tokens. One-off page logic stays in the page.
+`src/components/portal/console/` and consumes `--adm-*` tokens. One-off page logic stays in the page.
 
 **Contribution checklist** (PR review gate for admin UI):
 - [ ] No raw hex/rgba in pages, tokens or `theme.ts` constants only. A new token followed §2.3.

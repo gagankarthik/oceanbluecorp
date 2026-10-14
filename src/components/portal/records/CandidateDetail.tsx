@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Application, BenchType, Job, PipelineRecord, Submission } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { usePageCrumb } from "@/components/admin/admin-provider";
+import { usePageCrumb } from "@/components/portal/console/provider";
 import { refreshApplications, useJobSummaries } from "@/hooks/use-console-data";
-import { statusMeta, type AppStatus } from "@/components/admin/theme";
+import { statusMeta, type AppStatus } from "@/components/portal/console/theme";
 import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { fmtDateTime } from "@/lib/format";
 import { TERMINAL } from "@/lib/pipeline";

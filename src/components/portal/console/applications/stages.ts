@@ -1,5 +1,5 @@
 import type { Application } from "@/lib/aws/dynamodb";
-import { statusMeta, stateOf, type AppStatus } from "@/components/admin/theme";
+import { statusMeta, stateOf, type AppStatus } from "@/components/portal/console/theme";
 
 /** A list row: the application plus the job fields the screen joins on. */
 export interface ApplicationRow extends Application {

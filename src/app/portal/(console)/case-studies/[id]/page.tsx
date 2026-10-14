@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { ArticleEditor } from "@/components/admin/articles/article-editor";
+import { ArticleEditor } from "@/components/portal/console/articles/article-editor";
 
 export default function AdminCaseStudyEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

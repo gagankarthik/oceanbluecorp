@@ -103,7 +103,7 @@ src/
 │   ├── ui/             # shadcn/ui primitives (dropdown, sheet, tooltip, checkbox)
 │   ├── site/           # Public website components
 │   ├── portal/         # Portal shell and UI kit
-│   ├── admin/          # Console detail/editor components, used under portal/(console)
+│   │   └── console/    # Console detail/editor components, used under portal/(console)
 │   └── providers/      # Context providers (wraps AuthProvider)
 ├── lib/
 │   ├── seo.ts          # pageMetadata, breadcrumbs, jsonLdString for every public page

@@ -5,14 +5,18 @@ import { photos, type PhotoKey } from "@/lib/photos";
 export default function Photo({
   name,
   className = "",
-  priority = false,
+  preload = false,
+  eager = false,
   sizes = "(min-width: 1024px) 50vw, 100vw",
   position = "center",
   zoom = false,
 }: {
   name: PhotoKey;
   className?: string;
-  priority?: boolean;
+  /** The page's LCP: preloaded in the head */
+  preload?: boolean;
+  /** Above the fold but not the LCP: skip lazy loading */
+  eager?: boolean;
   sizes?: string;
   position?: string;
   /** Scale up slightly when a parent .group is hovered */
@@ -26,7 +30,8 @@ export default function Photo({
         alt={p.alt}
         fill
         sizes={sizes}
-        priority={priority}
+        preload={preload}
+        loading={preload || eager ? "eager" : undefined}
         className={`treated object-cover ${zoom ? "transition-transform duration-700 ease-[var(--ease-out-strong)] group-hover:scale-[1.05]" : ""}`}
         style={{ objectPosition: position }}
       />

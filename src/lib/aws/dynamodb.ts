@@ -277,7 +277,7 @@ async function queryAll<T>(
  * Where a candidate came from. Shared by Application and Candidate, the two
  * had drifted apart (Candidate was missing "Career Portal"), so the candidate
  * form could write a value its own type rejected. Mirrors SOURCE_OPTIONS in
- * components/admin/theme.ts, which is what every picker renders.
+ * components/portal/console/theme.ts, which is what every picker renders.
  */
 export type ApplicationSource =
   | "LinkedIn" | "Indeed" | "Company Website" | "Referral"
@@ -291,7 +291,7 @@ export type ApplicationSource =
 export type BenchType = "internal" | "external";
 
 /**
- * Work authorization. Mirrors WORK_AUTH_OPTIONS in components/admin/theme.ts.
+ * Work authorization. Mirrors WORK_AUTH_OPTIONS in components/portal/console/theme.ts.
  *
  * Widened from the original six because the pickers had already outgrown it:
  * the Applications filter offered H4 EAD / E3 / L1 and split OPT and CPT apart,
@@ -315,7 +315,7 @@ export type WorkAuthorization =
  * W2 by one candidate and corp-to-corp by another, and the payroll treatment is
  * the candidate's fact, not the job's.
  *
- * Mirrors HIRE_TYPE_OPTIONS in components/admin/theme.ts, which is what every
+ * Mirrors HIRE_TYPE_OPTIONS in components/portal/console/theme.ts, which is what every
  * picker renders.
  */
 export type HireType =

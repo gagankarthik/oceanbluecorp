@@ -141,12 +141,15 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-function ItemLink({ item, onPick, compact = false }: { item: Item; onPick?: () => void; compact?: boolean }) {
-  const cls = `group block px-3 transition-colors hover:bg-mist-100 focus-visible:bg-mist-100 ${compact ? "py-2" : "py-2.5"}`;
+function ItemLink({ item, onPick, compact = false, touch = false }: { item: Item; onPick?: () => void; compact?: boolean; touch?: boolean }) {
+  // touch: the phone menu, names only on a 44px row
+  const cls = `group block px-3 transition-colors hover:bg-mist-100 focus-visible:bg-mist-100 ${
+    touch ? "flex min-h-11 items-center hover:bg-mist-200 focus-visible:bg-mist-200" : compact ? "py-2" : "py-2.5"
+  }`;
   const inner = (
     <>
       <span className="block text-[15px] font-medium text-navy-900 group-hover:text-ocean-700">{item.label}</span>
-      {item.desc && !compact && <span className="mt-0.5 block text-[14px] leading-snug text-mist-600">{item.desc}</span>}
+      {item.desc && !compact && !touch && <span className="mt-0.5 block text-[14px] leading-snug text-mist-600">{item.desc}</span>}
     </>
   );
   return /^(tel:|https?:)/.test(item.href) ? (
@@ -368,14 +371,14 @@ export default function Header() {
                     <Chevron open={open} />
                   </button>
                   {open && (
-                    <div className="grid gap-5 bg-mist-100 p-4">
+                    <div className="grid gap-4 bg-mist-100 px-2 py-3">
                       {m.groups.map((g) => (
                         <div key={g.title}>
                           <p className="px-3 text-[13px] font-semibold text-mist-600">{g.title}</p>
                           <ul className="mt-1 grid">
                             {g.items.map((it) => (
                               <li key={it.href + it.label}>
-                                <ItemLink item={it} />
+                                <ItemLink item={it} touch />
                               </li>
                             ))}
                           </ul>

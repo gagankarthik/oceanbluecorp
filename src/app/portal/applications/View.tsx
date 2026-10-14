@@ -20,7 +20,7 @@ import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import { haystackOf, matchesTerms, searchTerms } from "@/lib/candidate-search";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { STATE_NAME, WORK_AUTH_OPTIONS, hireTypeLabel, stateOf } from "@/components/admin/theme";
+import { STATE_NAME, WORK_AUTH_OPTIONS, hireTypeLabel, stateOf } from "@/components/portal/console/theme";
 import { daysInStage, everReached, isStale, STALE_DAYS, TERMINAL } from "@/lib/pipeline";
 
 type Row = Application & { searchText?: string };

@@ -8,7 +8,7 @@ import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import { InlineSelect, KpiButton, StageBadge, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
 import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, tally, type Stage } from "@/components/portal/recruiting/model";
-import { STATE_NAME, hireTypeLabel, stateOf } from "@/components/admin/theme";
+import { STATE_NAME, hireTypeLabel, stateOf } from "@/components/portal/console/theme";
 import {
   Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, Segmented, StatCard,
   usePortalRouter,

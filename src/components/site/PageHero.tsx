@@ -27,7 +27,7 @@ export default function PageHero({
           {cells.map((c, i) => (
             <div key={i} className={`${i >= 3 ? "hidden md:block" : ""} ${i === 0 ? "shutter" : ""}`}>
               {"photo" in c ? (
-                <Photo name={c.photo} position={c.position} className="h-full" priority={i === 0} sizes="(min-width: 768px) 25vw, 33vw" />
+                <Photo name={c.photo} position={c.position} className="h-full" preload={i === 0} eager sizes="(min-width: 768px) 25vw, 33vw" />
               ) : (
                 <div className={`h-full ${c.tone}`} />
               )}

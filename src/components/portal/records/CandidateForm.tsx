@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import type { BenchType, Job } from "@/lib/aws/dynamodb";
-import { HIRE_TYPE_OPTIONS, SOURCE_OPTIONS } from "@/components/admin/theme";
+import { HIRE_TYPE_OPTIONS, SOURCE_OPTIONS } from "@/components/portal/console/theme";
 import { POOL_META, POOL_ORDER } from "@/lib/bench";
 import {
   CANDIDATE_FIELD_IDS as IDS, CANDIDATE_LIMITS, type CandidateField, type CandidateFormState,

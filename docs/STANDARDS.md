@@ -18,7 +18,7 @@ reuse, security, and accessibility.
 | HTTP handlers | `src/app/api/**/route.ts` | Guard, validate, delegate, respond. No DynamoDB expressions inline. |
 | AWS access | `src/lib/aws/*` | The only place the AWS SDK is imported. |
 | Pure logic / helpers | `src/lib/*` | No AWS SDK, no React. Safe to import anywhere. |
-| Shared admin components | `src/components/admin/*` | Reusable across admin screens. |
+| Shared admin components | `src/components/portal/console/*` | Reusable across admin screens. |
 | shadcn primitives | `src/components/ui/*` | Generated/vendored. Extend, don't fork. |
 | Hooks | `src/hooks/*` | |
 | One-off scripts | `scripts/*.mjs` | Dry run by default, `--apply` to write. See §7. |
@@ -27,12 +27,12 @@ reuse, security, and accessibility.
 `src/lib/aws/dynamodb.ts`, not building an `UpdateExpression` in the handler.
 
 **Page files should compose, not accumulate.** These are past the point where
-that holds and should shed logic into `src/lib` and `src/components/admin` as
+that holds and should shed logic into `src/lib` and `src/components/portal/console` as
 they are next touched:
 
 ```
 3273  src/lib/aws/dynamodb.ts
-1504  src/components/admin/workspace.tsx
+1504  src/components/portal/console/workspace.tsx
 1048  src/app/admin/bench/page.tsx
  815  src/app/admin/applications/page.tsx
  743  src/app/admin/page.tsx
@@ -127,7 +127,7 @@ was duplicated first**.
 | Explain a heading | `<InfoTip>` via `subtitle` / `info` props (card, section, page headers) | a grey sentence under every title |
 | Put JSON-LD or any value in an inline `<script>` | `jsonLdString` (`lib/seo.ts`) | a bare `JSON.stringify` |
 | Page title, description, canonical, OG card | `pageMetadata` (`lib/seo.ts`) | a hand-built `metadata` object |
-| Loading placeholder | `Skel` and the layout skeletons (`admin/skeletons.tsx`), with a `label` | `animate-pulse` on an ad-hoc div |
+| Loading placeholder | `Skel` and the layout skeletons (`portal/console/skeletons.tsx`), with a `label` | `animate-pulse` on an ad-hoc div |
 | A colour, space, radius or duration | a token (DESIGN_SYSTEM.md §2) | a raw value in a page |
 
 **Denormalise deliberately.** Pipeline records copy `candidateName` and

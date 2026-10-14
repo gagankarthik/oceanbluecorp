@@ -78,7 +78,7 @@ export default function Maintenance({
 
       <div className="hidden p-2 lg:col-span-5 lg:block">
         <div className="shutter h-full">
-          <Photo name="bridge" className="h-full" priority sizes="40vw" />
+          <Photo name="bridge" className="h-full" preload sizes="40vw" />
         </div>
       </div>
     </main>

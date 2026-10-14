@@ -4,7 +4,7 @@
 // so this stays safe to use from client components (see CLAUDE.md, a value
 // import from lib/aws ships the SDK and its env references to the browser).
 import type { ResumeAnalysis } from "@/lib/aws/dynamodb";
-import { normalizeState } from "@/components/admin/theme";
+import { normalizeState } from "@/components/portal/console/theme";
 
 /** What the extractor found about the person, as returned by /api/resume/parse. */
 export interface ParsedResumeContact {

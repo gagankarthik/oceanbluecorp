@@ -1,6 +1,6 @@
 "use client";
 
-import { US_STATES } from "@/components/admin/theme";
+import { US_STATES } from "@/components/portal/console/theme";
 import { WORKPLACES, WORKPLACE_LABEL, type Workplace } from "@/lib/workplace";
 import { Choice, Field, NativeSelect, TextInput } from "./base";
 

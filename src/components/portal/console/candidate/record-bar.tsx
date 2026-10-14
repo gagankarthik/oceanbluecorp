@@ -7,14 +7,14 @@ import type { Application, BenchType } from "@/lib/aws/dynamodb";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { WorkspaceButton } from "@/components/admin/workspace";
-import { StatusBadge } from "@/components/admin/status-badge";
-import { Avatar } from "@/components/admin/avatar";
-import { StarRating } from "@/components/admin/star-rating";
+import { WorkspaceButton } from "@/components/portal/console/workspace";
+import { StatusBadge } from "@/components/portal/console/status-badge";
+import { Avatar } from "@/components/portal/console/avatar";
+import { StarRating } from "@/components/portal/console/star-rating";
 import {
   IconEdit, IconJob,
   IconLocation, IconMail, IconPhone, IconUserCheck,
-} from "@/components/admin/icons";
+} from "@/components/portal/console/icons";
 import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { cn } from "@/lib/utils";
 

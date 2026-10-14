@@ -84,10 +84,13 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
   }, [jobs, query, practice, workplace, type, sort]);
 
   const select =
-    "mt-2 w-full min-h-12 appearance-none bg-mist-0 px-4 text-navy-900 focus:outline-2 focus:outline-offset-2 focus:outline-ocean-600";
+    "mt-2 w-full min-h-12 appearance-none bg-mist-0 px-4 text-navy-900 max-md:text-base focus:outline-2 focus:outline-offset-2 focus:outline-ocean-600";
 
   const remoteOnly = workplace === "Remote";
   const hasRemote = workplaces.includes("Remote");
+  // Phones: the filters fold behind a button so the pinned bar stays one row
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilters = [practice, workplace, type].filter((v) => v !== ALL).length;
 
   const clear = () => {
     setLinked("");
@@ -106,18 +109,35 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
           stuck ? "-mx-4 border-b border-mist-200 px-4 md:-mx-7 md:px-7 xl:-mx-10 xl:px-10" : "px-5 md:px-6"
         }`}
       >
-      <form role="search" onSubmit={(e) => e.preventDefault()} className="grid gap-4 py-5 md:grid-cols-[2fr_1fr_1fr_1fr_auto] md:items-end md:py-6">
-        <label className="text-[15px] font-medium">
-          Search roles
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Job title, skill, city or job ID"
-            className={`${select} placeholder:text-mist-500`}
-          />
-        </label>
-        <label className="text-[15px] font-medium">
+      <form role="search" onSubmit={(e) => e.preventDefault()} className="grid gap-4 py-3 md:grid-cols-[2fr_1fr_1fr_1fr_auto] md:items-end md:py-6">
+        <div className="flex items-end gap-2">
+          <label className="min-w-0 flex-1 text-[15px] font-medium">
+            <span className="max-md:sr-only">Search roles</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Job title, skill, city or job ID"
+              className={`${select} placeholder:text-mist-500 max-md:mt-0`}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            aria-controls="job-filters"
+            className={`inline-flex min-h-12 shrink-0 items-center gap-2 px-4 font-medium focus:outline-2 focus:outline-offset-2 focus:outline-ocean-600 md:hidden ${
+              filtersOpen ? "bg-navy-900 text-white" : "bg-mist-0 text-navy-900"
+            }`}
+          >
+            Filters
+            {activeFilters > 0 && (
+              <span className="grid size-5 place-items-center rounded-full bg-ocean-600 text-[12px] tabular-nums text-white">{activeFilters}</span>
+            )}
+          </button>
+        </div>
+        <div id="job-filters" className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-x-2 gap-y-3 pb-2 max-md:[&_select]:mt-1 max-md:[&_select]:min-h-11 md:contents`}>
+        <label className="text-[13px] font-medium md:text-[15px]">
           Practice
           <select value={practice} onChange={(e) => setPractice(e.target.value)} className={select}>
             {practices.map((p) => (
@@ -125,7 +145,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             ))}
           </select>
         </label>
-        <label className="text-[15px] font-medium">
+        <label className="text-[13px] font-medium md:text-[15px]">
           Workplace
           <select value={workplace} onChange={(e) => setWorkplace(e.target.value)} className={select}>
             {workplaces.map((p) => (
@@ -133,7 +153,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             ))}
           </select>
         </label>
-        <label className="text-[15px] font-medium">
+        <label className="text-[13px] font-medium md:text-[15px]">
           Job type
           <select value={type} onChange={(e) => setType(e.target.value)} className={select}>
             {types.map((p) => (
@@ -142,7 +162,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
           </select>
         </label>
         {hasRemote && (
-          <label className="flex min-h-12 w-fit cursor-pointer items-center gap-3 whitespace-nowrap text-[15px] font-medium">
+          <label className="flex min-h-11 w-fit self-end md:min-h-12 cursor-pointer items-center gap-3 whitespace-nowrap text-[13px] font-medium md:text-[15px]">
             <input
               type="checkbox"
               checked={remoteOnly}
@@ -156,6 +176,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             Remote only
           </label>
         )}
+        </div>
       </form>
       </div>
 

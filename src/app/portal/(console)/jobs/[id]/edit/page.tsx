@@ -9,7 +9,7 @@ import {
 } from "@/components/portal/records/JobForm";
 import type { AssigneeUser } from "@/components/portal/records/JobForm";
 import { EmptyState, ErrorState, FormSkeleton, Page, PageHeader } from "@/components/portal/kit";
-import { useNavSection } from "@/components/admin/admin-provider";
+import { useNavSection } from "@/components/portal/console/provider";
 import { jobCategory, JOB_LIST_HREF, JOB_LIST_LABEL } from "@/lib/job-status";
 
 export default function EditJobPage({

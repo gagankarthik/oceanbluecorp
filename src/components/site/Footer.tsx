@@ -199,12 +199,12 @@ export default function Footer() {
       </div>
 
       <div data-footer-bar className="gutter bg-black/25">
-        <div className="flex flex-col gap-4 py-6 text-[length:var(--text-small)] text-tide-300 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col items-center gap-4 py-6 text-center text-[length:var(--text-small)] text-tide-300 lg:flex-row lg:justify-between lg:text-left">
           <p>
             &copy; {new Date().getFullYear()} {company.name} All rights reserved.
           </p>
           <div>
-            <ul aria-label="Staff sign in" className="flex flex-wrap gap-2">
+            <ul aria-label="Staff sign in" className="flex flex-wrap justify-center gap-2 lg:justify-start">
               {[
                 { href: company.portals.hr, label: "HR portal" },
                 { href: company.portals.staff, label: "Employee sign in" },

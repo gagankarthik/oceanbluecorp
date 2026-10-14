@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ActivityEntry, Application, NoteEntry, TaskEntry } from "@/lib/aws/dynamodb";
-import { hireTypeLabel, PIPELINE_STAGES, workAuthMeta, type AppStatus } from "@/components/admin/theme";
+import { hireTypeLabel, PIPELINE_STAGES, workAuthMeta, type AppStatus } from "@/components/portal/console/theme";
 import { POOL_LABEL, POOL_META, poolOf } from "@/lib/bench";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { dueState, fmtDue, parseDue, postTaskOp, type TaskOp } from "./tasks";

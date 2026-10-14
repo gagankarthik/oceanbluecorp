@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { AdminProvider } from "@/components/admin/admin-provider";
+import { AdminProvider } from "@/components/portal/console/provider";
 import { useSession } from "@/components/portal/session";
 import { NoAccess } from "@/components/portal/ui";
 import { canAccess } from "@/lib/portal/roles";

@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { IconWarning, IconTrash } from "./icons";
-import { AdminDialog } from "./admin-dialog";
+import { AdminDialog } from "./dialog";
 import { WorkspaceButton } from "./workspace";
 
 interface ConfirmDialogProps {

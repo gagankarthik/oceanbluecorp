@@ -136,7 +136,7 @@ export default function Home() {
             </div>
           </div>
           <div className="shutter aspect-[4/3] md:col-start-2 md:row-span-2 md:row-start-1 md:aspect-auto">
-            <Photo name="tower" priority className="h-full" position="28% 50%" />
+            <Photo name="tower" preload className="h-full" position="28% 50%" />
           </div>
           <div className="grid grid-cols-2 gap-2 md:col-start-1 md:row-start-2">
             <Link

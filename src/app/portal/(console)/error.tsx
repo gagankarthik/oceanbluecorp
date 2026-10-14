@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useAuth, landingRouteFor } from "@/lib/auth";
 import { BrokenIcon } from "@/components/site/StatusCard";
-import { WorkspaceButton } from "@/components/admin/workspace";
+import { WorkspaceButton } from "@/components/portal/console/workspace";
 
 // Catches render errors below the admin layout, so the shell survives.
 export default function AdminError({

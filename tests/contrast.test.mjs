@@ -148,7 +148,7 @@ describe("stage colours from theme.ts", () => {
   /* Parsed out of theme.ts rather than copied here. A copy passes forever
      while the real palette drifts, which is the failure mode this whole file
      exists to prevent. */
-  const themeSrc = readFileSync("src/components/admin/theme.ts", "utf8");
+  const themeSrc = readFileSync("src/components/portal/console/theme.ts", "utf8");
   const block = themeSrc.slice(
     themeSrc.indexOf("export const toneColor"),
     themeSrc.indexOf("};", themeSrc.indexOf("export const toneColor")),
@@ -219,10 +219,10 @@ describe("record and page headers", () => {
   /* The cobalt band was retired for the portal look: headers sit on the canvas
      and the candidate identity sits on a white card. Pin both the colours and
      that no white-on-fill text survives in the header components. */
-  const ws = readFileSync("src/components/admin/workspace.tsx", "utf8");
+  const ws = readFileSync("src/components/portal/console/workspace.tsx", "utf8");
   const slice = (from, to) => ws.slice(ws.indexOf(from), ws.indexOf(to, ws.indexOf(from)));
   const header = slice("export function BackLink", "export function RecordFact");
-  const bar = readFileSync("src/components/admin/candidate/record-bar.tsx", "utf8");
+  const bar = readFileSync("src/components/portal/console/candidate/record-bar.tsx", "utf8");
 
   test("the header components were found", () => {
     assert.ok(header.includes("export function RecordHeader"), "RecordHeader not found");

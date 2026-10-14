@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { load } from "./load.mjs";
 
 const { buildResumePrefill, filledKeys } = load("src/lib/resume-prefill.ts");
-const { normalizeState } = load("src/components/admin/theme.ts");
+const { normalizeState } = load("src/components/portal/console/theme.ts");
 
 describe("buildResumePrefill", () => {
   test("prefers the extractor's own name split over guessing", () => {

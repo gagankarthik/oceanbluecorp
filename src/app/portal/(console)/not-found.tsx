@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, landingRouteFor } from "@/lib/auth";
-import { BackLink, WorkspaceButton } from "@/components/admin/workspace";
+import { BackLink, WorkspaceButton } from "@/components/portal/console/workspace";
 import { LostIcon } from "@/components/site/StatusCard";
 
 // Rendered inside the admin shell, so the sidebar stays as the way out.

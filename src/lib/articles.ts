@@ -13,7 +13,7 @@
 
 import type { Article, ArticleKind, ArticleMetric, ArticleStatus } from "@/lib/aws/dynamodb";
 import type { Schema } from "@/lib/validate";
-import type { Tone } from "@/components/admin/theme";
+import type { Tone } from "@/components/portal/console/theme";
 
 // ── Kinds ────────────────────────────────────────────────────────────────────
 

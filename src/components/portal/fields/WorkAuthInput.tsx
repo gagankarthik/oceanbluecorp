@@ -2,7 +2,7 @@
 
 import {
   WORK_AUTH_GROUPS, WORK_AUTH_OPTIONS, workAuthExpires, workAuthMeta, workAuthNeedsSponsorship,
-} from "@/components/admin/theme";
+} from "@/components/portal/console/theme";
 import { pastDateWarning } from "@/lib/form-validation";
 import { CheckRow, Field, NativeSelect, Notice, TextInput } from "./base";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { COMMON_SKILLS } from "@/components/admin/theme";
+import { COMMON_SKILLS } from "@/components/portal/console/theme";
 import { APPLICATION_SKILLS_MAX, APPLICATION_SKILL_CHARS } from "@/lib/application-input";
 import Icon from "../icons";
 
