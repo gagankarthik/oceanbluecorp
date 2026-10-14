@@ -45,8 +45,8 @@ function AnnouncementPreview({ draft }: { draft: Draft }) {
   const href = draft.announcementHref.trim();
   return (
     <div aria-label="Announcement bar preview" className="overflow-hidden rounded-lg ring-1 ring-mist-200">
-      <div className="relative flex min-h-11 items-center justify-center gap-3 bg-navy-900 py-2 pl-4 pr-12 text-center text-[14px] leading-snug text-mist-50 sm:text-[15px]">
-        {tag && <span className="inline-flex shrink-0 items-center bg-cyan-500 px-2 py-0.5 text-[13px] font-semibold text-navy-950">{tag}</span>}
+      <div className="relative flex min-h-11 items-center justify-center gap-3 bg-navy-900 py-2 pl-4 pr-12 text-center text-adm-base leading-snug text-mist-50">
+        {tag && <span className="inline-flex shrink-0 items-center bg-cyan-500 px-2 py-0.5 text-adm-base font-semibold text-navy-950">{tag}</span>}
         <p className="min-w-0 break-words">
           <span className="text-tide-300">{text}</span>{" "}
           {href && (
@@ -201,7 +201,7 @@ export default function ContentView() {
         <Panel
           title="Announcement bar"
           description={isLive ? "Showing on every page of the site." : "Hidden. Write a message to show it."}
-          action={homepage?.updatedAt && <span className="text-[12px] text-mist-500">Saved {fmtRelative(homepage.updatedAt).toLowerCase()}</span>}
+          action={homepage?.updatedAt && <span className="text-adm-xs text-mist-600">Saved {fmtRelative(homepage.updatedAt).toLowerCase()}</span>}
         >
           <div className="grid gap-5">
             <Field
@@ -259,7 +259,7 @@ export default function ContentView() {
         <div className="lg:sticky lg:top-6">
           <Panel title="Preview" description={dirty ? "Unsaved. This is what visitors will see after you save." : "What visitors see now."}>
             <AnnouncementPreview draft={draft} />
-            <p className="mt-4 text-[13px] text-mist-600">Saving updates the live site straight away. Visitors who dismissed an earlier message will see a new one.</p>
+            <p className="mt-4 text-adm-base text-mist-600">Saving updates the live site straight away. Visitors who dismissed an earlier message will see a new one.</p>
           </Panel>
         </div>
       </div>
@@ -272,7 +272,7 @@ export default function ContentView() {
           </Button>
         }
       >
-        <div className="flex flex-wrap items-center gap-3 text-[14px] text-navy-900">
+        <div className="flex flex-wrap items-center gap-3 text-adm-base text-navy-900">
           <Badge tone={maintenanceOn ? "red" : "green"} dot>
             {maintenanceOn ? "Site offline" : "Site online"}
           </Badge>
@@ -290,11 +290,11 @@ export default function ContentView() {
         >
           <Icon name="chevronDown" className={`mt-1 size-4 shrink-0 text-mist-500 transition-transform duration-200 motion-reduce:transition-none ${showBlocks ? "" : "-rotate-90"}`} />
           <span className="min-w-0">
-            <span className="flex flex-wrap items-center gap-2 text-[16px] font-semibold text-navy-900">
+            <span className="flex flex-wrap items-center gap-2 text-adm-md font-semibold text-navy-900">
               Advanced: stored blocks
               <Badge>{blocks.length}</Badge>
             </span>
-            <span className="mt-0.5 block max-w-[75ch] text-[14px] text-mist-600">
+            <span className="mt-0.5 block max-w-[75ch] text-adm-base text-mist-600">
               The redesigned site takes its page copy from code. Of the stored blocks it reads only the announcement, maintenance mode and the help directory; the rest is kept for reference.
             </span>
           </span>
@@ -326,17 +326,17 @@ export default function ContentView() {
                         <ul className="grid gap-2">
                           {entries.map(([k, v]) => (
                             <li key={k} className="rounded-lg bg-mist-50 p-3 ring-1 ring-inset ring-mist-200">
-                              <p className="flex items-center justify-between gap-2 text-[12px] font-medium text-mist-600">
+                              <p className="flex items-center justify-between gap-2 text-adm-xs font-medium text-mist-600">
                                 <span className="min-w-0 break-all">{k}</span>
                                 {isLiveField(b.id, k) ? <Badge tone="green">Read by the site</Badge> : <Badge>Not used</Badge>}
                               </p>
-                              <p className="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[13px] text-navy-900">{v || <span className="text-mist-400">Empty</span>}</p>
+                              <p className="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-adm-base text-navy-900">{v || <span className="text-mist-600">Empty</span>}</p>
                             </li>
                           ))}
                         </ul>
                       )}
                       {b.id === "help-directory" && (
-                        <a href="/portal/help" className="inline-flex min-h-10 items-center gap-1.5 text-[13px] font-medium text-ocean-700 hover:underline">
+                        <a href="/portal/help" className="inline-flex min-h-10 items-center gap-1.5 text-adm-base font-medium text-ocean-700 hover:underline">
                           Edit on the Help page
                           <Icon name="chevronRight" className="size-4" />
                         </a>

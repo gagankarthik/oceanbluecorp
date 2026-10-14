@@ -26,15 +26,15 @@ import { daysInStage, everReached, isStale, STALE_DAYS, TERMINAL } from "@/lib/p
 type Row = Application & { searchText?: string };
 
 type SavedView = "all" | "mine" | "review" | "interviewing" | "offers" | "stale" | "hired";
-const SAVED: { key: SavedView; label: string; test: (a: Row, me: { id?: string; name?: string }) => boolean }[] = [
+const SAVED: { key: SavedView; label: string; test: (a: Row, me: { id?: string; name?: string }) => boolean; tone?: "attention"; divider?: boolean }[] = [
   { key: "all", label: "All", test: () => true },
   { key: "mine", label: "My queue", test: (a, me) => !!a.ownership && (a.ownership === me.id || a.ownershipName === me.name) },
   { key: "review", label: "To review", test: (a) => a.status === "pending" || a.status === "reviewing" },
   { key: "interviewing", label: "Interviewing", test: (a) => a.status === "interview" },
   { key: "offers", label: "Offers", test: (a) => a.status === "offered" },
-  // Same rule as the dashboard's "Stalled" count.
-  { key: "stale", label: "Stalled", test: (a) => isStale(a) },
   { key: "hired", label: "Hired", test: (a) => a.status === "hired" },
+  // Same rule as the dashboard's "Stalled" count.
+  { key: "stale", label: "Stalled", test: (a) => isStale(a), tone: "attention", divider: true },
 ];
 
 const stageOptions = BOARD.map((s) => ({ value: s, label: STAGE_LABEL[s] }));
@@ -93,6 +93,7 @@ export default function ApplicationsView() {
   const { setData } = appsRes;
 
   const [view, setView] = useState<"board" | "table">("table");
+  const [insightsOpen, setInsightsOpen] = useState(false);
   const [saved, setSaved] = useState<SavedView>("all");
   // KPIs, the funnel, deep links and saved views all write the table's filters: one bar, every constraint a chip.
   const [table, setTable] = useState<TableState>({ query: "", filters: {} });
@@ -254,7 +255,7 @@ export default function ApplicationsView() {
           <Avatar name={a.name || a.email} size="sm" />
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-semibold" title={a.name || a.email}>{a.name || a.email}</span>
-            <span className="truncate text-[12px] text-mist-500">{a.applicationId || locationOf(a)}</span>
+            <span className="truncate text-adm-xs text-mist-600">{a.applicationId || locationOf(a)}</span>
           </span>
         </span>
       ),
@@ -286,18 +287,18 @@ export default function ApplicationsView() {
       hideBelow: "xl",
       value: (a) => (TERMINAL.has(a.status) ? -1 : daysInStage(a)),
       cell: (a) => {
-        if (TERMINAL.has(a.status)) return <span className="text-mist-400">&mdash;</span>;
+        if (TERMINAL.has(a.status)) return <span className="text-mist-600">&mdash;</span>;
         const d = daysInStage(a);
-        return <span className={`tabular-nums ${d >= STALE_DAYS ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>;
+        return <span className={`tabular-nums ${d >= STALE_DAYS ? "font-semibold text-status-warning" : "text-mist-600"}`}>{d}d</span>;
       },
     },
     { key: "location", header: "Location", sortable: true, card: false, hideBelow: "2xl", value: (a) => locationOf(a) },
-    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="block max-w-40 truncate whitespace-nowrap text-[13px]" title={a.ownershipName}>{a.ownershipName}</span> : <span className="whitespace-nowrap text-[13px] font-medium text-[#b42318]">Unassigned</span>) },
+    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="block max-w-40 truncate whitespace-nowrap text-adm-base" title={a.ownershipName}>{a.ownershipName}</span> : <span className="whitespace-nowrap text-adm-base font-medium text-status-danger">Unassigned</span>) },
     { key: "source", header: "Source", sortable: true, card: false, defaultHidden: true, value: (a) => a.source ?? "" },
     { key: "hireType", header: "Hire type", sortable: true, card: false, defaultHidden: true, value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
     { key: "skills", header: "Skills", card: false, defaultHidden: true, value: (a) => a.skills?.join(", ") ?? "" },
-    { key: "appliedAt", header: "Applied", sortable: true, card: false, hideBelow: "2xl", value: (a) => a.appliedAt, cell: (a) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(a.appliedAt)}</span> },
+    { key: "appliedAt", header: "Applied", sortable: true, card: false, hideBelow: "2xl", value: (a) => a.appliedAt, cell: (a) => <span className="text-adm-base tabular-nums text-mist-600">{fmtDate(a.appliedAt)}</span> },
     { key: "rating", header: "Rating", sortable: true, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <RatingValue value={a.rating} /> },
   ];
 
@@ -354,13 +355,13 @@ export default function ApplicationsView() {
         <div className="flex items-center gap-4">
           <Avatar name={a.name || a.email} size="lg" />
           <div className="min-w-0">
-            <h3 className="truncate text-[20px] font-semibold">{a.name || a.email}</h3>
-            <p className="truncate text-[14px] text-mist-600">{a.jobTitle || "No position"}</p>
+            <h3 className="truncate text-adm-lg font-semibold">{a.name || a.email}</h3>
+            <p className="truncate text-adm-base text-mist-600">{a.jobTitle || "No position"}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <StageBadge stage={a.status} />
-          {!TERMINAL.has(a.status) && <span className="text-[13px] text-mist-600">{daysInStage(a)} days in stage</span>}
+          {!TERMINAL.has(a.status) && <span className="text-adm-base text-mist-600">{daysInStage(a)} days in stage</span>}
           <StarInput value={a.rating || 0} onChange={(n) => void rate(a, n)} label={`Rating for ${a.name}`} />
           {a.addToTalentBench && <Badge tone="green">Bench</Badge>}
         </div>
@@ -378,14 +379,14 @@ export default function ApplicationsView() {
             { k: "Location", v: locationOf(a) || "—" },
             { k: "Applied", v: fmtDate(a.appliedAt) },
             { k: "Source", v: a.source || "—" },
-            { k: "Owner", v: a.ownershipName || <span className="font-medium text-[#b42318]">Unassigned</span> },
+            { k: "Owner", v: a.ownershipName || <span className="font-medium text-status-danger">Unassigned</span> },
             { k: "Work authorization", v: a.workAuthorization || "—" },
             { k: "Hire type", v: hireTypeLabel(a.hireType) || "—" },
           ]}
         />
         {!!a.skills?.length && (
           <section>
-            <h4 className="text-[14px] font-semibold">Skills</h4>
+            <h4 className="text-adm-base font-semibold">Skills</h4>
             <div className="mt-2">
               <Tags items={a.skills} />
             </div>
@@ -393,10 +394,10 @@ export default function ApplicationsView() {
         )}
         {!!a.statusHistory?.length && (
           <section>
-            <h4 className="text-[14px] font-semibold">Stage history</h4>
+            <h4 className="text-adm-base font-semibold">Stage history</h4>
             <ol className="mt-2 grid gap-1.5">
               {[...a.statusHistory].reverse().slice(0, 6).map((h, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 text-[13px]">
+                <li key={i} className="flex items-center justify-between gap-3 text-adm-base">
                   <StageBadge stage={h.status} />
                   <span className="truncate text-mist-600">
                     {h.changedByName ? `${h.changedByName}, ` : ""}
@@ -508,7 +509,7 @@ export default function ApplicationsView() {
       label="Saved views"
       value={saved}
       onChange={setSaved}
-      options={SAVED.map((s) => ({ value: s.key, label: s.label, count: s.key === "all" ? rows.length : rows.filter((a) => s.test(a, me)).length }))}
+      options={SAVED.map((s) => ({ value: s.key, label: s.label, tone: s.tone, divider: s.divider, count: s.key === "all" ? rows.length : rows.filter((a) => s.test(a, me)).length }))}
     />
   );
 
@@ -618,8 +619,9 @@ export default function ApplicationsView() {
         actions={
           <>
             {ready && <SavedViewsMenu items={savedSearches} activeId={activeSavedId} onApply={applySaved} onSave={saveCurrent} onDelete={deleteSaved} />}
+            {ready && <ActionMenu items={[{ label: "Insights", icon: "chart", onSelect: () => setInsightsOpen(true) }]} />}
             {ready && (
-              <InsightsSheet title="Applications insights" description="Volume over time, how far candidates get and where they come from. Click a stage to filter.">
+              <InsightsSheet open={insightsOpen} onOpenChange={setInsightsOpen} title="Applications insights" description="Volume over time, how far candidates get and where they come from. Click a stage to filter.">
                 {(close) => (
                   <>
                     <Panel title="Applications per week" description="Last 12 weeks">

@@ -257,15 +257,12 @@ function NewApplicationInner() {
                   startFromResume(file);
                 }}
               />
-              <span className="flex items-center justify-between">
-                <span className="grid size-10 place-items-center rounded-lg bg-ocean-600 text-white">
-                  <Icon name="upload" className="size-5" />
-                </span>
-                <span className="rounded-full bg-mist-0 px-2 py-0.5 text-[12px] font-medium text-ocean-700 ring-1 ring-inset ring-ocean-200">Fastest</span>
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-adm-base font-semibold text-navy-900">Upload a resume</span>
+                <span className="rounded-full bg-mist-0 px-2 py-0.5 text-adm-xs font-medium text-ocean-700 ring-1 ring-inset ring-ocean-200">Fastest</span>
               </span>
-              <span className="mt-3 text-[15px] font-semibold text-navy-900">Upload a resume</span>
-              <span className="mt-1 text-[14px] text-mist-600">We read the name, contact, skills and experience and fill the form for you to check.</span>
-              <span className="mt-auto pt-3 text-[12px] text-mist-500">{RESUME_HINT}. Drop it here or click.</span>
+              <span className="mt-1 text-adm-base text-mist-600">We read the name, contact, skills and experience and fill the form for you to check.</span>
+              <span className="mt-auto pt-3 text-adm-xs text-mist-600">{RESUME_HINT}. Drop it here or click.</span>
             </label>
             <button
               type="button"
@@ -275,21 +272,15 @@ function NewApplicationInner() {
               }}
               className={`${OPTION} ring-1 ring-inset ring-mist-300 hover:bg-mist-50 hover:ring-mist-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600`}
             >
-              <span className="grid size-10 place-items-center rounded-lg bg-mist-100 text-navy-800">
-                <Icon name="edit" className="size-5" />
-              </span>
-              <span className="mt-3 text-[15px] font-semibold text-navy-900">Enter details manually</span>
-              <span className="mt-1 text-[14px] text-mist-600">Type the essentials now and attach a resume later if you have one.</span>
-              <span className="mt-auto pt-3 text-[12px] text-mist-500">Only name and email are required.</span>
+              <span className="text-adm-base font-semibold text-navy-900">Enter details manually</span>
+              <span className="mt-1 text-adm-base text-mist-600">Type the essentials now and attach a resume later if you have one.</span>
+              <span className="mt-auto pt-3 text-adm-xs text-mist-600">Only name and email are required.</span>
             </button>
             {!forBench && (
               <button type="button" onClick={openBench} className={`${OPTION} ring-1 ring-inset ring-mist-300 hover:bg-mist-50 hover:ring-mist-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600`}>
-                <span className="grid size-10 place-items-center rounded-lg bg-mist-100 text-navy-800">
-                  <Icon name="bench" className="size-5" />
-                </span>
-                <span className="mt-3 text-[15px] font-semibold text-navy-900">Pick from talent bench</span>
-                <span className="mt-1 text-[14px] text-mist-600">Put someone already on the bench forward for a role, with their details carried over.</span>
-                <span className="mt-auto pt-3 text-[12px] text-mist-500">Searches both pools.</span>
+                <span className="text-adm-base font-semibold text-navy-900">Pick from talent bench</span>
+                <span className="mt-1 text-adm-base text-mist-600">Put someone already on the bench forward for a role, with their details carried over.</span>
+                <span className="mt-auto pt-3 text-adm-xs text-mist-600">Searches both pools.</span>
               </button>
             )}
           </div>
@@ -318,7 +309,7 @@ function NewApplicationInner() {
                 value={benchQuery}
                 onChange={(e) => setBenchQuery(e.target.value)}
                 placeholder="Search name, email or skill"
-                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
               />
             </label>
           </div>
@@ -356,13 +347,13 @@ function NewApplicationInner() {
                     className="flex min-h-14 w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-mist-50 disabled:opacity-60"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium text-navy-900">{a.name || a.email}</span>
-                      <span className="block truncate text-[12px] text-mist-600">
+                      <span className="block truncate text-adm-base font-medium text-navy-900">{a.name || a.email}</span>
+                      <span className="block truncate text-adm-xs text-mist-600">
                         {[a.email, a.jobTitle, (a.skills || []).slice(0, 4).join(", ")].filter(Boolean).join(" · ")}
                       </span>
                     </span>
-                    <span className="hidden shrink-0 text-[12px] text-mist-600 sm:block">{POOL_LABEL[poolOf(a)]}</span>
-                    {benchPicking === a.id ? <Spinner className="size-4 text-ocean-600" /> : <Icon name="chevronRight" className="size-4 shrink-0 text-mist-400" />}
+                    <span className="hidden shrink-0 text-adm-xs text-mist-600 sm:block">{POOL_LABEL[poolOf(a)]}</span>
+                    {benchPicking === a.id ? <Spinner className="size-4 text-ocean-600" /> : <Icon name="chevronRight" className="size-4 shrink-0 text-mist-500" />}
                   </button>
                 </li>
               ))}
@@ -375,10 +366,10 @@ function NewApplicationInner() {
         <Panel>
           <div className="flex flex-col items-center px-4 py-10 text-center">
             <Spinner className="size-7 text-ocean-600" />
-            <p className="mt-4 text-[16px] font-semibold text-navy-900" role="status" aria-live="polite">
+            <p className="mt-4 text-adm-md font-semibold text-navy-900" role="status" aria-live="polite">
               Reading {form.resumeFile?.name ?? "the resume"}…
             </p>
-            <p className="mt-1.5 max-w-md text-[14px] leading-relaxed text-mist-600">
+            <p className="mt-1.5 max-w-md text-adm-base leading-normal text-mist-600">
               Pulling out name, contact details, location, skills and experience. This usually takes a few seconds and can take up to a
               minute. The form opens filled in, ready for you to check.
             </p>
@@ -448,7 +439,7 @@ function NewApplicationInner() {
         <StickyActions
           status={
             errorCount > 0 ? (
-              <span className="font-medium text-[#b42318]">Fix the highlighted fields to add this candidate.</span>
+              <span className="font-medium text-status-danger">Fix the highlighted fields to add this candidate.</span>
             ) : (
               "First name and email are all you need to save."
             )

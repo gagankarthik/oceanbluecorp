@@ -34,7 +34,7 @@ export default function CertificationsPage() {
         <section key={lvl.level} className={idx % 2 ? "bg-field-mist" : "bg-field-paper"}>
           <div className={`gutter grid gap-12 lg:grid-cols-12 ${idx === 0 ? "pb-24 md:pb-32" : "py-24 md:py-32"}`}>
             <div className="side" data-reveal>
-              <h2 className="display text-[clamp(2.5rem,5vw,5rem)]">{lvl.level}</h2>
+              <h2 className="display text-head-xl">{lvl.level}</h2>
               <p className="mt-3 text-mist-600">{lvl.who}</p>
             </div>
             <ul className="axis grid gap-16">
@@ -47,9 +47,9 @@ export default function CertificationsPage() {
                       <img src={b.src} alt={`${c.name} certification badge`} width={b.w} height={b.h} className={b.cls} />
                     </div>
                     <div>
-                      <h3 className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">{c.name}</h3>
-                      <p className="mt-2 text-[15px] text-mist-600">Issued by {c.issuer}</p>
-                      <p className="mt-4 max-w-[46ch]">{c.body}</p>
+                      <h3 className="display text-head-md">{c.name}</h3>
+                      <p className="mt-2 text-small text-mist-600">Issued by {c.issuer}</p>
+                      <p className="mt-4 max-w-measure-narrow">{c.body}</p>
                     </div>
                   </li>
                 );
@@ -59,13 +59,13 @@ export default function CertificationsPage() {
         </section>
       ))}
 
-      <section aria-labelledby="partners-title" className="bg-navy-900 text-mist-50">
+      <section aria-labelledby="partners-title" className="on-dark bg-navy-900 text-mist-50">
         <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 id="partners-title" className="display text-[clamp(2.25rem,4vw,3.75rem)]">
+            <h2 id="partners-title" className="display text-head">
               Platform partners
             </h2>
-            <p className="mt-4 max-w-[34ch] text-tide-300">
+            <p className="mt-4 max-w-measure-narrow text-tide-300">
               Most of our cloud, data and AI work runs on these three platforms, so you get people who already know the stack.
             </p>
           </div>
@@ -76,8 +76,8 @@ export default function CertificationsPage() {
                   <MarkTile mark={partnerMarks[i]} tall />
                 </ul>
                 <div>
-                  <p className="text-[20px] font-medium">{p.tier}</p>
-                  <p className="mt-2 max-w-[46ch] text-tide-300">{p.body}</p>
+                  <p className="text-title font-medium">{p.tier}</p>
+                  <p className="mt-2 max-w-measure-narrow text-tide-300">{p.body}</p>
                 </div>
               </li>
             ))}
@@ -88,7 +88,7 @@ export default function CertificationsPage() {
       <section aria-labelledby="security-title" className="bg-field-paper">
         <div className="gutter grid gap-10 py-20 md:py-24 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 id="security-title" className="display text-[clamp(2rem,3.4vw,3.25rem)]">
+            <h2 id="security-title" className="display text-head">
               Security and data protection
             </h2>
           </div>

@@ -7,17 +7,15 @@ import { Badge, type Tone } from "../ui";
 import type { Role } from "@/lib/portal/roles";
 import type { Article, ArticleKind, ArticleStatus } from "@/lib/aws/dynamodb";
 import { articleStatusLabel } from "@/lib/articles";
-import { SERIES } from "../charts";
+import { SERIES, seriesColors } from "../charts";
 import { Modal as KitModal } from "../kit/overlay";
-
-const SERIES_COLORS: readonly string[] = SERIES;
 
 /** Roles that can create and edit publishing content; mirrors PUBLISHING_ROLES. */
 export const canEdit = (role: Role) => role === "admin" || role === "hr" || role === "marketing";
 
 export function ReadOnlyNote() {
   return (
-    <p className="flex items-center gap-2 rounded-lg bg-mist-100 px-4 py-2.5 text-[13px] text-mist-700">
+    <p className="flex items-center gap-2 rounded-lg bg-mist-100 px-4 py-2.5 text-adm-base text-mist-700">
       <Icon name="eye" className="size-4 shrink-0" />
       View only. Admin, HR and Media can edit this content.
     </p>
@@ -47,7 +45,7 @@ export function fmtRelative(iso?: string | null) {
 }
 
 const inputCls =
-  "mt-1.5 block w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:bg-mist-50 disabled:text-mist-600";
+  "mt-1.5 block w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:bg-mist-50 disabled:text-mist-600";
 
 export function TextField({
   label,
@@ -70,17 +68,17 @@ export function TextField({
 }) {
   const over = max !== undefined && value.length > max;
   return (
-    <label className="block text-[13px] font-medium text-navy-900">
+    <label className="block text-adm-base font-medium text-navy-900">
       <span className="flex items-center justify-between gap-2">
         {label}
         {max !== undefined && (
-          <span className={`text-[12px] tabular-nums ${over ? "text-[#b42318]" : "text-mist-500"}`}>
+          <span className={`text-adm-xs tabular-nums ${over ? "text-status-danger" : "text-mist-600"}`}>
             {value.length}/{max}
           </span>
         )}
       </span>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled} className={`${inputCls} h-10`} />
-      {hint && <span className="mt-1 block text-[12px] font-normal text-mist-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-adm-xs font-normal text-mist-600">{hint}</span>}
     </label>
   );
 }
@@ -104,11 +102,11 @@ export function TextArea({
 }) {
   const over = max !== undefined && value.length > max;
   return (
-    <label className="block text-[13px] font-medium text-navy-900">
+    <label className="block text-adm-base font-medium text-navy-900">
       <span className="flex items-center justify-between gap-2">
         {label}
         {max !== undefined && (
-          <span className={`text-[12px] tabular-nums ${over ? "text-[#b42318]" : "text-mist-500"}`}>
+          <span className={`text-adm-xs tabular-nums ${over ? "text-status-danger" : "text-mist-600"}`}>
             {value.length}/{max}
           </span>
         )}
@@ -119,7 +117,7 @@ export function TextArea({
         rows={rows}
         placeholder={placeholder}
         disabled={disabled}
-        className={`${inputCls} resize-y py-2 leading-relaxed`}
+        className={`${inputCls} resize-y py-2 leading-normal`}
       />
     </label>
   );
@@ -168,7 +166,7 @@ export function CopyLinkButton({ path, label = "Copy link" }: { path: string; la
           notify("Couldn't copy the link", { tone: "error" });
         }
       }}
-      className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-mist-0 px-3 text-[13px] font-medium text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-mist-0 px-3 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50"
     >
       <Icon name={copied ? "check" : "external"} className="size-4" />
       <span aria-live="polite">{copied ? "Copied" : label}</span>
@@ -199,7 +197,7 @@ export function ChartFilter({
   colors?: readonly string[];
 }) {
   const sorted = [...data].sort((a, b) => b.value - a.value);
-  const palette = colors ?? SERIES_COLORS;
+  const palette = colors ?? seriesColors(sorted.map((d) => d.label));
   return (
     <div className={bare ? "" : "mt-4 border-t border-mist-200 pt-4"}>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={label}>
@@ -211,13 +209,13 @@ export function ChartFilter({
               type="button"
               aria-pressed={on}
               onClick={() => onChange(on ? null : d.label)}
-              className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-colors ${
+              className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1 text-adm-xs font-medium transition-colors ${
                 on ? "bg-navy-900 text-white" : "bg-mist-50 text-navy-900 ring-1 ring-inset ring-mist-200 hover:bg-mist-100"
               }`}
             >
-              <span aria-hidden className="size-2 rounded-full" style={{ background: palette[i % palette.length] }} />
+              <span aria-hidden className="size-2 rounded-full" style={{ background: palette[i] ?? SERIES[SERIES.length - 1] }} />
               {d.label}
-              <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-500"}`}>{d.value}</span>
+              <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-600"}`}>{d.value}</span>
             </button>
           );
         })}
@@ -272,18 +270,18 @@ export function MiniStat({
   onClick?: () => void;
   active?: boolean;
 }) {
-  const chip = tone === "warn" ? "bg-[#fffaeb] text-[#b54708]" : "bg-ocean-50 text-ocean-700";
+  const chip = tone === "warn" ? "bg-status-warning-soft text-status-warning" : "bg-ocean-50 text-ocean-700";
   const inner = (
     <>
       <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${chip}`}>
-        <Icon name={icon} className="size-[18px]" />
+        <Icon name={icon} className="size-5" />
       </span>
       <span className="min-w-0 text-left">
         <span className="flex items-baseline gap-2">
-          <span className="text-[20px] font-semibold leading-none tabular-nums text-navy-900">{value}</span>
-          <span className="truncate text-[13px] font-medium text-mist-700">{label}</span>
+          <span className="text-adm-lg font-semibold leading-none tabular-nums text-navy-900">{value}</span>
+          <span className="truncate text-adm-base font-medium text-mist-700">{label}</span>
         </span>
-        {hint && <span className="mt-1 block truncate text-[12px] text-mist-500">{hint}</span>}
+        {hint && <span className="mt-1 block truncate text-adm-xs text-mist-600">{hint}</span>}
       </span>
     </>
   );

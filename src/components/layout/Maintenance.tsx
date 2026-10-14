@@ -29,7 +29,7 @@ export default function Maintenance({
 
         <div className="gutter flex flex-1 flex-col justify-center py-14">
           <p className="text-mist-600">{planned ? "Scheduled maintenance" : "Temporarily offline"}</p>
-          <h1 className="lines poster mt-4 text-[clamp(3rem,7vw,6.5rem)]">
+          <h1 className="lines poster mt-4 text-poster">
             {lines.map((l, i) => (
               <span key={l} className="line">
                 <span data-line style={{ "--i": i } as React.CSSProperties}>
@@ -38,7 +38,7 @@ export default function Maintenance({
               </span>
             ))}
           </h1>
-          <p data-after-lines className="mt-6 max-w-[44ch] text-lead leading-snug">
+          <p data-after-lines className="mt-6 max-w-measure-narrow text-lead leading-snug">
             {message || "Nothing you have sent us has been lost."}
           </p>
           {eta && (
@@ -71,7 +71,7 @@ export default function Maintenance({
           </p>
         </div>
 
-        <p className="gutter py-5 text-[length:var(--text-small)] text-mist-600">
+        <p className="gutter py-5 text-small text-mist-600">
           &copy; {new Date().getFullYear()} {company.name}
         </p>
       </div>

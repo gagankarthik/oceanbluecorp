@@ -32,6 +32,19 @@ export function isPhone(v: string): boolean {
   return digits >= 7 && digits <= 20;
 }
 
+/**
+ * A number `isPhone` accepts, in the +<digits> form Cognito stores. Ten digits
+ * without a country code are read as US; an extension is dropped.
+ */
+export function toE164(v: string): string {
+  const s = v.trim().replace(PHONE_EXT_RE, "");
+  const digits = s.replace(/\D/g, "");
+  if (s.startsWith("+")) return `+${digits}`;
+  if (digits.startsWith("00")) return `+${digits.slice(2)}`;
+  if (digits.length === 10) return `+1${digits}`;
+  return `+${digits}`;
+}
+
 export function isUrl(v: string): boolean {
   try {
     const u = new URL(v.trim());

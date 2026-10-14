@@ -21,7 +21,7 @@ export default function BackLink({
   className?: string;
 }) {
   const color = { ocean: "text-ocean-700 hover:text-ocean-800", ink: "text-mist-700 hover:text-navy-900", light: "text-tide-200 hover:text-white" }[tone];
-  const cls = `group inline-flex min-h-10 items-center gap-2 self-start text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 ${color} ${className}`;
+  const cls = `group inline-flex min-h-10 items-center gap-2 self-start text-small font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 ${color} ${className}`;
   const body = (
     <>
       <svg

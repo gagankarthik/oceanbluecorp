@@ -58,7 +58,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
   return (
     <fieldset className="grid gap-4 border-t border-mist-200 pt-5 first:border-0 first:pt-0">
       <legend className="sr-only">{title}</legend>
-      <p aria-hidden className="text-[14px] font-semibold text-navy-900">
+      <p aria-hidden className="text-adm-base font-semibold text-navy-900">
         {title}
       </p>
       {children}
@@ -182,9 +182,9 @@ function ClientDetail({ c, jobs, jobsLoading, jobsError, onDelete }: { c: Client
               href={site}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-mist-0 px-4 text-[14px] font-medium text-navy-900 ring-1 ring-inset ring-mist-300 transition-colors hover:bg-mist-50"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-mist-0 px-4 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-mist-300 transition-colors hover:bg-mist-50"
             >
-              <Icon name="globe" className="size-[18px]" />
+              <Icon name="globe" className="size-5" />
               Website
               <Icon name="external" className="size-4 text-mist-500" />
               <span className="sr-only">(opens in a new tab)</span>
@@ -222,7 +222,7 @@ function ClientDetail({ c, jobs, jobsLoading, jobsError, onDelete }: { c: Client
       />
 
       <section className="grid gap-2">
-        <h3 className="text-[14px] font-semibold text-navy-900">Roles</h3>
+        <h3 className="text-adm-base font-semibold text-navy-900">Roles</h3>
         <LinkedRoles jobs={jobs} loading={jobsLoading} error={jobsError} />
       </section>
 
@@ -304,7 +304,7 @@ export default function ClientsView() {
             <span className="block max-w-[16rem] truncate font-medium" title={c.name}>
               {c.name}
             </span>
-            <span className="block truncate text-[12px] text-mist-600">{domainOf(c.websiteUrl)}</span>
+            <span className="block truncate text-adm-xs text-mist-600">{domainOf(c.websiteUrl)}</span>
           </span>
         </span>
       ),
@@ -318,10 +318,10 @@ export default function ClientsView() {
         hasContact(c) ? (
           <span className="block min-w-0 max-w-[16rem]">
             <span className="block truncate">{c.email || c.phone}</span>
-            {c.email && c.phone && <span className="block text-[12px] text-mist-600">{c.phone}</span>}
+            {c.email && c.phone && <span className="block text-adm-xs text-mist-600">{c.phone}</span>}
           </span>
         ) : (
-          <span className="text-[12px] text-mist-500">No contact on file</span>
+          <span className="text-adm-xs text-mist-600">No contact on file</span>
         ),
     },
     { key: "location", header: "Location", sortable: true, hideBelow: "xl", value: locationOf },
@@ -378,7 +378,7 @@ export default function ClientsView() {
           title="Clients"
           icon="building"
           section="relationships"
-          description="The companies we place consultants with, and the roles we hold for them."
+
           actions={
             <>
               {clients.length > 0 && (
@@ -409,8 +409,8 @@ export default function ClientsView() {
                       />
                       {byState.length > 0 && (
                         <div className="grid gap-2.5 border-t border-mist-200 pt-4">
-                          <p className="text-[12px] font-medium text-mist-600">Top states</p>
-                          <ul className="grid gap-2.5 text-[13px]">
+                          <p className="text-adm-xs font-medium text-mist-600">Top states</p>
+                          <ul className="grid gap-2.5 text-adm-base">
                             {byState.map((s) => (
                               <li key={s.label} className="flex items-center justify-between gap-3">
                                 <span className="truncate text-navy-900">{s.label}</span>

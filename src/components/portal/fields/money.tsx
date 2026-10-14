@@ -19,12 +19,12 @@ export function moneyValue(v: string): number | undefined {
 export function MoneyInput({ suffix, className = "", ...props }: React.InputHTMLAttributes<HTMLInputElement> & { suffix?: string }) {
   return (
     <div className="relative">
-      <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-mist-500">
+      <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-adm-base text-mist-600">
         $
       </span>
       <TextInput type="text" inputMode="decimal" {...props} className={`pl-7 tabular-nums ${suffix ? "pr-12" : ""} ${className}`} />
       {suffix && (
-        <span aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-mist-500">
+        <span aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-adm-base text-mist-600">
           {suffix}
         </span>
       )}
@@ -124,8 +124,8 @@ export function MarginPreview({ bill, pay, unit }: { bill: string; pay: string; 
   return (
     <p
       role="status"
-      className={`rounded-lg px-3.5 py-2.5 text-[13px] font-medium tabular-nums ring-1 ring-inset ${
-        loss ? "bg-[#fef3f2] text-[#b42318] ring-[#fecdca]" : "bg-[#ecfdf3] text-[#067647] ring-[#abefc6]"
+      className={`rounded-lg px-3.5 py-2.5 text-adm-base font-medium tabular-nums ring-1 ring-inset ${
+        loss ? "bg-status-danger-soft text-status-danger ring-status-danger-line" : "bg-status-success-soft text-status-success ring-status-success-line"
       }`}
     >
       Gross margin {pct.toFixed(1)}% · {unit ? formatRate(b - p, unit) : `$${(b - p).toFixed(2)}`} per {unit ? "unit" : "hour"}

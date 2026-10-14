@@ -26,13 +26,13 @@ function Entry({ label, onRemove, children }: { label: string; onRemove: () => v
   return (
     <div role="group" aria-label={label} className="min-w-0 rounded-lg bg-mist-50 p-4 ring-1 ring-inset ring-mist-200">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-[13px] font-semibold text-navy-900">{label}</p>
+        <p className="text-adm-base font-semibold text-navy-900">{label}</p>
         <button
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${label.toLowerCase()}`}
           title="Remove"
-          className="-my-1 grid size-8 place-items-center rounded-lg text-mist-500 transition-colors hover:bg-[#fef3f2] hover:text-[#b42318]"
+          className="-my-1 grid size-8 place-items-center rounded-lg text-mist-500 transition-colors hover:bg-status-danger-soft hover:text-status-danger"
         >
           <Icon name="trash" className="size-4" />
         </button>
@@ -150,7 +150,7 @@ function Body({ onOpenChange, application, onSaved }: Omit<Props, "open">) {
   const work = draft.work_experience || [];
   const edu = draft.education || [];
   const certs = draft.certifications || [];
-  const empty = (text: string) => <p className="text-[13px] text-mist-600">{text}</p>;
+  const empty = (text: string) => <p className="text-adm-base text-mist-600">{text}</p>;
 
   return (
     <>
@@ -170,7 +170,7 @@ function Body({ onOpenChange, application, onSaved }: Omit<Props, "open">) {
         }
       >
         <form id={FORM_ID} noValidate onSubmit={handleSave} className="grid gap-6">
-          <p className="-mt-1 text-[13px] text-mist-600">Correct anything the parser got wrong. Contact details are not changed here.</p>
+          <p className="-mt-1 text-adm-base text-mist-600">Correct anything the parser got wrong. Contact details are not changed here.</p>
           <FormBanner message={error} onDismiss={() => setError(null)} />
 
           <FormSection title="Summary">
@@ -232,7 +232,7 @@ function Body({ onOpenChange, application, onSaved }: Omit<Props, "open">) {
             </Field>
           </FormSection>
 
-          <FormSection title="Experience" badge={<span className="text-[13px] tabular-nums text-mist-500">{work.length}</span>} action={<AddButton label="Add role" onClick={addWork} />}>
+          <FormSection title="Experience" badge={<span className="text-adm-base tabular-nums text-mist-600">{work.length}</span>} action={<AddButton label="Add role" onClick={addWork} />}>
             {work.length === 0 && empty("No roles recorded. Add one to start.")}
             {work.map((w, i) => (
               <Entry key={i} label={`Role ${i + 1}`} onRemove={() => removeWork(i)}>
@@ -261,7 +261,7 @@ function Body({ onOpenChange, application, onSaved }: Omit<Props, "open">) {
             ))}
           </FormSection>
 
-          <FormSection title="Education" badge={<span className="text-[13px] tabular-nums text-mist-500">{edu.length}</span>} action={<AddButton label="Add education" onClick={addEdu} />}>
+          <FormSection title="Education" badge={<span className="text-adm-base tabular-nums text-mist-600">{edu.length}</span>} action={<AddButton label="Add education" onClick={addEdu} />}>
             {edu.length === 0 && empty("No education recorded.")}
             {edu.map((e, i) => (
               <Entry key={i} label={`Education ${i + 1}`} onRemove={() => removeEdu(i)}>
@@ -284,7 +284,7 @@ function Body({ onOpenChange, application, onSaved }: Omit<Props, "open">) {
             ))}
           </FormSection>
 
-          <FormSection title="Certifications" badge={<span className="text-[13px] tabular-nums text-mist-500">{certs.length}</span>} action={<AddButton label="Add certification" onClick={addCert} />}>
+          <FormSection title="Certifications" badge={<span className="text-adm-base tabular-nums text-mist-600">{certs.length}</span>} action={<AddButton label="Add certification" onClick={addCert} />}>
             {certs.length === 0 && empty("No certifications recorded.")}
             {certs.map((c, i) => (
               <Entry key={i} label={`Certification ${i + 1}`} onRemove={() => removeCert(i)}>

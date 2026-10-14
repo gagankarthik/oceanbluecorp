@@ -80,7 +80,7 @@ export function JobTeamCard({
     <Panel
       title={
         <>
-          Team <span className="ml-1 text-[13px] font-medium tabular-nums text-mist-500">{memberCount}</span>
+          Team <span className="ml-1 text-adm-base font-medium tabular-nums text-mist-600">{memberCount}</span>
         </>
       }
       action={
@@ -95,7 +95,7 @@ export function JobTeamCard({
         {canEdit && adding && (
           <div className="grid gap-1.5">
             {staff.loading ? (
-              <p role="status" className="flex h-10 items-center gap-2 text-[13px] text-mist-600">
+              <p role="status" className="flex h-10 items-center gap-2 text-adm-base text-mist-600">
                 <Spinner /> Loading the team list…
               </p>
             ) : staff.error ? (
@@ -106,7 +106,7 @@ export function JobTeamCard({
                 </Button>
               </div>
             ) : left.length === 0 ? (
-              <p className="text-[13px] text-mist-600">{staff.people.length === 0 ? "No staff accounts to assign." : "Everyone on staff is already on this job."}</p>
+              <p className="text-adm-base text-mist-600">{staff.people.length === 0 ? "No staff accounts to assign." : "Everyone on staff is already on this job."}</p>
             ) : (
               <Select
                 label="Add a recruiter to this job"
@@ -126,7 +126,7 @@ export function JobTeamCard({
               />
             )}
             {savingId && !ids.includes(savingId) && (
-              <p role="status" className="flex items-center gap-2 text-[12px] text-mist-600">
+              <p role="status" className="flex items-center gap-2 text-adm-xs text-mist-600">
                 <Spinner className="size-3.5" /> Adding to the team…
               </p>
             )}
@@ -134,14 +134,14 @@ export function JobTeamCard({
         )}
 
         {memberCount === 0 ? (
-          <p className="text-[13px] text-mist-600">{canEdit ? "Nobody is assigned yet. Use Add to put a recruiter on this job." : "Nobody is assigned to this job yet."}</p>
+          <p className="text-adm-base text-mist-600">{canEdit ? "Nobody is assigned yet. Use Add to put a recruiter on this job." : "Nobody is assigned to this job yet."}</p>
         ) : (
           <ul className="grid gap-1" aria-label="Team members">
             {job.recruitmentManagerName && (
               <li className="flex min-h-10 items-center gap-3">
                 <Avatar name={job.recruitmentManagerName} size="sm" />
-                <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-navy-900">{job.recruitmentManagerName}</span>
-                <span className="shrink-0 text-[12px] text-mist-500">Manager</span>
+                <span className="min-w-0 flex-1 truncate text-adm-base font-medium text-navy-900">{job.recruitmentManagerName}</span>
+                <span className="shrink-0 text-adm-xs text-mist-600">Manager</span>
               </li>
             )}
             {names.map((name, i) => {
@@ -150,8 +150,8 @@ export function JobTeamCard({
                 <li key={ids[i] ?? i} className="flex min-h-10 items-center gap-3">
                   <Avatar name={name} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium text-navy-900">{name}</span>
-                    {emails[i] && <span className="block truncate text-[12px] text-mist-600">{emails[i]}</span>}
+                    <span className="block truncate text-adm-base font-medium text-navy-900">{name}</span>
+                    {emails[i] && <span className="block truncate text-adm-xs text-mist-600">{emails[i]}</span>}
                   </span>
                   {busy ? (
                     <Spinner className="size-4 text-mist-500" label="Saving" />
@@ -163,7 +163,7 @@ export function JobTeamCard({
                         disabled={!!savingId}
                         aria-label={`Remove ${name} from the team`}
                         title="Remove from the team"
-                        className="grid size-8 shrink-0 place-items-center rounded-lg text-mist-500 transition-colors hover:bg-[#fef3f2] hover:text-[#b42318] disabled:opacity-50"
+                        className="grid size-8 shrink-0 place-items-center rounded-lg text-mist-500 transition-colors hover:bg-status-danger-soft hover:text-status-danger disabled:opacity-50"
                       >
                         <Icon name="x" className="size-4" />
                       </button>

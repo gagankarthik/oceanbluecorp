@@ -148,8 +148,8 @@ function ItemLink({ item, onPick, compact = false, touch = false }: { item: Item
   }`;
   const inner = (
     <>
-      <span className="block text-[15px] font-medium text-navy-900 group-hover:text-ocean-700">{item.label}</span>
-      {item.desc && !compact && !touch && <span className="mt-0.5 block text-[14px] leading-snug text-mist-600">{item.desc}</span>}
+      <span className="block text-small font-medium text-navy-900 group-hover:text-ocean-700">{item.label}</span>
+      {item.desc && !compact && !touch && <span className="mt-0.5 block text-small leading-snug text-mist-600">{item.desc}</span>}
     </>
   );
   return /^(tel:|https?:)/.test(item.href) ? (
@@ -235,7 +235,7 @@ export default function Header() {
                   aria-expanded={open}
                   aria-controls="mega-panel"
                   onClick={() => setOpenMenu(open ? null : m.id)}
-                  className={`relative flex h-full items-center gap-1.5 px-3 text-[15px] transition-colors hover:text-ocean-700 xl:px-4 ${
+                  className={`relative flex h-full items-center gap-1.5 px-3 text-small transition-colors hover:text-ocean-700 xl:px-4 ${
                     open || isCurrent(m) ? "text-ocean-700" : "text-navy-900"
                   }`}
                 >
@@ -258,7 +258,7 @@ export default function Header() {
             <>
               <Link
                 href="/jobs"
-                className={`hidden min-h-11 items-center gap-2 px-4 text-[15px] font-medium active:scale-[0.98] md:inline-flex ${
+                className={`hidden min-h-11 items-center gap-2 px-4 text-small font-medium active:scale-[0.98] md:inline-flex ${
                   pathname.startsWith("/jobs") ? "bg-navy-900 text-white" : "text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
                 }`}
               >
@@ -268,12 +268,14 @@ export default function Header() {
                 </svg>
                 Find a job
               </Link>
-              <Link
-                href="/contact"
-                className="hidden min-h-11 items-center bg-ocean-600 px-5 text-[15px] font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98] sm:inline-flex"
-              >
-                Contact us
-              </Link>
+              {pathname !== "/contact" && (
+                <Link
+                  href="/contact"
+                  className="hidden min-h-11 items-center bg-ocean-600 px-5 text-small font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98] sm:inline-flex"
+                >
+                  Contact us
+                </Link>
+              )}
             </>
           )}
           <AccountMenu />
@@ -307,7 +309,7 @@ export default function Header() {
             >
               {active.groups.map((g) => (
                 <div key={g.title}>
-                  <p className="px-3 text-[13px] font-semibold text-mist-600">
+                  <p className="px-3 text-caption font-semibold text-mist-600">
                     {g.href ? (
                       <Link href={g.href} className="hover:text-ocean-700">
                         {g.title}
@@ -326,25 +328,25 @@ export default function Header() {
                 </div>
               ))}
             </div>
-            <aside className="col-span-3 flex flex-col justify-between bg-navy-900 p-6 text-mist-50">
+            <aside className="on-dark col-span-3 flex flex-col justify-between bg-navy-900 p-6 text-mist-50">
               <div>
-                <p className="text-[18px] font-semibold leading-snug">{active.feature.title}</p>
-                <p className="mt-2 text-[14px] leading-relaxed text-tide-300">{active.feature.body}</p>
+                <p className="text-body font-semibold leading-snug">{active.feature.title}</p>
+                <p className="mt-2 text-small leading-normal text-tide-300">{active.feature.body}</p>
               </div>
               <div className="mt-6 grid gap-3">
                 <Link
                   href={active.feature.cta.href}
-                  className="flex min-h-11 items-center justify-center bg-cyan-500 px-4 text-[15px] font-medium text-navy-950 btn-fill btn-fill-cyan"
+                  className="flex min-h-11 items-center justify-center bg-cyan-500 px-4 text-small font-medium text-navy-950 btn-fill btn-fill-cyan"
                 >
                   {active.feature.cta.label}
                 </Link>
                 {active.feature.secondary &&
                   (active.feature.secondary.href.startsWith("tel:") ? (
-                    <a href={active.feature.secondary.href} className="text-center text-[15px] text-white underline underline-offset-4">
+                    <a href={active.feature.secondary.href} className="text-center text-small text-white underline underline-offset-4">
                       {active.feature.secondary.label}
                     </a>
                   ) : (
-                    <Link href={active.feature.secondary.href} className="text-center text-[15px] text-white underline underline-offset-4">
+                    <Link href={active.feature.secondary.href} className="text-center text-small text-white underline underline-offset-4">
                       {active.feature.secondary.label}
                     </Link>
                   ))}
@@ -365,7 +367,7 @@ export default function Header() {
                     type="button"
                     aria-expanded={open}
                     onClick={() => setMobileSection(open ? null : m.id)}
-                    className="flex min-h-14 w-full items-center justify-between text-left text-[18px] font-medium"
+                    className="flex min-h-14 w-full items-center justify-between text-left text-body font-medium"
                   >
                     {m.label}
                     <Chevron open={open} />
@@ -381,11 +383,11 @@ export default function Header() {
                         return (
                           <div key={g.title}>
                             {g.href ? (
-                              <Link href={g.href} className="flex min-h-11 items-center px-3 text-[13px] font-semibold text-mist-600 hover:text-navy-900">
+                              <Link href={g.href} className="flex min-h-11 items-center px-3 text-caption font-semibold text-mist-600 hover:text-navy-900">
                                 {g.title}
                               </Link>
                             ) : (
-                              <p className="px-3 text-[13px] font-semibold text-mist-600">{g.title}</p>
+                              <p className="px-3 text-caption font-semibold text-mist-600">{g.title}</p>
                             )}
                             {/* Two columns on phones so long menus stay short */}
                             <ul className={`grid ${m.compact ? "grid-cols-2" : ""}`}>
@@ -411,9 +413,11 @@ export default function Header() {
                 <Link href="/jobs" className="flex min-h-12 items-center justify-center bg-navy-900 font-medium text-white btn-fill btn-fill-navy">
                   Find a job
                 </Link>
-                <Link href="/contact" className="flex min-h-12 items-center justify-center bg-ocean-600 font-medium text-white btn-fill btn-fill-ocean">
-                  Contact us
-                </Link>
+                {pathname !== "/contact" && (
+                  <Link href="/contact" className="flex min-h-12 items-center justify-center bg-ocean-600 font-medium text-white btn-fill btn-fill-ocean">
+                    Contact us
+                  </Link>
+                )}
               </>
             )}
             <a href={company.tel} className="flex min-h-12 items-center justify-center bg-mist-100 font-medium btn-fill btn-fill-mist">

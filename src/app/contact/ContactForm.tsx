@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useFormErrors } from "@/hooks/use-form-errors";
+import FieldError from "@/components/site/FieldError";
+import SubmitButton from "@/components/site/SubmitButton";
 import { check, collectErrors, email, maxLen, minLen, normalizeWebsite, phone, required, website } from "@/lib/form-validation";
 import { JOB_SEEKER_PREFIX } from "@/lib/contact";
 import { CONTACT_PATH_PARAM, type ContactPath } from "./paths";
@@ -55,20 +57,10 @@ const EMPTY = { firstName: "", lastName: "", email: "", phone: "", company: "", 
 type Field = keyof typeof EMPTY;
 
 const base =
-  "mt-2 w-full border-0 border-b-2 border-mist-300 bg-transparent px-0 text-navy-900 placeholder:text-mist-500 transition-colors focus:border-ocean-600 focus:outline-none aria-[invalid=true]:border-navy-900";
+  "mt-2 w-full border-0 border-b-2 border-[var(--color-border-control)] bg-transparent px-0 text-navy-900 placeholder:text-placeholder transition-colors focus:border-ocean-600 focus:outline-none aria-[invalid=true]:border-coral-700";
 const field = `${base} py-3 text-lead`;
 // Body size, so the open list of options stays a normal size too
-const selectField = `${base} py-2.5 text-[17px]`;
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <p id={`${id}-error`} className="mt-2 flex items-center gap-2 text-[15px] font-normal text-navy-900">
-      <span aria-hidden className="size-2 shrink-0 bg-buoy-500" />
-      {message}
-    </p>
-  );
-}
+const selectField = `${base} py-2.5 text-body`;
 
 export default function ContactForm({ initialPath = "hiring" }: { initialPath?: ContactPath }) {
   const [path, setPath] = useState<ContactPath>(initialPath);
@@ -195,7 +187,7 @@ export default function ContactForm({ initialPath = "hiring" }: { initialPath?: 
       {!sent && (
         <>
           <fieldset>
-            <legend className="display text-[clamp(2rem,3.4vw,3.25rem)]">Hiring, or looking for work?</legend>
+            <legend className="display text-head">Hiring, or looking for work?</legend>
             <div className="mt-8 flex flex-wrap gap-2">
               {(Object.keys(COPY) as ContactPath[]).map((p) => (
                 <label
@@ -210,7 +202,7 @@ export default function ContactForm({ initialPath = "hiring" }: { initialPath?: 
               ))}
             </div>
           </fieldset>
-          <p className="mt-6 max-w-[52ch]" aria-live="polite">
+          <p className="mt-6 max-w-measure-narrow" aria-live="polite">
             {copy.lead}
             {seeker && (
               <>
@@ -228,15 +220,15 @@ export default function ContactForm({ initialPath = "hiring" }: { initialPath?: 
 
       {sent ? (
         <div role="status">
-          <span aria-hidden className="grid size-12 place-items-center rounded-full bg-[#079455] text-white">
+          <span aria-hidden className="grid size-12 place-items-center rounded-full bg-kelp-700 text-white">
             <svg viewBox="0 0 20 20" className="size-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m4.5 10.5 3.5 3.5 7.5-8" />
             </svg>
           </span>
-          <h2 ref={doneRef} tabIndex={-1} className="display mt-6 text-[clamp(1.75rem,2.6vw,2.5rem)] outline-none">
+          <h2 ref={doneRef} tabIndex={-1} className="display mt-6 text-head-md outline-none">
             {COPY[sent].done.title}
           </h2>
-          <p className="mt-4 max-w-[52ch]">{COPY[sent].done.body}</p>
+          <p className="mt-4 max-w-measure-narrow">{COPY[sent].done.body}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             {sent === "work" && (
               <Link href="/jobs" className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean">
@@ -285,20 +277,16 @@ export default function ContactForm({ initialPath = "hiring" }: { initialPath?: 
           </div>
 
           {error && (
-            <p role="alert" className="mt-8 bg-buoy-300/30 px-4 py-3 text-[15px] text-navy-900">
+            <p role="alert" className="mt-8 bg-buoy-300/30 px-4 py-3 text-small text-navy-900">
               {error}
             </p>
           )}
 
           <div className="mt-12 flex flex-wrap items-center gap-6">
-            <button
-              type="submit"
-              disabled={busy}
-              className="inline-flex min-h-12 items-center bg-ocean-600 px-7 font-medium text-white btn-fill btn-fill-ocean active:translate-y-px disabled:opacity-60"
-            >
-              {busy ? "Sending…" : "Send message"}
-            </button>
-            <p className="max-w-[44ch] text-[15px] text-mist-600">
+            <SubmitButton busy={busy} busyLabel="Sending…">
+              Send message
+            </SubmitButton>
+            <p className="max-w-measure-narrow text-small text-mist-600">
               {copy.next} We use your details only to reply. See our{" "}
               <Link href="/privacy" className="font-medium text-ocean-700 underline underline-offset-4">
                 privacy policy

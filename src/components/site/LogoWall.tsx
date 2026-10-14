@@ -36,7 +36,7 @@ export function MarkTile({ mark, tall = false }: { mark: Mark; tall?: boolean })
         <img src={mark.src} alt={mark.name} className={`${mark.h} w-auto max-w-[80%] object-contain ${mark.tint ? "brightness-0" : ""}`} loading="lazy" />
       ) : (
         // No logo file supplied yet: the name is set in type until one is added
-        <span className="text-center text-[1.25rem] font-medium leading-tight tracking-tight text-navy-900">{mark.name}</span>
+        <span className="text-center text-title font-medium leading-tight tracking-tight text-navy-900">{mark.name}</span>
       )}
     </li>
   );

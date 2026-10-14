@@ -29,7 +29,7 @@ export default function OfficeClocks() {
         return (
           <li key={o.place} className="bg-navy-800 p-6 md:p-8" data-reveal style={{ "--d": i } as React.CSSProperties}>
             <p className="font-medium">{o.place}</p>
-            <p className="display mt-10 text-[length:var(--text-head)] tabular-nums" suppressHydrationWarning>
+            <p className="display mt-10 text-head tabular-nums" suppressHydrationWarning>
               {now ? timeIn(o.tz, now) : " "}
             </p>
             <p className="mt-3 flex items-center gap-2 text-tide-300">

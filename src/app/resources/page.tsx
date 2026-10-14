@@ -47,8 +47,8 @@ export default async function ResourcesPage() {
         <section key={c} className={idx % 2 ? "bg-field-mist" : "bg-field-paper"}>
           <div className={`gutter grid gap-10 lg:grid-cols-12 ${idx === 0 ? "pb-20 md:pb-24" : "py-20 md:py-24"}`}>
             <div className="side" data-reveal>
-              <h2 className="display text-[clamp(2rem,3.4vw,3.25rem)]">{categories[c].name}</h2>
-              <p className="mt-3 max-w-[30ch] text-mist-600">{categories[c].intro}</p>
+              <h2 className="display text-head">{categories[c].name}</h2>
+              <p className="mt-3 max-w-measure-narrow text-mist-600">{categories[c].intro}</p>
               <Link href={`/resources/${c}`} className="mt-5 inline-block font-medium text-ocean-700 underline underline-offset-4">
                 All {categories[c].name.toLowerCase()}
               </Link>
@@ -60,13 +60,13 @@ export default async function ResourcesPage() {
         </section>
       ))}
 
-      <section aria-labelledby="media-kit-title" className="bg-navy-900 text-mist-50">
+      <section aria-labelledby="media-kit-title" className="on-dark bg-navy-900 text-mist-50">
         <div className="gutter grid items-center gap-8 py-16 md:py-20 lg:grid-cols-12">
           <div className="lg:col-span-7" data-reveal>
-            <h2 id="media-kit-title" className="display text-[clamp(2rem,3.4vw,3rem)]">
+            <h2 id="media-kit-title" className="display text-head">
               Media kit
             </h2>
-            <p className="mt-3 max-w-[52ch] text-tide-300">
+            <p className="mt-3 max-w-measure-narrow text-tide-300">
               Logos, approved company descriptions, a fact sheet and brand colours for press, partners and procurement teams.
             </p>
           </div>

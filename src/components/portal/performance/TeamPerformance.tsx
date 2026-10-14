@@ -146,7 +146,7 @@ export default function TeamPerformance({ period }: { period: Period }) {
       cell: (r) => (
         <span className="flex items-center gap-3">
           <Avatar name={r.name} size="sm" />
-          <span className={`truncate ${r.name === "Unassigned" ? "italic text-mist-500" : "font-medium"}`}>{r.name}</span>
+          <span className={`truncate ${r.name === "Unassigned" ? "italic text-mist-600" : "font-medium"}`}>{r.name}</span>
         </span>
       ),
     },
@@ -166,11 +166,11 @@ export default function TeamPerformance({ period }: { period: Period }) {
       <div className="flex items-center gap-4">
         <Avatar name={r.name} size="lg" />
         <div>
-          <p className="text-[17px] font-semibold text-navy-900">{r.name}</p>
-          <p className="text-[14px] text-mist-600">{r.active} active candidates, {p.label.toLowerCase()}</p>
+          <p className="text-adm-md font-semibold text-navy-900">{r.name}</p>
+          <p className="text-adm-base text-mist-600">{r.active} active candidates, {p.label.toLowerCase()}</p>
         </div>
       </div>
-      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-mist-50 p-4 text-[13px]">
+      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-mist-50 p-4 text-adm-base">
         {[
           { k: "Submit to interview", v: pct(r.submitToInterview) },
           { k: "Interview to hire", v: pct(r.interviewToHire) },
@@ -178,13 +178,13 @@ export default function TeamPerformance({ period }: { period: Period }) {
           { k: "Offers", v: r.offers },
         ].map((x) => (
           <div key={x.k}>
-            <dt className="text-mist-500">{x.k}</dt>
+            <dt className="text-mist-600">{x.k}</dt>
             <dd className="font-semibold tabular-nums text-navy-900">{x.v}</dd>
           </div>
         ))}
       </dl>
       <section>
-        <h3 className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-navy-900">
+        <h3 className="mb-3 flex items-center gap-2 text-adm-base font-semibold text-navy-900">
           <Icon name="funnel" className="size-4 text-ocean-700" />
           Pipeline
         </h3>
@@ -199,7 +199,7 @@ export default function TeamPerformance({ period }: { period: Period }) {
         />
       </section>
       <section>
-        <h3 className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-navy-900">
+        <h3 className="mb-3 flex items-center gap-2 text-adm-base font-semibold text-navy-900">
           <Icon name="userCheck" className="size-4 text-ocean-700" />
           Placements
         </h3>
@@ -212,10 +212,10 @@ export default function TeamPerformance({ period }: { period: Period }) {
                 <Link href={`/portal/candidates/${x.id}`} className="flex items-center gap-3 rounded-lg bg-mist-50 p-3 hover:bg-mist-100">
                   <Avatar name={x.name} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium">{x.name}</span>
-                    <span className="block truncate text-[12px] text-mist-600">{x.job || "No position"}</span>
+                    <span className="block truncate text-adm-base font-medium">{x.name}</span>
+                    <span className="block truncate text-adm-xs text-mist-600">{x.job || "No position"}</span>
                   </span>
-                  <span className="text-[12px] tabular-nums text-mist-500">{fmtDate(x.at)}</span>
+                  <span className="text-adm-xs tabular-nums text-mist-600">{fmtDate(x.at)}</span>
                 </Link>
               </li>
             ))}
@@ -266,12 +266,12 @@ export default function TeamPerformance({ period }: { period: Period }) {
                 return (
                   <li key={r.id}>
                     <button type="button" onClick={() => setOpen(r)} className="group flex min-h-10 w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors duration-150 hover:bg-mist-50">
-                      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-[12px] font-semibold ${i === 0 && r.placements ? "bg-[#fef0c7] text-[#93370d]" : "bg-mist-100 text-mist-600"}`}>{i + 1}</span>
+                      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-adm-xs font-semibold ${i === 0 && r.placements ? "bg-status-warning-hover text-status-warning-strong" : "bg-mist-100 text-mist-600"}`}>{i + 1}</span>
                       <Avatar name={r.name} size="sm" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2">
-                          <span className="truncate text-[14px] font-medium text-navy-900 group-hover:text-ocean-700">{r.name}</span>
-                          <span className="text-[14px] font-semibold tabular-nums text-navy-900">{r.placements}</span>
+                          <span className="truncate text-adm-base font-medium text-navy-900 group-hover:text-ocean-700">{r.name}</span>
+                          <span className="text-adm-base font-semibold tabular-nums text-navy-900">{r.placements}</span>
                         </span>
                         <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-mist-100">
                           <span className="block h-full rounded-full bg-ocean-600" style={{ width: `${(r.placements / max) * 100}%` }} />
@@ -287,7 +287,7 @@ export default function TeamPerformance({ period }: { period: Period }) {
       </div>
 
       <section aria-labelledby="scorecards-title" className="grid min-w-0 gap-3">
-        <h2 id="scorecards-title" className="text-[17px] font-semibold text-navy-900">Scorecards</h2>
+        <h2 id="scorecards-title" className="text-adm-md font-semibold text-navy-900">Scorecards</h2>
         <DataTable
           rows={rows}
           columns={columns}

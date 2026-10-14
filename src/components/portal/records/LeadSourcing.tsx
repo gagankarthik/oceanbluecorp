@@ -48,13 +48,13 @@ function Skills({ matched, missing }: { matched: string[]; missing: string[] }) 
   return (
     <div className="flex flex-wrap gap-1.5">
       {m.map((s) => (
-        <span key={`m-${s}`} className="inline-flex items-center gap-1 rounded-md bg-[#ecfdf3] px-2 py-0.5 text-[12px] font-medium text-[#067647]">
+        <span key={`m-${s}`} className="inline-flex items-center gap-1 rounded-md bg-status-success-soft px-2 py-0.5 text-adm-xs font-medium text-status-success">
           <Icon name="check" className="size-3" />
           {s}
         </span>
       ))}
       {x.map((s) => (
-        <span key={`x-${s}`} className="inline-flex items-center gap-1 rounded-md bg-mist-100 px-2 py-0.5 text-[12px] font-medium text-mist-700">
+        <span key={`x-${s}`} className="inline-flex items-center gap-1 rounded-md bg-mist-100 px-2 py-0.5 text-adm-xs font-medium text-mist-700">
           <Icon name="x" className="size-3" />
           {s}
         </span>
@@ -173,7 +173,7 @@ export function LeadSourcing() {
               <Button type="submit" icon="search" loading={loading} disabled={!canRun}>
                 Find candidates
               </Button>
-              <p className="text-[12px] text-mist-600 sm:col-span-2">The ranking is saved on the job and also shows in its AI matches tab.</p>
+              <p className="text-adm-xs text-mist-600 sm:col-span-2">The ranking is saved on the job and also shows in its AI matches tab.</p>
             </div>
           ) : (
             <>
@@ -236,20 +236,20 @@ export function LeadSourcing() {
                     onClick={() => setExpanded((m) => ({ ...m, [c.resume_id]: !m[c.resume_id] }))}
                     className="flex min-h-16 w-full items-center gap-3 px-5 py-3 text-left hover:bg-mist-50 sm:gap-4"
                   >
-                    <span className="w-5 shrink-0 text-right text-[12px] font-medium tabular-nums text-mist-500">{i + 1}</span>
+                    <span className="w-5 shrink-0 text-right text-adm-xs font-medium tabular-nums text-mist-600">{i + 1}</span>
                     <span className="min-w-0 flex-1">
                       <span className="flex min-w-0 flex-wrap items-center gap-2">
-                        <span className="truncate text-[15px] font-semibold text-navy-900">{c.candidate_name || "Unnamed candidate"}</span>
+                        <span className="truncate text-adm-base font-semibold text-navy-900">{c.candidate_name || "Unnamed candidate"}</span>
                         {c.origin && <Badge tone={c.origin === "bench" ? "blue" : "grey"}>{ORIGIN[c.origin]}</Badge>}
                       </span>
-                      <span className="mt-0.5 block truncate text-[12px] text-mist-600">{[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}</span>
+                      <span className="mt-0.5 block truncate text-adm-xs text-mist-600">{[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}</span>
                     </span>
                     <span className="hidden sm:block">
                       <Badge tone={v.tone}>{v.label}</Badge>
                     </span>
                     <span className="shrink-0 text-right tabular-nums">
-                      <span className={`text-[20px] font-semibold leading-none ${c.fit_score >= 60 ? "text-[#067647]" : "text-[#b42318]"}`}>{c.fit_score}</span>
-                      <span className="text-[12px] text-mist-500">/100</span>
+                      <span className={`text-adm-lg font-semibold leading-none ${c.fit_score >= 60 ? "text-status-success" : "text-status-danger"}`}>{c.fit_score}</span>
+                      <span className="text-adm-xs text-mist-600">/100</span>
                     </span>
                     <Icon name="chevronDown" className={`size-4 shrink-0 text-mist-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
                   </button>
@@ -260,8 +260,8 @@ export function LeadSourcing() {
                       </span>
                       {c.rationale && (
                         <div>
-                          <p className="text-[12px] font-semibold text-mist-500">Why {c.qualified ? "they fit" : "they may not fit"}</p>
-                          <p className="mt-1 max-w-[72ch] text-[14px] leading-relaxed text-mist-700">{c.rationale}</p>
+                          <p className="text-adm-xs font-semibold text-mist-600">Why {c.qualified ? "they fit" : "they may not fit"}</p>
+                          <p className="mt-1 max-w-[72ch] text-adm-base leading-normal text-mist-700">{c.rationale}</p>
                         </div>
                       )}
                       <Skills matched={c.matched_skills} missing={c.missing_skills} />
@@ -286,7 +286,7 @@ export function LeadSourcing() {
         </Panel>
       ) : null}
       {!ran && !loading && (
-        <p className="text-center text-[13px] text-mist-600">
+        <p className="text-center text-adm-base text-mist-600">
           Results are ranked from indexed resumes. Manage files in the{" "}
           <Link href="/portal/resumes" className="font-medium text-ocean-700 underline-offset-4 hover:underline">
             resume bank

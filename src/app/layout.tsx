@@ -11,7 +11,7 @@ import { jsonLdString } from "@/lib/seo";
 // minute; content saves call revalidatePath("/", "layout") to push edits live.
 export const revalidate = 60;
 
-// General Sans (Fontshare, linked in <head>) for the site; Geist for the console.
+// General Sans (Fontshare, linked in <head>) for the site and the console; Geist Mono for code.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

@@ -54,10 +54,10 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
       <section id="locations" aria-labelledby="locations-title" className="scroll-mt-24 bg-field-mist">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="locations-title" className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-6" data-reveal>
+            <h2 id="locations-title" className="display text-head lg:col-span-6" data-reveal>
               Four offices, three countries, one team
             </h2>
-            <p className="max-w-[46ch] lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
+            <p className="max-w-measure-narrow lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
               Powell, Hyderabad, Vizianagaram and London. Enough overlap to hand work across the day, and someone awake when your systems
               are not.
             </p>
@@ -65,10 +65,10 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
           <ul className="mt-14 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {officeAddresses.map((o, i) => (
               <li key={o.city} className="flex flex-col bg-mist-0 p-6" data-reveal style={{ "--d": i } as React.CSSProperties}>
-                <p className="text-[14px] font-semibold text-ocean-700">{o.hq ? "Headquarters" : o.country}</p>
-                <h3 className="mt-1 text-[22px] font-semibold text-navy-900">{o.city}</h3>
+                <p className="text-small font-semibold text-ocean-700">{o.hq ? "Headquarters" : o.country}</p>
+                <h3 className="mt-1 text-title font-semibold text-navy-900">{o.city}</h3>
                 {o.hq && <p className="text-mist-600">{o.country}</p>}
-                <address className="mt-4 flex-1 not-italic leading-relaxed">
+                <address className="mt-4 flex-1 not-italic leading-normal">
                   {o.address[0]}
                   <br />
                   {o.address[1]}
@@ -86,13 +86,13 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(o.address.join(", "))}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-10 items-center bg-ocean-600 px-4 text-[15px] font-medium text-white btn-fill btn-fill-ocean"
+                    className="inline-flex min-h-10 items-center px-4 text-small font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
                   >
                     Get directions
                   </a>
                   <a
                     href={`mailto:${company.email}?subject=${encodeURIComponent(`Enquiry for our ${o.city} team`)}`}
-                    className="inline-flex min-h-10 items-center bg-mist-100 px-4 text-[15px] font-medium text-navy-900 btn-fill btn-fill-mist"
+                    className="inline-flex min-h-10 items-center bg-mist-100 px-4 text-small font-medium text-navy-900 btn-fill btn-fill-mist"
                   >
                     Email this team
                   </a>
@@ -109,7 +109,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
                 loading="lazy"
               />
             </div>
-            <figcaption className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[15px]">
+            <figcaption className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-small">
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${company.address[0]}, ${company.address[1]}`)}`}
                 className="font-medium text-ocean-700 underline underline-offset-4"

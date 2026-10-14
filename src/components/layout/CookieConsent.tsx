@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const BTN = "inline-flex min-h-11 items-center justify-center px-6 text-[15px] font-medium active:scale-[0.98]";
+const BTN = "inline-flex min-h-11 items-center justify-center px-6 text-small font-medium active:scale-[0.98]";
 const PRIMARY = `${BTN} bg-ocean-600 text-white btn-fill btn-fill-ocean`;
 const SECONDARY = `${BTN} text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline`;
 const GHOST = `${BTN} transition-colors text-ocean-700 underline-offset-4 hover:underline`;
@@ -146,8 +146,8 @@ export default function CookieConsent() {
         {!manage ? (
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
             <div className="min-w-0 flex-1">
-              <h2 id="cookie-title" className="text-[19px] font-semibold">Your privacy</h2>
-              <p id="cookie-desc" className="mt-1 max-w-[80ch] text-[15px] leading-relaxed text-mist-600">
+              <h2 id="cookie-title" className="text-title font-semibold">Your privacy</h2>
+              <p id="cookie-desc" className="mt-1 max-w-measure text-small leading-normal text-mist-600">
                 We use essential cookies to run this site, and no tracking or advertising. With your permission we also remember choices you make, such as a closed announcement. See our{" "}
                 <Link href="/cookies" className="text-ocean-700 underline underline-offset-4">
                   Cookie policy
@@ -179,7 +179,7 @@ export default function CookieConsent() {
                 >
                   <Glyph d="M16 10H4M8 6l-4 4 4 4" />
                 </button>
-                <h2 id="cookie-title" className="text-[19px] font-semibold">Cookie choices</h2>
+                <h2 id="cookie-title" className="text-title font-semibold">Cookie choices</h2>
               </div>
               <button
                 type="button"
@@ -190,7 +190,7 @@ export default function CookieConsent() {
                 <Glyph d="M5 5l10 10M15 5 5 15" />
               </button>
             </div>
-            <p id="cookie-desc" className="mt-1 text-[15px] text-mist-600">
+            <p id="cookie-desc" className="mt-1 text-small text-mist-600">
               Choose what we may remember. You can change this any time from the footer.
             </p>
             <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
@@ -201,15 +201,15 @@ export default function CookieConsent() {
                   return (
                     <li key={c.key} className="flex items-start justify-between gap-4 bg-mist-100 p-4">
                       <span className="min-w-0">
-                        <span className="flex items-center gap-2 text-[15px] font-semibold">
+                        <span className="flex items-center gap-2 text-small font-semibold">
                           {c.name}
                           {locked && (
-                            <span className="inline-flex items-center gap-1 bg-tide-200 px-2 py-0.5 text-[13px] font-medium text-navy-900">
+                            <span className="inline-flex items-center gap-1 bg-tide-200 px-2 py-0.5 text-caption font-medium text-navy-900">
                               <Glyph d="m4.5 10.5 3.5 3.5 7.5-8" className="size-3" /> Always on
                             </span>
                           )}
                         </span>
-                        <span className="mt-1 block text-[14px] text-mist-600">{c.desc}</span>
+                        <span className="mt-1 block text-small text-mist-600">{c.desc}</span>
                       </span>
                       <Switch
                         on={on}

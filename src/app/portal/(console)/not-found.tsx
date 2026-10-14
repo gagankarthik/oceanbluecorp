@@ -25,7 +25,7 @@ export default function AdminNotFound() {
         <h1 className="mt-3 text-adm-xl font-semibold tracking-[-0.02em] text-[var(--adm-ink)]">
           This page doesn&rsquo;t exist
         </h1>
-        <p className="mt-2 max-w-[46ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
+        <p className="mt-2 max-w-[46ch] text-adm-base leading-normal text-[var(--adm-ink-mute)]">
           The link may be out of date, or the record it pointed to was removed.
           Go back, or use the sidebar to find what you need.
         </p>

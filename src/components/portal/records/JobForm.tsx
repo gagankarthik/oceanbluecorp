@@ -221,7 +221,7 @@ interface JobFormProps {
 
 type OptionalStep = "pay" | "client" | "team";
 
-const SUMMARY_K = "w-20 shrink-0 text-mist-500";
+const SUMMARY_K = "w-20 shrink-0 text-mist-600";
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -456,7 +456,7 @@ export function JobForm({
         back={{ href: mode === "edit" && job ? `/portal/jobs/${job.id}${data.category === "open" ? "?category=open" : ""}` : JOB_LIST_HREF[data.category], label: mode === "edit" ? "Job" : listLabel }}
         title={`${mode === "create" ? "New" : "Edit"} ${data.category === "open" ? "open" : "state"} role`}
         description={mode === "create" ? "Three required steps; add the rest when you have them." : job?.title || undefined}
-        meta={mode === "edit" && job?.postingId ? <span className="rounded-md bg-mist-100 px-2 py-0.5 font-mono text-[12px] text-mist-700">{job.postingId}</span> : undefined}
+        meta={mode === "edit" && job?.postingId ? <span className="rounded-md bg-mist-100 px-2 py-0.5 font-mono text-adm-xs text-mist-700">{job.postingId}</span> : undefined}
         actions={
           <Button variant="secondary" icon="eye" onClick={() => setShowPreview(true)}>
             Preview
@@ -468,7 +468,7 @@ export function JobForm({
         <form id={formId} noValidate onSubmit={handleFormSubmit} onBlur={revalidate} className="grid min-w-0 gap-6">
           <FormBanner message={serverError} onDismiss={onDismissError} />
           {notice && (
-            <p className="flex items-start gap-2.5 rounded-xl bg-ocean-50 px-4 py-3 text-[14px] text-navy-900 ring-1 ring-inset ring-ocean-200">
+            <p className="flex items-start gap-2.5 rounded-xl bg-ocean-50 px-4 py-3 text-adm-base text-navy-900 ring-1 ring-inset ring-ocean-200">
               <Icon name="copy" className="mt-0.5 size-4 shrink-0 text-ocean-700" />
               <span className="min-w-0">{notice}</span>
             </p>
@@ -476,7 +476,7 @@ export function JobForm({
 
           <StepCard id="step-role" step={1} title="Role" description="What the job is called and how it is worked." state={stepState("step-role")} required>
             <div className="grid gap-5">
-              <p className="flex flex-wrap items-center gap-2 text-[13px] text-mist-600">
+              <p className="flex flex-wrap items-center gap-2 text-adm-base text-mist-600">
                 Listed under <Badge tone="blue">{listLabel}</Badge>
                 <button type="button" onClick={() => setChangingCategory((v) => !v)} aria-expanded={changingCategory} className="font-medium text-ocean-700 underline-offset-4 hover:underline">
                   {changingCategory ? "Done" : "Change"}
@@ -562,7 +562,7 @@ export function JobForm({
                   labelledBy="job-description-label"
                   required
                   invalid={!!errors.description}
-                  className={errors.description ? "border-[#f04438]" : undefined}
+                  className={errors.description ? "border-status-danger-mark" : undefined}
                   value={data.description}
                   onChange={(html) => set("description", html)}
                   placeholder="Describe the role, the team, and what makes it worth applying for…"
@@ -750,14 +750,14 @@ export function JobForm({
           )}
 
           {mode === "edit" && job && (
-            <dl className="flex flex-wrap gap-x-6 gap-y-1.5 rounded-xl bg-mist-50 px-5 py-3 text-[13px] ring-1 ring-inset ring-mist-200">
+            <dl className="flex flex-wrap gap-x-6 gap-y-1.5 rounded-xl bg-mist-50 px-5 py-3 text-adm-base ring-1 ring-inset ring-mist-200">
               {[
                 ["Created", fmtDate(job.createdAt)],
                 ["Updated", fmtDate(job.updatedAt)],
                 ["Posted by", job.postedByName || "–"],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-1.5">
-                  <dt className="text-mist-500">{k}</dt>
+                  <dt className="text-mist-600">{k}</dt>
                   <dd className="tabular-nums text-navy-900">{v}</dd>
                 </div>
               ))}
@@ -766,12 +766,12 @@ export function JobForm({
 
           {/* Narrow screens: steps, status and the save actions stay in reach. */}
           <div className="sticky bottom-0 z-20 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
-            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-mist-0/95 px-3 py-3 shadow-[0_-4px_24px_rgba(16,24,40,0.08)] ring-1 ring-mist-200 backdrop-blur">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-mist-0 px-3 py-3 ring-1 ring-mist-200">
               <Button variant="ghost" icon="layers" onClick={() => setShowSteps(true)} className="shrink-0">
                 Steps
               </Button>
-              <p className="min-w-0 flex-1 truncate text-[13px] text-mist-600">
-                {requiredLeft > 0 ? `${requiredLeft} required step${requiredLeft === 1 ? "" : "s"} left` : <span className="font-medium text-[#067647]">Ready to save</span>}
+              <p className="min-w-0 flex-1 truncate text-adm-base text-mist-600">
+                {requiredLeft > 0 ? `${requiredLeft} required step${requiredLeft === 1 ? "" : "s"} left` : <span className="font-medium text-status-success">Ready to save</span>}
                 {mode === "edit" && <span className="block truncate">Status: {statusCopy.label}</span>}
               </p>
               <div className="flex w-full gap-2 sm:w-auto [&>*]:flex-1">{saveButtons(false)}</div>
@@ -786,11 +786,11 @@ export function JobForm({
           onJump={jump}
           className="sticky top-[5.5rem] hidden max-h-[calc(100svh-7rem)] lg:flex"
           summary={
-            <dl className="grid gap-2 text-[13px]">
+            <dl className="grid gap-2 text-adm-base">
               {summary.map((row) => (
                 <div key={row.k} className="flex gap-3">
                   <dt className={SUMMARY_K}>{row.k}</dt>
-                  <dd className={`min-w-0 flex-1 truncate ${row.v ? "text-navy-900" : "text-mist-400"}`} title={row.v || undefined}>
+                  <dd className={`min-w-0 flex-1 truncate ${row.v ? "text-navy-900" : "text-mist-600"}`} title={row.v || undefined}>
                     {row.v || "Not set"}
                   </dd>
                 </div>
@@ -801,7 +801,7 @@ export function JobForm({
             <div className="grid gap-3">
               {mode === "edit" && statusSelect("rail")}
               {saveButtons(true)}
-              <p className="text-center text-[12px] text-mist-600">
+              <p className="text-center text-adm-xs text-mist-600">
                 {requiredLeft > 0
                   ? `${requiredLeft} required step${requiredLeft === 1 ? "" : "s"} left`
                   : mode === "create"
@@ -853,7 +853,7 @@ export function JobForm({
 // ── Preview ────────────────────────────────────────────────────────────────────
 
 const PREVIEW_PROSE =
-  "text-[14px] leading-relaxed text-mist-700 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+p]:mt-3 [&_strong]:font-semibold [&_strong]:text-navy-900 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5";
+  "text-adm-base leading-normal text-mist-700 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+p]:mt-3 [&_strong]:font-semibold [&_strong]:text-navy-900 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5";
 
 function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLabel: string; onClose: () => void }) {
   const sections = [
@@ -866,25 +866,25 @@ function PreviewModal({ data, typeLabel, onClose }: { data: JobFormData; typeLab
     <Modal title="Public preview" description="How this posting reads on the careers site" size="xl" onClose={onClose}>
       <div className="grid gap-4">
         <div className="rounded-xl p-5 ring-1 ring-mist-200">
-          <h3 className="text-[22px] font-semibold leading-tight text-navy-900">{data.title || "Untitled role"}</h3>
-          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-mist-600">
+          <h3 className="text-adm-lg font-semibold leading-tight text-navy-900">{data.title || "Untitled role"}</h3>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-adm-base text-mist-600">
             <span>{typeLabel}</span>
             <span>{jobLocationLabel(data) || stateName || "Location not set"}</span>
             {data.submissionDueDate && <span className="tabular-nums">Apply by {fmtDate(data.submissionDueDate)}</span>}
           </p>
           {data.salaryMin && data.salaryMax && (
-            <p className="mt-3 text-[16px] font-semibold tabular-nums text-navy-900">
+            <p className="mt-3 text-adm-md font-semibold tabular-nums text-navy-900">
               ${toNumber(data.salaryMin).toLocaleString()} – ${toNumber(data.salaryMax).toLocaleString()}
-              <span className="ml-1 text-[13px] font-medium text-mist-600">{SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}</span>
+              <span className="ml-1 text-adm-base font-medium text-mist-600">{SALARY_PERIODS.find((p) => p.value === data.salaryPeriod)?.short}</span>
             </p>
           )}
         </div>
         {sections.length === 0 ? (
-          <p className="rounded-xl bg-mist-50 px-5 py-8 text-center text-[14px] text-mist-600">Write a description to see it here.</p>
+          <p className="rounded-xl bg-mist-50 px-5 py-8 text-center text-adm-base text-mist-600">Write a description to see it here.</p>
         ) : (
           sections.map((s) => (
             <section key={s.title} className="rounded-xl p-5 ring-1 ring-mist-200">
-              <h4 className="mb-2 text-[16px] font-semibold text-navy-900">{s.title}</h4>
+              <h4 className="mb-2 text-adm-md font-semibold text-navy-900">{s.title}</h4>
               <div className={PREVIEW_PROSE} dangerouslySetInnerHTML={renderRichText(s.html)} />
             </section>
           ))

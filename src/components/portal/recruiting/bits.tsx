@@ -5,7 +5,7 @@ import { useToast } from "../toast";
 import Icon from "../icons";
 import { Avatar, Badge } from "../ui";
 import type { MenuEntry } from "../records/Menu";
-import { KpiRow as KitKpiRow } from "../kit/layout";
+
 import { Modal as KitModal } from "../kit/overlay";
 import { ErrorState as KitErrorState } from "../kit/states";
 import { ListPageSkeleton } from "../kit/skeletons";
@@ -34,7 +34,7 @@ export function Toast({ message, onDone }: { message: string; onDone: () => void
 }
 
 export const fieldCls =
-  "mt-1.5 block h-10 w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600";
+  "mt-1.5 block h-10 w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600";
 
 export function Timeline({ items }: { items: { date: string; text: string }[] }) {
   return (
@@ -43,8 +43,8 @@ export function Timeline({ items }: { items: { date: string; text: string }[] })
       {items.map((t, i) => (
         <li key={i} className="relative">
           <span aria-hidden className="absolute -left-5 top-1.5 size-2.5 rounded-full bg-ocean-600 ring-4 ring-ocean-50" />
-          <p className="text-[14px] text-navy-900">{t.text}</p>
-          <p className="text-[12px] text-mist-500">{t.date}</p>
+          <p className="text-adm-base text-navy-900">{t.text}</p>
+          <p className="text-adm-xs text-mist-600">{t.date}</p>
         </li>
       ))}
     </ol>
@@ -55,7 +55,7 @@ export function Tags({ items }: { items: string[] }) {
   return (
     <span className="flex flex-wrap gap-1">
       {items.map((s) => (
-        <span key={s} className="rounded-md bg-mist-100 px-2 py-0.5 text-[12px] font-medium text-navy-900">
+        <span key={s} className="rounded-md bg-mist-100 px-2 py-0.5 text-adm-xs font-medium text-navy-900">
           {s}
         </span>
       ))}
@@ -77,7 +77,7 @@ export function ChipFilter({
 }) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap items-center gap-1.5">
-      <span className="mr-1 text-[12px] font-medium text-mist-600">{label}</span>
+      <span className="mr-1 text-adm-xs font-medium text-mist-600">{label}</span>
       {options.map((o) => {
         const on = value === o.value;
         return (
@@ -86,13 +86,13 @@ export function ChipFilter({
             type="button"
             aria-pressed={on}
             onClick={() => onChange(on ? null : o.value)}
-            className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium ring-1 ring-inset transition-colors ${
+            className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-adm-base font-medium ring-1 ring-inset transition-colors ${
               on ? "bg-navy-900 text-white ring-navy-900" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
             }`}
           >
             {o.color && <span aria-hidden className="size-2 rounded-full" style={{ background: o.color }} />}
             {o.label ?? o.value}
-            {o.count !== undefined && <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-500"}`}>{o.count}</span>}
+            {o.count !== undefined && <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-600"}`}>{o.count}</span>}
           </button>
         );
       })}
@@ -115,26 +115,8 @@ export function KpiButton({ active, onClick, label, children }: { active: boolea
   );
 }
 
-/** Shows the filter applied from a chart or KPI, with a way to clear it */
-export function FocusChip({ text, onClear }: { text: string | null; onClear: () => void }) {
-  if (!text) return null;
-  return (
-    <div className="flex items-center gap-2 text-[13px]">
-      <span className="text-mist-600">Showing</span>
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 px-3 py-1 font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200">
-        {text}
-        <button type="button" onClick={onClear} aria-label={`Clear ${text}`} className="grid size-4 place-items-center rounded-full hover:bg-ocean-100">
-          <Icon name="x" className="size-3" />
-        </button>
-      </span>
-    </div>
-  );
-}
-
-/** Kit KpiRow; `cols` caps the columns. */
-export function KpiRow({ children, cols }: { children: React.ReactNode; cols?: 3 | 4 }) {
-  return <KitKpiRow cols={cols}>{children}</KitKpiRow>;
-}
+/** Kit KpiRow; kept for existing imports. */
+export { KpiRow } from "../kit/layout";
 
 /** Ordered stages as bars, with conversion from the previous stage shown inline */
 export function StageFunnel({
@@ -155,15 +137,15 @@ export function StageFunnel({
         const on = active === s.label;
         const inner = (
           <>
-            <span className="truncate text-left text-[14px] text-navy-900">{s.label}</span>
+            <span className="truncate text-left text-adm-base text-navy-900">{s.label}</span>
             <span className="relative h-7 overflow-hidden rounded-md bg-mist-100">
               <span
                 className={`absolute inset-y-0 left-0 rounded-md transition-[width] duration-200 ${on ? "bg-navy-900" : "bg-ocean-600"}`}
                 style={{ width: `${Math.max(4, (s.value / max) * 100)}%`, opacity: on || !active ? 1 : 0.45 }}
               />
             </span>
-            <span className="text-right text-[14px] font-semibold tabular-nums text-navy-900">{s.value}</span>
-            <span className="text-right text-[12px] tabular-nums text-mist-600">{conv === null ? "" : `${conv}%`}</span>
+            <span className="text-right text-adm-base font-semibold tabular-nums text-navy-900">{s.value}</span>
+            <span className="text-right text-adm-xs tabular-nums text-mist-600">{conv === null ? "" : `${conv}%`}</span>
           </>
         );
         const cls = "grid w-full grid-cols-[6.5rem_1fr_2.25rem_2.75rem] items-center gap-3 rounded-lg";
@@ -215,13 +197,13 @@ export function BreakdownList({
               onClick={() => onSelect(on ? null : r.key)}
               className={`flex min-h-11 w-full items-center gap-3 px-2 text-left transition-colors duration-150 ${on ? "bg-ocean-50" : "hover:bg-mist-50"}`}
             >
-              <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: r.color ?? "#0a72c0" }} />
+              <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: r.color ?? "var(--color-ocean-600)" }} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-medium text-navy-900">{r.label}</span>
-                {r.sub && <span className="block truncate text-[12px] text-mist-600">{r.sub}</span>}
+                <span className="block truncate text-adm-base font-medium text-navy-900">{r.label}</span>
+                {r.sub && <span className="block truncate text-adm-xs text-mist-600">{r.sub}</span>}
               </span>
-              <span className="text-right text-[14px] font-semibold tabular-nums text-navy-900">{r.value}</span>
-              <span className="w-10 text-right text-[12px] tabular-nums text-mist-600">{r.pct}%</span>
+              <span className="text-right text-adm-base font-semibold tabular-nums text-navy-900">{r.value}</span>
+              <span className="w-10 text-right text-adm-xs tabular-nums text-mist-600">{r.pct}%</span>
             </button>
           </li>
         );
@@ -265,7 +247,7 @@ export function InlineSelect({
         aria-label={label}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className={`h-8 w-full cursor-pointer appearance-none rounded-md bg-transparent pr-7 text-[13px] font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 focus:bg-mist-0 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50 ${dot ? "pl-6" : "pl-2.5"}`}
+        className={`h-8 w-full cursor-pointer appearance-none rounded-md bg-transparent pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 focus:bg-mist-0 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50 ${dot ? "pl-6" : "pl-2.5"}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -278,7 +260,7 @@ export function InlineSelect({
   );
 }
 
-export const stageDot = (s: string) => STAGE_DOT[s as Stage] ?? "#99a2af";
+export const stageDot = (s: string) => STAGE_DOT[s as Stage] ?? "var(--color-mist-400)";
 
 /** First-load placeholder: the kit list skeleton, without a header unless asked. */
 export function LoadingState({ label = "Loading", header = false, kpis = 4 }: { label?: string; header?: boolean; kpis?: number }) {
@@ -304,9 +286,9 @@ export function StarInput({ value, onChange, label }: { value: number; onChange:
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
           aria-pressed={n <= value}
           onClick={() => onChange(n === value ? 0 : n)}
-          className="grid size-6 place-items-center rounded text-mist-300 transition-colors hover:text-[#f79009]"
+          className="grid size-8 place-items-center rounded text-mist-300 transition-colors hover:text-status-warning-mark"
         >
-          <svg viewBox="0 0 24 24" className={`size-4 ${n <= value ? "text-[#f79009]" : ""}`} aria-hidden>
+          <svg viewBox="0 0 24 24" className={`size-4 ${n <= value ? "text-status-warning-mark" : ""}`} aria-hidden>
             <path fill="currentColor" d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8L3.5 9.7l5.9-.8z" />
           </svg>
         </button>
@@ -317,10 +299,10 @@ export function StarInput({ value, onChange, label }: { value: number; onChange:
 
 /** Read-only rating for dense rows: one star and the number, or a muted dash when unrated. */
 export function RatingValue({ value }: { value?: number }) {
-  if (!value) return <span className="text-mist-400" aria-label="Not rated">&mdash;</span>;
+  if (!value) return <span className="text-mist-600" aria-label="Not rated">&mdash;</span>;
   return (
     <span className="inline-flex items-center gap-1 tabular-nums text-navy-900" aria-label={`${value} of 5 stars`}>
-      <svg viewBox="0 0 24 24" className="size-3.5 text-[#f79009]" aria-hidden>
+      <svg viewBox="0 0 24 24" className="size-3.5 text-status-warning-mark" aria-hidden>
         <path fill="currentColor" d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8L3.5 9.7l5.9-.8z" />
       </svg>
       {value}
@@ -330,7 +312,7 @@ export function RatingValue({ value }: { value?: number }) {
 
 /** Overlapping initials, three at most then "+N"; red "Unassigned" when empty. */
 export function AvatarStack({ names, max = 3 }: { names: string[]; max?: number }) {
-  if (!names.length) return <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>;
+  if (!names.length) return <span className="text-adm-base font-medium text-status-danger">Unassigned</span>;
   const shown = names.slice(0, max);
   const extra = names.length - shown.length;
   return (
@@ -342,7 +324,7 @@ export function AvatarStack({ names, max = 3 }: { names: string[]; max?: number 
         </span>
       ))}
       {extra > 0 && (
-        <span aria-hidden className="-ml-2 grid size-7 place-items-center rounded-full bg-mist-200 text-[11px] font-semibold tabular-nums text-navy-900 ring-2 ring-white">
+        <span aria-hidden className="-ml-2 grid size-7 place-items-center rounded-full bg-mist-200 text-adm-xs font-semibold tabular-nums text-navy-900 ring-2 ring-white">
           +{extra}
         </span>
       )}
@@ -367,9 +349,9 @@ export function JobStatusSelect({
   return (
     <span
       onClick={(e) => e.stopPropagation()}
-      className={`relative inline-flex h-8 max-w-full items-center gap-1.5 rounded-md pl-2.5 pr-7 text-[13px] font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 has-[:focus-visible]:bg-mist-0 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ocean-600 ${disabled ? "opacity-50" : ""}`}
+      className={`relative inline-flex h-8 max-w-full items-center gap-1.5 rounded-md pl-2.5 pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 has-[:focus-visible]:bg-mist-0 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ocean-600 ${disabled ? "opacity-50" : ""}`}
     >
-      <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "#99a2af" }} />
+      <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "var(--color-mist-400)" }} />
       <span aria-hidden className="whitespace-nowrap">{jobStatusShort(value)}</span>
       <Icon name="chevronDown" className="pointer-events-none absolute right-2 size-3.5 text-mist-500" />
       <select

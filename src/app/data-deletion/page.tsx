@@ -31,8 +31,8 @@ export default function DataDeletionPage() {
     <article className="bg-field-paper">
       <header id="top" className="gutter pb-12 pt-14 md:pb-16 md:pt-20">
         <LegalNav current="/data-deletion" />
-        <h1 className="display mt-10 text-[clamp(2.5rem,5vw,4.5rem)]">Data deletion request</h1>
-        <p className="mt-8 max-w-[60ch] text-[clamp(1.0625rem,1.2vw,1.1875rem)] leading-relaxed">
+        <h1 className="display mt-10 text-head-xl">Data deletion request</h1>
+        <p className="mt-8 max-w-measure text-body leading-normal">
           You can ask us to delete the personal data we hold about you, such as your contact form submissions, job application, resume, and
           account details, at any time.
         </p>
@@ -40,11 +40,11 @@ export default function DataDeletionPage() {
 
       <div className="gutter grid gap-12 pb-24 md:pb-32 lg:grid-cols-12">
         {/* The ask first, then what happens after */}
-        <section aria-labelledby="ask-title" className="bg-navy-900 p-7 text-mist-50 sm:p-10 lg:col-span-7" data-reveal>
-          <h2 id="ask-title" className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+        <section aria-labelledby="ask-title" className="on-dark bg-navy-900 p-7 text-mist-50 sm:p-10 lg:col-span-7" data-reveal>
+          <h2 id="ask-title" className="display text-head-md">
             Email us to delete your data
           </h2>
-          <p className="mt-4 max-w-[56ch] text-tide-300">
+          <p className="mt-4 max-w-measure text-tide-300">
             Send a request to{" "}
             <a href={`mailto:${DELETE_EMAIL}`} className="font-medium text-white underline underline-offset-4">
               {DELETE_EMAIL}
@@ -63,13 +63,13 @@ export default function DataDeletionPage() {
         <ul className="grid content-start gap-2 lg:col-span-5">
           {facts.map((f, i) => (
             <li key={f.title} className="bg-mist-0 p-7" data-reveal style={{ "--d": i + 1 } as React.CSSProperties}>
-              <h2 className="text-[20px] font-semibold">{f.title}</h2>
-              <p className="mt-2 leading-relaxed text-mist-600">{f.body}</p>
+              <h2 className="text-title font-semibold">{f.title}</h2>
+              <p className="mt-2 leading-normal text-mist-600">{f.body}</p>
             </li>
           ))}
         </ul>
 
-        <div className="max-w-[68ch] lg:col-span-7">
+        <div className="max-w-measure lg:col-span-7">
           <RelatedLinks
             links={[
               { href: "/privacy", label: "Privacy Policy" },

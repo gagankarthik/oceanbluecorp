@@ -1,168 +1,227 @@
 # Oceanblue site design language
 
-The public website's design system (`/`, `/solutions`, `/careers`, resources,
-legal). The admin console has its own, in `DESIGN_SYSTEM.md`, which also holds
-the token rules both share (§2: tiers, naming, token-or-literal, how to add
-one). Tokens live in `src/app/globals.css` (`TOKENS`, `@theme`, and the SITE /
-TYPE ROLES blocks); components live in `src/components/site/`.
+The public website (`/`, `/services`, `/industries`, `/careers`, `/jobs`,
+resources, legal). The portal has its own system, in `DESIGN_SYSTEM.md`. Colour
+lives in `src/styles/colors.css`; type, motion and button utilities are in the
+"Website redesign v2" block at the end of `src/app/globals.css` plus the
+`.btn-fill` family; components are in `src/components/site/` and
+`src/components/visuals/`.
 
-Pages compose roles. They never pick a raw colour, pixel size, shadow or
-duration. If a page needs something the roles do not cover, add a role here
-first.
+Pages use palette classes from `colors.css` (`bg-ocean-600`, `text-mist-600`),
+never a hex. Literal hex stays only where CSS cannot reach: the OG/icon image
+generators, `manifest.ts`, the `themeColor` in `layout.tsx`, `global-error.tsx`
+(renders without the stylesheet), and the swatch values printed on the brand and
+media-kit pages.
+
+The old cobalt site's CSS is gone from `globals.css`: the `--color-*` semantic tier
+and its `--p-slate/gray/blue/…` primitives, the legacy Tailwind colour aliases
+(`ink-muted`, `paper`, `line`, `cobalt`, `brand`, `aqua`, `night`, `success`,
+`warning`, `danger` and containers), `--p-text-*`, `--type-*` and the `type-*`
+utilities, `--space-layout-*`, `--grid-max`, `--measure-prose`, the
+`--size-control-*` / `--button-*` / `--input-*` component tokens, the HORIZON block
+(`--hz-*`, `.horizon`, `.hz-*`), and the `.site`, `.rise`, `.word`, `.menu-in`,
+`.side-sheet`, `.marquee`, `.grid-beam`, `.geo-art`, `.reveal`, `.timeline-fill`,
+`.chamfer`, `.logo-in/out`, `demo-*`, `nf-*`, `mt-*`, `er-nudge` and `ann-*` rules.
+Status colour on the site uses the `kelp` / `buoy` / `coral` scales directly.
+
+`colors.css` names the site's muted and accent roles `--color-site-muted` and
+`--color-site-accent`: `--color-muted` and `--color-accent` belong to the shadcn
+primitives in `components/ui` (they alias the console tokens). `--color-ink` is
+navy-900.
 
 ---
 
 ## 1. Colour
 
-### Roles
+### Scales (`colors.css`)
 
-Each Tailwind role below is an alias of a semantic token (`text-ink` is
-`--color-text-primary`, `bg-cobalt` is `--color-action-primary`), which points
-at a primitive. Pages use the role; nothing references a primitive.
+| Scale | Steps | Role |
+|---|---|---|
+| `mist` | 0–700 | Cool neutral: grounds, hairlines, muted text. 500 (3.99:1 on white) is for edges and marks only; 550 (4.92:1) is the lightest text step |
+| `tide` | 100–800 | Pale shallows: the lightest coloured field, hover fills |
+| `cyan` | 100–700 | Logo cyan (500 = #0caacf). Fills and actions on dark fields; navy text on it |
+| `ocean` | 50–900 | Logo blue (600 = #0a72c0). Brand block and primary action; links use 700 |
+| `navy` | 600–950 | Deep water: running ink (900) and dark fields (900, 950) |
+| `buoy` | 50–700 | Status only: warnings, the field-error mark |
+| `kelp` | 50–800 | Success only |
+| `coral` | 50–700 | Danger only |
 
-| Role | Token (Tailwind) | Value | Use |
-|---|---|---|---|
-| Surface | `bg-white` | #ffffff | Default page ground, cards |
-| Surface container | `bg-paper` | #f3f6fb | Alternating sections, wells, footer |
-| Surface container high | `bg-paper-deep` | #e7edf6 | Image placeholders, pressed wells |
-| Inverse surface | `bg-ink` / `bg-night` | #0b1a33 | Dark bands and panels (navy) |
-| On surface | `text-ink` | #0b1a33 | Headings, primary text |
-| On surface variant | `text-ink-muted` | #3a4a66 | Body copy |
-| On surface subtle | `text-ink-subtle` | #56637b | Meta, captions, placeholders |
-| Outline | `border-line-strong` | #cbd5e3 | Inputs, outline buttons |
-| Outline variant | `border-line` | #e2e8f1 | Card borders, dividers, hairline grids |
-| Primary | `bg-cobalt` / `text-cobalt` | #1d4ed8 | The action colour: primary buttons, links, focus, selected state |
-| Primary (pressed/hover) | `bg-cobalt-deep` | #1740ad | Hover and pressed state of primary |
-| Primary container | `bg-cobalt-tint` | #eef2ff | Selected chips, soft highlights |
-| Primary on dark | `text-cobalt-light` | #a9c1ff | Links and accents on navy |
-| Brand | `text-brand` | #0975c1 | The logo blue: brand moments, illustration strokes |
-| Brand accent | `bg-aqua` | #0cacCF | Fills and marks only. **Never text** (2.7:1) |
-| Success | `text-success` / `bg-success-container` | #047857 / #ecfdf5 | Applied, operational, confirmed |
-| Warning | `text-warning` / `bg-warning-container` | #92400e / #fffbeb | Time-sensitive only (deadlines) |
-| Danger | `text-danger` / `bg-danger-container` | #b91c1c / #fef2f2 | Errors, destructive actions |
+Chapter fields name whole-section grounds: `field-paper` (mist-50, the page
+canvas), `field-mist` (mist-100), `field-shallow` (tide-200), `field-cyan`,
+`field-brand` (ocean-600), `field-deep` (navy-900), `field-abyss` (navy-950).
 
 ### 60-30-10
 
-- **60%**: white and blue-grey surfaces.
-- **30%**: navy, meaning type and one dark band per page at most (the closing panel counts).
-- **10%**: cobalt, meaning actions and selection only. If cobalt is decorating something
-  that is not clickable or selected, it is diluting the action colour (the Von Restorff
-  effect only works if the accent is rare).
+- **60%**: `mist-50` canvas, `mist-0` and `mist-100` tiles and sections.
+- **30%**: `navy-900` type and the dark fields: the mega-menu feature panel
+  (navy-900) and the footer (navy-950).
+- **10%**: `ocean-600`. Primary buttons, the active nav underline, focus rings,
+  links (`ocean-700`), and one brand block per page at most, the closing band.
+  On that band, actions switch to white and navy.
 
-The palette is **analogous** (navy, cobalt, logo blue, aqua) with one **complementary**
-warm hue (amber), reserved for urgency, so "closes tomorrow" is the only warm thing on a
-page.
+Status hues (`buoy`, `kelp`, `coral`) never decorate.
 
-### Contrast (WCAG 2.2 AA, measured)
+### Contrast (from the token comments)
 
-navy/white 17.4 · ink-muted/white 8.9 · ink-subtle/white 6.1 · ink-subtle/paper-deep 5.2 ·
-white/cobalt 6.7 · cobalt/paper 6.2 · brand/white 4.9 · aqua/white 2.7 (decorative only).
-Body text must be ≥ 4.5:1; large text and UI outlines ≥ 3:1.
+ocean-600/white 5.0 · ocean-600 on mist-50 4.71 · navy-900/white 14.1 ·
+white on ocean-700 7.0 · navy-950 on cyan-500 6.5 · navy-900 on mist-100 12.3 ·
+mist-550/white 4.92 · mist-500/white 3.99 (edges only). Body text ≥ 4.5:1; large
+text and UI edges ≥ 3:1.
 
 ## 2. Type
 
-IBM Plex Sans (self-hosted variable file, used at 400/500/600 only) plus Geist Mono
-for figures and kickers. Use a **role**, not a size: there are no `text-[Npx]`
-values on the site. Sizes come from one scale with a **1.2 ratio** (`--p-text-*`):
-11, 13, 16, 19, 23, 28, 34, 40, 48, 56px. Roles are fluid (375 → 1280px), so no
-breakpoint variants are needed.
+General Sans from Fontshare (linked in `src/app/layout.tsx`, weights 400/500/600
+only; `b` and `strong` are 600) and Geist Mono (`font-mono`, used on the developer,
+security, cookies, legal and error pages). Body is `--text-body`, 17 → 19px, leading 1.5.
 
-| Role | Class | Range | Use |
-|---|---|---|---|
-| Display | `type-display` | 40 → 56px | Home hero only |
-| Headline large | `type-headline-lg` | 34 → 48px | Page title (h1) on interior pages |
-| Headline | `type-headline` | 28 → 40px | Section title (h2) |
-| Headline small | `type-headline-sm` | 23 → 28px | Sub-section title, CTA panel title |
-| Title large | `type-title-lg` | 19 → 23px | Card title (h3) |
-| Title | `type-title` | 19px | List item title, small card title |
-| Body large | `type-body-lg` | 16 → 19px | Lead paragraph under a title |
-| Body | `type-body` | 16px | Running text |
-| Body small / label / caption | `type-body-sm`, `type-label`, `type-caption` | 13px | One size; weight and leading tell them apart |
-| Overline | `type-overline` | 11px | Mono kickers, badges |
+### Scale
 
-Leading falls as size rises: display 1.1, headlines 1.15, titles 1.25, body 1.55,
-small 1.45. Measure: running text is capped at 65ch (`--measure-prose`, the
-`measure` utility). Headings balance; paragraphs use `text-wrap: pretty`.
+Every size comes from one scale in the `@theme` of the "Website redesign v2" block
+of `globals.css`. Steps are fluid from 375 to 1280px and sit about 1.25 apart at
+1280. A literal `text-[Npx]`, `text-[Nrem]` or inline `text-[clamp(…)]` fails
+`tests/site-type-scale.test.mjs`; `em` sizes inside code samples are fine.
 
-## 3. Space
+| Role | Size (375 → 1280) | Use |
+|---|---|---|
+| `text-caption` | 13 | Counts, fine print, the compact filter labels on phones |
+| `text-small` | 14 → 15 | UI and supporting text: buttons, menu rows, labels, card copy, form notes |
+| `text-body` | 17 → 19 | Running text (the body default), inputs, mobile menu rows |
+| `text-title` | 19 → 22 | Card and list-item titles, `dt` terms, small `h3`s |
+| `text-lead` | 20 → 26 | Lead paragraphs and standfirsts |
+| `text-head-sm` | 24 → 28 | Tile and list headings, legal `h2`s, intro paragraphs set large |
+| `text-head-md` | 28 → 36 | Sub-section headings, the auth panel line |
+| `text-head` | 36 → 48 (max 56) | Section `h2`s |
+| `text-head-xl` | 40 → 64 (max 72) | Large statements and stats, closing lines |
+| `text-poster` | 48 → 102 (max 136) | The interior page title (`PageHero`, jobs, maintenance) |
+| `text-hero` / `text-hero-tile` | `7.2cqi` / `11cqi` of the tile | Home hero only: the h1 and the two tile lines, sized on their `@container` tile so the board fits one screen |
 
-Base 4, mostly in steps of 8. Layout spacing is tokens, read through the
-constants in `src/components/site/sections.tsx`:
+Heading weight and leading come from two utilities:
 
-- `SECTION_Y` = `--space-layout-section-gap`: 64 / 80 / 96px (phone / tablet /
-  desktop), on the `<section>` with `data-tone`. Two borderless sections of the
-  same tone collapse the second's top padding.
-- `OPENER_Y`: first block under the fixed header.
-- `STACK_LG` = `--space-layout-stack-lg` (40/48) title → content; `STACK_MD` =
-  `--space-layout-stack-md` (32/40) between groups.
-- `CONTAINER`: `--grid-max` 1240 wide, `--space-layout-gutter` (16, 24 from sm)
-  at the edges.
-- Inside a component use the Tailwind scale: card padding 24px phone, 32px from tablet (compact
-  cards 20/24); card gaps 16px phone, 20–24px from tablet.
+| Utility | Setting | Use |
+|---|---|---|
+| `display` | 600, tracking -0.025em, leading 1.1, balanced | Every heading role except the page title |
+| `poster` | 600, tracking -0.035em, leading 1.1 | The page title, with `text-poster` |
+
+Leading: running text 1.5 (`leading-normal`, also the body default); short
+headings set without `display` use `leading-snug`. No size carries its own line
+height.
+
+The site sizes are registered with tailwind-merge in `src/lib/utils.ts`, so
+`cn("text-small text-navy-900")` keeps both.
+
+### Measure
+
+`max-w-measure` (65ch, `--container-measure`) for running text: legal documents,
+articles, job descriptions, FAQ answers, long notes. `max-w-measure-narrow` (46ch)
+for lead paragraphs, standfirsts and short supporting copy beside a heading. Nothing
+runs wider than 65ch or narrower than 45ch; a `max-w-[Nch]` under 30ch is a heading
+constraint (two remain) and is allowed.
+
+## 3. Space and layout
+
+- **`gutter`**: the page edge, 16px on phones, 28px from md, 40px from xl. Every
+  section and the header use it.
+- **Section rhythm**: `py-24 md:py-32` (96 / 128px). The closing band is
+  `py-20 md:py-24`. `PageHero` sets `pt-12 md:pt-16` and `pb-24 md:pb-32` under its
+  mosaic.
+- **Axis**: on a 12-column grid from lg, `axis` puts headings and body on columns
+  6–12 and `side` puts the aside on 1–4.
+- **The board (home and `PageHero`).** Tiles sit 8px apart (`gap-2`, the home
+  board; the `PageHero` mosaic tiles butt together) and 16px from the viewport sides
+  (`px-4`), 8px from the header (`pt-2` / `py-2`). Text inside a tile keeps 20px+ of
+  padding (`p-5`, `p-6 md:p-8 lg:p-10`).
+- The home hero fills the first screen from md: `h-[calc(100svh-88px)]`, minimum
+  38rem.
 
 ## 4. Shape and elevation
 
-| Size | Radius | Examples |
-|---|---|---|
-| Small controls | `rounded-xl` (12) | Inputs, icon tiles, menu items |
-| Cards | `rounded-2xl` (16) | Job rows, feature cards, dropdown panels |
-| Panels | `rounded-[28px]` | CTA panel, sheets, large media |
-| Actions | `rounded-full` | Buttons, chips, toggles |
+Square. Buttons, tiles, fields, menus and panels have no radius. Round shapes are
+limited to marks: 48px carousel arrows, check and cross bullets, the job-alert
+toggle, count badges.
 
-Elevation is navy-tinted, one light source above: **flat** (border only, the default) →
-`shadow-[var(--shadow-raised)]` (hover on interactive cards) →
-`shadow-[var(--shadow-overlay)]` (menus, popovers) → `shadow-[var(--shadow-modal)]`
-(sheets, dialogs). Nothing sits higher than it needs to.
+Flat by default. The sticky header carries a hairline, and a soft shadow once the
+page scrolls or a menu opens; the mega panel has a drop shadow. Nothing else lifts.
+Photographs are greyscale (`.treated`).
 
 ## 5. Motion
 
-Durations: `--dur-short` 150ms (state change: hover, press, toggle), `--dur-medium`
-250ms (menus, chips), `--dur-long` 300ms (sheets: 280ms in, 200ms out). Functional
-transitions stay within 150–300ms, ease-out to enter and ease-in to exit. Page-load
-reveals (`.rise`, `.word`) take 400ms.
+| Motion | Where | Timing |
+|---|---|---|
+| Reveal | `[data-reveal]`, revealed once by `RevealObserver` | 400ms, 24px rise, stagger `--d` × 80ms |
+| Headline line-up | `.lines [data-line]` (home hero, `PageHero`) | 400ms per line, `--i` × 110ms + 150ms; `[data-after-lines]` fades up after (700ms at 520ms) |
+| Hero shutter | `.shutter`, the first hero picture | clip 400ms, image settles from 1.12 over 600ms, both at 150ms |
+| Closing waves | `.wave-drift` in `Closing` | four lines settle once over 3, 3.5, 4 and 4.5s |
+| Route enter | `.page-enter` (`app/template.tsx`) | 220ms opacity, client navigations only |
+| Button hover | `.btn-fill` | see §5a |
 
-Nothing loops. Decorative motion runs once and settles inside five seconds: the
-hero film plays 4.8s and holds, the client logos and practice showcase change once,
-the grid beams cross once, illustrations stop after one pass. Because nothing runs
-past five seconds there are **no pause or play controls** (WCAG 2.2.2 is met by
-ending, not by a button). Loading skeletons and spinners may repeat: they report
-state. Everything animates transform and opacity only, and **every animation is
-removed under `prefers-reduced-motion`**.
+Curve: `--ease-out-strong` (cubic-bezier(0.16, 1, 0.3, 1)). The reveal, line-up,
+shutter and wave styles only apply under `prefers-reduced-motion: no-preference`
+and once `RevealObserver` has put `.js` on `<html>`, so without script or with
+reduced motion everything is simply visible. Printed pages never animate.
+
+The home hero's `WaveField` canvas animates continuously while on screen and
+answers the pointer; under reduced motion it draws one static frame.
 
 ## 5a. Controls
 
-- One input style: `src/components/site/input.tsx` (Input, Textarea, FieldError),
-  48px tall, `--color-border-control` edge (3.4:1), 2px cobalt focus ring with offset,
-  danger edge on `aria-invalid`.
-- One button: `buttonClass` / `Button` / `LinkButton` in `src/components/site/button.tsx`,
-  sizes sm 40 (44 on touch), md 48, lg 56. `loading` shows a spinner, sets
-  `aria-busy` and disables the button. Disabled is `--opacity-disabled` (0.45) with a
-  not-allowed cursor.
-- Every button group is one primary (filled) and at most one secondary (outline).
-  The header: "Talk to us" primary, "Find a job" secondary. Heroes and CTA panels
-  follow the same pair.
-- Targets: 40px minimum on desktop, 44px on touch (`--size-control-touch`).
+- **Buttons** are square links or buttons with Tailwind classes plus the
+  `.btn-fill` family in `globals.css`. Primary: `bg-ocean-600 text-white btn-fill
+  btn-fill-ocean`, 48px (`min-h-12`; header 44px, closing band 52px). Secondary:
+  `ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline`. Pressed:
+  `active:scale-[0.98]`.
+- **`.btn-fill` variants** set `--btn-fill`, the hover and focus colour: `ocean`,
+  `navy`, `deep`, `cyan`, `white`, `mist`, `quiet`, `glass`, `outline`,
+  `outline-light`. Filled variants shift to it over 150ms (`--dur-short`). The two
+  outline variants sweep it in left to right over 250ms (`--dur-medium`) and flip
+  the label ink. Ease-out in, ease-in out; no transition when disabled or under
+  reduced motion.
+- **Form submit**: `SubmitButton` (`src/components/site/SubmitButton.tsx`). Busy
+  shows a spinner and the busy label without changing width, sets `aria-busy` and
+  disables. Disabled is `--opacity-disabled` (0.45) with a not-allowed cursor.
+- **Field errors**: `FieldError` (`src/components/site/FieldError.tsx`), a buoy
+  square and a sentence, referenced by `aria-describedby="<id>-error"`.
+- **Fields**: the contact form uses an underline field (2px `mist-300` bottom edge,
+  `ocean-600` on focus); the apply form uses a boxed 48px field (`ring-mist-300`,
+  2px `ocean-600` ring on focus).
+- **Focus**: one global `:focus-visible`, 2px `ocean-600` outline, 2px offset.
+  Inside `.on-dark` it turns white.
+- **Pairs**: every group is one primary and at most one secondary. Header: "Find a
+  job" (outline) and "Contact us" (ocean). Hero: ocean primary, navy outline. Closing
+  band: white primary, navy secondary.
+- **Targets**: 44px minimum on header controls and menu rows, 48px on page actions.
 
-## 6. Layout and placement
+## 6. Navigation
 
-- Grid: 4 columns on phones, 8 from md, 12 from lg,
-  gutter 16 then 24; container 1240px; header 1440px. Breakpoints are sm 640, md 768,
-  lg 1024, xl 1280.
-- **Z-pattern** for openers and the home hero: logo top-left, navigation, primary action
-  top-right, then headline → supporting line → action.
-- **F-pattern** for reading pages (solutions, careers, legal): left-aligned headings,
-  scannable first words, key facts in the first two lines.
-- One primary action per view. The buyer action is **"Talk to us"** (cobalt); the
-  candidate action is **"Find a job"** / **"Apply now"**. Secondary actions are outline
-  buttons or text links.
-- Mobile first: design at 375px, then add columns. Touch targets ≥ 44px. The primary
-  action on long mobile pages stays reachable (fixed bottom bar on job pages).
+- **Header** (`Header.tsx`): sticky, white, 72px. Logo left, four menus
+  (Services, Industries, Resources, Company) from lg, actions right. The current
+  section gets `ocean-700` text and a 2px `ocean-600` underline. Signed-in staff see
+  their account in place of the visitor actions.
+- **Mega panel**: one shared panel below the bar, opened on click or hover (90ms
+  intent, 160ms close), closed by Escape or an outside click. Groups on the left, a
+  navy feature panel with one cyan action on the right. Services lists names only:
+  three groups, the long middle one in two columns. Industries is one group of five,
+  two columns, each with a short tagline (`industries[].tagline` in `site-content.ts`).
+- **Mobile menu** (below lg): sections are 56px rows that expand in place. Inside,
+  links are names only on 44px rows. Services lists its items in two columns. A
+  group whose links all land on one page (a service's features) collapses to one
+  link named after the group. The visitor actions and a call button follow as
+  full-width 48px buttons.
+- **Footer**: `navy-950`.
 
-## 7. Principles we check against
+## 7. Placement
 
-Jakob (familiar patterns), Hick (few choices per decision), Fitts (big, near targets),
-Miller (chunk into ≤ 7 groups), Von Restorff (one accent), Doherty (respond < 400ms:
-server-render content, skeletons over spinners), Tesler (the system absorbs complexity),
-Postel (accept messy input), serial position (key items first and last), peak-end
-(strong close and success states), Gestalt proximity and common region (space groups
-things, hairlines separate them), aesthetic-usability, and WCAG 2.2 AA.
+- **Z-pattern** for the header and the home hero: logo top-left, menus, primary
+  action top-right, then headline, supporting line, actions.
+- **F-pattern** for reading pages: left-aligned headings on the axis, key facts in
+  the first two lines.
+- One primary action per view. The buyer action is "Contact us"; the candidate
+  action is "Find a job" / "Apply now".
+- Mobile first: design at 375px. The hero stacks; tiles go to two columns, then one.
+
+## 8. Principles we check against
+
+Jakob, Hick, Fitts, Miller, Von Restorff (one accent), Doherty (server-rendered
+content, nothing waits past 400ms unannounced), Tesler, Postel, serial position,
+peak-end (a strong closing band and success states), Gestalt proximity and common
+region, aesthetic-usability, and WCAG 2.2 AA. The laws themselves are in
+`DESIGN_LAWS.md`.

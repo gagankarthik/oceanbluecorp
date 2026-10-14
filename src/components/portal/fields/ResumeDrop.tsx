@@ -33,11 +33,11 @@ function FileRow({ name, meta, children }: { name: string; meta: string; childre
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg bg-mist-50 px-3.5 py-3 ring-1 ring-inset ring-mist-200">
       <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-mist-0 text-mist-600 ring-1 ring-mist-200">
-        <Icon name="resume" className="size-[18px]" />
+        <Icon name="resume" className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[14px] font-medium text-navy-900">{name}</p>
-        <p className="text-[12px] text-mist-600">{meta}</p>
+        <p className="truncate text-adm-base font-medium text-navy-900">{name}</p>
+        <p className="text-adm-xs text-mist-600">{meta}</p>
       </div>
       {children && <div className="flex shrink-0 flex-wrap items-center gap-1">{children}</div>}
     </div>
@@ -45,7 +45,7 @@ function FileRow({ name, meta, children }: { name: string; meta: string; childre
 }
 
 const iconBtn = "grid size-9 place-items-center rounded-lg text-mist-600 hover:bg-mist-100 hover:text-navy-900";
-const dangerBtn = "grid size-9 place-items-center rounded-lg text-mist-600 hover:bg-[#fef3f2] hover:text-[#b42318]";
+const dangerBtn = "grid size-9 place-items-center rounded-lg text-mist-600 hover:bg-status-danger-soft hover:text-status-danger";
 
 /**
  * Resume picker with drop support. Shows a newly chosen file, else the file on
@@ -95,19 +95,19 @@ export function ResumeDrop({
       {file ? (
         <FileRow name={file.name} meta={`${kb(file.size)} · ${existing ? "replaces the current resume on save" : "attached on save"}`}>
           {fileActions}
-          <button type="button" aria-label="Remove the chosen file" onClick={onClearFile} className={dangerBtn}>
+          <button type="button" aria-label="Remove the chosen file" title="Remove the chosen file" onClick={onClearFile} className={dangerBtn}>
             <Icon name="x" className="size-4" />
           </button>
         </FileRow>
       ) : existing ? (
         <FileRow name={existing.fileName} meta={existing.origin === "bench" ? "From the bench profile" : "Current resume on file"}>
           {onDownload && existing.origin === "record" && (
-            <button type="button" aria-label="Download resume" onClick={onDownload} className={iconBtn}>
+            <button type="button" aria-label="Download resume" title="Download resume" onClick={onDownload} className={iconBtn}>
               <Icon name="download" className="size-4" />
             </button>
           )}
           {onRemoveExisting && (
-            <button type="button" aria-label="Remove resume" onClick={onRemoveExisting} className={dangerBtn}>
+            <button type="button" aria-label="Remove resume" title="Remove resume" onClick={onRemoveExisting} className={dangerBtn}>
               <Icon name="trash" className="size-4" />
             </button>
           )}
@@ -142,10 +142,10 @@ export function ResumeDrop({
             }}
           />
           <Icon name="upload" className="size-5 text-mist-600" />
-          <span className="text-[14px] font-medium text-navy-900">
+          <span className="text-adm-base font-medium text-navy-900">
             {existing ? "Upload a replacement" : "Upload a resume"} <span className="font-normal text-mist-600">or drop it here</span>
           </span>
-          <span className="text-[12px] text-mist-600">
+          <span className="text-adm-xs text-mist-600">
             {RESUME_HINT}. {helper}
           </span>
         </label>

@@ -105,7 +105,7 @@ export default async function CareersPage() {
             {facts.map((f, i) => (
               <div key={f.label} className="flex flex-col-reverse bg-mist-100 px-6 py-8" data-reveal style={{ "--d": i } as React.CSSProperties}>
                 <dt className="mt-2 text-mist-600">{f.label}</dt>
-                <dd className="display text-[clamp(2.5rem,4.5vw,4rem)] tabular-nums">{f.value}</dd>
+                <dd className="display text-head-xl tabular-nums">{f.value}</dd>
               </div>
             ))}
           </dl>
@@ -118,18 +118,18 @@ export default async function CareersPage() {
             <Photo name="typing" className="aspect-[4/5]" />
           </div>
           <div className="axis">
-            <h2 id="life-title" className="display text-[clamp(2.25rem,4vw,3.75rem)]" data-reveal>
+            <h2 id="life-title" className="display text-head" data-reveal>
               What it is like here
             </h2>
-            <p className="mt-6 max-w-[52ch] text-[clamp(1.125rem,1.4vw,1.375rem)] leading-snug" data-reveal>
+            <p className="mt-6 max-w-measure-narrow text-title leading-snug" data-reveal>
               Our engineers are embedded with the client and accountable for the outcome, so you carry real scope from the first week and you see
               what your work changed.
             </p>
             <dl className="mt-12 grid gap-x-12 gap-y-12 sm:grid-cols-2">
               {reasons.map((r, i) => (
                 <div key={r.title} data-reveal style={{ "--d": i % 2 } as React.CSSProperties}>
-                  <dt className="text-[20px] font-medium">{r.title}</dt>
-                  <dd className="mt-2 max-w-[36ch]">{r.body}</dd>
+                  <dt className="text-title font-medium">{r.title}</dt>
+                  <dd className="mt-2 max-w-measure-narrow">{r.body}</dd>
                 </div>
               ))}
             </dl>
@@ -140,10 +140,10 @@ export default async function CareersPage() {
       <section aria-labelledby="practices-title" className="bg-field-mist">
         <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 id="practices-title" className="display text-[clamp(2.25rem,4vw,3.75rem)]">
+            <h2 id="practices-title" className="display text-head">
               Find the team you belong on
             </h2>
-            <p className="mt-6 max-w-[34ch] text-mist-600">
+            <p className="mt-6 max-w-measure-narrow text-mist-600">
               We place engineers, recruiters and delivery leads with enterprises and government agencies across North America, and we hire for
               the same disciplines ourselves.
             </p>
@@ -152,8 +152,8 @@ export default async function CareersPage() {
             </Link>
 
             {/* For anyone who can't place themselves in a practice yet */}
-            <div className="mt-10 bg-ocean-600 p-6 text-white md:p-7">
-              <h3 className="text-[clamp(1.25rem,1.6vw,1.5rem)] font-semibold">Not sure where to start?</h3>
+            <div className="on-dark mt-10 bg-ocean-600 p-6 text-white md:p-7">
+              <h3 className="text-title font-semibold">Not sure where to start?</h3>
               <p className="mt-2 text-ocean-50">
                 Tell us what you do and the work you want. A recruiter will point you to the right team, or keep your details for the next role
                 that fits.
@@ -164,7 +164,7 @@ export default async function CareersPage() {
               >
                 Talk to a recruiter
               </Link>
-              <ul className="mt-5 grid gap-1 text-[15px]">
+              <ul className="mt-5 grid gap-1 text-small">
                 <li>
                   <a href={company.tel} className="underline underline-offset-4 hover:text-cyan-100">
                     {company.phone}
@@ -185,9 +185,9 @@ export default async function CareersPage() {
                   href={p.q ? `/jobs?q=${encodeURIComponent(p.q)}` : "/jobs"}
                   className="group flex h-full flex-col bg-mist-0 p-6 transition-colors hover:bg-tide-100"
                 >
-                  <span className="text-[20px] font-medium group-hover:text-ocean-700">{p.name}</span>
+                  <span className="text-title font-medium group-hover:text-ocean-700">{p.name}</span>
                   <span className="mt-1 text-mist-600">{p.body}</span>
-                  <span className="mt-auto inline-flex items-center gap-2 pt-5 text-[15px] font-medium text-ocean-700">
+                  <span className="mt-auto inline-flex items-center gap-2 pt-5 text-small font-medium text-ocean-700">
                     See open roles
                     <svg aria-hidden viewBox="0 0 20 20" className="size-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 10h12M11 5l5 5-5 5" />
@@ -200,13 +200,13 @@ export default async function CareersPage() {
         </div>
       </section>
 
-      <section aria-labelledby="hire-title" className="bg-navy-900 text-mist-50">
+      <section aria-labelledby="hire-title" className="on-dark bg-navy-900 text-mist-50">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="hire-title" className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-6" data-reveal>
+            <h2 id="hire-title" className="display text-head lg:col-span-6" data-reveal>
               How we hire
             </h2>
-            <p className="max-w-[46ch] text-tide-300 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+            <p className="max-w-measure-narrow text-tide-300 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
               Four steps from first message to first day, with a recruiter beside you at each one.
             </p>
           </div>
@@ -216,7 +216,7 @@ export default async function CareersPage() {
                 <span className="grid size-16 place-items-center bg-mist-0">
                   <HireIcon step={h.name} className="size-12" />
                 </span>
-                <p className="mt-6 text-[20px] font-semibold text-white">{h.name}</p>
+                <p className="mt-6 text-title font-semibold text-white">{h.name}</p>
                 <p className="mt-2 text-tide-300">{h.body}</p>
               </li>
             ))}
@@ -227,10 +227,10 @@ export default async function CareersPage() {
       <section aria-labelledby="offer-title" className="bg-field-paper">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="offer-title" className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-6" data-reveal>
+            <h2 id="offer-title" className="display text-head lg:col-span-6" data-reveal>
               What we offer
             </h2>
-            <p className="max-w-[46ch] text-mist-600 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+            <p className="max-w-measure-narrow text-mist-600 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
               The benefits, and the places you could be doing the work.
             </p>
           </div>
@@ -238,7 +238,7 @@ export default async function CareersPage() {
           <dl className="mt-14 grid gap-2 md:grid-cols-3">
             {CAREER_BENEFITS.map((b, i) => (
               <div key={b.title} className="bg-mist-100 p-6 md:p-7" data-reveal style={{ "--d": i } as React.CSSProperties}>
-                <dt className="flex items-center gap-4 text-[20px] font-semibold">
+                <dt className="flex items-center gap-4 text-title font-semibold">
                   <span className="grid size-16 shrink-0 place-items-center bg-mist-0">
                     <BenefitIcon benefit={b.title} className="size-12" />
                   </span>
@@ -252,8 +252,8 @@ export default async function CareersPage() {
           <div className="mt-2 bg-mist-100 p-6 md:p-8" data-reveal>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <h3 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-semibold">Where we work</h3>
-                <p className="mt-2 max-w-[60ch] text-mist-600">
+                <h3 className="text-head-sm font-semibold">Where we work</h3>
+                <p className="mt-2 max-w-measure text-mist-600">
                   Four offices across three countries, with roles in all of them, and remote roles across the United States.
                 </p>
               </div>
@@ -264,8 +264,8 @@ export default async function CareersPage() {
             <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {workplaces.map((w) => (
                 <li key={w.city} className="bg-mist-0 p-5">
-                  <p className="text-[19px] font-semibold">{w.city}</p>
-                  <p className="mt-1 text-[15px] text-mist-600">
+                  <p className="text-title font-semibold">{w.city}</p>
+                  <p className="mt-1 text-small text-mist-600">
                     {w.country}, {w.note}
                   </p>
                 </li>
@@ -273,9 +273,9 @@ export default async function CareersPage() {
             </ul>
           </div>
 
-          <div className="mt-2 bg-navy-900 p-6 text-mist-50 md:p-8" data-reveal>
-            <h3 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-semibold">An equal opportunity employer</h3>
-            <p className="mt-3 max-w-[80ch] text-tide-300">
+          <div className="on-dark mt-2 bg-navy-900 p-6 text-mist-50 md:p-8" data-reveal>
+            <h3 className="text-head-sm font-semibold">An equal opportunity employer</h3>
+            <p className="mt-3 max-w-measure text-tide-300">
               A supportive, inclusive workplace where every voice is heard. {EEO_STATEMENT} Need an accommodation during hiring? Tell your recruiter and we will arrange it.
             </p>
             <Link href="/equal-opportunity" className="mt-5 inline-block font-medium text-white underline underline-offset-4 hover:text-cyan-300">
@@ -288,7 +288,7 @@ export default async function CareersPage() {
       <section className="bg-field-mist">
         <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 className="display text-[clamp(2.25rem,4vw,3.75rem)]">Latest openings</h2>
+            <h2 className="display text-head">Latest openings</h2>
             <Link href="/jobs" className="mt-6 inline-block font-medium text-ocean-700 underline underline-offset-4">
               {jobs.length ? "See all openings" : "Browse the job board"}
             </Link>
@@ -298,8 +298,8 @@ export default async function CareersPage() {
               <li key={j.slug} data-reveal style={{ "--d": i } as React.CSSProperties}>
                 <Link href={`/jobs/${j.slug}`} className="group flex flex-wrap items-center justify-between gap-4 bg-mist-0 p-6 transition-colors hover:bg-tide-100">
                   <span>
-                    <span className="display block text-[1.75rem] [overflow-wrap:anywhere] group-hover:text-ocean-700">{j.title}</span>
-                    <span className="mt-1 block text-[15px] text-mist-600">
+                    <span className="display block text-head-sm [overflow-wrap:anywhere] group-hover:text-ocean-700">{j.title}</span>
+                    <span className="mt-1 block text-small text-mist-600">
                       {jobFacts({ ...j, practice: "" }).join(" · ")}
                     </span>
                   </span>
@@ -323,15 +323,15 @@ export default async function CareersPage() {
 
       <FaqList title="Questions candidates ask" items={faqsFor("Careers")} here="/careers" />
 
-      <section className="bg-ocean-600 text-white">
+      <section className="on-dark bg-ocean-600 text-white">
         <div className="gutter flex flex-col items-center gap-10 py-20 text-center md:py-24">
           <div data-reveal>
-            <h2 className="display text-[clamp(2.25rem,4vw,3.75rem)]">
+            <h2 className="display text-head">
               Ready to join
               <br />
               our team?
             </h2>
-            <p className="mx-auto mt-6 max-w-[48ch]">
+            <p className="mx-auto mt-6 max-w-measure-narrow">
               See what is open right now, or{" "}
               <a href={`mailto:${company.email}?subject=Resume`} className="underline underline-offset-4 hover:text-cyan-100">
                 send us your resume

@@ -62,15 +62,15 @@ export function PageHeader({
 }) {
   return (
     <header className="grid gap-4">
-      {back && <BackLink href={back.href} label={back.label} tone="ink" className="-my-2 text-[14px]" />}
+      {back && <BackLink href={back.href} label={back.label} tone="ink" className="-my-2 text-adm-base" />}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex min-w-0 items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="min-w-0 break-words text-[22px] font-semibold leading-tight tracking-tight text-navy-900 sm:text-[24px]">{title}</h1>
+              <h1 className="min-w-0 break-words text-adm-xl font-semibold leading-tight tracking-tight text-navy-900">{title}</h1>
               {meta}
             </div>
-            {description && <p className="mt-0.5 max-w-[65ch] text-[14px] text-mist-600">{description}</p>}
+            {description && <p className="mt-0.5 max-w-[65ch] text-adm-base text-mist-600">{description}</p>}
           </div>
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap md:justify-end">{actions}</div>}
@@ -100,10 +100,10 @@ export function Panel({
   return (
     <section className={`flex min-w-0 flex-col rounded-xl bg-mist-0 ring-1 ring-mist-200 ${className}`}>
       {(title || action) && (
-        <header className="flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-mist-200 px-5 py-2.5">
+        <header className="flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-mist-200 px-5 py-2">
           <div className="min-w-0">
-            {title && <h2 className="truncate text-[15px] font-semibold text-navy-900">{title}</h2>}
-            {description && <p className="text-[13px] text-mist-600">{description}</p>}
+            {title && <h2 className="truncate text-adm-md font-semibold text-navy-900">{title}</h2>}
+            {description && <p className="text-adm-base text-mist-600">{description}</p>}
           </div>
           {action && <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>}
         </header>
@@ -123,7 +123,8 @@ export function KpiRow({ children, cols, className = "" }: { children: React.Rea
   const n = cols ?? (Math.min(4, Math.max(2, Children.toArray(children).length)) as 2 | 3 | 4);
   // Three across from sm leaves an orphan; the third card spans until lg.
   const orphan = n === 3 ? "sm:max-lg:[&>*:nth-child(3)]:col-span-2" : "";
-  return <div className={`grid grid-cols-1 gap-4 [&>*]:h-full ${kpiCols[n]} ${orphan} ${className}`}>{children}</div>;
+  // Gap wider than the cards' 16px padding, so each card reads as its own unit
+  return <div className={`grid grid-cols-1 gap-5 [&>*]:h-full ${kpiCols[n]} ${orphan} ${className}`}>{children}</div>;
 }
 
 /**
@@ -164,7 +165,7 @@ export function InsightsRow({
             type="button"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-adm-base font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50"
           >
             <Icon name="chevronDown" className={`size-4 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
             {open ? "Hide more insights" : "Show more insights"}

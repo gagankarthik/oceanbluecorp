@@ -138,7 +138,7 @@ export default function Select({
         aria-label={`${label}: ${current?.label ?? ""}`}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex h-10 w-full items-center gap-2 rounded-lg pl-3 pr-2.5 text-left text-[14px] ring-1 ring-inset transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`inline-flex h-10 w-full items-center gap-2 rounded-lg pl-3 pr-2.5 text-left text-adm-base ring-1 ring-inset transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 disabled:cursor-not-allowed disabled:opacity-60 ${
           isDefault ? "bg-mist-0 text-navy-900 ring-[var(--color-border-control)] hover:bg-mist-50" : "bg-ocean-50 text-ocean-800 ring-ocean-600 hover:bg-ocean-100"
         }`}
       >
@@ -169,12 +169,12 @@ export default function Select({
                     setActive(0);
                   }}
                   placeholder={`Search ${label.toLowerCase()}`}
-                  className="h-9 w-full rounded-md bg-mist-50 pl-8 pr-2 text-[14px] ring-1 ring-inset ring-[var(--color-border-control)] placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                  className="h-9 w-full rounded-md bg-mist-50 pl-8 pr-2 text-adm-base ring-1 ring-inset ring-[var(--color-border-control)] placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
                 />
               </label>
             </div>
           )}
-          <p className="px-3 pb-1 pt-2.5 text-[12px] font-semibold text-mist-600">{label}</p>
+          <p className="px-3 pb-1 pt-2.5 text-adm-xs font-semibold text-mist-600">{label}</p>
           <ul
             ref={list}
             id={`${id}-list`}
@@ -184,7 +184,7 @@ export default function Select({
             aria-activedescendant={shown[active] ? `${id}-opt-${active}` : undefined}
             className="scroll-thin max-h-72 overflow-y-auto p-1.5 pt-0"
           >
-            {shown.length === 0 && <li className="px-3 py-6 text-center text-[13px] text-mist-600">No matches</li>}
+            {shown.length === 0 && <li className="px-3 py-6 text-center text-adm-base text-mist-600">No matches</li>}
             {shown.map((o, i) => {
               const selected = o.value === value;
               return (
@@ -196,7 +196,7 @@ export default function Select({
                   aria-selected={selected}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => choose(o)}
-                  className={`flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 text-[14px] ${i === active ? "bg-mist-100" : ""}`}
+                  className={`flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 text-adm-base ${i === active ? "bg-mist-100" : ""}`}
                 >
                   <span className={`mt-0.5 grid size-4 shrink-0 place-items-center ${selected ? "text-ocean-600" : "text-transparent"}`}>
                     <Icon name="check" className="size-4" />
@@ -204,10 +204,10 @@ export default function Select({
                   {o.icon && <Icon name={o.icon} className="mt-0.5 size-4 shrink-0 text-mist-600" />}
                   <span className="min-w-0 flex-1">
                     <span className={`block truncate ${selected ? "font-semibold text-navy-900" : "text-navy-900"}`}>{o.label}</span>
-                    {o.description && <span className="mt-0.5 block text-[12px] leading-snug text-mist-600">{o.description}</span>}
+                    {o.description && <span className="mt-0.5 block text-adm-xs leading-snug text-mist-600">{o.description}</span>}
                   </span>
                   {o.count !== undefined && (
-                    <span className="mt-0.5 rounded-md bg-mist-100 px-1.5 text-[12px] tabular-nums text-mist-600">{o.count}</span>
+                    <span className="mt-0.5 rounded-md bg-mist-100 px-1.5 text-adm-xs tabular-nums text-mist-600">{o.count}</span>
                   )}
                 </li>
               );
@@ -218,7 +218,7 @@ export default function Select({
               <button
                 type="button"
                 onClick={() => choose(options[0])}
-                className="w-full rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-ocean-700 hover:bg-ocean-50"
+                className="w-full rounded-lg px-2.5 py-2 text-left text-adm-base font-medium text-ocean-700 hover:bg-ocean-50"
               >
                 Reset to {options[0]?.label.toLowerCase()}
               </button>

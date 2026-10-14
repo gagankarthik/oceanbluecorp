@@ -49,13 +49,13 @@ export function SkillsInput({
     <div className="grid gap-2">
       <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg bg-mist-0 px-2 py-1.5 ring-1 ring-inset ring-mist-300 focus-within:ring-2 focus-within:ring-ocean-600">
         {value.map((t) => (
-          <span key={t} className="inline-flex max-w-full items-center gap-1 rounded-md bg-ocean-50 py-0.5 pl-2 pr-0.5 text-[13px] font-medium text-ocean-800">
+          <span key={t} className="inline-flex max-w-full items-center gap-1 rounded-md bg-ocean-50 py-0.5 pl-2 pr-0.5 text-adm-base font-medium text-ocean-800">
             <span className="truncate">{t}</span>
             <button
               type="button"
               onClick={() => onChange(value.filter((x) => x !== t))}
               aria-label={`Remove ${t}`}
-              className="grid size-6 shrink-0 place-items-center rounded hover:bg-ocean-100"
+              className="adm-hit grid size-6 shrink-0 place-items-center rounded hover:bg-ocean-100"
             >
               <Icon name="x" className="size-3.5" />
             </button>
@@ -86,19 +86,21 @@ export function SkillsInput({
               add(text);
             }
           }}
-          className="h-7 min-w-[8rem] flex-1 bg-transparent px-1 text-[14px] text-navy-900 outline-none placeholder:text-mist-400 disabled:cursor-not-allowed"
+          className="h-7 min-w-[8rem] flex-1 bg-transparent px-1 text-adm-base text-navy-900 outline-none placeholder:text-placeholder disabled:cursor-not-allowed"
         />
       </div>
       {unused.length > 0 && !full && (
-        <div className="flex flex-wrap gap-1.5" aria-label="Suggested skills">
+        <div className="flex flex-wrap items-center gap-x-3 text-adm-xs" role="group" aria-label="Suggested skills">
+          <span className="text-mist-600">Suggested</span>
           {unused.slice(0, 8).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => add(s)}
-              className="min-h-7 rounded-md border border-dashed border-mist-300 px-2 text-[12px] font-medium text-mist-600 hover:border-ocean-400 hover:text-ocean-700"
+              title={`Add ${s}`}
+              className="min-h-8 font-medium text-ocean-700 underline-offset-4 hover:underline"
             >
-              + {s}
+              {s}
             </button>
           ))}
         </div>

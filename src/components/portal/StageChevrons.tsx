@@ -65,7 +65,7 @@ export function StageChevrons({
               >
                 <span
                   style={{ clipPath: chevron(i === 0), background: bg, color: ink }}
-                  className={`flex h-full items-center justify-center gap-1.5 whitespace-nowrap text-[13px] transition-[filter,background-color] ${i ? "pl-5 pr-4" : "pl-3.5 pr-4"} ${
+                  className={`flex h-full items-center justify-center gap-1.5 whitespace-nowrap text-adm-base transition-[filter,background-color] ${i ? "pl-5 pr-4" : "pl-3.5 pr-4"} ${
                     on
                       ? "font-semibold"
                       : past

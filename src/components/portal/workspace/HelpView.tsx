@@ -65,7 +65,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
           // Clipboard can be blocked; the value stays visible and selectable.
         }
       }}
-      className={`grid size-10 shrink-0 place-items-center rounded-lg transition-colors duration-150 ${copied ? "text-[#067647]" : "text-mist-500 hover:bg-mist-100 hover:text-navy-900"}`}
+      className={`grid size-10 shrink-0 place-items-center rounded-lg transition-colors duration-150 ${copied ? "text-status-success" : "text-mist-500 hover:bg-mist-100 hover:text-navy-900"}`}
     >
       <Icon name={copied ? "check" : "copy"} className="size-4" />
     </button>
@@ -75,7 +75,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 function ContactCell({ icon, href, value, label }: { icon: IconName; href?: string; value?: string; label: string }) {
   if (!value) {
     return (
-      <span className="flex min-h-10 min-w-0 items-center gap-2 text-adm-base text-mist-400">
+      <span className="flex min-h-10 min-w-0 items-center gap-2 text-adm-base text-mist-600">
         <Icon name={icon} className="size-4 shrink-0" />
         <span className="md:sr-only">No {label.split(" ")[0]} on record</span>
         <span aria-hidden className="hidden md:inline">–</span>
@@ -152,7 +152,7 @@ function EditorField({ id, label, error, children }: { id: string; label: string
       </label>
       {children}
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-adm-xs text-[#b42318]">
+        <p id={`${id}-error`} role="alert" className="mt-1 text-adm-xs text-status-danger">
           {error}
         </p>
       )}
@@ -331,16 +331,12 @@ const topicCls =
   "group flex h-full min-w-0 flex-col rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200 transition-colors duration-150 hover:ring-ocean-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600";
 
 function TopicCard({ t }: { t: Topic }) {
-  // Icon row on top so the value gets the card's full width and never breaks mid-address
   const inner = (
     <>
-      <span className="flex items-start justify-between">
-        <span className="grid size-9 place-items-center rounded-lg bg-ocean-50 text-ocean-700">
-          <Icon name={t.icon} className="size-[18px]" />
-        </span>
-        {t.external && <Icon name="external" className="size-4 text-mist-400 group-hover:text-ocean-700" />}
+      <span className="flex items-start justify-between gap-2">
+        <span className="block text-adm-base font-semibold text-navy-900">{t.title}</span>
+        {t.external && <Icon name="external" className="size-4 shrink-0 text-mist-500 group-hover:text-ocean-700" />}
       </span>
-      <span className="mt-3 block text-adm-base font-semibold text-navy-900">{t.title}</span>
       <span className="mt-0.5 block text-adm-base tabular-nums text-mist-600 [overflow-wrap:normal]">{t.value}</span>
     </>
   );
@@ -431,7 +427,7 @@ export default function HelpView() {
         title="Help"
         icon="help"
         section="workspace"
-        description="Who to reach at Oceanblue, and how to get things done in the portal."
+
         actions={
           canEdit ? (
             <Button variant="secondary" icon="edit" disabled={loading} onClick={() => setEditing(true)}>
@@ -477,14 +473,14 @@ export default function HelpView() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search people"
-                className="h-9 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                className="h-9 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
               />
               </span>
             </label>
           </div>
 
           {loadFailed && !loading && (
-            <div role="status" className="flex flex-wrap items-center gap-3 border-b border-[#fedf89] bg-[#fffaeb] px-4 py-2 text-adm-base text-[#b54708]">
+            <div role="status" className="flex flex-wrap items-center gap-3 border-b border-status-warning-line bg-status-warning-soft px-4 py-2 text-adm-base text-status-warning">
               <Icon name="alert" className="size-4 shrink-0" />
               <span className="min-w-0 flex-1 basis-60">The saved directory couldn&apos;t be loaded, so this is the built-in list and may be out of date.</span>
               <Button variant="secondary" size="sm" icon="refresh" onClick={retry}>

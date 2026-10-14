@@ -8,6 +8,7 @@ import { Button, EmptyState } from "../ui";
 import { ConfirmDialog, Modal as KitModal } from "../kit/overlay";
 import { ErrorState } from "../kit/states";
 import { ListPageSkeleton, Skeleton } from "../kit/skeletons";
+import { SERIES, seriesColors } from "../charts";
 
 /**
  * Thin wrapper over the portal-wide toast so pages can call show("...")
@@ -65,7 +66,7 @@ export function ConfirmModal({
 }
 
 export const inputCls =
-  "mt-1.5 block h-10 w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-[#f04438]";
+  "mt-1.5 block h-10 w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-status-danger-mark";
 
 /** Labelled input with its inline error */
 export function Field({
@@ -84,16 +85,16 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className={`block text-[13px] font-medium text-navy-900 ${className}`}>
+    <label className={`block text-adm-base font-medium text-navy-900 ${className}`}>
       {label}
-      {required && <span className="text-[#b42318]"> *</span>}
+      {required && <span className="text-status-danger"> *</span>}
       {children}
       {error ? (
-        <span role="alert" className="mt-1 block text-[12px] font-normal text-[#b42318]">
+        <span role="alert" className="mt-1 block text-adm-xs font-normal text-status-danger">
           {error}
         </span>
       ) : (
-        hint && <span className="mt-1 block text-[12px] font-normal text-mist-500">{hint}</span>
+        hint && <span className="mt-1 block text-adm-xs font-normal text-mist-600">{hint}</span>
       )}
     </label>
   );
@@ -108,7 +109,7 @@ export function useDiscardGuard(dirty: boolean, busy: boolean, onClose: () => vo
     else onClose();
   };
   const prompt = asking ? (
-    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#fffaeb] px-4 py-3 text-[14px] text-[#b54708] ring-1 ring-inset ring-[#fedf89]">
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-status-warning-soft px-4 py-3 text-adm-base text-status-warning ring-1 ring-inset ring-status-warning-line">
       <span>Discard your unsaved changes?</span>
       <span className="flex gap-2">
         <Button size="sm" variant="secondary" onClick={() => setAsking(false)}>
@@ -126,7 +127,7 @@ export function useDiscardGuard(dirty: boolean, busy: boolean, onClose: () => vo
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-lg bg-[#fef3f2] px-3 py-2 text-[13px] text-[#b42318]">
+    <p role="alert" className="rounded-lg bg-status-danger-soft px-3 py-2 text-adm-base text-status-danger">
       {message}
     </p>
   );
@@ -158,8 +159,8 @@ export function InlineDelete({ label, warning, busy, onConfirm }: { label: strin
     );
   }
   return (
-    <div className="grid gap-3 rounded-xl bg-[#fef3f2] p-4 ring-1 ring-inset ring-[#fecdca]">
-      <p className="text-[14px] text-[#b42318]">{warning}</p>
+    <div className="grid gap-3 rounded-xl bg-status-danger-soft p-4 ring-1 ring-inset ring-status-danger-line">
+      <p className="text-adm-base text-status-danger">{warning}</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={() => setAsking(false)} disabled={busy}>
           Cancel
@@ -175,12 +176,12 @@ export function InlineDelete({ label, warning, busy, onConfirm }: { label: strin
 /** Facts list for a detail drawer; empty values show a dash */
 export function Facts({ items, cols = 2 }: { items: [string, React.ReactNode][]; cols?: 1 | 2 }) {
   return (
-    <dl className={`grid gap-3 rounded-xl bg-mist-50 p-4 text-[14px] ${cols === 2 ? "sm:grid-cols-2" : ""}`}>
+    <dl className={`grid gap-3 text-adm-base ${cols === 2 ? "sm:grid-cols-2" : ""}`}>
       {items.map(([k, v]) => (
         <div key={k} className="min-w-0">
-          <dt className="text-[12px] font-medium text-mist-500">{k}</dt>
+          <dt className="text-adm-xs font-medium text-mist-600">{k}</dt>
           <dd className="truncate text-navy-900" title={typeof v === "string" ? v : undefined}>
-            {v || <span className="text-mist-400">–</span>}
+            {v || <span className="text-mist-600">–</span>}
           </dd>
         </div>
       ))}
@@ -227,24 +228,28 @@ export function SegmentChips({
   label: string;
 }) {
   const total = items.reduce((a, i) => a + i.count, 0);
+  // Same order and colours as DonutChart: largest first, never cycled, extras neutral.
+  const sorted = [...items].sort((a, b) => b.count - a.count);
+  const palette = colors ?? seriesColors(sorted.map((s) => s.label));
+  const colorOf = new Map(sorted.map((s, i) => [s.label, palette[i] ?? SERIES[SERIES.length - 1]]));
   return (
     <div role="group" aria-label={label} className="flex flex-wrap gap-1.5">
       {[{ label: "All", count: total }, ...items].map((it, i) => {
         const active = value === it.label;
-        const color = i === 0 ? undefined : colors?.[(i - 1) % colors.length];
+        const color = i === 0 ? undefined : colorOf.get(it.label);
         return (
           <button
             key={it.label}
             type="button"
             aria-pressed={active}
             onClick={() => onChange(active && it.label !== "All" ? "All" : it.label)}
-            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-adm-base font-medium transition-colors ${
               active ? "bg-navy-900 text-white" : "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-100"
             }`}
           >
             {color && <span aria-hidden className="size-2.5 rounded-full ring-1 ring-white/60" style={{ background: color }} />}
             {it.label}
-            <span className={`tabular-nums ${active ? "text-tide-200" : "text-mist-500"}`}>{it.count}</span>
+            <span className={`tabular-nums ${active ? "text-tide-200" : "text-mist-600"}`}>{it.count}</span>
           </button>
         );
       })}
@@ -266,13 +271,13 @@ export function ViewTabs<T extends string>({ tabs, value, onChange, label }: { t
           role="tab"
           aria-selected={value === t.id}
           onClick={() => onChange(t.id)}
-          className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
+          className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-adm-base font-medium transition-colors duration-150 ${
             value === t.id ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600 hover:text-navy-900"
           }`}
         >
           {t.label}
           {t.count !== undefined && (
-            <span className={`rounded-md px-1.5 text-[12px] tabular-nums ${value === t.id ? "bg-ocean-50 text-ocean-700" : "bg-mist-200 text-mist-600"}`}>{t.count}</span>
+            <span className={`rounded-md px-1.5 text-adm-xs tabular-nums ${value === t.id ? "bg-ocean-50 text-ocean-700" : "bg-mist-200 text-mist-600"}`}>{t.count}</span>
           )}
         </button>
       ))}
@@ -289,18 +294,18 @@ export function LinkedRoles({ jobs, loading, error }: { jobs: { id: string; titl
         <Skeleton className="h-12 w-full rounded-xl" />
       </div>
     );
-  if (error) return <p className="text-[14px] text-mist-600">Couldn&apos;t load the roles for this record.</p>;
-  if (!jobs.length) return <p className="text-[14px] text-mist-600">No roles are linked to this record yet.</p>;
+  if (error) return <p className="text-adm-base text-mist-600">Couldn&apos;t load the roles for this record.</p>;
+  if (!jobs.length) return <p className="text-adm-base text-mist-600">No roles are linked to this record yet.</p>;
   return (
     <ul className="divide-y divide-mist-200 rounded-xl ring-1 ring-mist-200">
       {jobs.map((j) => (
         <li key={j.id}>
-          <Link href={`/portal/jobs/${j.id}`} className="flex items-center justify-between gap-3 px-4 py-3 text-[14px] hover:bg-mist-50">
+          <Link href={`/portal/jobs/${j.id}`} className="flex items-center justify-between gap-3 px-4 py-3 text-adm-base hover:bg-mist-50">
             <span className="min-w-0">
               <span className="block truncate font-medium text-navy-900">{j.title}</span>
-              {j.location && <span className="block truncate text-[12px] text-mist-600">{j.location}</span>}
+              {j.location && <span className="block truncate text-adm-xs text-mist-600">{j.location}</span>}
             </span>
-            <span className="flex shrink-0 items-center gap-2 text-[12px] text-mist-600">
+            <span className="flex shrink-0 items-center gap-2 text-adm-xs text-mist-600">
               {j.status}
               <Icon name="chevronRight" className="size-4" />
             </span>

@@ -21,11 +21,11 @@ export default function StoryTimeline() {
               className={`absolute left-0 top-0 size-4 -translate-y-1/2 rounded-full ring-4 ring-field-mist ${latest ? "bg-cyan-500" : "bg-ocean-600"}`}
             />
             <p className="flex items-baseline gap-3">
-              <span className="poster text-[clamp(2.75rem,4.5vw,4rem)] tabular-nums text-ocean-700">{m.year}</span>
-              {latest && <span className="bg-cyan-100 px-2 py-0.5 text-[13px] font-semibold text-navy-900">Latest</span>}
+              <span className="poster text-head-xl tabular-nums text-ocean-700">{m.year}</span>
+              {latest && <span className="bg-cyan-100 px-2 py-0.5 text-caption font-semibold text-navy-900">Latest</span>}
             </p>
-            <h3 className="mt-4 text-[clamp(1.25rem,1.6vw,1.5rem)] font-semibold text-navy-900">{m.title}</h3>
-            <p className="mt-2 max-w-[38ch] leading-relaxed text-mist-600">{m.text}</p>
+            <h3 className="mt-4 text-title font-semibold text-navy-900">{m.title}</h3>
+            <p className="mt-2 max-w-measure-narrow leading-normal text-mist-600">{m.text}</p>
           </li>
         );
       })}

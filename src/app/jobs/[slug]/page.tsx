@@ -85,7 +85,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const prose =
-  "max-w-[64ch] [overflow-wrap:anywhere] [&_a]:text-ocean-700 [&_a]:underline [&_h2]:display [&_h2]:mt-8 [&_h2]:text-[1.5rem] [&_h3]:mt-6 [&_h3]:font-semibold [&_li]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mt-4 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:marker:text-ocean-600";
+  "max-w-measure [overflow-wrap:anywhere] [&_a]:text-ocean-700 [&_a]:underline [&_h2]:display [&_h2]:mt-8 [&_h2]:text-head-sm [&_h3]:mt-6 [&_h3]:font-semibold [&_li]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mt-4 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:marker:text-ocean-600";
 
 export default async function JobPage({ params }: Props) {
   const found = await getJob((await params).slug);
@@ -132,7 +132,7 @@ export default async function JobPage({ params }: Props) {
         <div className="gutter pb-12 pt-10 md:pt-14">
           <BackLink href="/jobs" label="All openings" />
           <div className="mt-10 grid gap-8 lg:grid-cols-12">
-            <h1 className="lines poster min-w-0 text-[clamp(2.25rem,4.5vw,4rem)] [overflow-wrap:anywhere] lg:col-span-9">
+            <h1 className="lines poster min-w-0 text-head-xl [overflow-wrap:anywhere] lg:col-span-9">
               <span className="line">
                 <span data-line style={{ "--i": 0 } as React.CSSProperties}>
                   {job.title}
@@ -141,7 +141,7 @@ export default async function JobPage({ params }: Props) {
             </h1>
           </div>
           {job.postingId && (
-            <p data-after-lines className="mt-4 text-[15px] font-medium tabular-nums text-mist-600">
+            <p data-after-lines className="mt-4 text-small font-medium tabular-nums text-mist-600">
               Job ID {job.postingId}
             </p>
           )}
@@ -161,7 +161,7 @@ export default async function JobPage({ params }: Props) {
           <div className="grid min-w-0 content-start gap-12 lg:col-span-7">
             {sections.map((s) => (
               <div key={s.title}>
-                <h2 className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">{s.title}</h2>
+                <h2 className="display text-head-md">{s.title}</h2>
                 <div className={`mt-4 ${prose}`} dangerouslySetInnerHTML={s.html} />
               </div>
             ))}
@@ -173,7 +173,7 @@ export default async function JobPage({ params }: Props) {
               <dl className="grid gap-4">
                 {facts.map((f) => (
                   <div key={f.k}>
-                    <dt className="text-[14px] text-mist-600">{f.k}</dt>
+                    <dt className="text-small text-mist-600">{f.k}</dt>
                     <dd className="font-medium">{f.v}</dd>
                   </div>
                 ))}
@@ -186,13 +186,13 @@ export default async function JobPage({ params }: Props) {
         </div>
       </section>
 
-      <section aria-labelledby="other-role-title" className="bg-navy-900 text-mist-50">
+      <section aria-labelledby="other-role-title" className="on-dark bg-navy-900 text-mist-50">
         <div className="gutter flex flex-wrap items-center justify-between gap-6 py-14 md:py-16">
           <div>
-            <h2 id="other-role-title" className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+            <h2 id="other-role-title" className="display text-head-md">
               Not quite the right role?
             </h2>
-            <p className="mt-2 max-w-[56ch] text-tide-300">
+            <p className="mt-2 max-w-measure text-tide-300">
               Tell us the work you are looking for. A recruiter will keep your details and contact you when something fits.
             </p>
           </div>

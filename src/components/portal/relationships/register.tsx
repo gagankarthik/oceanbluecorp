@@ -66,8 +66,8 @@ export function RecordHead({ name, sub, badges }: { name: string; sub?: React.Re
     <div className="flex items-center gap-4">
       <Avatar name={name} size="lg" />
       <div className="min-w-0">
-        <p className="truncate text-[18px] font-semibold text-navy-900">{name}</p>
-        {sub && <p className="truncate text-[14px] text-mist-600">{sub}</p>}
+        <p className="truncate text-adm-md font-semibold text-navy-900">{name}</p>
+        {sub && <p className="truncate text-adm-base text-mist-600">{sub}</p>}
         {badges && <div className="mt-2 flex flex-wrap gap-1.5">{badges}</div>}
       </div>
     </div>
@@ -79,8 +79,8 @@ export function RecordStats({ items }: { items: { k: string; v: React.ReactNode 
     <dl className="grid grid-cols-3 gap-3">
       {items.map((s) => (
         <div key={s.k} className="min-w-0 rounded-xl bg-mist-50 p-3">
-          <dt className="text-[12px] text-mist-600">{s.k}</dt>
-          <dd className="mt-1 truncate text-[18px] font-semibold tabular-nums text-navy-900">{s.v}</dd>
+          <dt className="text-adm-xs text-mist-600">{s.k}</dt>
+          <dd className="mt-1 truncate text-adm-md font-semibold tabular-nums text-navy-900">{s.v}</dd>
         </div>
       ))}
     </dl>
@@ -90,18 +90,18 @@ export function RecordStats({ items }: { items: { k: string; v: React.ReactNode 
 /** Label + control + error/hint, for controls that aren't native inputs (Select). */
 export function FieldShell({ label, required, error, hint, className = "", children }: { label: string; required?: boolean; error?: string; hint?: string; className?: string; children: React.ReactNode }) {
   return (
-    <div className={`text-[13px] font-medium text-navy-900 ${className}`}>
+    <div className={`text-adm-base font-medium text-navy-900 ${className}`}>
       <p className="mb-1.5">
         {label}
-        {required && <span className="text-[#b42318]"> *</span>}
+        {required && <span className="text-status-danger"> *</span>}
       </p>
       {children}
       {error ? (
-        <span role="alert" className="mt-1 block text-[12px] font-normal text-[#b42318]">
+        <span role="alert" className="mt-1 block text-adm-xs font-normal text-status-danger">
           {error}
         </span>
       ) : (
-        hint && <span className="mt-1 block text-[12px] font-normal text-mist-500">{hint}</span>
+        hint && <span className="mt-1 block text-adm-xs font-normal text-mist-600">{hint}</span>
       )}
     </div>
   );
@@ -135,7 +135,7 @@ export function RoleCount({ open = 0, all = 0 }: { open?: number; all?: number }
   return (
     <span className="whitespace-nowrap tabular-nums">
       <span className="font-medium">{open}</span>
-      <span className="text-mist-500"> open of {all}</span>
+      <span className="text-mist-600"> open of {all}</span>
     </span>
   );
 }

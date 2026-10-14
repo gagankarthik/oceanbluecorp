@@ -68,7 +68,7 @@ export default function Legal() {
       <header id="top" className="bg-field-paper">
         <div className="gutter grid gap-8 pb-12 pt-14 md:pb-16 md:pt-20 lg:grid-cols-12">
           <p className="side text-mist-600 lg:pt-4">Legal and privacy</p>
-          <h1 className="lines poster axis text-[clamp(2.75rem,6vw,5.5rem)]">
+          <h1 className="lines poster axis text-head-xl">
             <span className="line">
               <span data-line style={{ "--i": 0 } as React.CSSProperties}>
                 The documents,
@@ -80,7 +80,7 @@ export default function Legal() {
               </span>
             </span>
           </h1>
-          <p data-after-lines className="axis max-w-[46ch] text-lead leading-snug">
+          <p data-after-lines className="axis max-w-measure-narrow text-lead leading-snug">
             Everything governing how we handle your data and how this site may be used. Each one states when it was last updated.
           </p>
         </div>
@@ -91,9 +91,9 @@ export default function Legal() {
           {documents.map((d, i) => (
             <li key={d.href} data-reveal style={{ "--d": i % 3 } as React.CSSProperties}>
               <Link href={d.href} className="group flex h-full min-h-[220px] flex-col bg-mist-0 p-7 transition-colors hover:bg-tide-100">
-                <h2 className="display text-[clamp(1.5rem,2vw,2rem)] group-hover:text-ocean-700">{d.name}</h2>
-                {d.updated && <p className="mt-1 text-[15px] text-mist-600">Last updated {d.updated}</p>}
-                <p className="mt-4 leading-relaxed">{d.desc}</p>
+                <h2 className="display text-head-sm group-hover:text-ocean-700">{d.name}</h2>
+                {d.updated && <p className="mt-1 text-small text-mist-600">Last updated {d.updated}</p>}
+                <p className="mt-4 leading-normal">{d.desc}</p>
                 <span className="mt-auto inline-flex items-center gap-2 pt-6 font-medium text-ocean-700">
                   Read
                   <Arrow className="size-4 transition-transform group-hover:translate-x-1" />
@@ -107,10 +107,10 @@ export default function Legal() {
       <section aria-labelledby="legal-q" className="bg-field-paper">
         <div className="gutter grid items-end gap-8 py-16 md:py-20 lg:grid-cols-12">
           <div className="lg:col-span-7" data-reveal>
-            <h2 id="legal-q" className="display text-[clamp(2rem,3.4vw,3.25rem)]">
+            <h2 id="legal-q" className="display text-head">
               Questions about any of this?
             </h2>
-            <p className="mt-4 max-w-[56ch] text-mist-600">
+            <p className="mt-4 max-w-measure text-mist-600">
               For privacy requests, data deletion, or anything else in these documents, email{" "}
               <a href={`mailto:${company.email}`} className="text-ocean-700 underline underline-offset-4">
                 {company.email}

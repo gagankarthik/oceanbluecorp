@@ -14,7 +14,7 @@ export default function AuthShell({
   return (
     <section className="grid min-h-svh bg-field-paper lg:h-svh lg:grid-cols-2 lg:overflow-hidden">
       {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-navy-900 text-mist-50 lg:block">
+      <div className="on-dark relative hidden overflow-hidden bg-navy-900 text-mist-50 lg:block">
         <div aria-hidden className="absolute inset-0 opacity-35">
           <Photo name="tower" className="h-full" position="28% 50%" sizes="50vw" />
         </div>
@@ -24,10 +24,10 @@ export default function AuthShell({
             <Logo variant="white" className="h-11 w-[9.4rem]" />
           </Link>
           <div>
-            <p className="display max-w-[16ch] text-[clamp(2rem,3vw,3rem)]">The people and platforms enterprises rely on.</p>
-            <p className="mt-4 max-w-[40ch] text-tide-300">For Oceanblue employees and consultants on assignment.</p>
+            <p className="display max-w-[16ch] text-head-md">The people and platforms enterprises rely on.</p>
+            <p className="mt-4 max-w-measure-narrow text-tide-300">For Oceanblue employees and consultants on assignment.</p>
           </div>
-          <p className="text-[14px] text-tide-300">
+          <p className="text-small text-tide-300">
             Not staff?{" "}
             <Link href="/jobs" className="text-white underline underline-offset-4">
               Find a job

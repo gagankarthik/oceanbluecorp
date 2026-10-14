@@ -308,11 +308,11 @@ export default function ResumesView() {
 
   const IndexCell = ({ r }: { r: BankResume }) =>
     r.indexing ? (
-      <span className="inline-flex items-center gap-1.5 text-[13px] text-mist-600"><Spinner className="size-4 text-ocean-600" /> Indexing</span>
+      <span className="inline-flex items-center gap-1.5 text-adm-base text-mist-600"><Spinner className="size-4 text-ocean-600" /> Indexing</span>
     ) : r.indexed ? (
       <Badge tone="green" dot>Searchable</Badge>
     ) : isExtra(r) ? (
-      <span className="text-[13px] text-mist-500" title="Another copy of this file is kept and searchable">Extra copy, skipped</span>
+      <span className="text-adm-base text-mist-600" title="Another copy of this file is kept and searchable">Extra copy, skipped</span>
     ) : isFailed(r) ? (
       <button
         type="button"
@@ -322,12 +322,12 @@ export default function ResumesView() {
         }}
         disabled={rowIndexing || jobBusy}
         title={serverFailures.get(r.fileKey) || "The last attempt failed"}
-        className="inline-flex min-h-7 items-center rounded-md bg-[#fef3f2] px-2 text-[12px] font-medium text-[#b42318] ring-1 ring-inset ring-[#fecdca] hover:bg-[#fee4e2] disabled:opacity-50"
+        className="inline-flex min-h-8 items-center rounded-md bg-status-danger-soft px-2 text-adm-xs font-medium text-status-danger ring-1 ring-inset ring-status-danger-line hover:bg-status-danger-hover disabled:opacity-50"
       >
         Failed, retry
       </button>
     ) : (
-      <span className="text-[13px] text-mist-500">Not searchable yet</span>
+      <span className="text-adm-base text-mist-600">Not searchable yet</span>
     );
 
   const columns: Column<BankResume>[] = [
@@ -345,10 +345,10 @@ export default function ResumesView() {
       ),
     },
     { key: "type", header: "Type", sortable: true, card: false, hideBelow: "xl", value: (r) => formatLabel(r.fileType) },
-    { key: "candidate", header: "Candidate", sortable: true, hideBelow: "md", value: (r) => r.candidateName ?? "", cell: (r) => r.candidateName || <span className="text-mist-400">&mdash;</span> },
-    { key: "uploader", header: "Uploaded by", sortable: true, card: false, hideBelow: "xl", value: (r) => r.uploaderEmail, cell: (r) => <span className="text-[13px] text-mist-700">{r.uploaderEmail}</span> },
+    { key: "candidate", header: "Candidate", sortable: true, hideBelow: "md", value: (r) => r.candidateName ?? "", cell: (r) => r.candidateName || <span className="text-mist-600">&mdash;</span> },
+    { key: "uploader", header: "Uploaded by", sortable: true, card: false, hideBelow: "xl", value: (r) => r.uploaderEmail, cell: (r) => <span className="text-adm-base text-mist-700">{r.uploaderEmail}</span> },
     { key: "size", header: "Size", sortable: true, numeric: true, card: false, hideBelow: "lg", value: (r) => r.fileSize || 0, cell: (r) => <span className="tabular-nums text-mist-600">{fmtSize(r.fileSize || 0)}</span> },
-    { key: "uploadedAt", header: "Uploaded", sortable: true, hideBelow: "md", value: (r) => r.uploadedAt, cell: (r) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(r.uploadedAt)}</span> },
+    { key: "uploadedAt", header: "Uploaded", sortable: true, hideBelow: "md", value: (r) => r.uploadedAt, cell: (r) => <span className="text-adm-base tabular-nums text-mist-600">{fmtDate(r.uploadedAt)}</span> },
     { key: "indexed", header: "Search", sortable: true, align: "center", value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => <IndexCell r={r} /> },
   ];
   const filters: Filter<BankResume>[] = [
@@ -386,7 +386,7 @@ export default function ResumesView() {
       {job.phase === "stopping" ? "Stopping after the current batch." : `Indexing in the cloud: ${Math.max(0, job.total - job.remaining)} of ${job.total} done, ${job.remaining} left${job.updatedAt ? `, last activity ${fmtRelative(job.updatedAt)}` : ""}. You can close this page.`}
     </span>
   ) : job?.phase === "stalled" ? (
-    <span className="text-[#b54708]">Indexing stopped responding with {job.remaining} of {job.total} left{job.updatedAt ? ` (last activity ${fmtRelative(job.updatedAt)})` : ""}. Resume picks up where it stopped.</span>
+    <span className="text-status-warning">Indexing stopped responding with {job.remaining} of {job.total} left{job.updatedAt ? ` (last activity ${fmtRelative(job.updatedAt)})` : ""}. Resume picks up where it stopped.</span>
   ) : failedRows.length || appFailures ? (
     <span className="text-mist-700">
       {failedRows.length} file{failedRows.length === 1 ? "" : "s"} couldn&apos;t be read{appFailures > 0 ? `, plus ${appFailures} bench and applicant resume${appFailures === 1 ? "" : "s"}` : ""}. Usually a scanned PDF with no text, or a damaged file.
@@ -404,8 +404,8 @@ export default function ResumesView() {
       onClick={() => setStatusKey((k) => (k === key ? null : key))}
       className={`flex min-h-10 min-w-0 flex-col items-start rounded-lg px-3 py-2 text-left ring-1 ring-inset transition-colors duration-150 ${statusKey === key ? "bg-ocean-50 ring-ocean-300" : "ring-mist-200 hover:bg-mist-50"}`}
     >
-      <span className={`text-[20px] font-semibold leading-tight tabular-nums ${value ? tone : "text-mist-500"}`}>{value}</span>
-      <span className="truncate text-[12px] text-mist-600">{label}</span>
+      <span className={`text-adm-lg font-semibold leading-tight tabular-nums ${value ? tone : "text-mist-600"}`}>{value}</span>
+      <span className="truncate text-adm-xs text-mist-600">{label}</span>
     </button>
   );
 
@@ -436,16 +436,16 @@ export default function ResumesView() {
         <Panel title="Bank health" action={healthAction}>
           <div className="grid gap-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-[30px] font-semibold leading-none tracking-tight tabular-nums text-navy-900">{searchablePct}%</span>
-              <span className="text-[14px] text-mist-600">searchable, {searchable} of {list.length} files</span>
+              <span className="text-adm-2xl font-semibold leading-none tracking-tight tabular-nums text-navy-900">{searchablePct}%</span>
+              <span className="text-adm-base text-mist-600">searchable, {searchable} of {list.length} files</span>
             </div>
             <ProgressBar value={runPct ?? searchablePct} tone={runPct === null && searchablePct === 100 ? "green" : "blue"} />
-            <p className="text-[13px]">{healthLine}</p>
+            <p className="text-adm-base">{healthLine}</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {stat("indexed", "Searchable", searchable, "text-[#067647]")}
+              {stat("indexed", "Searchable", searchable, "text-status-success")}
               {stat("pending", "Not searchable yet", pendingNotFailed, "text-navy-900")}
-              {stat("failed", "Failed", failedRows.length, "text-[#b42318]")}
-              {stat("duplicates", "Extra copies", extraCount, "text-[#b54708]")}
+              {stat("failed", "Failed", failedRows.length, "text-status-danger")}
+              {stat("duplicates", "Extra copies", extraCount, "text-status-warning")}
             </div>
           </div>
         </Panel>
@@ -499,7 +499,7 @@ export default function ResumesView() {
                       { k: "Size", v: fmtSize(row.fileSize || 0) },
                     ]}
                   />
-                  {isFailed(row) && serverFailures.get(row.fileKey) && <p className="rounded-lg bg-[#fef3f2] p-3 text-[13px] text-[#b42318]">{serverFailures.get(row.fileKey)}</p>}
+                  {isFailed(row) && serverFailures.get(row.fileKey) && <p className="rounded-lg bg-status-danger-soft p-3 text-adm-base text-status-danger">{serverFailures.get(row.fileKey)}</p>}
                   <div className="flex flex-wrap gap-2 border-t border-mist-200 pt-5">
                     <Button icon="download" onClick={() => void download(row)}>Download</Button>
                     {!row.indexed && !isExtra(row) && (
@@ -546,8 +546,8 @@ export default function ResumesView() {
         <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-navy-950/40 p-4">
           <div className="w-full max-w-sm rounded-xl border-2 border-dashed border-ocean-600 bg-mist-0 px-6 py-10 text-center shadow-2xl">
             <Icon name="upload" className="mx-auto size-7 text-ocean-600" />
-            <p className="mt-3 text-[16px] font-semibold">Drop resumes to upload</p>
-            <p className="mt-1 text-[13px] text-mist-600">PDF or Word, up to 5 MB each</p>
+            <p className="mt-3 text-adm-md font-semibold">Drop resumes to upload</p>
+            <p className="mt-1 text-adm-base text-mist-600">PDF or Word, up to 5 MB each</p>
           </div>
         </div>
       )}
@@ -557,11 +557,7 @@ export default function ResumesView() {
           section="recruiting"
           icon="resume"
           title="Resumes"
-          description={
-            resumes
-              ? `${list.length} resume${list.length === 1 ? "" : "s"} on file${pendingIndex.length ? `, ${pendingIndex.length} not searchable yet` : ""}. Drop files anywhere to upload.`
-              : "Resume files kept searchable for Lead sourcing and Best candidates."
-          }
+          description="Drop files anywhere to upload."
           actions={
             <>
               {list.length > 0 && (
@@ -597,11 +593,11 @@ export default function ResumesView() {
                 <li key={item.id} className="flex items-start gap-3 px-5 py-3">
                   <Badge tone="grey">{formatLabel(item.file.type)}</Badge>
                   <div className="min-w-0 flex-1">
-                    <p className="flex min-w-0 items-center gap-2 text-[14px]">
+                    <p className="flex min-w-0 items-center gap-2 text-adm-base">
                       <span className="truncate font-medium">{item.file.name}</span>
-                      <span className="shrink-0 text-[12px] tabular-nums text-mist-500">{fmtSize(item.file.size)}</span>
+                      <span className="shrink-0 text-adm-xs tabular-nums text-mist-600">{fmtSize(item.file.size)}</span>
                       {item.status === "uploading" && <Spinner className="size-4 text-ocean-600" label="Uploading" />}
-                      {item.status === "done" && <Icon name="check" className="size-4 shrink-0 text-[#067647]" title="Uploaded" />}
+                      {item.status === "done" && <Icon name="check" className="size-4 shrink-0 text-status-success" title="Uploaded" />}
                     </p>
                     {item.status === "pending" && (
                       <input
@@ -612,7 +608,7 @@ export default function ResumesView() {
                         className={`${fieldCls} h-10`}
                       />
                     )}
-                    {item.status === "error" && <p className="mt-1 text-[13px] text-[#b42318]">{item.error}</p>}
+                    {item.status === "error" && <p className="mt-1 text-adm-base text-status-danger">{item.error}</p>}
                   </div>
                   {(item.status === "pending" || item.status === "error") && (
                     <Button size="sm" variant="ghost" icon="x" label={`Remove ${item.file.name}`} onClick={() => setQueue((q) => q.filter((i) => i.id !== item.id))} />
@@ -622,7 +618,7 @@ export default function ResumesView() {
             </ul>
             {(pendingCount > 0 || uploading) && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-5 py-3">
-                <span className="text-[13px] text-mist-600">{pendingCount ? `${pendingCount} ready to upload` : "Uploading"}</span>
+                <span className="text-adm-base text-mist-600">{pendingCount ? `${pendingCount} ready to upload` : "Uploading"}</span>
                 <Button icon="upload" loading={uploading} disabled={!pendingCount} onClick={() => void uploadAll()}>
                   Upload {pendingCount || ""} file{pendingCount === 1 ? "" : "s"}
                 </Button>
@@ -645,8 +641,8 @@ export default function ResumesView() {
           onClose={() => setPreview(null)}
           footer={
             <>
-              <a href={preview.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-[14px] font-medium text-navy-900 transition-colors hover:bg-mist-100">
-                <Icon name="external" className="size-[18px]" />
+              <a href={preview.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-adm-base font-medium text-navy-900 transition-colors hover:bg-mist-100">
+                <Icon name="external" className="size-5" />
                 Open in a new tab
               </a>
               <Button variant="secondary" icon="download" onClick={() => {
@@ -700,7 +696,7 @@ function DuplicatesDialog({
       footer={
         confirming ? (
           <>
-            <span className="mr-auto text-[13px] text-[#b42318]">Permanently deletes {toDelete.length} file{toDelete.length === 1 ? "" : "s"}.</span>
+            <span className="mr-auto text-adm-base text-status-danger">Permanently deletes {toDelete.length} file{toDelete.length === 1 ? "" : "s"}.</span>
             <Button variant="secondary" disabled={busy} onClick={() => setConfirming(false)}>Back</Button>
             <Button variant="danger" icon="trash" loading={busy} onClick={() => void run()}>Delete {toDelete.length}</Button>
           </>
@@ -714,33 +710,33 @@ function DuplicatesDialog({
         )
       }
     >
-      <p className="text-[14px] text-mist-700">Same file name and size. Choose the copy to keep in each group; every other copy is deleted.</p>
+      <p className="text-adm-base text-mist-700">Same file name and size. Choose the copy to keep in each group; every other copy is deleted.</p>
       <ul className="mt-4 grid gap-3">
         {groups.map((g) => {
           const kept = keeperOf(g);
           const losesIndexed = !g.files.find((f) => f.key === kept)?.indexed && g.files.some((f) => f.indexed);
           return (
             <li key={g.groupKey} className="overflow-hidden rounded-lg ring-1 ring-mist-200">
-              <p className="flex items-center justify-between gap-3 bg-mist-50 px-3 py-2 text-[13px]">
+              <p className="flex items-center justify-between gap-3 bg-mist-50 px-3 py-2 text-adm-base">
                 <span className="truncate font-semibold">{g.keeper.fileName}</span>
                 <span className="shrink-0 tabular-nums text-mist-600">{g.files.length} copies</span>
               </p>
               <ul className="divide-y divide-mist-100">
                 {g.files.map((f) => (
-                  <li key={f.key} className="flex items-center gap-3 px-3 py-2 text-[13px]">
+                  <li key={f.key} className="flex items-center gap-3 px-3 py-2 text-adm-base">
                     <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
                       <input type="radio" name={g.groupKey} checked={f.key === kept} onChange={() => setKeep((k) => ({ ...k, [g.groupKey]: f.key }))} className="size-4 accent-ocean-600" />
                       <span className="min-w-0">
                         <span className="block truncate">{f.row.candidateName || f.row.uploaderEmail}</span>
-                        <span className="block truncate text-[12px] text-mist-500">{fmtDateTime(f.row.uploadedAt)}{f.indexed ? ", searchable" : ""}</span>
+                        <span className="block truncate text-adm-xs text-mist-600">{fmtDateTime(f.row.uploadedAt)}{f.indexed ? ", searchable" : ""}</span>
                       </span>
                     </label>
-                    <span className={`font-semibold ${f.key === kept ? "text-[#067647]" : "text-[#b42318]"}`}>{f.key === kept ? "Keep" : "Delete"}</span>
+                    <span className={`font-semibold ${f.key === kept ? "text-status-success" : "text-status-danger"}`}>{f.key === kept ? "Keep" : "Delete"}</span>
                     <Button size="sm" variant="ghost" icon="eye" label={`Preview ${f.fileName}`} onClick={() => onPreview(f.row)} />
                   </li>
                 ))}
               </ul>
-              {losesIndexed && <p className="bg-[#fffaeb] px-3 py-2 text-[12px] text-[#b54708]">The searchable copy will be deleted. Run Make all searchable afterwards.</p>}
+              {losesIndexed && <p className="bg-status-warning-soft px-3 py-2 text-adm-xs text-status-warning">The searchable copy will be deleted. Run Make all searchable afterwards.</p>}
             </li>
           );
         })}

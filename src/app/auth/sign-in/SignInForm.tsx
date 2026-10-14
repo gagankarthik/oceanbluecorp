@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { company } from "@/lib/site-content";
 import { useAuth } from "@/lib/auth";
 import { landingRouteFor } from "@/lib/auth/config";
-import { field, ErrorNote, PasswordInput, PasswordRules, unmetRules } from "../fields";
+import { useFormErrors } from "@/hooks/use-form-errors";
+import { check, collectErrors, email as emailRule, phone as phoneRule, required, toE164 } from "@/lib/form-validation";
+import FieldError from "@/components/site/FieldError";
+import SubmitButton from "@/components/site/SubmitButton";
+import { field, invalid, ErrorNote, PasswordInput, PasswordRules, StepLabel, unmetRules } from "../fields";
 
 type Step = "signin" | "complete";
+type Field = "email" | "password" | "name" | "phone" | "newPassword" | "confirm";
+
+const IDS: Partial<Record<Field, string>> = { name: "full-name", newPassword: "new-password", confirm: "confirm-password" };
 
 /** Staff sign-in against Cognito; invited users finish account setup on the second step. */
 export default function SignInForm() {
@@ -18,8 +25,11 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [capsLock, setCapsLock] = useState(false);
+  // Cognito and network failures only; field problems sit under their field.
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const shownStep = useRef(step);
 
   // Invite challenge: these travel back to Cognito with the answer.
   const [session, setSession] = useState("");
@@ -29,6 +39,22 @@ export default function SignInForm() {
   const [phone, setPhone] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+
+  const { errors, validateAll, revalidate, reset } = useFormErrors<Field>(() => {
+    if (step === "signin") {
+      return collectErrors<Field>({
+        email: check(email, required("Enter the email address you use for work."), emailRule("Enter your work email, like name@oceanbluecorp.com.")),
+        password: check(password, required("Enter your password.")),
+      } as Record<Field, string | undefined>);
+    }
+    const unmet = unmetRules(newPassword);
+    return collectErrors<Field>({
+      name: check(name, required("Enter your full name.")),
+      phone: check(phone, required("Enter your mobile number."), phoneRule()),
+      newPassword: !newPassword ? "Choose a new password." : unmet.length ? `Your password still needs ${unmet.join(", ")}.` : undefined,
+      confirm: !confirm ? "Enter the password again." : confirm !== newPassword ? "The passwords do not match." : undefined,
+    } as Record<Field, string | undefined>);
+  }, IDS);
 
   const landing = (role: Parameters<typeof landingRouteFor>[0]) => {
     const next = new URLSearchParams(window.location.search).get("next");
@@ -40,18 +66,26 @@ export default function SignInForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
+  // A new step announces itself: focus lands on its heading.
+  useEffect(() => {
+    if (shownStep.current !== step) headingRef.current?.focus();
+    shownStep.current = step;
+  }, [step]);
+
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(email)) return setError("Enter the email address you use for work.");
-    if (!password) return setError("Enter your password.");
+    if (!validateAll()) return;
+    const workEmail = email.trim();
+    setEmail(workEmail);
     setError(null);
     setBusy(true);
     try {
-      const result = await signInWithCredentials(email, password);
+      const result = await signInWithCredentials(workEmail, password);
       if (result.status === "NEW_PASSWORD_REQUIRED") {
         setSession(result.session);
         setChallengeUsername(result.username);
         setRequiredAttributes(result.requiredAttributes);
+        reset();
         setStep("complete");
       } else {
         landing(result.user.role);
@@ -65,20 +99,15 @@ export default function SignInForm() {
 
   async function handleComplete(e: React.FormEvent) {
     e.preventDefault();
-    const unmet = unmetRules(newPassword);
-    if (!name.trim()) return setError("Enter your full name.");
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length !== 10) return setError("Enter a 10-digit US phone number.");
-    if (unmet.length) return setError(`Your password still needs ${unmet.join(", ")}.`);
-    if (newPassword !== confirm) return setError("The passwords do not match.");
+    if (!validateAll()) return;
     setError(null);
     setBusy(true);
     try {
       const authUser = await completeNewPassword({
-        email,
+        email: email.trim(),
         session,
         name: name.trim(),
-        phone: `+1${digits}`,
+        phone: toE164(phone),
         password: newPassword,
         username: challengeUsername,
         requiredAttributes,
@@ -93,52 +122,90 @@ export default function SignInForm() {
     }
   }
 
-  const submit =
-    "mt-6 flex min-h-12 w-full items-center justify-center bg-ocean-600 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.99] disabled:opacity-60";
+  const heading = "display text-head-sm outline-none";
 
   if (step === "complete") {
     return (
-      <form onSubmit={handleComplete} noValidate>
-        <h1 className="display text-[clamp(1.625rem,2.4vw,2rem)]">Set up your account</h1>
-        <p className="mt-1 text-[15px] text-mist-600">Welcome to Oceanblue. Add your details and choose a password.</p>
+      <form onSubmit={handleComplete} onBlur={revalidate} noValidate>
+        <StepLabel n={2} of={2} />
+        <h1 ref={headingRef} tabIndex={-1} className={heading}>
+          Set up your account
+        </h1>
+        <p className="mt-1 text-small text-mist-600">Welcome to Oceanblue. Add your details and choose a password.</p>
         <div className="mt-5 grid gap-4">
-          <label className="block font-medium">
-            Full name
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required className={field} />
-          </label>
-          <label className="block font-medium">
-            Mobile phone
+          <div>
+            <label htmlFor="full-name" className="block font-medium">
+              Full name
+            </label>
             <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              autoComplete="tel-national"
-              placeholder="614 555 0100"
+              id="full-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
               required
               className={field}
+              {...invalid("full-name", errors.name)}
             />
-          </label>
-          <PasswordInput id="new-password" label="New password" value={newPassword} onChange={setNewPassword} autoComplete="new-password" />
+            <FieldError id="full-name" message={errors.name} />
+          </div>
+          <div>
+            <label htmlFor="phone" className="block font-medium">
+              Mobile phone
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              inputMode="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              autoComplete="tel"
+              placeholder="(614) 555-0100"
+              required
+              className={field}
+              {...invalid("phone", errors.phone)}
+            />
+            <FieldError id="phone" message={errors.phone} />
+          </div>
+          <PasswordInput
+            id="new-password"
+            label="New password"
+            value={newPassword}
+            onChange={setNewPassword}
+            autoComplete="new-password"
+            error={errors.newPassword}
+          />
           <PasswordRules value={newPassword} />
-          <PasswordInput id="confirm-password" label="Confirm password" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+          <PasswordInput
+            id="confirm-password"
+            label="Confirm password"
+            value={confirm}
+            onChange={setConfirm}
+            autoComplete="new-password"
+            error={errors.confirm}
+          />
         </div>
         <ErrorNote error={error} />
-        <button type="submit" disabled={busy} className={submit}>
-          {busy ? "Saving…" : "Finish and sign in"}
-        </button>
+        <SubmitButton busy={busy} busyLabel="Saving…" full className="mt-6">
+          Finish and sign in
+        </SubmitButton>
       </form>
     );
   }
 
   return (
-    <form onSubmit={handleSignIn} noValidate>
-      <h1 className="display text-[clamp(1.625rem,2.4vw,2rem)]">Employee sign in</h1>
-      <p className="mt-1 text-[15px] text-mist-600">Use your Oceanblue work email and password.</p>
+    <form onSubmit={handleSignIn} onBlur={revalidate} noValidate>
+      <h1 ref={headingRef} tabIndex={-1} className={heading}>
+        Employee sign in
+      </h1>
+      <p className="mt-1 text-small text-mist-600">Use your Oceanblue work email and password.</p>
 
       <div className="mt-5 grid gap-4">
-        <label className="block font-medium">
-          Work email
+        <div>
+          <label htmlFor="email" className="block font-medium">
+            Work email
+          </label>
           <input
+            id="email"
             type="email"
             name="email"
             autoComplete="username"
@@ -148,8 +215,10 @@ export default function SignInForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@oceanbluecorp.com"
             className={field}
+            {...invalid("email", errors.email)}
           />
-        </label>
+          <FieldError id="email" message={errors.email} />
+        </div>
 
         <div>
           <PasswordInput
@@ -159,23 +228,24 @@ export default function SignInForm() {
             onChange={setPassword}
             autoComplete="current-password"
             onKeyUp={(e) => setCapsLock(e.getModifierState("CapsLock"))}
+            error={errors.password}
             aside={
-              <Link href="/auth/forgot-password" className="text-[15px] font-medium text-ocean-700 underline-offset-4 hover:underline">
+              <Link href="/auth/forgot-password" className="text-small font-medium text-ocean-700 underline-offset-4 hover:underline">
                 Forgot password?
               </Link>
             }
           />
-          {capsLock && <p className="mt-2 text-[14px] font-medium text-navy-900">Caps Lock is on.</p>}
+          {capsLock && <p className="mt-2 text-small font-medium text-navy-900">Caps Lock is on.</p>}
         </div>
       </div>
 
       <ErrorNote error={error} />
 
-      <button type="submit" disabled={busy} className={submit}>
-        {busy ? "Signing in…" : "Sign in"}
-      </button>
+      <SubmitButton busy={busy} busyLabel="Signing in…" full className="mt-6">
+        Sign in
+      </SubmitButton>
 
-      <p className="mt-5 text-[15px] text-mist-600">
+      <p className="mt-5 text-small text-mist-600">
         Access is by invitation. Need help?{" "}
         <a href={`mailto:${company.email}?subject=Sign-in%20help`} className="font-medium text-ocean-700 underline underline-offset-4">
           Contact HR

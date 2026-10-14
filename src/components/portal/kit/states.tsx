@@ -49,8 +49,8 @@ export function EmptyState({
       <span className={`grid size-12 place-items-center rounded-full ${chip}`}>
         <Icon name={glyph} className="size-6" />
       </span>
-      <p className="mt-4 text-[16px] font-semibold text-navy-900">{title}</p>
-      {body && <p className="mt-1 max-w-[48ch] text-[14px] text-mist-600">{body}</p>}
+      <p className="mt-4 text-adm-md font-semibold text-navy-900">{title}</p>
+      {body && <p className="mt-1 max-w-[48ch] text-adm-base text-mist-600">{body}</p>}
       {hasButtons && (
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           {variant === "no-results" && onClearFilters && (
@@ -92,11 +92,11 @@ export function ErrorState({
 }) {
   return (
     <div role="alert" className={`flex flex-col items-center px-6 py-16 text-center ${framed ? card : ""}`}>
-      <span className="grid size-12 place-items-center rounded-full bg-[#fef3f2] text-[#b42318]">
+      <span className="grid size-12 place-items-center rounded-full bg-status-danger-soft text-status-danger">
         <Icon name="alert" className="size-6" />
       </span>
-      <p className="mt-4 text-[16px] font-semibold text-navy-900">{title}</p>
-      <p className="mt-1 max-w-[48ch] text-[14px] text-mist-600">{message || "Check your connection and try again."}</p>
+      <p className="mt-4 text-adm-md font-semibold text-navy-900">{title}</p>
+      <p className="mt-1 max-w-[48ch] text-adm-base text-mist-600">{message || "Check your connection and try again."}</p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {onRetry && (
           <Button icon="refresh" onClick={onRetry} loading={retrying}>

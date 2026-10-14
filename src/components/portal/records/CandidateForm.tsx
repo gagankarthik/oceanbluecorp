@@ -82,11 +82,11 @@ export function CandidateForm({
       </p>
       <ul className="mt-1.5 grid gap-1">
         {form.duplicates.map((d) => (
-          <li key={d.id} className="text-[13px]">
+          <li key={d.id} className="text-adm-base">
             <Link href={`/portal/candidates/${d.id}`} className="font-medium text-ocean-700 underline-offset-4 hover:underline">
               {d.name || d.email}
             </Link>
-            <span className="text-[#93370d]/80">
+            <span className="text-status-warning-strong/80">
               {" "}
               {[d.email, d.jobTitle].filter(Boolean).join(" · ")} · matched on {d.matchedOn.join(" and ")}
             </span>

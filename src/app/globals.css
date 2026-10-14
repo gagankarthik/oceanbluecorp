@@ -10,68 +10,12 @@
      semantic    --{category}-{property}-{role}[-{state}]     a purpose
      component   --{component}-{part}-{property}[-{state}]    one element
 
-   Components read semantic or component tokens, never a primitive,
-   so a retheme is a change to the semantic block and nothing else.
-   The console's semantic layer is --adm-* (light + dark, below); the
-   public site's is --color-*, surfaced as Tailwind roles in @theme.
+   Colour primitives are the scales in styles/colors.css. The console's
+   semantic layer is --adm-* (ADMIN block below); the public site uses the
+   palette classes and the type scale in the "Website redesign v2" block.
    Rules and the review process: DESIGN_SYSTEM.md §2.
    ============================================================ */
 :root {
-  /* ── Tier 1: primitives ─────────────────────────────────── */
-
-  /* Blue-grey: the public site's neutral, navy at the dark end. */
-  --p-neutral-0:   #ffffff;
-  --p-slate-25:    #eef2fb;
-  --p-slate-50:    #f3f6fb;
-  --p-slate-100:   #e7edf6;
-  --p-slate-200:   #e2e8f1;
-  --p-slate-300:   #cbd5e3;
-  --p-slate-400:   #9aa6ba;
-  --p-slate-600:   #56637b;
-  --p-slate-700:   #3a4a66;
-  --p-slate-900:   #0b1a33;
-
-  /* Cool grey: the console's neutral. */
-  --p-gray-50:     #f9fafb;
-  --p-gray-75:     #f5f7fa;
-  --p-gray-100:    #f2f4f7;
-  --p-gray-150:    #eef1f5;
-  --p-gray-200:    #e4e7ec;
-  --p-gray-300:    #d0d5dd;
-  --p-gray-500:    #667085;
-  --p-gray-600:    #475467;
-  --p-gray-900:    #101828;
-
-  /* Blue: cobalt is 700. */
-  --p-blue-50:     #eef2ff;
-  --p-blue-100:    #dbe6fe;
-  --p-blue-150:    #c9d6ec;
-  --p-blue-300:    #a9c1ff;
-  --p-blue-500:    #3b6cf0;
-  --p-blue-700:    #1d4ed8;
-  --p-blue-800:    #1740ad;
-  --p-blue-900:    #12348c;
-
-  /* Logo blues. Aqua is 2.7:1 on white: fills and marks, never text. */
-  --p-brand-blue:  #0975c1;
-  --p-brand-aqua:  #0cacCF;
-
-  --p-green-50:    #ecfdf5;
-  --p-green-200:   #b9dfc3;
-  --p-green-600:   #059669;
-  --p-green-700:   #047857;
-  --p-amber-50:    #fffbeb;
-  --p-amber-200:   #f4d9a1;
-  --p-amber-600:   #d97706;
-  --p-amber-700:   #b45309;
-  --p-amber-800:   #92400e;
-  --p-red-50:      #fef2f2;
-  --p-red-200:     #f3b5ae;
-  --p-red-500:     #e8432f;
-  --p-red-700:     #b91c1c;
-  --p-rose-700:    #be123c;
-  --p-indigo-600:  #4f46e5;
-
   /* Space: base 4. The step number is the multiple, matching Tailwind's
      scale, so p-4 and --p-space-4 are the same 16px. */
   --p-space-1:  0.25rem;   /*  4 */
@@ -85,135 +29,19 @@
   --p-space-20: 5rem;      /* 80 */
   --p-space-24: 6rem;      /* 96 */
 
-  /* Site type: one ratio, 1.2 (minor third) from a 16px body. The step
-     number is the power: --p-text-2 = 16 × 1.2², rounded to the pixel. */
-  --p-text-n2: 0.6875rem;  /* 11 */
-  --p-text-n1: 0.8125rem;  /* 13 */
-  --p-text-0:  1rem;       /* 16 */
-  --p-text-1:  1.1875rem;  /* 19 */
-  --p-text-2:  1.4375rem;  /* 23 */
-  --p-text-3:  1.75rem;    /* 28 */
-  --p-text-4:  2.125rem;   /* 34 */
-  --p-text-5:  2.5rem;     /* 40 */
-  --p-text-6:  3rem;       /* 48 */
-  --p-text-7:  3.5rem;     /* 56 */
-
-  /* ── Tier 2: semantic ───────────────────────────────────── */
-
-  /* Colour, public site (light only; the console themes --adm-*). */
-  --color-background-primary:   var(--p-neutral-0);
-  --color-background-secondary: var(--p-slate-50);
-  --color-background-tertiary:  var(--p-slate-100);
-  --color-background-inverse:   var(--p-slate-900);
-  --color-background-selected:  var(--p-blue-50);
-
-  --color-text-primary:         var(--p-slate-900);
-  --color-text-secondary:       var(--p-slate-700);
-  --color-text-tertiary:        var(--p-slate-600);
-  --color-text-inverse:         var(--p-neutral-0);
-  --color-text-interactive:     var(--p-blue-700);
-  --color-text-interactive-inverse: var(--p-blue-300);
-  --color-text-brand:           var(--p-brand-blue);
-  --color-text-placeholder:     var(--color-mist-550);   /* 4.92:1 on white */
-
-  --color-border-default:       var(--p-slate-200);
-  --color-border-strong:        var(--p-slate-300);
   /* Control edges (inputs, outline buttons, toggles, checkboxes): 3.99:1 on white, 3.7:1 on mist-50 (1.4.11). */
   --color-border-control:       var(--color-mist-500);
-  --color-border-interactive:   var(--p-blue-700);
-  --color-border-focus:         var(--p-blue-700);
-  --color-border-focus-inverse: var(--p-neutral-0);
+  --color-text-placeholder:     var(--color-mist-550);   /* 4.92:1 on white */
+  /* Disabled is an opacity, not a colour, so it holds on any ground. */
+  --opacity-disabled:           0.45;
 
-  /* Interactive states: one ramp for every filled action. Disabled is an
-     opacity, not a colour, so it holds on any ground. */
-  --color-action-primary:          var(--p-blue-700);
-  --color-action-primary-hover:    var(--p-blue-800);
-  --color-action-primary-pressed:  var(--p-blue-900);
-  --color-action-on-primary:       var(--p-neutral-0);
-  --opacity-disabled:              0.45;
-
-  /* Feedback. Text shades pass AA on white and on their own container. */
-  --color-text-success:         var(--p-green-700);
-  --color-background-success:   var(--p-green-50);
-  --color-text-warning:         var(--p-amber-800);
-  --color-background-warning:   var(--p-amber-50);
-  --color-text-danger:          var(--p-red-700);
-  --color-background-danger:    var(--p-red-50);
-  --color-text-info:            var(--p-blue-700);
-  --color-background-info:      var(--p-blue-50);
-
-  /* Space between components: the page's rhythm. Steps up at sm and lg.
-     Inside a component, spacing is the Tailwind scale (the same base-4 steps). */
-  --space-layout-gutter:        var(--p-space-4);
-  --space-layout-section-gap:   var(--p-space-16);
-  --space-layout-stack-md:      var(--p-space-8);
-  --space-layout-stack-lg:      var(--p-space-10);
-
-  /* Content column. */
-  --grid-max:     77.5rem;   /* 1240 */
-  --measure-prose: 65ch;
-
-  /* Site type roles. Fluid roles run 375 → 1280px between two scale steps;
-     leading tightens as size grows. */
-  --type-size-display:     clamp(var(--p-text-5), 2.086rem + 1.768vw, var(--p-text-7));
-  --type-size-headline-lg: clamp(var(--p-text-4), 1.763rem + 1.547vw, var(--p-text-6));
-  --type-size-headline:    clamp(var(--p-text-3), 1.439rem + 1.326vw, var(--p-text-5));
-  --type-size-headline-sm: clamp(var(--p-text-2), 1.308rem + 0.552vw, var(--p-text-3));
-  --type-size-title-lg:    clamp(var(--p-text-1), 1.084rem + 0.442vw, var(--p-text-2));
-  --type-size-title:       var(--p-text-1);
-  --type-size-body-lg:     clamp(var(--p-text-0), 0.922rem + 0.331vw, var(--p-text-1));
-  --type-size-body:        var(--p-text-0);
-  --type-size-small:       var(--p-text-n1);
-  --type-size-overline:    var(--p-text-n2);
-  --type-leading-display:  1.1;
-  --type-leading-headline: 1.15;
-  --type-leading-title:    1.25;
-  --type-leading-body:     1.55;
-  --type-leading-small:    1.45;
-
-  /* Control heights sit on the 4px unit so stacked controls keep the beat. */
-  --size-control-lg: 2.5rem;    /* 40 */
-  --size-control-xl: 3rem;      /* 48 */
-  --size-control-2xl: 3.5rem;   /* 56 */
-  --size-control-touch: 2.75rem; /* 44, coarse pointers */
-
-  /* ── Tier 3: component ──────────────────────────────────── */
-
-  --button-primary-background:         var(--color-action-primary);
-  --button-primary-background-hover:   var(--color-action-primary-hover);
-  --button-primary-background-pressed: var(--color-action-primary-pressed);
-  --button-primary-text:               var(--color-action-on-primary);
-  --button-height-sm:                  var(--size-control-lg);
-  --button-height-md:                  var(--size-control-xl);
-  --button-height-lg:                  var(--size-control-2xl);
-  --input-height:                      var(--size-control-xl);
-  --input-border:                      var(--color-border-control);
-  --input-border-hover:                var(--color-text-tertiary);
-  --input-border-focus:                var(--color-border-focus);
-  --input-border-invalid:              var(--color-text-danger);
-
-  --skeleton-background: var(--color-background-tertiary);
+  --skeleton-background: var(--color-mist-100);
   --skeleton-radius:     6px;
   --skeleton-duration:   1.6s;
   --content-enter-duration: 200ms;
 }
 
-/* The named breakpoints are sm 640, md 768, lg 1024, xl 1280 (@theme below).
-   Custom properties cannot sit in a media condition, so the literals here are
-   those same values. */
-@media (min-width: 40rem) {
-  :root {
-    --space-layout-gutter:      var(--p-space-6);
-    --space-layout-section-gap: var(--p-space-20);
-    --space-layout-stack-md:    var(--p-space-10);
-    --space-layout-stack-lg:    var(--p-space-12);
-  }
-}
-@media (min-width: 64rem) {
-  :root {
-    --space-layout-section-gap: var(--p-space-24);
-  }
-}
+/* The named breakpoints are sm 640, md 768, lg 1024, xl 1280 (@theme below). */
 
 @theme inline {
   /* Console type scale: ratio 1.2 (minor third) from a 14px body, F(n) = 14 × 1.2^n
@@ -237,45 +65,6 @@
   --breakpoint-lg: 64rem;
   --breakpoint-xl: 80rem;
 
-  /* Public site palette, drawn from the Oceanblue mark (see the SITE block at
-     the end of this file). Navy for type and dark surfaces, cobalt for action,
-     the logo's blue and aqua for accents, and a cool blue-grey for grounds.
-     Measured: navy on white 17.4:1, ink-muted 8.9:1, ink-subtle 6.1:1 (5.2:1
-     on paper-deep), white on cobalt 6.7:1, brand on white 4.9:1. Aqua is 2.7:1
-     on white, so it is for fills and marks only, never text. */
-  --color-ink: var(--color-text-primary);
-  --color-ink-muted: var(--color-text-secondary);
-  --color-ink-subtle: var(--color-text-tertiary);
-  --color-paper: var(--color-background-secondary);
-  --color-paper-deep: var(--color-background-tertiary);
-  --color-line: var(--color-border-default);
-  --color-line-strong: var(--color-border-strong);
-  --color-line-input: var(--color-border-control); /* control edge, 3.99:1; hairlines keep line / line-strong */
-  --color-cobalt: var(--color-action-primary);
-  --color-cobalt-deep: var(--color-action-primary-hover);
-  --color-cobalt-tint: var(--color-background-selected);
-  --color-cobalt-light: var(--color-text-interactive-inverse);
-  --color-brand: var(--color-text-brand);
-  --color-aqua: var(--p-brand-aqua);
-  --color-night: var(--color-background-inverse);
-  /* Status roles. Text shades are 700/800 so they pass AA on white and on
-     their own container tint. Warm amber is the one complementary hue: it
-     means "time-sensitive" and nothing else. */
-  --color-success: var(--color-text-success);
-  --color-success-container: var(--color-background-success);
-  --color-warning: var(--color-text-warning);
-  --color-warning-container: var(--color-background-warning);
-  --color-danger: var(--color-text-danger);
-  --color-danger-container: var(--color-background-danger);
-  /* Elevation: navy-tinted, one light source from above. */
-  --shadow-raised: 0 1px 2px rgb(11 26 51 / 0.06), 0 8px 24px -16px rgb(11 26 51 / 0.28);
-  --shadow-overlay: 0 24px 48px -20px rgb(11 26 51 / 0.35);
-  --shadow-modal: 0 40px 100px -30px rgb(11 26 51 / 0.5);
-  /* Motion, after Material 3: one standard curve, emphasized curves for
-     things entering and leaving, and three durations. */
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-emphasized-in: cubic-bezier(0.05, 0.7, 0.1, 1);
-  --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
@@ -340,13 +129,6 @@
   }
   html {
     scroll-behavior: smooth;
-  }
-
-  /* ADA / WCAG 2.1 AA, visible focus ring for keyboard navigation */
-  :focus-visible {
-    outline: 2px solid var(--color-border-focus);
-    outline-offset: 2px;
-    border-radius: 4px;
   }
 
   /* Remove focus ring for mouse users, keep for keyboard */
@@ -426,146 +208,6 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
-}
-
-/* ============================================================
-   HORIZON, the landing-page design system.
-
-   Light canvas with dark navy bands, one cobalt accent, Geist Sans
-   display and Geist Mono labels. Scoped to the landing via the
-   .horizon class and --hz-* tokens; does not touch admin or auth.
-   ============================================================ */
-
-:root {
-  /* Light surfaces */
-  --hz-canvas:    #ffffff;
-  --hz-surface:   #f8fafc;
-  --hz-surface-2: #f1f5f9;
-  --hz-line:      #e2e8f0;
-  --hz-line-2:    #cbd5e1;
-
-  /* Dark bands, deep, futuristic near-black blue */
-  --hz-ink:       #050912;   /* darkest, hero / CTA */
-
-  /* Text */
-  --hz-text:        #0f172a;
-  --hz-text-mute:   #475569;
-  --hz-text-subtle: #64748b;
-
-  /* Paper ground and its hairline, for the alternating light sections.
-     Cool-biased so it belongs to the same family as the accent; a warm
-     off-white next to an all-blue palette reads as a second white.
-
-     Kept separate from --hz-canvas: sections designed against pure white
-     would all shift if the global canvas were tinted. */
-  --hz-paper:      #F7F9FC;
-
-  /* The light end of the logo gradient, measured off the mark (the droplet
-     runs #0975C1 at its base to #0CACCF at the arc tips). */
-  --hz-aqua:       #0CACCF;
-
-  /* The single brand accent. */
-  --hz-cobalt:     #1d4ed8;
-  --hz-cobalt-600: #1740ad;
-  --hz-cobalt-100: #dbe6fe;
-  --hz-cyan:       #2ad8ef;
-
-  /* Alternating section band. --hz-ivory is a legacy alias. */
-  --hz-band:       #f4f7fb;
-  --hz-band-line:  #e6ecf4;
-  --hz-ivory:      var(--hz-band);
-
-  /* Cool-tinted shadows */
-  --hz-shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.05);
-  --hz-shadow-md: 0 10px 30px -12px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);
-}
-
-/* Landing base. Geist Sans everywhere (no Inter body on the landing) */
-.horizon {
-  font-family: "General Sans", system-ui, sans-serif;
-  color: var(--hz-text);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-/* Display. Geist Sans, tight modern grotesque */
-.hz-display {
-  font-family: "General Sans", system-ui, sans-serif;
-  letter-spacing: -0.035em;
-  line-height: 1.03;
-  font-weight: 600;
-}
-
-/* `pretty` rather than `balance` on body copy: it fixes the last-line orphan
-   and leaves the rest ragged. Scoped to .horizon; the admin console is
-   untouched. */
-.horizon p {
-  text-wrap: pretty;
-}
-
-/* Focus ring. No border-radius: an outline follows the element's own. */
-.hz-focus:focus-visible {
-  outline-style: solid;
-  outline-width: 2px;
-  outline-offset: 3px;
-}
-.hz-focus:focus-visible      { outline-color: var(--hz-cobalt); }
-
-/* Eyebrow: mono, uppercase, tracked. The colour lives here rather than at the
-   call sites, which had drifted into pairing it with amber and turning a
-   label into a second accent. An eyebrow names its section; cobalt is
-   reserved for what is actionable. */
-.hz-eyebrow {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: var(--type-size-overline);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 500;
-  color: var(--hz-text-subtle);
-}
-
-/* Tabular numerals for stats */
-.hz-tnum {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-}
-
-/* Ambient aurora wash, a soft, drifting color field (no grids) */
-@keyframes hz-aurora {
-  0%   { transform: translate3d(0,0,0) scale(1); }
-  50%  { transform: translate3d(2%, -2%, 0) scale(1.08); }
-  100% { transform: translate3d(0,0,0) scale(1); }
-}
-.hz-aurora { animation: hz-aurora 4.8s ease-in-out 1 both; will-change: transform; }
-
-/* Logo marquee */
-@keyframes hz-marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-/* One pass, then the text holds (no perpetual loops); hover still pauses it. */
-.hz-marquee { animation: hz-marquee 50s linear 1 both; }
-.hz-marquee:hover { animation-play-state: paused; }
-
-@media (prefers-reduced-motion: reduce) {
-  .hz-marquee { animation: none; }
-}
-
-/* Word-by-word headline rise. The parent span clips, the inner one
-   travels, same effect WordsReveal produced in JS. */
-@keyframes hz-word {
-  from { transform: translate3d(0, 110%, 0); opacity: 0; }
-  to   { transform: none; opacity: 1; }
-}
-.hz-word-clip { display: inline-block; overflow: hidden; vertical-align: top; }
-.hz-word {
-  display: inline-block;
-  animation: hz-word 400ms var(--ease-emphasized-in) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* Never leave the text hidden, drop the travel, keep it legible. */
-  .hz-word { animation: none; opacity: 1; transform: none; }
 }
 
 /* ============================================================
@@ -702,12 +344,6 @@
   --adm-radius-card:    12px;
   --adm-radius-dialog:  16px;
 
-  /* Grid row density. */
-  --adm-row-h-compact:  44px;
-  --adm-row-h-default:  52px;
-  --adm-row-h-relaxed:  64px;
-  --adm-row-h:          var(--adm-row-h-default);
-
   /* Legacy shadcn roles, read by components/ui primitives; they follow the console. */
   --primary:            var(--adm-accent);
   --primary-foreground: var(--color-mist-0);
@@ -771,96 +407,6 @@
 .adm-scope select,
 .adm-scope textarea { color-scheme: inherit; }
 
-/* ============================================================
-   ADMIN, data-grid primitives.
-   A business system is read in columns, so the grid needs real
-   structure: a sticky filled header, column rules, tabular
-   figures, and a full-width focus row. These are utilities so
-   every table inherits them without per-page markup.
-   ============================================================ */
-
-.adm-grid {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-}
-
-/* Sticky header band, as the portal grid: 12/16 medium, sentence case, mist-600 on mist-50. */
-.adm-grid thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--adm-head);
-  color: var(--adm-head-ink);
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--adm-line);
-}
-.adm-grid thead th:last-child { box-shadow: none; }
-
-/* Rows are ruled on one axis only: column rules read as graph paper. */
-
-/* Border on the CELLS, not the row: this table is `border-collapse: separate`,
-   where `tr` borders are never painted, so the row divider must live on td. */
-.adm-grid tbody td { border-bottom: 1px solid var(--adm-line-soft); }
-.adm-grid tbody tr:last-child td { border-bottom: 0; }
-
-/* Column rules stay available for genuinely numeric ledgers, opt-in. */
-.adm-grid--ruled tbody td { box-shadow: inset -1px 0 0 var(--adm-line-rule); }
-.adm-grid--ruled tbody td:last-child { box-shadow: none; }
-
-/* ── Density. Set on the scroll container; cells read the variable so a single
-   attribute retunes the whole grid without touching any cell class. Type size
-   is deliberately NOT part of density, only vertical rhythm changes. */
-[data-density="compact"] { --adm-row-h: var(--adm-row-h-compact); }
-[data-density="default"] { --adm-row-h: var(--adm-row-h-default); }
-[data-density="relaxed"] { --adm-row-h: var(--adm-row-h-relaxed); }
-
-.adm-grid tbody td { height: var(--adm-row-h); }
-
-/* ── Pinned identity column. At workspace density a wide grid scrolls
-   horizontally, and a row whose name has scrolled off is unreadable. The first
-   column stays put and grows a seam only once content has scrolled under it. */
-.adm-grid--pinned thead th:first-child,
-.adm-grid--pinned tbody td:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--adm-surface);
-}
-.adm-grid--pinned thead th:first-child { z-index: 3; background: var(--adm-head); }
-
-/* ── Pinned actions column: the row menu stays reachable while a wide grid
-   scrolls sideways, mirroring the pinned identity column on the left. */
-.adm-grid--actions thead th:last-child,
-.adm-grid--actions tbody td:last-child {
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  background: var(--adm-surface);
-}
-/* Sticky cells are opaque so scrolled content never shows through; they
-   follow the row's hover and selected washes with solid equivalents. */
-.adm-grid--pinned tbody tr:hover > td:first-child,
-.adm-grid--actions tbody tr:hover > td:last-child { background: var(--adm-row-hover); }
-.adm-grid--pinned tbody tr[data-state="selected"] > td:first-child,
-.adm-grid--actions tbody tr[data-state="selected"] > td:last-child {
-  background: color-mix(in srgb, var(--adm-accent) 6%, var(--adm-surface));
-}
-.adm-grid--actions thead th:last-child { z-index: 3; background: var(--adm-head); }
-.adm-grid--actions.has-overflow-right thead th:last-child,
-.adm-grid--actions.has-overflow-right tbody td:last-child {
-  box-shadow: inset 1px 0 0 var(--adm-line), -6px 0 8px -6px rgb(11 46 70 / 0.1);
-}
-.adm-grid--pinned.is-scrolled thead th:first-child,
-.adm-grid--pinned.is-scrolled tbody td:first-child {
-  box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgb(11 46 70 / 0.1);
-}
-
 /* ── Hit targets (Fitts's Law).
    Several grid controls measured 16–28px: the selection checkboxes were
    16x24, the sort buttons 24px tall, the rating stars 16px. Those are below
@@ -886,31 +432,24 @@
   }
 }
 
+/* Touch: portal controls take a 44px target (Fitts). The hit layer grows,
+   not the drawn control, so dense rows keep their height. */
+@media (pointer: coarse) {
+  .adm-hit::after {
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+  }
+  [data-portal-shell] :is(button, [role="button"], select):not(.adm-hit, [role="checkbox"], [role="radio"], [role="switch"]),
+  body:has([data-portal-shell]) :is([role="menuitem"], [role="option"]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 /* Disabled reads as disabled to the pointer too; opacity comes from --adm-opacity-disabled. */
 .adm-scope :is(button, input, select, textarea):disabled,
 .adm-portals :is(button, input, select, textarea):disabled {
   cursor: not-allowed;
-}
-
-/* Column headers: the whole cell sorts, not just the label's text box.
-   The select-all checkbox lives in a th too, and must keep its square box. */
-.adm-grid thead th button:not([role="checkbox"]) {
-  height: 100%;
-  min-height: 40px;
-  /* Preflight resets text-transform on buttons; sortable headings follow the band. */
-  text-transform: inherit;
-  letter-spacing: inherit;
-}
-
-/* Numeric columns align on the decimal, as a ledger should */
-.adm-num { text-align: right; font-variant-numeric: tabular-nums; }
-
-/* Record identifiers read as codes, not prose */
-.adm-code {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 12px;
-  letter-spacing: -0.01em;
-  color: var(--adm-ink-mute);
 }
 
 /* ── "React Immediately": every interactive control answers the keyboard.
@@ -973,76 +512,38 @@
 }
 
 /* ============================================================
-   SITE, the public website design system.
-
-   IBM Plex Sans, ink on white and warm paper, one cobalt accent.
-   Components live in src/components/site/. Motion is CSS only so
-   it starts at first paint, and every class here is disabled
-   under prefers-reduced-motion at the bottom of this block.
+   SITE controls. Type, layout and reveal motion are in the
+   "Website redesign v2" block at the end of this file.
    ============================================================ */
 
-/* Motion and elevation as real variables, since @theme inline values are not
-   emitted (so shadow-[var(--shadow-raised)] and ease-[var(--ease-standard)]
-   resolve). Durations: short for state changes, medium for small movement,
-   long for things entering the page. */
+/* Durations: short for state changes, medium for small movement. The
+   standard curve is also read by the portal shell and the loading block. */
 :root {
-  --shadow-raised: 0 1px 2px rgb(11 26 51 / 0.06), 0 8px 24px -16px rgb(11 26 51 / 0.28);
-  --shadow-overlay: 0 24px 48px -20px rgb(11 26 51 / 0.35);
-  --shadow-modal: 0 40px 100px -30px rgb(11 26 51 / 0.5);
   --dur-short: 150ms;
   --dur-medium: 250ms;
-  --dur-long: 300ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-emphasized-in: cubic-bezier(0.05, 0.7, 0.1, 1);
-  --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
 }
 
-.site {
-  font-family: "General Sans", ui-sans-serif, system-ui, sans-serif;
-  color: var(--color-text-primary);
-  -webkit-font-smoothing: antialiased;
-}
-.site h1, .site h2, .site h3 { text-wrap: balance; }
-.site p { text-wrap: pretty; }
-
-/* Announcement strip dismissed on this browser: hidden before first paint
-   (the attribute is set by an inline script in the root layout), with the
-   header and page offsets it would have pushed. */
-html[data-ann-dismissed] .ann-bar { display: none; }
-html[data-ann-dismissed] .ann-offset { top: 0; }
-html[data-ann-dismissed] .ann-pad { padding-top: 0; }
-
-/* Two borderless sections of the same colour read as one band, so the second
-   drops its top padding instead of doubling the gap. Sections opt in with
-   data-tone (see SECTION_Y in components/site/sections.tsx). */
-.site [data-tone="white"] + [data-tone="white"],
-.site [data-tone="paper"] + [data-tone="paper"] { padding-top: 0; }
-
-/* The section after a page opener starts at one fixed distance, whatever its
-   own SECTION_Y says: the opener's hairline already separates them. */
-.site [data-opener] + [data-tone] { padding-top: 3.5rem; }
-
-/* One focus style for every interactive element (WCAG 2.4.7). */
-.site :focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-.site .on-dark :focus-visible,
-.site .on-dark:focus-visible { outline-color: var(--color-border-focus-inverse); }
-
-/* Buttons: on hover and keyboard focus a fill sweeps in from the left.
-   A background layer over the element's own colour, so no size change and
-   it clips to any radius; inset rings paint above it. Variants name the
-   resting look and set the fill (and the label ink where it must flip). */
+/* Buttons. Variants name the resting look and set --btn-fill, the hover and
+   keyboard-focus colour (and the label ink where it must flip). A filled
+   button just shifts to it; only outline buttons get the left-to-right sweep,
+   a background layer that clips to any radius under the inset ring.
+   Ease-out on the way in, ease-in on the way out. */
 .btn-fill {
+  transition: background-color var(--dur-short) ease-in, color var(--dur-short) ease-in;
+}
+.btn-fill:is(:hover, :focus-visible):not(.btn-fill-outline, .btn-fill-outline-light, :disabled, [aria-disabled="true"], [aria-busy="true"]) {
+  background-color: var(--btn-fill);
+  transition-timing-function: ease-out;
+}
+.btn-fill:is(.btn-fill-outline, .btn-fill-outline-light) {
   background-image: linear-gradient(var(--btn-fill), var(--btn-fill));
   background-repeat: no-repeat;
   background-position: left center;
   background-size: 0% 100%;
   transition: background-size var(--dur-medium) ease-in, color var(--dur-medium) ease-in;
 }
-.btn-fill:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+.btn-fill:is(.btn-fill-outline, .btn-fill-outline-light):is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
   background-size: 100% 100%;
   transition-timing-function: ease-out;
 }
@@ -1062,332 +563,14 @@ html[data-ann-dismissed] .ann-pad { padding-top: 0; }
 .btn-fill-outline-light:is(:hover, :focus-visible):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) { color: var(--color-navy-950); }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-fill { transition: none; }
+  .btn-fill, .btn-fill:is(.btn-fill-outline, .btn-fill-outline-light) { transition: none; }
 }
-
-/* Page-load sequence for heroes */
-@keyframes site-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
-}
-.rise { animation: site-rise 400ms var(--ease-emphasized-in) both; }
-
-/* Hero headline: each word rises in sequence */
-@keyframes site-word {
-  from { opacity: 0; transform: translateY(0.45em); }
-  to { opacity: 1; transform: none; }
-}
-.word { display: inline-block; animation: site-word 400ms var(--ease-emphasized-in) both; }
-
-/* Mega menu: wiped down from the bar, opaque at every frame, so the hero
-   never shows through a half-faded sheet. */
-@keyframes site-menu {
-  from { clip-path: inset(0 0 100% 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-.menu-in { animation: site-menu 200ms var(--ease-emphasized-in); }
-
-/* Side sheet (components/site/side-sheet): up from the bottom on phones, in
-   from the right from sm. Radix holds the element until the exit animation
-   ends, so closing animates too. */
-@keyframes site-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
-@keyframes site-sheet-down { from { transform: none; } to { transform: translateY(100%); } }
-@keyframes site-sheet-in-right { from { transform: translateX(100%); } to { transform: none; } }
-@keyframes site-sheet-out-right { from { transform: none; } to { transform: translateX(100%); } }
-@keyframes site-overlay-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes site-overlay-out { from { opacity: 1; } to { opacity: 0; } }
-.side-sheet[data-state="open"] { animation: site-sheet-up 280ms var(--ease-emphasized-in) both; }
-.side-sheet[data-state="closed"] { animation: site-sheet-down 200ms var(--ease-emphasized-out) both; }
-@media (min-width: 640px) {
-  .side-sheet[data-state="open"] { animation-name: site-sheet-in-right; }
-  .side-sheet[data-state="closed"] { animation-name: site-sheet-out-right; }
-}
-.sheet-overlay[data-state="open"] { animation: site-overlay-in 250ms ease-out both; }
-.sheet-overlay[data-state="closed"] { animation: site-overlay-out 200ms ease-in both; }
 
 /* Route enter (app/template.tsx), client navigations only. Opacity alone: a
    transform here would break position: sticky for the whole page. */
-.page-enter { animation: site-overlay-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-/* Logo marquee */
-@keyframes site-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.marquee { animation: site-marquee 38s linear 1 both; }
-.marquee-wrap:hover .marquee,
-[data-motion="paused"] .marquee { animation-play-state: paused; }
-
-/* Brand-blue beams on LineGrid. Each line is 2400 units long; the 280-unit dash
-   starts just before it and ends just past it, so the beam glides through once
-   and leaves nothing behind. One slow, eased pass that ends inside five
-   seconds (WCAG 2.2.2); none under reduced motion. */
-@keyframes grid-beam { from { stroke-dashoffset: 280; } to { stroke-dashoffset: -2400; } }
-.grid-beam {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-dasharray: 280 4000;
-  stroke-dashoffset: 280;
-  animation: grid-beam 4.6s cubic-bezier(0.65, 0, 0.35, 1) 1 both;
-}
-@media (prefers-reduced-motion: reduce) { .grid-beam { display: none; } }
-
-/* Wireframe art: flowing dashed edges, breathing accent plane, slow drift */
-@keyframes site-dash { to { stroke-dashoffset: -20; } }
-/* Finite runs: looping decoration has to stop within five seconds (WCAG 2.2.2). */
-.geo-art line[stroke-dasharray] { animation: site-dash 1.6s linear 3; }
-@keyframes site-plane { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.6; } }
-.geo-art .geo-plane { animation: site-plane 4.2s ease-in-out 1; }
-@keyframes site-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.geo-art { animation: site-drift 4.8s ease-in-out 1; }
-
-/* Scroll-linked reveals and the timeline fill. Pure CSS: where unsupported,
-   content is simply visible and the rail simply full. */
-@supports (animation-timeline: view()) {
-  @keyframes site-reveal {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: none; }
-  }
-  .reveal {
-    animation: site-reveal linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 40%;
-  }
-  @keyframes site-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  .timeline-fill {
-    transform-origin: left;
-    animation: site-fill linear both;
-    animation-timeline: view();
-    animation-range: entry 10% cover 45%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rise, .word, .menu-in, .page-enter, .side-sheet, .sheet-overlay, .marquee, .geo-art, .geo-art .geo-plane, .geo-art line[stroke-dasharray],
-  .reveal, .timeline-fill { animation: none !important; }
-}
-
-/* ============================================================
-   TYPE ROLES, the only text sizes public pages should use.
-
-   Modelled on Material 3's role scale: a page picks a role for its
-   job (display, headline, title, body, label), never a pixel size.
-   Sizes are fluid between a 375px phone and a 1280px desktop, so
-   no breakpoint variants are needed. Line heights tighten as size
-   grows; tracking tightens on large type and opens on labels.
-   ============================================================ */
-@utility type-display {
-  font-size: var(--type-size-display);
-  line-height: var(--type-leading-display);
-  letter-spacing: -0.035em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-@utility type-headline-lg {
-  font-size: var(--type-size-headline-lg);
-  line-height: var(--type-leading-headline);
-  letter-spacing: -0.03em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-@utility type-headline {
-  font-size: var(--type-size-headline);
-  line-height: var(--type-leading-headline);
-  letter-spacing: -0.025em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-@utility type-headline-sm {
-  font-size: var(--type-size-headline-sm);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  text-wrap: balance;
-}
-@utility type-title-lg {
-  font-size: var(--type-size-title-lg);
-  line-height: var(--type-leading-title);
-  letter-spacing: -0.015em;
-  font-weight: 600;
-}
-@utility type-title {
-  font-size: var(--type-size-title);
-  line-height: var(--type-leading-title);
-  letter-spacing: -0.01em;
-  font-weight: 600;
-}
-@utility type-body-lg {
-  font-size: var(--type-size-body-lg);
-  line-height: var(--type-leading-body);
-}
-@utility type-body {
-  font-size: var(--type-size-body);
-  line-height: var(--type-leading-body);
-}
-/* body-sm, label and caption share the 13px step; weight and leading tell them apart. */
-@utility type-body-sm {
-  font-size: var(--type-size-small);
-  line-height: var(--type-leading-body);
-}
-@utility type-label {
-  font-size: var(--type-size-small);
-  line-height: 1.35;
-  font-weight: 600;
-}
-@utility type-caption {
-  font-size: var(--type-size-small);
-  line-height: var(--type-leading-small);
-}
-/* Mono kickers, badges and dense mock UI only. */
-@utility type-overline {
-  font-size: var(--type-size-overline);
-  line-height: 1.4;
-}
-/* Running prose: 45–75 characters a line. */
-@utility measure {
-  max-width: var(--measure-prose);
-}
-
-/* Dark bands, shaped as on clerk.com: the top corners are cut, and at the
-   bottom the next section rises into the band as a trapezoid, so the dark
-   wraps around it. The ChamferGround wrapper supplies the neighbouring tone. */
-.chamfer {
-  --chamfer: 20px;
-  clip-path: polygon(
-    var(--chamfer) 0, calc(100% - var(--chamfer)) 0, 100% var(--chamfer),
-    100% 100%, calc(100% - var(--chamfer)) calc(100% - var(--chamfer)),
-    var(--chamfer) calc(100% - var(--chamfer)), 0 100%, 0 var(--chamfer)
-  );
-}
-/* Top edge notched like the bottom one, mirrored. */
-.chamfer.chamfer-notched {
-  clip-path: polygon(
-    0 0, var(--chamfer) var(--chamfer), calc(100% - var(--chamfer)) var(--chamfer), 100% 0,
-    100% 100%, calc(100% - var(--chamfer)) calc(100% - var(--chamfer)),
-    var(--chamfer) calc(100% - var(--chamfer)), 0 100%
-  );
-}
-/* The notch cuts into the top padding; give it back so the heading keeps SECTION_Y's clearance. */
-.chamfer.chamfer-notched { padding-top: calc(4rem + var(--chamfer)); }
-@media (min-width: 640px) { .chamfer.chamfer-notched { padding-top: calc(5rem + var(--chamfer)); } }
-@media (min-width: 1024px) { .chamfer.chamfer-notched { padding-top: calc(6rem + var(--chamfer)); } }
-@media (min-width: 1024px) {
-  .chamfer { --chamfer: 48px; }
-}
-
-/* Client strip: a box's mark tips back and fades as the next one turns in. */
-@keyframes logo-in { from { opacity: 0; transform: rotateX(-80deg) scale(0.92); } to { opacity: 1; transform: none; } }
-@keyframes logo-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: rotateX(80deg) scale(0.92); } }
-.logo-in, .logo-out { backface-visibility: hidden; transform-origin: 50% 50%; will-change: transform, opacity; }
-.logo-in { animation: logo-in 300ms var(--ease-emphasized-in) both; }
-.logo-out { animation: logo-out 250ms var(--ease-emphasized-out) both; }
-@media (prefers-reduced-motion: reduce) { .logo-in, .logo-out { animation: none; } .logo-out { display: none; } }
-
-/* Solutions showcase demos, played on the card the canvas centres on. They
-   start once the canvas has settled. */
-.demo-cursor { left: 56%; bottom: 58px; animation: demo-cursor 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both; }
-@keyframes demo-cursor {
-  0% { opacity: 0; transform: translate(70px, -110px); }
-  15% { opacity: 1; }
-  65% { transform: translate(0, 0); }
-  75% { transform: scale(0.82); }
-  85%, 100% { opacity: 1; transform: none; }
-}
-.demo-press { animation: demo-press 2.6s ease both; }
-@keyframes demo-press {
-  0%, 80% { transform: none; }
-  84% { transform: scale(0.96); background: var(--color-cobalt); }
-  92%, 100% { transform: none; background: var(--color-cobalt); }
-}
-.demo-grow { animation: demo-grow 700ms cubic-bezier(0.4, 0, 0.2, 1) 700ms both; }
-@keyframes demo-grow { from { transform: scaleX(0); } }
-.demo-rise { animation: demo-rise 500ms cubic-bezier(0.4, 0, 0.2, 1) both; }
-@keyframes demo-rise { from { transform: scaleY(0); } }
-.demo-ring { animation: demo-ring 1s cubic-bezier(0.4, 0, 0.2, 1) 600ms both; }
-@keyframes demo-ring { from { stroke-dashoffset: 94.2; } }
-.demo-draw { stroke-dasharray: 1; animation: demo-draw 1.2s ease 600ms both; }
-@keyframes demo-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-.demo-flow { animation: demo-flow 1.6s ease-in-out 3 both; }
-@keyframes demo-flow { from { left: 0; } to { left: calc(100% - 8px); } }
-.demo-pulse { animation: demo-pulse 1.4s ease-in-out 3 both; }
-@keyframes demo-pulse { 50% { opacity: 0.35; } }
-.demo-caret { animation: demo-pulse 1s steps(1) 4 both; }
-@media (prefers-reduced-motion: reduce) {
-  .demo-cursor { display: none; }
-  .demo-press, .demo-grow, .demo-rise, .demo-ring, .demo-draw, .demo-flow, .demo-pulse, .demo-caret { animation: none; }
-}
-
-/* Where a white section meets a paper one, the ground eases across instead
-   of stepping, so the page reads as one surface.
-   Sections that paint their own ground carry data-ground and are left alone. */
-.site :is([data-tone="white"], [data-opener]) + [data-tone="paper"]:not([data-ground]) {
-  background-image: linear-gradient(to bottom, #fff, var(--color-paper) 220px);
-}
-.site [data-tone="paper"] + [data-tone="white"]:not([data-ground]) {
-  background-image: linear-gradient(to bottom, var(--color-paper), #fff 220px);
-}
-
-/* 404 (components/site/missing-page): the window rises in, the skeleton
-   shimmers as if loading, the magnifier sweeps the hole, the scrap flutters. */
-.nf-rise, .nf-sweep, .nf-scrap, .nf-digits { transform-box: fill-box; transform-origin: 50% 50%; }
-.nf-rise { animation: nf-rise 400ms var(--ease-emphasized-in) both; }
-@keyframes nf-rise { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
-
-.nf-shimmer { animation: nf-shimmer 1.8s ease-in-out 2 both; }
-@keyframes nf-shimmer { 50% { opacity: .45; } }
-
-.nf-digits { animation: nf-digits 400ms var(--ease-emphasized-in) 300ms both; }
-@keyframes nf-digits { from { opacity: 0; transform: translateY(26px) scale(.9); } to { opacity: 1; transform: none; } }
-
-.nf-blink { animation: nf-blink 2.4s steps(1) 2 both; }
-@keyframes nf-blink { 50% { opacity: .35; } }
-
-.nf-sweep { animation: nf-sweep 4s ease-in-out 900ms 1 both; }
-@keyframes nf-sweep {
-  0%, 100% { transform: translate(-130px, 10px) rotate(-8deg); }
-  30% { transform: translate(-20px, -24px) rotate(4deg); }
-  55% { transform: translate(120px, 16px) rotate(10deg); }
-  80% { transform: translate(30px, 30px) rotate(-2deg); }
-}
-
-.nf-scrap { animation: nf-scrap 4.8s ease-in-out 1 both; transform-origin: 50% 20%; }
-@keyframes nf-scrap {
-  0%, 100% { transform: translate(0, 0) rotate(-14deg); }
-  25% { transform: translate(-10px, -12px) rotate(-4deg); }
-  50% { transform: translate(6px, -4px) rotate(-20deg); }
-  75% { transform: translate(-4px, -14px) rotate(-8deg); }
-}
-
-/* Maintenance (components/site/maintenance-art): gears turn in mesh, a card
-   drops into its slot, the bar fills. It shares nf-rise/shimmer/blink. */
-.mt-spin, .mt-spin-rev, .mt-drop { transform-box: fill-box; transform-origin: 50% 50%; }
-.mt-spin { animation: mt-spin 4.8s ease-out 1 both; }
-.mt-spin-rev { animation: mt-spin 4.8s ease-out 1 reverse both; }
-@keyframes mt-spin { to { transform: rotate(360deg); } }
-
-.mt-drop { animation: mt-drop 4.2s cubic-bezier(0.22, 1, 0.36, 1) 600ms 1 both; }
-@keyframes mt-drop {
-  0% { opacity: 0; transform: translateY(-34px) rotate(-7deg); }
-  22%, 86% { opacity: 1; transform: none; }
-  100% { opacity: 0; transform: none; }
-}
-
-.mt-fill { transform-box: fill-box; transform-origin: 0 50%; animation: mt-fill 4.2s cubic-bezier(0.4, 0, 0.2, 1) 600ms 1 both; }
-@keyframes mt-fill {
-  0% { opacity: 1; transform: scaleX(0.03); }
-  86% { opacity: 1; transform: scaleX(1); }
-  100% { opacity: 0; transform: scaleX(1); }
-}
-
-/* Load error (components/site/load-error-art): the plug nudges at the socket. */
-.er-nudge { animation: er-nudge 2.4s cubic-bezier(0.4, 0, 0.2, 1) 2 both; }
-@keyframes er-nudge {
-  0%, 100% { transform: translateX(-6px); }
-  45%, 60% { transform: translateX(14px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mt-spin, .mt-spin-rev, .mt-drop, .mt-fill, .er-nudge { animation: none; }
-  .nf-rise, .nf-shimmer, .nf-digits, .nf-blink, .nf-sweep, .nf-scrap { animation: none; }
-}
+@keyframes page-enter { from { opacity: 0; } to { opacity: 1; } }
+.page-enter { animation: page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) { .page-enter { animation: none !important; } }
 
 /* ============================================================
    LOADING. A skeleton is a flat neutral block that pulses; the
@@ -1428,12 +611,26 @@ html [data-sonner-toaster][data-sonner-theme="light"] {
   --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
   --ease-out-strong: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Five type steps, nothing in between */
-  --text-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
-  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
-  --text-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
-  --text-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
-  --text-poster: clamp(3rem, 8vw, 8.5rem);
+  /* The site type scale (SITE_DESIGN_LANGUAGE §2). Fluid 375 → 1280px, about
+     1.25 a step at 1280. No text-[Npx] on the site (tests/site-type-scale). */
+  --text-caption: 0.8125rem;                                        /* 13 */
+  --text-small: clamp(0.875rem, 0.849rem + 0.11vw, 0.9375rem);      /* 14 → 15 */
+  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);          /* 17 → 19 */
+  --text-title: clamp(1.1875rem, 1.11rem + 0.33vw, 1.375rem);       /* 19 → 22 */
+  --text-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);            /* 20 → 26 */
+  /* Heading roles, set with `display` or `poster` for weight and leading */
+  --text-head-sm: clamp(1.5rem, 1.4rem + 0.44vw, 1.75rem);          /* 24 → 28 */
+  --text-head-md: clamp(1.75rem, 1.54rem + 0.88vw, 2.25rem);        /* 28 → 36 */
+  --text-head: clamp(2.25rem, 1.94rem + 1.33vw, 3.5rem);            /* 36 → 48 */
+  --text-head-xl: clamp(2.5rem, 1.88rem + 2.65vw, 4.5rem);          /* 40 → 64 */
+  --text-poster: clamp(3rem, 8vw, 8.5rem);                          /* 48 → 102 */
+  /* Home hero only: sized on its tile (@container) so the board fits one screen */
+  --text-hero: clamp(1.5rem, 7.2cqi, 4.25rem);
+  --text-hero-tile: clamp(1.5rem, 11cqi, 2.75rem);
+
+  /* Measure: running text 65ch; lead and short supporting copy 46ch */
+  --container-measure: 65ch;
+  --container-measure-narrow: 46ch;
 }
 
 html {
@@ -1454,7 +651,6 @@ body {
 
 /* Layered, so a component's own focus style (e.g. the contact form's underline) can override it */
 @layer base {
-  /* Not --color-accent: the shadcn alias above remaps it to a near-white tint (1.09:1) */
   ::selection {
     background: var(--color-ocean-200);
     color: var(--color-navy-950);
@@ -1484,22 +680,21 @@ body {
   }
 }
 
-/* Display face: light weight, large and tight */
-/* Headings: General Sans semibold, tracked tight */
+/* Headings: General Sans semibold, tracked tight; size from a text-head-* role */
 @utility display {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.025em;
-  line-height: 1.08;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
-/* Poster type: set the size with text-poster or an explicit size */
+/* Poster type: the page title, with text-poster */
 @utility poster {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.035em;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 /* The page axis: headings and body columns start 5/12 across (about 42%) */

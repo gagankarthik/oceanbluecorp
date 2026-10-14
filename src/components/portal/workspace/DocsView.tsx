@@ -110,7 +110,7 @@ const ROUTE_ROWS = Object.entries(routeAccess)
 /* Primitives                                                          */
 /* ------------------------------------------------------------------ */
 
-const CODE = "rounded-md bg-mist-100 px-1.5 py-0.5 font-mono text-[13px] text-navy-900";
+const CODE = "rounded-md bg-mist-100 px-1.5 py-0.5 font-mono text-adm-base text-navy-900";
 
 const TONE_MAP: Record<string, Tone> = { slate: "grey", blue: "blue", emerald: "green", amber: "amber", violet: "cyan", indigo: "navy", sky: "cyan", rose: "red", grey: "grey", green: "green", navy: "navy", cyan: "cyan", red: "red" };
 
@@ -124,23 +124,23 @@ function DocBadge({ label, tone, status }: { label: string; tone?: string; statu
 }
 
 function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="inline-flex h-6 shrink-0 items-center rounded-md bg-mist-0 px-1.5 font-mono text-[12px] text-navy-900 ring-1 ring-inset ring-mist-300">{children}</kbd>;
+  return <kbd className="inline-flex h-6 shrink-0 items-center rounded-md bg-mist-0 px-1.5 font-mono text-adm-xs text-navy-900 ring-1 ring-inset ring-mist-300">{children}</kbd>;
 }
 
 function SectionHeader({ id, icon, title, description }: { id: string; icon: IconName; title: string; description?: string }) {
   return (
     <div id={id} data-doc-section className="scroll-mt-24 border-b border-mist-200 pb-4">
       <div className="flex items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#eeebfb] text-[#4a3aa7]">
-          <Icon name={icon} className="size-[18px]" />
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-ocean-50 text-ocean-700">
+          <Icon name={icon} className="size-5" />
         </span>
-        <h2 className="text-[19px] font-semibold tracking-tight text-navy-900">
+        <h2 className="text-adm-lg font-semibold tracking-tight text-navy-900">
           <a href={`#${id}`} className="hover:underline">
             {title}
           </a>
         </h2>
       </div>
-      {description && <p className="mt-2 max-w-[70ch] text-[14px] leading-relaxed text-mist-600">{description}</p>}
+      {description && <p className="mt-2 max-w-[70ch] text-adm-base leading-normal text-mist-600">{description}</p>}
     </div>
   );
 }
@@ -148,7 +148,7 @@ function SectionHeader({ id, icon, title, description }: { id: string; icon: Ico
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-4 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-      <h3 className="border-b border-mist-200 px-5 py-3 text-[15px] font-semibold text-navy-900">{title}</h3>
+      <h3 className="border-b border-mist-200 px-5 py-3 text-adm-md font-semibold text-navy-900">{title}</h3>
       <div className="grid min-w-0 gap-3 p-5">{children}</div>
     </section>
   );
@@ -157,12 +157,12 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 function InfoCard({ children, variant = "info" }: { children: React.ReactNode; variant?: "info" | "warning" | "tip" }) {
   const styles = {
     info: "bg-ocean-50 text-navy-900 ring-ocean-200",
-    warning: "bg-[#fffaeb] text-[#93370d] ring-[#fedf89]",
-    tip: "bg-[#ecfdf3] text-[#05603a] ring-[#abefc6]",
+    warning: "bg-status-warning-soft text-status-warning-strong ring-status-warning-line",
+    tip: "bg-status-success-soft text-status-success-strong ring-status-success-line",
   };
   const icon: Record<"info" | "warning" | "tip", IconName> = { info: "help", warning: "alert", tip: "check" };
   return (
-    <div className={`flex items-start gap-3 rounded-xl p-4 text-[13px] leading-relaxed ring-1 ring-inset ${styles[variant]}`}>
+    <div className={`flex items-start gap-3 rounded-xl p-4 text-adm-base leading-normal ring-1 ring-inset ${styles[variant]}`}>
       <Icon name={icon[variant]} className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 [&_code]:break-words [&_code]:font-mono">{children}</div>
     </div>
@@ -173,9 +173,9 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
 function DocTable({ headers, rows }: { headers: string[]; rows: (string | React.ReactNode)[][] }) {
   return (
     <div className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden rounded-xl ring-1 ring-mist-200">
-      <table className="w-full min-w-[520px] border-collapse text-[14px]">
+      <table className="w-full min-w-[520px] border-collapse text-adm-base">
         <thead>
-          <tr className="border-b border-mist-200 bg-mist-50 text-[12px] text-mist-600">
+          <tr className="border-b border-mist-200 bg-mist-50 text-adm-xs text-mist-600">
             {headers.map((h, i) => (
               <th key={i} scope="col" className="whitespace-nowrap px-4 py-2.5 text-left font-medium">
                 {h}
@@ -204,7 +204,7 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
   return (
     <div className="min-w-0 overflow-hidden rounded-xl bg-navy-900">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-1">
-        <span className="truncate font-mono text-[12px] text-tide-200">{label}</span>
+        <span className="truncate font-mono text-adm-xs text-tide-200">{label}</span>
         <button
           type="button"
           onClick={() => {
@@ -213,31 +213,31 @@ function CodeBlock({ label = "Code", children }: { label?: string; children: str
               setTimeout(() => setCopied(false), 1500);
             });
           }}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-tide-200 hover:bg-white/10"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-adm-base font-medium text-tide-200 hover:bg-white/10"
         >
           <Icon name={copied ? "check" : "copy"} className="size-4" />
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden whitespace-pre p-4 font-mono text-[12px] leading-relaxed text-mist-0">{children}</pre>
+      <pre className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden whitespace-pre p-4 font-mono text-adm-xs leading-normal text-mist-0">{children}</pre>
     </div>
   );
 }
 
 const METHOD: Record<string, string> = {
-  GET: "bg-[#ecfdf3] text-[#067647]",
+  GET: "bg-status-success-soft text-status-success",
   POST: "bg-ocean-50 text-ocean-700",
-  PUT: "bg-[#fffaeb] text-[#b54708]",
-  DELETE: "bg-[#fef3f2] text-[#b42318]",
+  PUT: "bg-status-warning-soft text-status-warning",
+  DELETE: "bg-status-danger-soft text-status-danger",
   PATCH: "bg-mist-100 text-mist-700",
 };
 function HttpBadge({ method }: { method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" }) {
-  return <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[12px] font-semibold ${METHOD[method]}`}>{method}</span>;
+  return <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-adm-xs font-semibold ${METHOD[method]}`}>{method}</span>;
 }
 
 function Yes() {
   return (
-    <span className="inline-flex text-[#067647]">
+    <span className="inline-flex text-status-success">
       <Icon name="check" className="size-4" />
       <span className="sr-only">Allowed</span>
     </span>
@@ -246,7 +246,7 @@ function Yes() {
 
 function No() {
   return (
-    <span className="inline-flex text-mist-400">
+    <span className="inline-flex text-mist-600">
       <Icon name="x" className="size-4" />
       <span className="sr-only">No access</span>
     </span>
@@ -256,8 +256,8 @@ function No() {
 function Well({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl bg-mist-50 p-4 ring-1 ring-inset ring-mist-200">
-      <p className="mb-1 text-[13px] font-semibold text-navy-900">{title}</p>
-      <p className="text-[14px] text-mist-700">{children}</p>
+      <p className="mb-1 text-adm-base font-semibold text-navy-900">{title}</p>
+      <p className="max-w-[65ch] text-adm-base text-mist-700">{children}</p>
     </div>
   );
 }
@@ -344,7 +344,7 @@ export default function DocsView() {
         if (!items.length) return null;
         return (
           <div key={cat.id}>
-            <p className="mb-1 px-3 text-[12px] font-semibold uppercase tracking-[0.06em] text-mist-500">{cat.label}</p>
+            <p className="mb-1 px-3 text-adm-xs font-semibold uppercase tracking-[0.06em] text-mist-600">{cat.label}</p>
             <ul className="grid gap-px">
               {items.map((item) => {
                 const active = activeId === item.id;
@@ -357,7 +357,7 @@ export default function DocsView() {
                         scrollTo(item.id);
                       }}
                       aria-current={active ? "location" : undefined}
-                      className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-[14px] transition-colors duration-150 lg:min-h-9 ${
+                      className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-adm-base transition-colors duration-150 lg:min-h-9 ${
                         active ? "bg-ocean-50 font-semibold text-ocean-800" : "text-mist-700 hover:bg-mist-100 hover:text-navy-900"
                       }`}
                     >
@@ -399,7 +399,7 @@ export default function DocsView() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search the docs"
-                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
               />
             </label>
             <div className="overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
@@ -408,7 +408,7 @@ export default function DocsView() {
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-controls="docs-contents"
-                className="flex min-h-11 w-full items-center justify-between gap-2 px-4 text-left text-[14px] font-medium text-navy-900 hover:bg-mist-50 lg:hidden"
+                className="flex min-h-11 w-full items-center justify-between gap-2 px-4 text-left text-adm-base font-medium text-navy-900 hover:bg-mist-50 lg:hidden"
               >
                 <span className="min-w-0 truncate">
                   Contents{activeLabel && <span className="font-normal text-mist-600"> · {activeLabel}</span>}
@@ -447,16 +447,16 @@ export default function DocsView() {
                 <div key={f.label} className="bg-mist-0 p-4">
                   <div className="mb-1 flex items-center gap-2">
                     <Icon name={f.icon} className="size-5 text-mist-500" />
-                    <span className="text-[14px] font-semibold text-navy-900">{f.label}</span>
+                    <span className="text-adm-base font-semibold text-navy-900">{f.label}</span>
                   </div>
-                  <p className="text-[13px] text-mist-700">{f.desc}</p>
+                  <p className="max-w-[65ch] text-adm-base text-mist-700">{f.desc}</p>
                 </div>
               ))}
             </div>
             </div>
 
             <SubSection title="Admin panel URL structure">
-              <p className="text-[13px] text-mist-700">
+              <p className="max-w-[65ch] text-adm-base text-mist-700">
                 Read from <code className={CODE}>routeAccess</code> in <code className={CODE}>src/lib/auth/config.ts</code>, the same map the layout enforces.
               </p>
               <DocTable
@@ -476,7 +476,7 @@ export default function DocsView() {
 
             <SubSection title="Authentication">
               <div className="space-y-3">
-                <p className="text-[14px] text-mist-700 leading-relaxed">
+                <p className="max-w-[65ch] text-adm-base text-mist-700 leading-normal">
                   The console is <strong>staff-only and invite-based</strong>; there is no public sign-up. A forgotten password is reset from the same page with an emailed code. Sign in with your email and password directly on <code className={CODE}>/auth/sign-in</code>; the form posts to <code className={CODE}>/api/auth/signin</code>, which authenticates against Cognito and returns your tokens. There is no Cognito Hosted UI redirect.
                 </p>
                 <InfoCard variant="info">
@@ -515,7 +515,7 @@ export default function DocsView() {
                 ].map((s) => (
                   <div key={s.keys} className="flex min-w-0 items-center gap-3 rounded-xl border border-mist-200 bg-mist-50 px-4 py-3">
                     <Kbd>{s.keys}</Kbd>
-                    <span className="text-[14px] text-mist-700">{s.desc}</span>
+                    <span className="text-adm-base text-mist-700">{s.desc}</span>
                   </div>
                 ))}
               </div>
@@ -531,8 +531,8 @@ export default function DocsView() {
             />
 
             <SubSection title="Creating a job">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
-                <p>Postings live in two lists: <strong>State roles</strong> (<strong>/portal/state-roles</strong>) and <strong>Open roles</strong> (<strong>/portal/open-roles</strong>). Click <strong>New job</strong> on either. Admin, HR, Sales and Media can create and edit; Media does not see or set the commercial fields. The form is organized into sections:</p>
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
+                <p className="max-w-[65ch]">Postings live in two lists: <strong>State roles</strong> (<strong>/portal/state-roles</strong>) and <strong>Open roles</strong> (<strong>/portal/open-roles</strong>). Click <strong>New job</strong> on either. Admin, HR, Sales and Media can create and edit; Media does not see or set the commercial fields. The form is organized into sections:</p>
                 <ol className="list-decimal list-outside space-y-1 ml-5">
                   <li><strong>Basic Info</strong>, Title, department, type (full-time / contract / etc.), location</li>
                   <li><strong>Job Details</strong>, Description, requirements, responsibilities</li>
@@ -585,13 +585,13 @@ export default function DocsView() {
             </SubSection>
 
             <SubSection title="Duplicate a job">
-              <p className="text-[14px] text-mist-700 leading-relaxed">
+              <p className="max-w-[65ch] text-adm-base text-mist-700 leading-normal">
                 In the jobs table, click the <strong>⋯ menu</strong> on any row and select <strong>Duplicate</strong>. A copy is created with a new Posting ID and status reset to <em>Draft</em>. Useful for recurring roles or similar positions.
               </p>
             </SubSection>
 
             <SubSection title="Export">
-              <p className="text-[14px] text-mist-700">
+              <p className="max-w-[65ch] text-adm-base text-mist-700">
                 The <strong>Export</strong> button on the jobs page downloads a CSV with columns: Job ID, Title, Client, Location, Status, Pay Rate, Bill Rate, Manager, Created, Deadline. Applies your current filter/search state.
               </p>
             </SubSection>
@@ -617,7 +617,7 @@ export default function DocsView() {
                 ] as const).map(([status, label, desc]) => (
                   <div key={status} className="flex flex-col gap-1.5 rounded-xl border border-mist-200 bg-mist-50 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
                     <span className="sm:w-32 sm:flex-none"><DocBadge status={status} label={label} size="md" /></span>
-                    <p className="text-[14px] text-mist-700">{desc}</p>
+                    <p className="max-w-[65ch] text-adm-base text-mist-700">{desc}</p>
                   </div>
                 ))}
               </div>
@@ -661,13 +661,13 @@ export default function DocsView() {
                   ["Rating", "1–5 star internal rating (not visible to candidate)"],
                   ["Notes", "Internal notes with timestamp history"],
                   ["Resume", "PDF or Word document stored in S3"],
-                  ["Talent Bench", "Toggle to save candidate to the talent pool"],
+                  ["Talent bench", "Toggle to save candidate to the talent pool"],
                 ]}
               />
             </SubSection>
 
             <SubSection title="Export">
-              <p className="text-[14px] text-mist-700">
+              <p className="max-w-[65ch] text-adm-base text-mist-700">
                 Use the <strong>Export CSV</strong> button on the applications page to download all filtered results with columns: Name, Email, Phone, Status, Applied, Source, Work Auth.
               </p>
             </SubSection>
@@ -682,8 +682,8 @@ export default function DocsView() {
             />
 
             <SubSection title="Adding to the bench">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
-                <p>Toggle <strong>Add to Talent Bench</strong> when creating or editing an application. The candidate is then visible in <strong>/portal/talent-bench</strong> regardless of job status.</p>
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
+                <p className="max-w-[65ch]">Toggle <strong>Add to talent bench</strong> when creating or editing an application. The candidate is then visible in <strong>/portal/talent-bench</strong> regardless of job status.</p>
                 <InfoCard variant="tip">
                   Bench candidates retain all their application data (skills, visa status, notes, rating). Use the bench to quickly match top candidates when new roles open.
                 </InfoCard>
@@ -691,8 +691,8 @@ export default function DocsView() {
             </SubSection>
 
             <SubSection title="Resume bank">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
-                <p>The <strong>/portal/resumes</strong> page shows all uploaded resumes stored in S3. Each resume entry has:</p>
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
+                <p className="max-w-[65ch]">The <strong>/portal/resumes</strong> page shows all uploaded resumes stored in S3. Each resume entry has:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>File name and size</li>
                   <li>Upload date and uploader</li>
@@ -722,7 +722,7 @@ export default function DocsView() {
                   ["Notes", "Internal notes about the client relationship"],
                 ]}
               />
-              <p className="text-[13px] text-mist-700">A job links to a client by its record id (<code className={CODE}>clientId</code>), picked from the client list on the job form. Rename a client and every linked role follows. Media never sees the client on a job.</p>
+              <p className="max-w-[65ch] text-adm-base text-mist-700">A job links to a client by its record id (<code className={CODE}>clientId</code>), picked from the client list on the job form. Rename a client and every linked role follows. Media never sees the client on a job.</p>
             </SubSection>
 
             <SubSection title="Vendors">
@@ -760,7 +760,7 @@ export default function DocsView() {
                   </Fragment>
                 ))}
               </div>
-              <p className="text-[14px] text-mist-700">All contact submissions arrive as <strong>New</strong>. Reply from the record (it marks the enquiry <em>Responded</em>), or <em>Archived</em> to hide from active view.</p>
+              <p className="max-w-[65ch] text-adm-base text-mist-700">All contact submissions arrive as <strong>New</strong>. Reply from the record (it marks the enquiry <em>Responded</em>), or <em>Archived</em> to hide from active view.</p>
             </SubSection>
 
             <SubSection title="Contact fields">
@@ -790,7 +790,7 @@ export default function DocsView() {
                 headers={["Section", "Portal route", "Public route"]}
                 rows={ARTICLE_KINDS.map((k) => [ARTICLE_KIND_CONFIG[k].label, `/portal/${k}`, `/${k}`])}
               />
-              <p className="text-[13px] text-mist-700">
+              <p className="max-w-[65ch] text-adm-base text-mist-700">
                 Articles live in <code className={CODE}>oceanblue-content</code> with <code className={CODE}>recordType: &quot;article&quot;</code> and a <code className={CODE}>kind</code>. The house style per kind is in <code className={CODE}>src/lib/editorial.ts</code>.
               </p>
             </SubSection>
@@ -802,7 +802,7 @@ export default function DocsView() {
                     <span className="sm:w-32 sm:flex-none">
                       <DocBadge label={s.label} tone={s.tone} />
                     </span>
-                    <p className="text-[14px] text-mist-700">{s.hint}</p>
+                    <p className="max-w-[65ch] text-adm-base text-mist-700">{s.hint}</p>
                   </div>
                 ))}
               </div>
@@ -818,8 +818,8 @@ export default function DocsView() {
             />
 
             <SubSection title="User management">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
-                <p>Open <strong>/portal/users</strong> to see every staff account. The <strong>Roles &amp; permissions</strong> tab (admins) shows which screens each role opens, generated from the same access rules. You can:</p>
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
+                <p className="max-w-[65ch]">Open <strong>/portal/users</strong> to see every staff account. The <strong>Roles &amp; permissions</strong> tab (admins) shows which screens each role opens, generated from the same access rules. You can:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>View all registered users with their email, status, and role</li>
                   <li>Assign a role, which is a Cognito group (admin, hr, recruiter, sales, media)</li>
@@ -849,7 +849,7 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Inviting a team member">
-              <ol className="text-[14px] text-mist-700 space-y-1.5 list-decimal list-outside ml-5 leading-relaxed">
+              <ol className="text-adm-base text-mist-700 space-y-1.5 list-decimal list-outside ml-5 leading-normal">
                 <li>Go to <strong>/portal/users</strong> → click <strong>Invite user</strong></li>
                 <li>Enter the email address and select the role: <code className={CODE}>admin</code>, <code className={CODE}>hr</code>, <code className={CODE}>recruiter</code>, <code className={CODE}>sales</code>, or <code className={CODE}>media</code></li>
                 <li>Cognito emails the invite with a temporary password</li>
@@ -867,8 +867,8 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             />
 
             <SubSection title="Global command palette">
-              <div className="space-y-2 text-[14px] text-mist-700">
-                <p>Press <Kbd>⌘ K</Kbd> (Mac) or <Kbd>Ctrl K</Kbd> (Windows) from anywhere in the admin panel to open the command palette.</p>
+              <div className="space-y-2 text-adm-base text-mist-700">
+                <p className="max-w-[65ch]">Press <Kbd>⌘ K</Kbd> (Mac) or <Kbd>Ctrl K</Kbd> (Windows) from anywhere in the admin panel to open the command palette.</p>
                 <DocTable
                   headers={["Search scope", "Examples"]}
                   rows={[
@@ -882,8 +882,8 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="In-app notifications">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
-                <p>The bell icon in the admin header shows unread notification count. Notifications are created automatically for:</p>
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
+                <p className="max-w-[65ch]">The bell icon in the admin header shows unread notification count. Notifications are created automatically for:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>New application received</li>
                   <li>New contact form submission</li>
@@ -919,8 +919,8 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             />
 
             <SubSection title="Content management">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
-                <p><strong>/portal/content</strong> lets you update website content blocks without deploying code. Sections available:</p>
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
+                <p className="max-w-[65ch]"><strong>/portal/content</strong> lets you update website content blocks without deploying code. Sections available:</p>
                 <ul className="list-disc list-outside ml-5 space-y-1">
                   <li>Homepage hero text, CTA labels</li>
                   <li>About page content blocks</li>
@@ -934,8 +934,8 @@ headers={["Feature", "Admin", "HR", "Recruiter", "Sales", "Media"]}
             </SubSection>
 
             <SubSection title="Maintenance mode">
-              <div className="space-y-2 text-[14px] leading-relaxed text-mist-700">
-                <p><strong>Settings → System</strong> replaces the public site with the maintenance screen. Set <em>Expected back</em> for planned work; left empty, the screen reads as an unexpected outage. <strong>Preview what visitors will see</strong> opens <code className={CODE}>/maintenance</code>.</p>
+              <div className="space-y-2 text-adm-base leading-normal text-mist-700">
+                <p className="max-w-[65ch]"><strong>Settings → System</strong> replaces the public site with the maintenance screen. Set <em>Expected back</em> for planned work; left empty, the screen reads as an unexpected outage. <strong>Preview what visitors will see</strong> opens <code className={CODE}>/maintenance</code>.</p>
                 <InfoCard variant="info">
                   While it is on, public pages answer <strong>503</strong> with <code>Retry-After</code>, so search engines keep the indexed pages. The console, sign-in, the API, <code>/status</code>, <code>robots.txt</code> and <code>sitemap.xml</code> stay up. The status code follows the switch within 30 seconds.
                 </InfoCard>
@@ -1190,7 +1190,7 @@ RESUME_MATCH_API_KEY=your_key`}</CodeBlock>
             />
 
             <SubSection title="Authentication flow">
-              <div className="space-y-2 text-[14px] text-mist-700 leading-relaxed">
+              <div className="space-y-2 text-adm-base text-mist-700 leading-normal">
                 <ol className="list-decimal list-outside space-y-2 ml-5">
                   <li>User enters email + password on <code className={CODE}>/auth/sign-in</code> and submits to <code className={CODE}>/api/auth/signin</code></li>
                   <li>The route runs Cognito <code className={CODE}>USER_PASSWORD_AUTH</code> and returns ID + access + refresh tokens</li>

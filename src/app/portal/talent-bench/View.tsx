@@ -47,8 +47,8 @@ const IDLE_DAYS = 30;
 const isIdle = (a: Application) => (daysOnBench(a) ?? 0) >= IDLE_DAYS;
 
 const EMPTY: Record<Pool, { title: string; body: string }> = {
-  all: { title: "No candidates on the bench yet", body: "Hired candidates join the Talent Bench automatically. Add the people you are sourcing to your own pool." },
-  internal: { title: "No consultants on the Talent Bench yet", body: "Hired candidates move here automatically, and the whole team sees them." },
+  all: { title: "No candidates on the bench yet", body: "Hired candidates join the talent bench automatically. Add the people you are sourcing to your own pool." },
+  internal: { title: "No consultants on the talent bench yet", body: "Hired candidates move here automatically, and the whole team sees them." },
   external: { title: "Nothing in your pool yet", body: "Add the external candidates you are sourcing. Only you see them." },
 };
 
@@ -65,6 +65,7 @@ export default function TalentBenchView() {
   const { setData } = benchRes;
 
   const [pool, setPool] = useState<Pool>("all");
+  const [insightsOpen, setInsightsOpen] = useState(false);
   // Cards suit browsing a bench by skills and availability; the choice is remembered.
   const [layout, setLayout] = useLocalStorage<"table" | "cards">("portal.bench.layout", "cards");
   const [table, setTable] = useState<TableState>({ query: "", filters: {} });
@@ -193,7 +194,7 @@ export default function TalentBenchView() {
           <Avatar name={a.name || a.email} size="sm" />
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-semibold" title={a.name || undefined}>{a.name || "Unknown"}</span>
-            <span className="truncate text-[12px] text-mist-500">{a.jobTitle || a.applicationId || ""}</span>
+            <span className="truncate text-adm-xs text-mist-600">{a.jobTitle || a.applicationId || ""}</span>
           </span>
         </span>
       ),
@@ -203,9 +204,9 @@ export default function TalentBenchView() {
     { key: "phone", header: "Phone", card: false, defaultHidden: true, value: (a) => a.phone ?? "" },
     { key: "position", header: "Last position", card: false, defaultHidden: true, value: (a) => a.jobTitle ?? "" },
     { key: "appId", header: "App ID", card: false, defaultHidden: true, value: (a) => a.applicationId || a.id.slice(0, 8) },
-    { key: "skills", header: "Skills", grow: 20, hideBelow: "md", value: (a) => [a.skills?.join(", "), a.searchText].filter(Boolean).join(" "), cell: (a) => (a.skills?.length ? <Tags items={a.skills.slice(0, 3).concat(a.skills.length > 3 ? [`+${a.skills.length - 3}`] : [])} /> : <span className="text-mist-400">&mdash;</span>) },
+    { key: "skills", header: "Skills", grow: 20, hideBelow: "md", value: (a) => [a.skills?.join(", "), a.searchText].filter(Boolean).join(" "), cell: (a) => (a.skills?.length ? <Tags items={a.skills.slice(0, 3).concat(a.skills.length > 3 ? [`+${a.skills.length - 3}`] : [])} /> : <span className="text-mist-600">&mdash;</span>) },
     { key: "location", header: "Location", sortable: true, grow: 15, hideBelow: "lg", value: (a) => locationOf(a) },
-    { key: "age", header: "On bench", sortable: true, numeric: true, hideBelow: "xl", value: (a) => daysOnBench(a) ?? -1, cell: (a) => { const d = daysOnBench(a); return d === null ? <span className="text-mist-400">&mdash;</span> : <span className={`tabular-nums ${d >= IDLE_DAYS ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>; } },
+    { key: "age", header: "On bench", sortable: true, numeric: true, hideBelow: "xl", value: (a) => daysOnBench(a) ?? -1, cell: (a) => { const d = daysOnBench(a); return d === null ? <span className="text-mist-600">&mdash;</span> : <span className={`tabular-nums ${d >= IDLE_DAYS ? "font-semibold text-status-warning" : "text-mist-600"}`}>{d}d</span>; } },
     { key: "rating", header: "Rating", sortable: true, card: false, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
     { key: "hireType", header: "Hire type", sortable: true, card: false, hideBelow: "2xl", value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
@@ -275,14 +276,14 @@ export default function TalentBenchView() {
         <div className="flex items-center gap-4">
           <Avatar name={a.name || a.email} size="lg" />
           <div className="min-w-0">
-            <h3 className="truncate text-[20px] font-semibold">{a.name || "Unknown"}</h3>
-            <p className="truncate text-[14px] text-mist-600">{a.jobTitle || "No position on file"}</p>
+            <h3 className="truncate text-adm-lg font-semibold">{a.name || "Unknown"}</h3>
+            <p className="truncate text-adm-base text-mist-600">{a.jobTitle || "No position on file"}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StageBadge stage={a.status} />
           <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge>
-          {d !== null && <span className={`text-[13px] ${d >= IDLE_DAYS ? "font-medium text-[#b54708]" : "text-mist-600"}`}>{d} days on the bench</span>}
+          {d !== null && <span className={`text-adm-base ${d >= IDLE_DAYS ? "font-medium text-status-warning" : "text-mist-600"}`}>{d} days on the bench</span>}
         </div>
         <KeyValue
           items={[
@@ -299,7 +300,7 @@ export default function TalentBenchView() {
         />
         {!!a.skills?.length && (
           <section>
-            <h4 className="text-[14px] font-semibold">Skills</h4>
+            <h4 className="text-adm-base font-semibold">Skills</h4>
             <div className="mt-2">
               <Tags items={a.skills} />
             </div>
@@ -307,8 +308,8 @@ export default function TalentBenchView() {
         )}
         {a.notes && (
           <section>
-            <h4 className="text-[14px] font-semibold">Notes</h4>
-            <p className="mt-2 whitespace-pre-line rounded-lg bg-mist-50 p-3 text-[14px]">{a.notes}</p>
+            <h4 className="text-adm-base font-semibold">Notes</h4>
+            <p className="mt-2 whitespace-pre-line rounded-lg bg-mist-50 p-3 text-adm-base">{a.notes}</p>
           </section>
         )}
         {/* One primary, one secondary, the rest in the overflow */}
@@ -470,13 +471,14 @@ export default function TalentBenchView() {
       <PageHeader
         section="recruiting"
         icon="bench"
-        title="Talent Bench"
-        description={ready ? `${rows.length} profile${rows.length === 1 ? "" : "s"} ready for future roles${idle ? `, ${idle} idle 30+ days` : ""}.` : "People ready for future roles."}
+        title="Talent bench"
+
         actions={
           <>
             <Button variant="secondary" icon="sparkle" href={`/portal/lead-sourcing?from=${pool}`}>Lead sourcing</Button>
+            {ready && inPool.length > 0 && <ActionMenu items={[{ label: "Insights", icon: "chart", onSelect: () => setInsightsOpen(true) }]} />}
             {ready && inPool.length > 0 && (
-              <InsightsSheet title="Talent bench insights" description="The skills on the bench and where each profile sits. Pick a skill to filter.">
+              <InsightsSheet open={insightsOpen} onOpenChange={setInsightsOpen} title="Talent bench insights" description="The skills on the bench and where each profile sits. Pick a skill to filter.">
                 {(close) => (
                   <>
                     <Panel title="Top skills on the bench" description="Pick a skill to filter">
@@ -513,7 +515,7 @@ export default function TalentBenchView() {
             <Button icon="plus" href="/portal/applications/new?bench=1">Add profile</Button>
           </>
         }
-        tabs={ready && rows.length > 0 && <p className="text-[13px] text-mist-600">{poolHint}</p>}
+        tabs={ready && rows.length > 0 && <p className="text-adm-base text-mist-600">{poolHint}</p>}
       />
       {body}
     </Page>
@@ -547,7 +549,7 @@ function BenchCards({
                 <button type="button" onClick={() => onOpen(a)} className="block max-w-full truncate text-left font-semibold text-navy-900 hover:text-ocean-700">
                   {a.name || "Unknown"}
                 </button>
-                <p className="truncate text-[12px] text-mist-600">{a.jobTitle || <span className="font-mono text-mist-500">{a.applicationId || a.id.slice(0, 8)}</span>}</p>
+                <p className="truncate text-adm-xs text-mist-600">{a.jobTitle || <span className="font-mono text-mist-600">{a.applicationId || a.id.slice(0, 8)}</span>}</p>
               </div>
               <span className="flex shrink-0 flex-col items-end gap-1.5">
                 <StageBadge stage={a.status} />
@@ -559,13 +561,13 @@ function BenchCards({
                 <Tags items={a.skills.slice(0, 5).concat(a.skills.length > 5 ? [`+${a.skills.length - 5}`] : [])} />
               </div>
             )}
-            <dl className="mt-4 grid gap-1.5 text-[13px] text-mist-700">
-              <div className="flex min-w-0 gap-2"><dt className="w-24 shrink-0 text-mist-500">Work auth</dt><dd className="truncate">{a.workAuthorization || "—"}</dd></div>
-              <div className="flex min-w-0 gap-2"><dt className="w-24 shrink-0 text-mist-500">Location</dt><dd className="truncate">{locationOf(a) || "—"}</dd></div>
-              <div className="flex min-w-0 gap-2"><dt className="w-24 shrink-0 text-mist-500">Email</dt><dd className="truncate">{a.email}</dd></div>
+            <dl className="mt-4 grid gap-1.5 text-adm-base text-mist-700">
+              <div className="flex min-w-0 gap-2"><dt className="w-24 shrink-0 text-mist-600">Work auth</dt><dd className="truncate">{a.workAuthorization || "—"}</dd></div>
+              <div className="flex min-w-0 gap-2"><dt className="w-24 shrink-0 text-mist-600">Location</dt><dd className="truncate">{locationOf(a) || "—"}</dd></div>
+              <div className="flex min-w-0 gap-2"><dt className="w-24 shrink-0 text-mist-600">Email</dt><dd className="truncate">{a.email}</dd></div>
               {a.resumeId && (
                 <div className="flex min-w-0 gap-2">
-                  <dt className="w-24 shrink-0 text-mist-500">Resume</dt>
+                  <dt className="w-24 shrink-0 text-mist-600">Resume</dt>
                   <dd>
                     <button type="button" onClick={() => onResume(a.resumeId!)} className="font-medium text-ocean-700 hover:underline">Resume on file</button>
                   </dd>
@@ -573,8 +575,8 @@ function BenchCards({
               )}
             </dl>
             {showAdder && (
-              <p className="mt-4 flex min-w-0 items-center gap-2 border-t border-mist-100 pt-4 text-[12px]">
-                <span className="shrink-0 text-mist-500">Added by</span>
+              <p className="mt-4 flex min-w-0 items-center gap-2 border-t border-mist-100 pt-4 text-adm-xs">
+                <span className="shrink-0 text-mist-600">Added by</span>
                 <span className="truncate font-medium text-mist-700">{a.adder}</span>
                 {a.adderRole && <span className="ml-auto shrink-0 rounded-md bg-mist-100 px-1.5 py-0.5 capitalize text-mist-600">{a.adderRole}</span>}
               </p>
@@ -582,7 +584,7 @@ function BenchCards({
             <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-mist-100 pt-3">
               <span className="flex items-center gap-2">
                 <StarInput value={a.rating || 0} onChange={(n) => onRate(a, n)} label={`Rating for ${a.name}`} />
-                {age !== null && <span className={`text-[12px] tabular-nums ${age >= IDLE_DAYS ? "font-medium text-[#b54708]" : "text-mist-500"}`} title="Days on bench">{age}d</span>}
+                {age !== null && <span className={`text-adm-xs tabular-nums ${age >= IDLE_DAYS ? "font-medium text-status-warning" : "text-mist-600"}`} title="Days on bench">{age}d</span>}
               </span>
               <span className="flex items-center">
                 <Button variant="ghost" icon="eye" label="View details" onClick={() => onOpen(a)} />

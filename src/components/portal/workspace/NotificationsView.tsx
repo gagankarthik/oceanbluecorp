@@ -13,14 +13,14 @@ import { Badge, Button, ConfirmDialog, EmptyState, ErrorState, Page, PageHeader,
 
 type Notification = NotificationView;
 
-const TYPES: Record<NotificationType, { label: string; icon: IconName; tone: Tone; chip: string }> = {
-  job_posted: { label: "Job posted", icon: "briefcase", tone: "blue", chip: "bg-ocean-50 text-ocean-700" },
-  application_received: { label: "New application", icon: "inbox", tone: "cyan", chip: "bg-cyan-100 text-navy-900" },
-  contact_received: { label: "Contact enquiry", icon: "contact", tone: "green", chip: "bg-[#e3f6ee] text-[#0b6e4a]" },
-  task_assigned: { label: "Task assigned", icon: "clock", tone: "amber", chip: "bg-[#fffaeb] text-[#b54708]" },
-  application_deleted: { label: "Application deleted", icon: "trash", tone: "grey", chip: "bg-mist-100 text-mist-700" },
+const TYPES: Record<NotificationType, { label: string; icon: IconName; tone: Tone }> = {
+  job_posted: { label: "Job posted", icon: "briefcase", tone: "blue" },
+  application_received: { label: "New application", icon: "inbox", tone: "cyan" },
+  contact_received: { label: "Contact enquiry", icon: "contact", tone: "green" },
+  task_assigned: { label: "Task assigned", icon: "clock", tone: "amber" },
+  application_deleted: { label: "Application deleted", icon: "trash", tone: "grey" },
 };
-const OTHER = { label: "Other", icon: "bell" as IconName, tone: "grey" as Tone, chip: "bg-mist-100 text-mist-700" };
+const OTHER = { label: "Other", icon: "bell" as IconName, tone: "grey" as Tone };
 const metaFor = (type: string) => TYPES[type as NotificationType] ?? OTHER;
 
 // Links stored before the move still say /admin.
@@ -63,21 +63,18 @@ function Row({ n, isAdmin, onDelete }: { n: Notification; isAdmin: boolean; onDe
         onClick={() => !n.isRead && void notificationActions.markRead(n.id)}
         className="flex min-w-0 flex-1 items-start gap-3 rounded-lg px-2 py-2.5 transition-colors duration-150 hover:bg-mist-50"
       >
-        <span className={`relative grid size-9 shrink-0 place-items-center rounded-lg ${m.chip}`}>
-          <Icon name={m.icon} className="size-[18px]" />
-          {!n.isRead && <span aria-hidden className="absolute -left-1 -top-1 size-2.5 rounded-full bg-ocean-600 ring-2 ring-mist-0" />}
-        </span>
+        <span aria-hidden className={`mt-2 size-2 shrink-0 rounded-full ${n.isRead ? "" : "bg-ocean-600"}`} />
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-baseline gap-x-2">
-            <span className={`min-w-0 truncate text-[14px] ${n.isRead ? "text-mist-700" : "font-semibold text-navy-900"}`}>
+            <span className={`min-w-0 truncate text-adm-base ${n.isRead ? "text-mist-700" : "font-semibold text-navy-900"}`}>
               {n.title}
               {!n.isRead && <span className="sr-only"> (unread)</span>}
             </span>
-            <span className="text-[12px] text-mist-500">{m.label}</span>
+            <span className="text-adm-xs text-mist-600">{m.label}</span>
           </span>
-          {n.message && <span className="mt-0.5 block truncate text-[13px] text-mist-600">{n.message}</span>}
+          {n.message && <span className="mt-0.5 block truncate text-adm-base text-mist-600">{n.message}</span>}
         </span>
-        <time dateTime={n.createdAt} title={fmtDateTime(n.createdAt)} className="shrink-0 pt-0.5 text-[12px] tabular-nums text-mist-500">
+        <time dateTime={n.createdAt} title={fmtDateTime(n.createdAt)} className="shrink-0 pt-0.5 text-adm-xs tabular-nums text-mist-600">
           {fmtRelative(n.createdAt)}
         </time>
       </Link>
@@ -98,7 +95,7 @@ function Row({ n, isAdmin, onDelete }: { n: Notification; isAdmin: boolean; onDe
               onClick={onDelete}
               title="Delete for everyone"
               aria-label={`Delete "${n.title}" for everyone`}
-              className="grid size-10 shrink-0 place-items-center rounded-lg text-[#b42318] transition-colors duration-150 hover:bg-[#fef3f2]"
+              className="grid size-10 shrink-0 place-items-center rounded-lg text-status-danger transition-colors duration-150 hover:bg-status-danger-soft"
             >
               <Icon name="trash" className="size-4" />
             </button>
@@ -199,7 +196,7 @@ export default function NotificationsView() {
         title="Notifications"
         icon="bell"
         section="workspace"
-        description="Activity for your role, newest first."
+
         meta={unread > 0 ? <Badge tone="blue">{unread} unread</Badge> : undefined}
         actions={
           unread > 0 ? (
@@ -242,7 +239,7 @@ export default function NotificationsView() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search notifications"
-                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
               />
             </label>
           </div>
@@ -257,7 +254,7 @@ export default function NotificationsView() {
             <div className="grid gap-6">
               {groups.map((g, gi) => (
                 <section key={g.day} aria-labelledby={`day-${gi}`} className="grid gap-2">
-                  <h2 id={`day-${gi}`} className="px-1 text-[13px] font-semibold text-mist-600">
+                  <h2 id={`day-${gi}`} className="px-1 text-adm-base font-semibold text-mist-600">
                     {g.day}
                   </h2>
                   <ul className="divide-y divide-mist-100 overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
@@ -274,7 +271,7 @@ export default function NotificationsView() {
                   </Button>
                 </div>
               )}
-              {filtering && <p className="text-center text-[13px] text-mist-500">{filtered.length} of {notifications.length} shown</p>}
+              {filtering && <p className="text-center text-adm-base text-mist-600">{filtered.length} of {notifications.length} shown</p>}
             </div>
           )}
         </>

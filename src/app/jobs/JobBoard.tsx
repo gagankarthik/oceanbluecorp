@@ -111,7 +111,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
       >
       <form role="search" onSubmit={(e) => e.preventDefault()} className="grid gap-4 py-3 md:grid-cols-[2fr_1fr_1fr_1fr_auto] md:items-end md:py-6">
         <div className="flex items-end gap-2">
-          <label className="min-w-0 flex-1 text-[15px] font-medium">
+          <label className="min-w-0 flex-1 text-small font-medium">
             <span className="max-md:sr-only">Search roles</span>
             <input
               type="search"
@@ -132,12 +132,12 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
           >
             Filters
             {activeFilters > 0 && (
-              <span className="grid size-5 place-items-center rounded-full bg-ocean-600 text-[12px] tabular-nums text-white">{activeFilters}</span>
+              <span className="grid size-5 place-items-center rounded-full bg-ocean-600 text-caption tabular-nums text-white">{activeFilters}</span>
             )}
           </button>
         </div>
         <div id="job-filters" className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-x-2 gap-y-3 pb-2 max-md:[&_select]:mt-1 max-md:[&_select]:min-h-11 md:contents`}>
-        <label className="text-[13px] font-medium md:text-[15px]">
+        <label className="text-caption font-medium md:text-small">
           Practice
           <select value={practice} onChange={(e) => setPractice(e.target.value)} className={select}>
             {practices.map((p) => (
@@ -145,7 +145,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             ))}
           </select>
         </label>
-        <label className="text-[13px] font-medium md:text-[15px]">
+        <label className="text-caption font-medium md:text-small">
           Workplace
           <select value={workplace} onChange={(e) => setWorkplace(e.target.value)} className={select}>
             {workplaces.map((p) => (
@@ -153,7 +153,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             ))}
           </select>
         </label>
-        <label className="text-[13px] font-medium md:text-[15px]">
+        <label className="text-caption font-medium md:text-small">
           Job type
           <select value={type} onChange={(e) => setType(e.target.value)} className={select}>
             {types.map((p) => (
@@ -162,7 +162,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
           </select>
         </label>
         {hasRemote && (
-          <label className="flex min-h-11 w-fit self-end md:min-h-12 cursor-pointer items-center gap-3 whitespace-nowrap text-[13px] font-medium md:text-[15px]">
+          <label className="flex min-h-11 w-fit self-end md:min-h-12 cursor-pointer items-center gap-3 whitespace-nowrap text-caption font-medium md:text-small">
             <input
               type="checkbox"
               checked={remoteOnly}
@@ -203,7 +203,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
           </>
         )}
       </p>
-        <label className="flex items-center gap-3 text-[15px] font-medium">
+        <label className="flex items-center gap-3 text-small font-medium">
           Sort by
           <select
             value={sort}
@@ -219,7 +219,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
 
       {results.length === 0 ? (
         <div className="mt-6 bg-mist-100 p-8">
-          <p className="text-[20px] font-medium">
+          <p className="text-title font-medium">
             {jobs.length ? "No openings match those filters." : "No open roles right now."}
           </p>
           <p className="mt-2 text-mist-600">Try a broader search, or send us your resume and we will contact you when a role fits.</p>
@@ -234,10 +234,10 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
                 className="group grid gap-4 bg-mist-0 p-6 [overflow-wrap:anywhere] transition-colors hover:bg-tide-100 md:grid-cols-[1fr_auto] md:items-center md:p-7"
               >
                 <span className="min-w-0">
-                  {j.ref && <span className="mb-1 block text-[14px] font-medium tabular-nums text-mist-600">Job ID {j.ref}</span>}
-                  <span className="display block text-[clamp(1.5rem,2vw,2rem)] group-hover:text-ocean-700">{j.title}</span>
-                  <span className="mt-2 block max-w-[60ch]">{j.summary}</span>
-                  <span className="mt-3 flex flex-wrap gap-2 text-[14px]">
+                  {j.ref && <span className="mb-1 block text-small font-medium tabular-nums text-mist-600">Job ID {j.ref}</span>}
+                  <span className="display block text-head-sm group-hover:text-ocean-700">{j.title}</span>
+                  <span className="mt-2 block max-w-measure">{j.summary}</span>
+                  <span className="mt-3 flex flex-wrap gap-2 text-small">
                     {jobFacts(j).map((t) => (
                       <span key={t} className="bg-mist-100 px-2.5 py-1 text-navy-900">
                         {t}
@@ -263,7 +263,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
         </ul>
         {results.length > shown && (
           <div className="mt-8 flex flex-col items-center gap-3">
-            <p className="text-[15px] text-mist-600">
+            <p className="text-small text-mist-600">
               Showing {shown} of {results.length}
             </p>
             <button

@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // Article HTML is sanitized at save (sanitizeArticleHtml), so it renders as stored.
 const prose =
-  "grid min-w-0 gap-5 [overflow-wrap:anywhere] text-[19px] leading-[1.6] [&_a]:text-ocean-700 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-ocean-600 [&_blockquote]:pl-5 [&_h2]:display [&_h2]:mt-6 [&_h2]:text-[1.75rem] [&_h3]:mt-4 [&_h3]:font-semibold [&_img]:w-full [&_li]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:marker:text-ocean-600";
+  "grid min-w-0 gap-5 [overflow-wrap:anywhere] text-title leading-normal [&_a]:text-ocean-700 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-ocean-600 [&_blockquote]:pl-5 [&_h2]:display [&_h2]:mt-6 [&_h2]:text-head-sm [&_h3]:mt-4 [&_h3]:font-semibold [&_img]:w-full [&_li]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6 [&_li]:marker:text-ocean-600";
 
 export default async function ResourcePage({ params }: Props) {
   const { category, slug } = await params;
@@ -52,7 +52,7 @@ export default async function ResourcePage({ params }: Props) {
       />
       <article className="bg-field-paper">
         <div id="top" className="gutter grid gap-10 pb-16 pt-10 md:pt-14 lg:grid-cols-12">
-          <p className="text-[15px] lg:col-span-12">
+          <p className="text-small lg:col-span-12">
             <Link href="/resources" className="text-ocean-700 underline underline-offset-4">
               Resources
             </Link>
@@ -61,14 +61,14 @@ export default async function ResourcePage({ params }: Props) {
               {cat.name}
             </Link>
           </p>
-          <div className="side text-[15px] text-mist-600 lg:pt-4">
+          <div className="side text-small text-mist-600 lg:pt-4">
             {cat.singular}
             {r.date ? `, ${r.date}` : ""}
             {byline && <span className="mt-1 block">{byline}</span>}
             {a.readingMinutes ? <span className="mt-1 block">{a.readingMinutes} min read</span> : null}
           </div>
           <div className="axis">
-            <h1 className="lines poster text-[clamp(2.25rem,4vw,4rem)]">
+            <h1 className="lines poster text-head">
               <span className="line">
                 <span data-line style={{ "--i": 0 } as React.CSSProperties}>
                   {r.title}
@@ -76,7 +76,7 @@ export default async function ResourcePage({ params }: Props) {
               </span>
             </h1>
             {(a.subtitle || r.summary) && (
-              <p data-after-lines className="mt-8 max-w-[46ch] text-[clamp(1.25rem,1.6vw,1.5rem)] leading-snug">
+              <p data-after-lines className="mt-8 max-w-measure-narrow text-title leading-snug">
                 {a.subtitle || r.summary}
               </p>
             )}
@@ -92,7 +92,7 @@ export default async function ResourcePage({ params }: Props) {
               <Photo name={categoryPhoto[r.category]} className="aspect-[4/3]" sizes="33vw" />
             )}
             {(a.clientName || a.industry || a.engagement || a.services?.length) && (
-              <dl className="grid gap-4 bg-mist-100 p-6 text-[15px]">
+              <dl className="grid gap-4 bg-mist-100 p-6 text-small">
                 {[
                   { k: "Client", v: a.clientName },
                   { k: "Industry", v: a.industry },
@@ -109,16 +109,16 @@ export default async function ResourcePage({ params }: Props) {
               </dl>
             )}
           </div>
-          <div className="axis max-w-[68ch]">
+          <div className="axis max-w-measure">
             {a.metrics && a.metrics.length > 0 && (
               <dl className="mb-12 grid gap-2 sm:grid-cols-3">
                 {a.metrics.map((m) => (
                   <div key={m.label} className="flex flex-col-reverse bg-navy-900 p-6 text-mist-50">
-                    <dt className="mt-2 text-[15px] text-tide-300">
+                    <dt className="mt-2 text-small text-tide-300">
                       {m.label}
                       {m.note ? <span className="block text-mist-400">{m.note}</span> : null}
                     </dt>
-                    <dd className="poster text-[2.25rem]">{m.value}</dd>
+                    <dd className="poster text-head-md">{m.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -126,10 +126,10 @@ export default async function ResourcePage({ params }: Props) {
             {a.quote && (
               <figure className="mb-12 bg-mist-100 p-7">
                 <blockquote>
-                  <p className="text-[clamp(1.25rem,1.6vw,1.5rem)] leading-snug">{a.quote}</p>
+                  <p className="text-title leading-snug">{a.quote}</p>
                 </blockquote>
                 {(a.quoteAuthor || a.quoteAuthorRole) && (
-                  <figcaption className="mt-5 text-[15px]">
+                  <figcaption className="mt-5 text-small">
                     {a.quoteAuthor && <span className="block font-medium">{a.quoteAuthor}</span>}
                     {a.quoteAuthorRole && <span className="block text-mist-600">{a.quoteAuthorRole}</span>}
                   </figcaption>
@@ -138,7 +138,7 @@ export default async function ResourcePage({ params }: Props) {
             )}
             {story.map((s) => (
               <section key={s.title} className="mb-12">
-                <h2 className="display mb-5 text-[clamp(1.75rem,2.6vw,2.25rem)]">{s.title}</h2>
+                <h2 className="display mb-5 text-head-md">{s.title}</h2>
                 <div className={prose} dangerouslySetInnerHTML={{ __html: s.html }} />
               </section>
             ))}
@@ -157,7 +157,7 @@ export default async function ResourcePage({ params }: Props) {
       {more.length > 0 && (
         <section className="bg-field-mist">
           <div className="gutter grid gap-10 py-20 md:py-24 lg:grid-cols-12">
-            <h2 className="display side text-[clamp(2rem,3vw,2.75rem)]">More {cat.name.toLowerCase()}</h2>
+            <h2 className="display side text-head-md">More {cat.name.toLowerCase()}</h2>
             <div className="axis">
               <ResourceList items={more} showCategory={false} />
             </div>

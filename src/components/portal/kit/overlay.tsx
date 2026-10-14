@@ -144,16 +144,16 @@ export function Modal({
           tabIndex={-1}
           className={`kit-rise relative flex max-h-[calc(100svh-0.5rem)] w-full flex-col rounded-t-2xl bg-mist-0 text-navy-900 shadow-2xl focus:outline-none sm:max-h-[calc(100svh-3rem)] sm:rounded-2xl ${modalWidth[size]}`}
         >
-          <div className="flex items-start justify-between gap-4 border-b border-mist-200 px-5 py-3.5 sm:px-6">
-            <div className="min-w-0 py-1.5">
-              <h2 id={titleId} className="text-[18px] font-semibold leading-snug text-navy-900">{title}</h2>
-              {description && <p className="mt-0.5 text-[13px] text-mist-600">{description}</p>}
+          <div className="flex items-start justify-between gap-4 border-b border-mist-200 px-5 py-4 sm:px-6">
+            <div className="min-w-0 py-1">
+              <h2 id={titleId} className="text-adm-md font-semibold leading-snug text-navy-900">{title}</h2>
+              {description && <p className="mt-0.5 text-adm-base text-mist-600">{description}</p>}
             </div>
             <CloseButton onClose={onClose} />
           </div>
           <div className="scroll-thin min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">{children}</div>
           {footer && (
-            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-mist-200 px-5 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] sm:px-6">{footer}</div>
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-mist-200 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">{footer}</div>
           )}
         </div>
       </div>
@@ -222,10 +222,10 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div id={bodyId} className="text-[14px] leading-relaxed text-mist-700">{body}</div>
+      <div id={bodyId} className="text-adm-base leading-normal text-mist-700">{body}</div>
       {needed && (
         <div className="mt-4">
-          <label htmlFor={inputId} className="mb-1.5 block text-[13px] text-navy-900">
+          <label htmlFor={inputId} className="mb-1.5 block text-adm-base text-navy-900">
             Type <strong className="font-semibold">{needed}</strong> to confirm
           </label>
           <input
@@ -293,7 +293,7 @@ export function Drawer({
           className={`kit-slide relative flex h-[92svh] w-full flex-col rounded-t-2xl bg-mist-0 text-navy-900 shadow-2xl focus:outline-none sm:h-full sm:rounded-none ${width === "lg" ? "sm:max-w-3xl" : "sm:max-w-136"}`}
         >
           <div className="flex items-center justify-between gap-4 border-b border-mist-200 px-5 py-3 sm:px-6">
-            <h2 id={titleId} className="min-w-0 truncate text-[18px] font-semibold text-navy-900">{title}</h2>
+            <h2 id={titleId} className="min-w-0 truncate text-adm-md font-semibold text-navy-900">{title}</h2>
             <div className="flex shrink-0 items-center gap-2">
               {actions}
               <CloseButton onClose={onClose} />
@@ -301,7 +301,7 @@ export function Drawer({
           </div>
           <div className="scroll-thin min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">{children}</div>
           {footer && (
-            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-mist-200 px-5 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] sm:px-6">{footer}</div>
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-mist-200 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">{footer}</div>
           )}
         </div>
       </div>

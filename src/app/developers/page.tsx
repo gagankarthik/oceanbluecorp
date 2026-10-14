@@ -35,11 +35,11 @@ function C({ children }: { children: React.ReactNode }) {
 function Section({ id, n, title, children }: { id: string; n: number; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="min-w-0 scroll-mt-28 border-t border-mist-200 pt-12 first:border-t-0 first:pt-0">
-      <h2 className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+      <h2 className="display text-head-md">
         <span className="mr-3 font-mono text-[0.5em] font-medium text-mist-500">{String(n).padStart(2, "0")}</span>
         {title}
       </h2>
-      <div className="mt-6 grid min-w-0 gap-4 leading-relaxed text-navy-900 [&>*]:min-w-0">{children}</div>
+      <div className="mt-6 grid min-w-0 gap-4 leading-normal text-navy-900 [&>*]:min-w-0">{children}</div>
     </section>
   );
 }
@@ -47,7 +47,7 @@ function Section({ id, n, title, children }: { id: string; n: number; title: str
 function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
   return (
     <div className="overflow-x-auto overflow-y-hidden bg-mist-0">
-      <table className="w-full min-w-[560px] text-left text-[15px]">
+      <table className="w-full min-w-[560px] text-left text-small">
         <thead>
           <tr className="bg-mist-100">
             {head.map((h) => (
@@ -73,8 +73,8 @@ function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
   );
 }
 
-const field = (s: string) => <code className="font-mono text-[14px] text-ocean-700">{s}</code>;
-const mono = (s: string) => <code className="font-mono text-[14px]">{s}</code>;
+const field = (s: string) => <code className="font-mono text-small text-ocean-700">{s}</code>;
+const mono = (s: string) => <code className="font-mono text-small">{s}</code>;
 
 function Endpoint({
   method,
@@ -94,20 +94,20 @@ function Endpoint({
   return (
     <article className="bg-mist-0 p-5 md:p-7">
       <h3 className="flex flex-wrap items-center gap-3">
-        <span className={`px-2 py-0.5 font-mono text-[13px] font-semibold ${method === "GET" ? "bg-tide-200 text-navy-900" : "bg-ocean-600 text-white"}`}>
+        <span className={`px-2 py-0.5 font-mono text-caption font-semibold ${method === "GET" ? "bg-tide-200 text-navy-900" : "bg-ocean-600 text-white"}`}>
           {method}
         </span>
-        <code className="break-all font-mono text-[16px] font-medium">{path}</code>
+        <code className="break-all font-mono text-small font-medium">{path}</code>
       </h3>
       <p className="mt-3 text-mist-700">{description}</p>
-      <p className="mt-6 text-[14px] font-semibold text-mist-600">Parameters</p>
+      <p className="mt-6 text-small font-semibold text-mist-600">Parameters</p>
       <div className="mt-2 border border-mist-200">
         <Table
           head={["Name", "Type", "Required", "Description"]}
           rows={params.map((p) => [field(p.name), mono(p.type), p.required ? "Required" : "Optional", p.description])}
         />
       </div>
-      <p className="mt-6 text-[14px] font-semibold text-mist-600">Example response</p>
+      <p className="mt-6 text-small font-semibold text-mist-600">Example response</p>
       <CodeBlock lang="json">{response}</CodeBlock>
       {children}
     </article>
@@ -127,7 +127,7 @@ export default function DevelopersPage() {
           <dl className="grid gap-3">
             <div>
               <dt className="font-semibold text-navy-900">Base URL</dt>
-              <dd className="break-all font-mono text-[14px]">{BASE}</dd>
+              <dd className="break-all font-mono text-small">{BASE}</dd>
             </div>
             <div>
               <dt className="font-semibold text-navy-900">Auth</dt>
@@ -145,8 +145,8 @@ export default function DevelopersPage() {
         <div className="gutter grid gap-12 pb-24 md:pb-32 lg:grid-cols-12">
           <aside className="lg:col-span-3">
             <nav aria-label="On this page" className="bg-mist-100 p-5 lg:sticky lg:top-24">
-              <p className="text-[14px] font-semibold text-mist-600">On this page</p>
-              <ol className="mt-3 grid gap-1.5 text-[15px]">
+              <p className="text-small font-semibold text-mist-600">On this page</p>
+              <ol className="mt-3 grid gap-1.5 text-small">
                 {NAV.map((s, i) => (
                   <li key={s.id}>
                     <a href={`#${s.id}`} className="text-navy-900 hover:text-ocean-700 hover:underline">
@@ -155,8 +155,8 @@ export default function DevelopersPage() {
                   </li>
                 ))}
               </ol>
-              <p className="mt-6 text-[14px] font-semibold text-mist-600">Need a key?</p>
-              <a href={ACCESS_MAIL} className="mt-1 inline-block break-all text-[15px] text-ocean-700 underline underline-offset-4">
+              <p className="mt-6 text-small font-semibold text-mist-600">Need a key?</p>
+              <a href={ACCESS_MAIL} className="mt-1 inline-block break-all text-small text-ocean-700 underline underline-offset-4">
                 {company.email}
               </a>
             </nav>
@@ -164,7 +164,7 @@ export default function DevelopersPage() {
 
           <div className="grid min-w-0 gap-16 lg:col-span-8 lg:col-start-5">
             <Section id="overview" n={1} title="Overview">
-              <p className="max-w-[68ch]">
+              <p className="max-w-measure">
                 The Oceanblue Solutions, Inc. Job Feed API lets external platforms pull our live job listings. It is a versioned REST API hosted at{" "}
                 <C>/api/v1</C>, and every request and response is JSON.
               </p>
@@ -173,11 +173,11 @@ export default function DevelopersPage() {
             </Section>
 
             <Section id="authentication" n={2} title="Authentication">
-              <p className="max-w-[68ch]">
+              <p className="max-w-measure">
                 Every request must include your API key in the <C>X-API-Key</C> header. For a quick test you can pass it as the <C>?api_key=</C>{" "}
                 query parameter instead.
               </p>
-              <p className="max-w-[68ch] border-l-2 border-buoy-400 bg-mist-0 px-5 py-4">
+              <p className="max-w-measure border-l-2 border-buoy-400 bg-mist-0 px-5 py-4">
                 Keep your API key secret. Do not put it in client-side code or a public repository. Contact us straight away if a key is
                 compromised and we will disable it.
               </p>
@@ -197,8 +197,8 @@ curl "${BASE}/jobs?api_key=obk_live_your_api_key_here"`}</CodeBlock>
                 ]}
               />
 
-              <h3 className="mt-6 text-[clamp(1.25rem,1.6vw,1.5rem)] font-semibold">Scopes</h3>
-              <p className="max-w-[68ch]">
+              <h3 className="mt-6 text-title font-semibold">Scopes</h3>
+              <p className="max-w-measure">
                 Each key is issued at one of two access levels. A read-only key that calls a write endpoint gets a <C>403</C> naming the scope it is
                 missing, in a <C>requiredScope</C> field. Ask your Oceanblue contact if you need a level changed; the key value itself does not change.
               </p>
@@ -320,7 +320,7 @@ curl "${BASE}/jobs?api_key=obk_live_your_api_key_here"`}</CodeBlock>
   "requiredScope": "jobs:write"
 }`}
               >
-                <p className="mt-2 bg-mist-100 px-5 py-4 text-[15px] text-mist-700">
+                <p className="mt-2 bg-mist-100 px-5 py-4 text-small text-mist-700">
                   Postings created over the API arrive as <C>draft</C> unless you send <C>status</C>, so a recruiter reviews them before they reach
                   the public jobs page. Rates, client and vendor details and recruiter assignments cannot be set through this endpoint. A{" "}
                   <C>type</C> of <C>remote</C> is still accepted from older integrations and is saved as full-time with a remote workplace.
@@ -329,7 +329,7 @@ curl "${BASE}/jobs?api_key=obk_live_your_api_key_here"`}</CodeBlock>
             </Section>
 
             <Section id="filtering" n={4} title="Filtering and pagination">
-              <p className="max-w-[68ch]">
+              <p className="max-w-measure">
                 By default the list endpoint returns only <C>active</C> and <C>open</C> jobs. Query parameters can be combined.
               </p>
               <CodeBlock lang="bash">{`# Active contract jobs, page 2
@@ -351,7 +351,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
             </Section>
 
             <Section id="response-schema" n={5} title="Response schema">
-              <p className="max-w-[68ch]">
+              <p className="max-w-measure">
                 Job objects contain these fields. Fields with no value are left out of the JSON. Pay rates, bill rates, recruiter assignments and
                 other internal fields are never included.
               </p>
@@ -382,7 +382,7 @@ GET /api/v1/jobs/b3f1a2c4-1234-5678-abcd-ef0123456789`}</CodeBlock>
             </Section>
 
             <Section id="errors" n={6} title="Errors">
-              <p className="max-w-[68ch]">
+              <p className="max-w-measure">
                 Every error returns a JSON body with an <C>error</C> field.
               </p>
               <CodeBlock lang="json">{`{
@@ -446,7 +446,7 @@ def get_job(job_id: str):
 
             <Section id="get-access" n={8} title="Get access">
               <div className="bg-mist-100 p-6 md:p-8">
-                <p className="max-w-[56ch]">
+                <p className="max-w-measure">
                   API access is available to vetted job platforms and technology partners. Email our team and we will issue you an API key within one
                   business day.
                 </p>

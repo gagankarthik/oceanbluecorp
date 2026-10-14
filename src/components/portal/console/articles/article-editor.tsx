@@ -371,7 +371,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   rel="noopener noreferrer"
                   className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-mist-0 px-4 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50"
                 >
-                  <Icon name="external" className="size-[18px]" />
+                  <Icon name="external" className="size-5" />
                   View live
                 </a>
               )}
@@ -384,12 +384,12 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       />
 
       {saveError && (
-        <div role="alert" className="flex items-start gap-3 rounded-xl bg-[#fef3f2] p-4 text-adm-base text-[#b42318] ring-1 ring-inset ring-[#fecdca]">
-          <Icon name="alert" className="mt-0.5 size-[18px] shrink-0" />
+        <div role="alert" className="flex items-start gap-3 rounded-xl bg-status-danger-soft p-4 text-adm-base text-status-danger ring-1 ring-inset ring-status-danger-line">
+          <Icon name="alert" className="mt-0.5 size-5 shrink-0" />
           <p className="min-w-0 flex-1">
             {saveError} <span className="text-mist-700">Your changes are still here.</span>
           </p>
-          <button type="button" onClick={() => setSaveError(null)} aria-label="Dismiss" className="grid size-8 shrink-0 place-items-center rounded-md hover:bg-[#fee4e2]">
+          <button type="button" onClick={() => setSaveError(null)} aria-label="Dismiss" className="grid size-8 shrink-0 place-items-center rounded-md hover:bg-status-danger-hover">
             <Icon name="x" className="size-4" />
           </button>
         </div>
@@ -460,7 +460,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                       setSlugLocked(true);
                       set("slug", slugify(e.target.value));
                     }}
-                    className="h-10 min-w-0 flex-1 rounded-lg bg-mist-0 px-3 font-mono text-adm-base text-navy-900 placeholder:text-mist-400 focus:outline-none sm:rounded-l-none"
+                    className="h-10 min-w-0 flex-1 rounded-lg bg-mist-0 px-3 font-mono text-adm-base text-navy-900 placeholder:text-placeholder focus:outline-none sm:rounded-l-none"
                   />
                 </div>
               </Field>
@@ -498,7 +498,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                 <Field id="clientName" label="Client" error={errors.clientName} counter={<Counter value={(form.clientName || "").length} hard={max("clientName")} />} helper="Only with written approval. Otherwise leave blank.">
                   <TextInput id="clientName" {...invalidProps("clientName")} value={form.clientName || ""} placeholder="Named, or blank for anonymised" onChange={(v) => set("clientName", v)} />
                 </Field>
-                <Field id="industry" label="Industry" error={errors.industry} helper="Groups the list by industry.">
+                <Field id="industry" label="Industry" error={errors.industry}>
                   <TextInput id="industry" {...invalidProps("industry")} value={form.industry || ""} placeholder="Healthcare payer, Manufacturing…" onChange={(v) => set("industry", v)} />
                 </Field>
                 <Field id="engagement" label="Engagement" error={errors.engagement} helper="Shape and length, in a phrase.">
@@ -536,7 +536,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
             <Panel
               title="The figures"
               description="Two or three, each against what it is measured. A percentage with no baseline is a hope, not a result."
-              action={<span className="text-adm-xs tabular-nums text-mist-500">{(form.metrics || []).length}/6</span>}
+              action={<span className="text-adm-xs tabular-nums text-mist-600">{(form.metrics || []).length}/6</span>}
             >
               <MetricRows metrics={form.metrics || []} onChange={(metrics) => set("metrics", metrics)} required={kind === "case-study"} />
               {at("metrics") && (
@@ -573,7 +573,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
             description={guide.length}
             action={
               words > 0 ? (
-                <span className="text-adm-xs tabular-nums text-mist-500">
+                <span className="text-adm-xs tabular-nums text-mist-600">
                   {words.toLocaleString()} words · {minutes} min read
                 </span>
               ) : (
@@ -654,7 +654,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   className={`${inputCls} h-10`}
                 />
                 {scheduledInPast && (
-                  <p className="flex gap-1.5 text-adm-xs font-medium text-[#b54708]">
+                  <p className="flex gap-1.5 text-adm-xs font-medium text-status-warning">
                     <Icon name="alert" className="mt-px size-3.5 shrink-0" />
                     This time has already passed, so it goes live as soon as you save.
                   </p>
@@ -665,8 +665,8 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
               <div id="checklist" className="grid gap-3 border-t border-mist-200 pt-4">
                 {blockers.length > 0 && (
-                  <div role={publishIntent ? "alert" : undefined} className="rounded-lg bg-[#fffaeb] p-3 ring-1 ring-inset ring-[#fedf89]">
-                    <p className="text-adm-xs font-semibold text-[#b54708]">
+                  <div role={publishIntent ? "alert" : undefined} className="rounded-lg bg-status-warning-soft p-3 ring-1 ring-inset ring-status-warning-line">
+                    <p className="text-adm-xs font-semibold text-status-warning">
                       Before it can go out · {blockers.length}
                     </p>
                     <ChecklistItems items={blockers} table={BLOCKER_SPOTS} onPick={focusSpot} tone="block" />
@@ -679,7 +679,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
                   </div>
                 )}
                 {blockers.length === 0 && warnings.length === 0 && (
-                  <p className="flex items-center gap-2 rounded-lg bg-[#ecfdf3] p-3 text-adm-base font-medium text-[#067647] ring-1 ring-inset ring-[#abefc6]">
+                  <p className="flex items-center gap-2 rounded-lg bg-status-success-soft p-3 text-adm-base font-medium text-status-success ring-1 ring-inset ring-status-success-line">
                     <Icon name="check" className="size-4" />
                     Nothing outstanding. Ready to publish.
                   </p>
@@ -690,7 +690,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
 
           {namesAClient(kind) && (
             <Panel title="Client sign-off" description={guide.signoff}>
-              <div className={`grid gap-3 rounded-lg p-3 ring-1 ring-inset ${form.approvalOnFile ? "bg-[#ecfdf3] ring-[#abefc6]" : "bg-[#fffaeb] ring-[#fedf89]"}`}>
+              <div className={`grid gap-3 rounded-lg p-3 ring-1 ring-inset ${form.approvalOnFile ? "bg-status-success-soft ring-status-success-line" : "bg-status-warning-soft ring-status-warning-line"}`}>
                 <CheckRow
                   id="approvalOnFile"
                   checked={!!form.approvalOnFile}
@@ -835,16 +835,16 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       </div>
 
       {/* Sticky action bar: floats over the page bottom, never pads the page. */}
-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-mist-0/95 px-4 py-3 shadow-lg ring-1 ring-mist-200 backdrop-blur">
+      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-mist-0 px-4 py-3 ring-1 ring-mist-200">
         <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-adm-base">
           {dirty ? (
-            <span className="inline-flex items-center gap-2 font-medium text-[#b54708]">
-              <span aria-hidden className="size-2 rounded-full bg-[#f79009]" />
+            <span className="inline-flex items-center gap-2 font-medium text-status-warning">
+              <span aria-hidden className="size-2 rounded-full bg-status-warning-mark" />
               Unsaved changes
             </span>
           ) : (
             <span className="inline-flex items-center gap-2 text-mist-600">
-              <Icon name="check" className="size-4 text-[#067647]" />
+              <Icon name="check" className="size-4 text-status-success" />
               {isNew ? "Not saved yet" : "All changes saved"}
             </span>
           )}
@@ -852,7 +852,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
             <button
               type="button"
               onClick={() => document.getElementById("checklist")?.scrollIntoView({ block: "center", behavior: "smooth" })}
-              className="inline-flex min-h-8 items-center gap-1.5 rounded-md font-medium text-[#b54708] hover:underline"
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-md font-medium text-status-warning hover:underline"
             >
               <Icon name="alert" className="size-4" />
               {blockers.length} to settle before publishing
@@ -905,16 +905,16 @@ function ChecklistItems({ items, table, onPick, tone }: { items: string[]; table
     <ul className="mt-2 grid gap-1">
       {items.map((msg) => {
         const spot = spotsOf(msg, table)[0];
-        const dot = <span aria-hidden className={`mt-[7px] size-1.5 shrink-0 rounded-full ${tone === "block" ? "bg-[#f79009]" : "bg-mist-400"}`} />;
+        const dot = <span aria-hidden className={`mt-[7px] size-1.5 shrink-0 rounded-full ${tone === "block" ? "bg-status-warning-mark" : "bg-mist-400"}`} />;
         return (
           <li key={msg}>
             {spot ? (
-              <button type="button" onClick={() => onPick(spot)} className="flex w-full gap-2 rounded-md px-1 py-1 text-left text-adm-xs leading-relaxed text-navy-900 hover:bg-mist-0/70 hover:underline">
+              <button type="button" onClick={() => onPick(spot)} className="flex w-full gap-2 rounded-md px-1 py-1 text-left text-adm-xs leading-normal text-navy-900 hover:bg-mist-0/70 hover:underline">
                 {dot}
                 {msg}
               </button>
             ) : (
-              <p className="flex gap-2 px-1 py-1 text-adm-xs leading-relaxed text-navy-900">
+              <p className="flex gap-2 px-1 py-1 text-adm-xs leading-normal text-navy-900">
                 {dot}
                 {msg}
               </p>
@@ -930,16 +930,11 @@ function HeroPreview({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = useState(false);
   if (!/^https:\/\/\S+$/i.test(src.trim())) {
     return (
-      <div className="grid aspect-[16/9] place-items-center rounded-lg bg-mist-50 text-center border border-dashed border-mist-300">
-        <span className="grid justify-items-center gap-1 px-4 text-adm-xs text-mist-500">
-          <Icon name="image" className="size-6 text-mist-400" />
-          {src.trim() ? "Use an https:// address to preview" : "The hero image previews here"}
-        </span>
-      </div>
+      <p className="text-adm-xs text-mist-600">{src.trim() ? "Use an https:// address to preview." : "No hero image yet."}</p>
     );
   }
   return failed ? (
-    <p className="flex gap-1.5 rounded-lg bg-[#fef3f2] p-3 text-adm-xs font-medium text-[#b42318] ring-1 ring-inset ring-[#fecdca]">
+    <p className="flex gap-1.5 rounded-lg bg-status-danger-soft p-3 text-adm-xs font-medium text-status-danger ring-1 ring-inset ring-status-danger-line">
       <Icon name="alert" className="mt-px size-3.5 shrink-0" />
       That address didn&apos;t load as an image. Check the link.
     </p>
@@ -953,13 +948,13 @@ function SearchSnippet({ title, path, description, noIndex }: { title: string; p
   const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
   return (
     <div className="grid gap-0.5 rounded-lg bg-mist-50 p-3 ring-1 ring-inset ring-mist-200">
-      <p className="flex items-center justify-between gap-2 text-adm-xs font-medium text-mist-500">
+      <p className="flex items-center justify-between gap-2 text-adm-xs font-medium text-mist-600">
         Search preview
         {noIndex && <Badge tone="amber">Hidden from search</Badge>}
       </p>
       <p className="mt-1 truncate text-adm-xs text-mist-600">oceanbluecorp.com{path.replace(/\/+$/, "").replace(/\//g, " › ")}</p>
       <p className="line-clamp-2 break-words text-adm-md leading-snug text-ocean-700">{clip(title, SEO_LIMITS.title)}</p>
-      <p className="line-clamp-3 break-words text-adm-base text-mist-700">{description ? clip(description, SEO_LIMITS.description) : <span className="text-mist-400">Write a summary to fill this in.</span>}</p>
+      <p className="line-clamp-3 break-words text-adm-base text-mist-700">{description ? clip(description, SEO_LIMITS.description) : <span className="text-mist-600">Write a summary to fill this in.</span>}</p>
     </div>
   );
 }

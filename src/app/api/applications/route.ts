@@ -27,7 +27,7 @@ import { candidateHaystack } from "@/lib/candidate-search";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-errors";
 import { applicationInputError } from "@/lib/application-input";
-import { isUrl, normalizeWebsite } from "@/lib/form-validation";
+import { isPhone, isUrl, normalizeWebsite } from "@/lib/form-validation";
 import { isPubliclyOpen } from "@/lib/job-status";
 
 // Resume analysis runs after the response via after(); give the invocation room
@@ -212,6 +212,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: validationMessage(checked.errors) }, { status: 400 });
       }
       body = checked.value;
+      // Optional here, but a number nobody can dial is refused, not stored.
+      if (body.phone && !isPhone(String(body.phone))) {
+        return NextResponse.json({ error: "Enter a phone number with 7 to 20 digits, like (614) 555-0100." }, { status: 400 });
+      }
     }
 
     // Stored only as an http(s) address, since staff screens render it as a link.

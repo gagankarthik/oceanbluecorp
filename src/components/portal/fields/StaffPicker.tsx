@@ -121,12 +121,13 @@ export function StaffMultiPicker({
             return (
               <li key={k} className="inline-flex h-9 max-w-full items-center gap-2 rounded-full bg-mist-0 pl-1 pr-1 ring-1 ring-inset ring-mist-300">
                 <Avatar name={name} size="sm" />
-                <span className="min-w-0 truncate text-[13px] font-medium text-navy-900">{name}</span>
+                <span className="min-w-0 truncate text-adm-base font-medium text-navy-900">{name}</span>
                 <button
                   type="button"
                   onClick={() => onRemove(k, i)}
                   aria-label={`Remove ${name}`}
-                  className="grid size-7 shrink-0 place-items-center rounded-full text-mist-500 hover:bg-[#fef3f2] hover:text-[#b42318]"
+                  title={`Remove ${name}`}
+                  className="adm-hit grid size-7 shrink-0 place-items-center rounded-full text-mist-500 hover:bg-status-danger-soft hover:text-status-danger"
                 >
                   <Icon name="x" className="size-3.5" />
                 </button>

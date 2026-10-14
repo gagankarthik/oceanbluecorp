@@ -12,7 +12,7 @@ export default function Closing({
   action?: string;
 }) {
   return (
-    <section aria-label="Contact" className="relative overflow-hidden bg-ocean-600 text-white">
+    <section aria-label="Contact" className="on-dark relative overflow-hidden bg-ocean-600 text-white">
       {/* Wave lines that settle into place once, a nod to the name */}
       <svg aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-full w-[200%] text-white" viewBox="0 0 2400 400" preserveAspectRatio="none">
         {[0, 1, 2, 3].map((i) => (
@@ -29,12 +29,12 @@ export default function Closing({
       </svg>
       <div className="gutter relative flex flex-col items-center gap-10 py-20 text-center md:py-24">
         <div data-reveal>
-          <h2 className="display text-[clamp(2.25rem,4vw,3.75rem)]">
+          <h2 className="display text-head">
             {lines[0]}
             <br />
             {lines[1]}
           </h2>
-          <p className="mx-auto mt-6 max-w-[48ch] text-white">{sentence}</p>
+          <p className="mx-auto mt-6 max-w-measure-narrow text-white">{sentence}</p>
         </div>
         <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
           <Link

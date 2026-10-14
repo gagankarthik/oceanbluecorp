@@ -54,7 +54,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   if (auth.isLoading || !auth.user || !realRole) {
     return (
       <div className="grid min-h-svh place-items-center bg-mist-50">
-        <div className="flex items-center gap-3 text-[15px] text-mist-600">
+        <div className="flex items-center gap-3 text-adm-base text-mist-600">
           <span className="size-5 animate-spin rounded-full border-2 border-ocean-200 border-t-ocean-600" />
           Loading your workspace
         </div>

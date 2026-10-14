@@ -320,7 +320,7 @@ export function FormActionBar({
   children: React.ReactNode;
 }) {
   return (
-    <div className="sticky bottom-0 z-20 -mx-5 -mb-5 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)]/95 px-5 py-3 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8">
+    <div className="sticky bottom-0 z-20 -mx-5 -mb-5 mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[var(--adm-line)] bg-[var(--adm-surface)] px-5 py-3 sm:-mx-6 sm:-mb-6 sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8">
       <p className="text-adm-xs text-[var(--adm-ink-mute)]">
         {message ?? (dirty ? (
           <span className="inline-flex items-center gap-2 font-medium text-[var(--adm-warning-ink)]">
@@ -596,7 +596,7 @@ export function NotePanel({ children, className }: { children: React.ReactNode; 
   return (
     <div
       className={cn(
-        "rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]",
+        "rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface-sunken)] px-4 py-3 text-adm-xs leading-normal text-[var(--adm-ink-mute)]",
         className,
       )}
     >

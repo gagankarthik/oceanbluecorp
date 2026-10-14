@@ -4,7 +4,7 @@ import Icon, { type IconName } from "../icons";
 
 /** Reading measure for posting copy and long notes. */
 export const PROSE =
-  "max-w-[72ch] text-[14px] leading-relaxed text-mist-700 [&_li]:marker:text-mist-400 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+p]:mt-3 [&_strong]:font-semibold [&_strong]:text-navy-900 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5";
+  "max-w-[72ch] text-adm-base leading-normal text-mist-700 [&_li]:marker:text-mist-500 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+p]:mt-3 [&_strong]:font-semibold [&_strong]:text-navy-900 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5";
 
 export type TabDef<K extends string> = { key: K; label: string; icon?: IconName; count?: number };
 
@@ -32,7 +32,7 @@ export function RecordTabs<K extends string>({
           aria-label={label}
           value={value}
           onChange={(e) => onChange(e.target.value as K)}
-          className="block h-10 w-full cursor-pointer appearance-none rounded-lg bg-mist-0 pl-3 pr-9 text-[14px] font-medium text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+          className="block h-10 w-full cursor-pointer appearance-none rounded-lg bg-mist-0 pl-3 pr-9 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600"
         >
           {tabs.map((t) => (
             <option key={t.key} value={t.key}>
@@ -53,14 +53,14 @@ export function RecordTabs<K extends string>({
               role="tab"
               aria-selected={on}
               onClick={() => onChange(t.key)}
-              className={`-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-[14px] font-medium transition-colors ${
+              className={`-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-adm-base font-medium transition-colors ${
                 on ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:border-mist-300 hover:text-navy-900"
               }`}
             >
               {t.icon && <Icon name={t.icon} className={`size-4 ${on ? "text-ocean-600" : "text-mist-500"}`} />}
               {t.label}
               {t.count !== undefined && t.count > 0 && (
-                <span className="rounded-md bg-mist-100 px-1.5 text-[12px] tabular-nums text-mist-700">{t.count}</span>
+                <span className="rounded-md bg-mist-100 px-1.5 text-adm-xs tabular-nums text-mist-700">{t.count}</span>
               )}
             </button>
           );
@@ -76,9 +76,9 @@ export function FactRows({ items }: { items: { label: string; value?: React.Reac
     <dl className="divide-y divide-mist-100">
       {items.map((f) => (
         <div key={f.label} className="flex items-baseline justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
-          <dt className="shrink-0 text-[13px] text-mist-600">{f.label}</dt>
-          <dd className="min-w-0 break-words text-right text-[14px] text-navy-900">
-            {f.value === undefined || f.value === null || f.value === "" ? <span className="text-mist-400">–</span> : f.value}
+          <dt className="shrink-0 text-adm-base text-mist-600">{f.label}</dt>
+          <dd className="min-w-0 break-words text-right text-adm-base text-navy-900">
+            {f.value === undefined || f.value === null || f.value === "" ? <span className="text-mist-600">–</span> : f.value}
           </dd>
         </div>
       ))}
@@ -89,7 +89,7 @@ export function FactRows({ items }: { items: { label: string; value?: React.Reac
 /** One line of facts under a record title: icon + text, wrapping. */
 export function FactLine({ items }: { items: { icon: IconName; text: React.ReactNode }[] }) {
   return (
-    <span className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-mist-600">
+    <span className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-adm-base text-mist-600">
       {items.map((f, i) => (
         <span key={i} className="inline-flex min-w-0 items-center gap-1.5">
           <Icon name={f.icon} className="size-4 shrink-0 text-mist-500" />

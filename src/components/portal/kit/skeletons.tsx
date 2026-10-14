@@ -65,7 +65,7 @@ export function StatCardSkeleton({ lines = 1 }: { lines?: 1 | 2 }) {
 export function KpiRowSkeleton({ count = 4, lines = 1 }: { count?: number; lines?: 1 | 2 }) {
   const cols = count >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : count === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
   return (
-    <div className={`grid grid-cols-1 gap-4 ${cols}`}>
+    <div className={`grid grid-cols-1 gap-5 ${cols}`}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className={count === 3 && i === 2 ? "sm:max-lg:col-span-2" : ""}>
           <StatCardSkeleton lines={lines} />

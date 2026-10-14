@@ -22,11 +22,11 @@ export default function StatusCard({
       <div className="gutter grid min-h-[72svh] place-items-center py-16">
         <div className="w-full max-w-[36rem] bg-mist-0 px-6 py-12 text-center shadow-[0_1px_0_var(--color-mist-200)] md:px-10">
           <div className="mx-auto w-fit">{icon}</div>
-          {eyebrow && <p className="mt-6 text-[14px] font-semibold tabular-nums text-ocean-700">{eyebrow}</p>}
-          <h1 className={`display text-[clamp(1.75rem,4vw,2.5rem)] ${eyebrow ? "mt-2" : "mt-6"}`}>{title}</h1>
-          <div className="mx-auto mt-3 max-w-[34ch] text-mist-600">{body}</div>
+          {eyebrow && <p className="mt-6 text-small font-semibold tabular-nums text-ocean-700">{eyebrow}</p>}
+          <h1 className={`display text-head-md ${eyebrow ? "mt-2" : "mt-6"}`}>{title}</h1>
+          <div className="mx-auto mt-3 max-w-measure-narrow text-mist-600">{body}</div>
           <div className="mt-8 flex flex-wrap justify-center gap-3">{actions}</div>
-          {footnote && <div className="mt-8 border-t border-mist-200 pt-6 text-[15px] text-mist-600">{footnote}</div>}
+          {footnote && <div className="mt-8 border-t border-mist-200 pt-6 text-small text-mist-600">{footnote}</div>}
         </div>
       </div>
     </section>

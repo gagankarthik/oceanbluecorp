@@ -107,7 +107,7 @@ function VendorForm({ editing, leads, leadsLoading, onClose, onSaved }: { editin
         <FormError message={saveError} />
         <fieldset className="grid gap-4">
           <legend className="sr-only">Vendor</legend>
-          <p aria-hidden className="text-[14px] font-semibold text-navy-900">
+          <p aria-hidden className="text-adm-base font-semibold text-navy-900">
             Vendor
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -134,7 +134,7 @@ function VendorForm({ editing, leads, leadsLoading, onClose, onSaved }: { editin
         </fieldset>
         <fieldset className="grid gap-4 border-t border-mist-200 pt-5">
           <legend className="sr-only">Contact</legend>
-          <p aria-hidden className="text-[14px] font-semibold text-navy-900">
+          <p aria-hidden className="text-adm-base font-semibold text-navy-900">
             Contact
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -197,7 +197,7 @@ function VendorDetail({ v, jobs, jobsLoading, jobsError, onDelete }: { v: Vendor
       />
 
       <section className="grid gap-2">
-        <h3 className="text-[14px] font-semibold text-navy-900">Roles</h3>
+        <h3 className="text-adm-base font-semibold text-navy-900">Roles</h3>
         <LinkedRoles jobs={jobs} loading={jobsLoading} error={jobsError} />
       </section>
 
@@ -306,10 +306,10 @@ export default function VendorsView() {
         hasContact(v) ? (
           <span className="block min-w-0 max-w-[16rem]">
             <span className="block truncate">{v.contactPerson || v.email}</span>
-            {v.contactPerson && v.email && <span className="block truncate text-[12px] text-mist-600">{v.email}</span>}
+            {v.contactPerson && v.email && <span className="block truncate text-adm-xs text-mist-600">{v.email}</span>}
           </span>
         ) : (
-          <span className="text-[12px] text-mist-500">No contact on file</span>
+          <span className="text-adm-xs text-mist-600">No contact on file</span>
         ),
     },
     { key: "location", header: "Location", sortable: true, hideBelow: "xl", value: locationOf },
@@ -325,11 +325,11 @@ export default function VendorsView() {
             <Avatar name={v.vendorLeadName} size="sm" />
             <span className="min-w-0">
               <span className="block truncate">{v.vendorLeadName}</span>
-              <span className="block text-[12px] text-mist-600">{leadLabel(v.vendorLeadRole)}</span>
+              <span className="block text-adm-xs text-mist-600">{leadLabel(v.vendorLeadRole)}</span>
             </span>
           </span>
         ) : (
-          <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>
+          <span className="text-adm-base font-medium text-status-danger">Unassigned</span>
         ),
     },
     { key: "createdAt", header: "Added", sortable: true, hideBelow: "xl", value: (v) => new Date(v.createdAt).getTime(), cell: (v) => <span className="tabular-nums text-mist-700">{fmtDate(v.createdAt)}</span> },
@@ -371,7 +371,7 @@ export default function VendorsView() {
           title="Vendors"
           icon="handshake"
           section="relationships"
-          description="Prime vendors and staffing partners we work roles through, and who owns each one."
+
           actions={
             <>
               {vendors.length > 0 && (

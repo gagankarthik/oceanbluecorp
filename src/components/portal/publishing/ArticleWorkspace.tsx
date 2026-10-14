@@ -184,7 +184,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
 
   // ── columns ───────────────────────────────────────────────────────────────
 
-  const dash = <span className="text-mist-400">—</span>;
+  const dash = <span className="text-mist-600">—</span>;
   const columns: Column<Article>[] = [
     {
       key: "title",
@@ -196,16 +196,16 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
           {a.heroImageUrl ? (
             <img src={a.heroImageUrl} alt="" className="size-11 shrink-0 rounded-md object-cover" />
           ) : (
-            <span className="grid size-11 shrink-0 place-items-center rounded-md bg-mist-100 text-mist-400">
+            <span className="grid size-11 shrink-0 place-items-center rounded-md bg-mist-100 text-mist-500">
               <Icon name={ICONS[kind]} className="size-5" />
             </span>
           )}
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 font-medium text-navy-900">
-              {a.featured && <Icon name="star" className="size-3.5 shrink-0 text-[#b54708]" title="Featured" />}
+              {a.featured && <Icon name="star" className="size-3.5 shrink-0 text-status-warning" title="Featured" />}
               <span className="line-clamp-1">{a.title}</span>
             </p>
-            <p className="line-clamp-1 text-[12px] text-mist-500">/{a.slug}</p>
+            <p className="line-clamp-1 text-adm-xs text-mist-600">/{a.slug}</p>
           </div>
         </div>
       ),
@@ -226,7 +226,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
       : []),
     ...(namesAClient(kind)
       ? ([
-          { key: "client", header: "Client", sortable: true, hideBelow: "md", value: (a) => a.clientName || "", cell: (a) => (a.clientName ? <span className="whitespace-nowrap font-medium">{a.clientName}</span> : <span className="text-mist-500">Anonymised</span>) },
+          { key: "client", header: "Client", sortable: true, hideBelow: "md", value: (a) => a.clientName || "", cell: (a) => (a.clientName ? <span className="whitespace-nowrap font-medium">{a.clientName}</span> : <span className="text-mist-600">Anonymised</span>) },
           { key: "industry", header: "Industry", sortable: true, hideBelow: "xl", value: (a) => a.industry || "", cell: (a) => <span className="whitespace-nowrap">{a.industry || dash}</span> },
           {
             key: "approval",
@@ -305,8 +305,8 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
             <Badge key={t}>{t}</Badge>
           ))}
         </div>
-        {a.subtitle && <p className="text-[15px] font-medium text-navy-900">{a.subtitle}</p>}
-        {a.excerpt && <p className="text-[15px] text-mist-700">{a.excerpt}</p>}
+        {a.subtitle && <p className="text-adm-base font-medium text-navy-900">{a.subtitle}</p>}
+        {a.excerpt && <p className="text-adm-base text-mist-700">{a.excerpt}</p>}
 
         <KeyValue
           items={[
@@ -338,12 +338,12 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
         />
 
         {blockers.length > 0 && (
-          <div className="rounded-lg bg-[#fffaeb] p-4 ring-1 ring-inset ring-[#fedf89]">
-            <p className="flex items-center gap-2 text-[13px] font-semibold text-[#b54708]">
+          <div className="rounded-lg bg-status-warning-soft p-4 ring-1 ring-inset ring-status-warning-line">
+            <p className="flex items-center gap-2 text-adm-base font-semibold text-status-warning">
               <Icon name="alert" className="size-4" />
               Before it can go live
             </p>
-            <ul className="mt-2 grid list-disc gap-1 pl-5 text-[13px] text-navy-900">
+            <ul className="mt-2 grid list-disc gap-1 pl-5 text-adm-base text-navy-900">
               {blockers.map((b) => (
                 <li key={b}>{b}</li>
               ))}
@@ -357,7 +357,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
               href={publicUrl(a)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-mist-0 px-3 text-[13px] font-medium text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-mist-0 px-3 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50"
             >
               <Icon name="globe" className="size-4" />
               View live
@@ -368,7 +368,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
 
         {editable && (
           <div className="grid gap-3 border-t border-mist-200 pt-5">
-            <p className="text-[12px] font-medium text-mist-500">Status</p>
+            <p className="text-adm-xs font-medium text-mist-600">Status</p>
             <div className="flex flex-wrap gap-2">
               {next.map((s) => (
                 <Button key={s.status} size="sm" variant="secondary" icon={s.icon} disabled={busy} onClick={() => apply([a.id], { status: s.status }, `set to ${articleStatusLabel(s.status).toLowerCase()}`)}>
@@ -433,12 +433,12 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
                 <>
                   <Panel title="Coming up" description="The next pieces to go live" padded={false}>
                     {pending.length === 0 ? (
-                      <p className="p-5 text-[14px] text-mist-600">Nothing scheduled.</p>
+                      <p className="p-5 text-adm-base text-mist-600">Nothing scheduled.</p>
                     ) : (
                       <ul className="divide-y divide-mist-100">
                         {pending.slice(0, 6).map((a) => (
                           <li key={a.id}>
-                            <Link href={editable ? editUrl(a) : publicUrl(a)} className="flex min-h-12 items-center justify-between gap-3 px-5 py-3 text-[14px] hover:bg-mist-50">
+                            <Link href={editable ? editUrl(a) : publicUrl(a)} className="flex min-h-12 items-center justify-between gap-3 px-5 py-3 text-adm-base hover:bg-mist-50">
                               <span className="min-w-0 truncate font-medium text-navy-900">{a.title}</span>
                               <span className="shrink-0 tabular-nums text-ocean-700">{fmtDate(a.publishedAt)}</span>
                             </Link>
@@ -668,7 +668,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
             </>
           }
         >
-          <p className="text-[14px] leading-relaxed text-mist-700">
+          <p className="text-adm-base leading-normal text-mist-700">
             {isLive(pendingDelete)
               ? `“${pendingDelete.title}” is live. Deleting it breaks every link pointing at ${publicUrl(pendingDelete)}. Archiving keeps the URL working.`
               : `“${pendingDelete.title}” will be removed. This cannot be undone.`}

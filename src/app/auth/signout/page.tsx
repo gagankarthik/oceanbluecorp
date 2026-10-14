@@ -57,13 +57,13 @@ export default function SignOutPage() {
         <Mark tone="neutral">
           <Glyph name="logout" />
         </Mark>
-        <h1 className="display mt-6 text-[clamp(2rem,3vw,2.5rem)]">{autoSignOut ? "Your session has ended" : "Sign out?"}</h1>
+        <h1 className="display mt-6 text-head-md">{autoSignOut ? "Your session has ended" : "Sign out?"}</h1>
         <p className="mt-2 text-mist-600">
           {autoSignOut ? "Your session expired, so we are signing you out." : "You will need to sign in again to use the console."}
         </p>
 
         {error && (
-          <p className="mt-6 flex items-start gap-3 bg-buoy-300/30 px-4 py-3 text-[15px] text-navy-900">
+          <p className="mt-6 flex items-start gap-3 bg-buoy-300/30 px-4 py-3 text-small text-navy-900">
             <Glyph name="alert" className="mt-0.5 size-[18px] shrink-0" />
             {error}
           </p>
@@ -72,7 +72,7 @@ export default function SignOutPage() {
         {busy ? (
           <div className="mt-8 flex items-center gap-3">
             <span className="size-6 animate-spin rounded-full border-[3px] border-mist-200 border-t-ocean-600" />
-            <p className="text-[15px] text-mist-600">{authLoading ? "Loading…" : "Signing you out…"}</p>
+            <p className="text-small text-mist-600">{authLoading ? "Loading…" : "Signing you out…"}</p>
           </div>
         ) : (
           !autoSignOut && (

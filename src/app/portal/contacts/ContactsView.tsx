@@ -12,7 +12,7 @@ import {
   Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { DonutChart, SERIES, TrendChart } from "@/components/portal/charts";
+import { DonutChart, TrendChart } from "@/components/portal/charts";
 import { GoneNotice, InlineDelete, SegmentChips, errorText, send, useToast, weekBuckets } from "@/components/portal/relationships/shared";
 import {
   AudienceBadge,
@@ -70,7 +70,7 @@ function DrawerBody({
       <ContactIdentity c={c} />
       <ContactRespond c={c} busy={busy !== null} onStatus={(s) => void run("status", () => onStatus(s))} />
       <section className="grid gap-2">
-        <h3 className="text-[14px] font-semibold text-navy-900">{c.inquiryType} enquiry</h3>
+        <h3 className="text-adm-base font-semibold text-navy-900">{c.inquiryType} enquiry</h3>
         <div className="rounded-xl p-4 ring-1 ring-mist-200">
           <ContactMessage c={c} />
         </div>
@@ -229,7 +229,7 @@ export default function ContactsView() {
                 <span className="truncate" title={contactName(c)}>{contactName(c)}</span>
                 {unread && <span className="sr-only">(unread)</span>}
               </span>
-              <span className="block max-w-[14rem] truncate text-[12px] font-normal text-mist-600" title={c.email}>
+              <span className="block max-w-[14rem] truncate text-adm-xs font-normal text-mist-600" title={c.email}>
                 {c.email}
               </span>
             </span>
@@ -245,7 +245,7 @@ export default function ContactsView() {
       grow: 20,
       hideBelow: "lg",
       value: (c) => c.company || "",
-      cell: (c) => (c.company ? <span className="block max-w-[14rem] truncate" title={c.company}>{c.company}</span> : <span className="text-mist-400">–</span>),
+      cell: (c) => (c.company ? <span className="block max-w-[14rem] truncate" title={c.company}>{c.company}</span> : <span className="text-mist-600">–</span>),
     },
     { key: "topic", header: "Enquiry / area", sortable: true, grow: 15, hideBelow: "xl", value: topicOf },
     { key: "status", header: "Status", sortable: true, align: "center", value: (c) => contactStatusMeta(c.status).label, cell: (c) => <ContactStatusBadge status={c.status} /> },
@@ -258,7 +258,7 @@ export default function ContactsView() {
         <time
           dateTime={c.createdAt}
           className={`whitespace-nowrap tabular-nums ${
-            c.status !== "new" ? "text-mist-600" : Date.now() - new Date(c.createdAt).getTime() > WAITING_MS ? "font-medium text-[#b54708]" : "font-medium text-navy-900"
+            c.status !== "new" ? "text-mist-600" : Date.now() - new Date(c.createdAt).getTime() > WAITING_MS ? "font-medium text-status-warning" : "font-medium text-navy-900"
           }`}
           title={fmtDateTime(c.createdAt)}
         >
@@ -303,7 +303,7 @@ export default function ContactsView() {
           title="Contacts"
           icon="contact"
           section="relationships"
-          description="Enquiries from the website contact form: companies hiring and people looking for work."
+
           meta={
             counts.new > 0 ? (
               <Badge tone="blue" dot>
@@ -335,7 +335,6 @@ export default function ContactsView() {
                             setSegment(v);
                             close();
                           }}
-                          colors={SERIES}
                         />
                       </div>
                     </Panel>

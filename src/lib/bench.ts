@@ -31,13 +31,13 @@ export interface PoolMeta {
 
 export const POOL_META: Record<BenchType, PoolMeta> = {
   external: {
-    label: "My Pool",
+    label: "My pool",
     badge: "External",
     hint: "External candidates you sourced, visible only to you",
     visibility: "own",
   },
   internal: {
-    label: "Talent Bench",
+    label: "Talent bench",
     badge: "Internal",
     hint: "Our own consultants, visible to the whole team",
     visibility: "team",

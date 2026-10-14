@@ -67,12 +67,12 @@ export function ContactRespond({ c, onStatus, busy }: { c: Contact; onStatus: (s
         <a
           href={replyHref(c)}
           onClick={() => c.status !== "responded" && !busy && onStatus("responded")}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ocean-600 px-4 text-[14px] font-medium text-white transition-colors hover:bg-ocean-700"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ocean-600 px-4 text-adm-base font-medium text-white transition-colors hover:bg-ocean-700"
         >
-          <Icon name="send" className="size-[18px]" />
+          <Icon name="send" className="size-5" />
           Reply by email
         </a>
-        <p className="text-[12px] text-mist-500">Opens your mail app and marks the enquiry responded.</p>
+        <p className="text-adm-xs text-mist-600">Opens your mail app and marks the enquiry responded.</p>
       </div>
       <div className="flex flex-wrap gap-2">
         {c.phone && (
@@ -87,7 +87,7 @@ export function ContactRespond({ c, onStatus, busy }: { c: Contact; onStatus: (s
         )}
       </div>
       <div className="grid gap-2">
-        <p className="text-[12px] font-medium text-mist-600">Status</p>
+        <p className="text-adm-xs font-medium text-mist-600">Status</p>
         <Segmented
           label="Enquiry status"
           value={c.status}
@@ -100,7 +100,7 @@ export function ContactRespond({ c, onStatus, busy }: { c: Contact; onStatus: (s
 }
 
 export function ContactMessage({ c }: { c: Contact }) {
-  return <p className="max-w-[70ch] whitespace-pre-wrap break-words text-[15px] leading-[1.7] text-navy-900">{c.message}</p>;
+  return <p className="max-w-[70ch] whitespace-pre-wrap break-words text-adm-base leading-normal text-navy-900">{c.message}</p>;
 }
 
 /** The same fact set in the drawer and on the record page. */
@@ -163,7 +163,7 @@ export function ContactNotes({ c, onSave }: { c: Contact; onSave: (notes: string
 
   return (
     <div className="grid gap-2">
-      <label className="block text-[13px] font-medium text-navy-900">
+      <label className="block text-adm-base font-medium text-navy-900">
         Internal notes
         <textarea
           value={value}
@@ -171,12 +171,12 @@ export function ContactNotes({ c, onSave }: { c: Contact; onSave: (notes: string
           rows={4}
           placeholder="Context for the team: who picked it up, what was agreed, next steps."
           aria-invalid={over || undefined}
-          className={`${inputCls} h-auto min-h-24 resize-y py-2 leading-relaxed`}
+          className={`${inputCls} h-auto min-h-24 resize-y py-2 leading-normal`}
         />
       </label>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className={`text-[12px] tabular-nums ${over ? "text-[#b42318]" : "text-mist-500"}`}>
-          {error ? <span role="alert" className="text-[#b42318]">{error}</span> : `${value.length} / ${NOTES_MAX} · Not shown to the sender`}
+        <span className={`text-adm-xs tabular-nums ${over ? "text-status-danger" : "text-mist-600"}`}>
+          {error ? <span role="alert" className="text-status-danger">{error}</span> : `${value.length} / ${NOTES_MAX} · Not shown to the sender`}
         </span>
         <div className="flex gap-2">
           {dirty && (
@@ -199,8 +199,8 @@ export function ContactIdentity({ c }: { c: Contact }) {
     <div className="flex items-center gap-4">
       <Avatar name={contactName(c)} size="lg" />
       <div className="min-w-0">
-        <p className="truncate text-[18px] font-semibold text-navy-900">{contactName(c)}</p>
-        <p className="truncate text-[14px] text-mist-600">{[c.jobTitle, c.company].filter(Boolean).join(", ") || audienceOf(c)}</p>
+        <p className="truncate text-adm-md font-semibold text-navy-900">{contactName(c)}</p>
+        <p className="truncate text-adm-base text-mist-600">{[c.jobTitle, c.company].filter(Boolean).join(", ") || audienceOf(c)}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <ContactStatusBadge status={c.status} />
           <AudienceBadge c={c} />

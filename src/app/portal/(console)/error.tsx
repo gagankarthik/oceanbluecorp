@@ -32,7 +32,7 @@ export default function AdminError({
         <h1 className="mt-3 text-adm-xl font-semibold tracking-[-0.02em] text-[var(--adm-ink)]">
           This page didn&rsquo;t load
         </h1>
-        <p className="mt-2 max-w-[46ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)]">
+        <p className="mt-2 max-w-[46ch] text-adm-base leading-normal text-[var(--adm-ink-mute)]">
           It&rsquo;s a problem on our side, not something you did. Trying again usually clears it.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">

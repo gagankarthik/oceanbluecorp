@@ -71,7 +71,7 @@ export default function ShareJob({ url, title }: { url: string; title: string })
       </button>
       {open && (
         <div role="menu" className="absolute inset-x-0 top-[calc(100%+6px)] z-20 bg-mist-0 p-2 shadow-xl ring-1 ring-mist-200">
-          <button type="button" role="menuitem" onClick={copy} className="flex min-h-10 w-full items-center px-3 text-left text-[15px] hover:bg-mist-100">
+          <button type="button" role="menuitem" onClick={copy} className="flex min-h-10 w-full items-center px-3 text-left text-small hover:bg-mist-100">
             {copied ? "Link copied" : "Copy link"}
           </button>
           {targets.map((t) => (
@@ -82,7 +82,7 @@ export default function ShareJob({ url, title }: { url: string; title: string })
               target={t.label === "Email" ? undefined : "_blank"}
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="flex min-h-10 items-center px-3 text-[15px] hover:bg-mist-100"
+              className="flex min-h-10 items-center px-3 text-small hover:bg-mist-100"
             >
               {t.label}
             </a>

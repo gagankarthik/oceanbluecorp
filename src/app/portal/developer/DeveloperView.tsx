@@ -55,8 +55,8 @@ const ENDPOINTS = [
   { method: "POST", path: "/api/v1/jobs", scope: "jobs:write", note: "File a new posting as a draft" },
 ];
 const QUERY_PARAMS = ["status", "department", "type", "page", "limit"];
-const methodTone: Record<string, string> = { GET: "bg-ocean-50 text-ocean-700", POST: "bg-[#ecfdf3] text-[#067647]" };
-const code = "rounded bg-mist-100 px-1 font-mono text-[13px] text-navy-900";
+const methodTone: Record<string, string> = { GET: "bg-ocean-50 text-ocean-700", POST: "bg-status-success-soft text-status-success" };
+const code = "rounded bg-mist-100 px-1 font-mono text-adm-base text-navy-900";
 
 // Disabled is a deliberate pause: grey, not red.
 function KeyStatus({ active }: { active: boolean }) {
@@ -116,11 +116,11 @@ function KeyDetail({
 
   return (
     <div className="grid gap-6">
-      <div className={`flex items-center gap-3 rounded-xl p-4 ${k.lastUsedAt ? "bg-mist-50" : "bg-[#fffaeb]"}`}>
-        <Icon name="activity" className={`size-5 shrink-0 ${k.lastUsedAt ? "text-mist-500" : "text-[#b54708]"}`} />
-        <div className="min-w-0 text-[14px]">
+      <div className={`flex items-center gap-3 rounded-xl p-4 ${k.lastUsedAt ? "bg-mist-50" : "bg-status-warning-soft"}`}>
+        <Icon name="activity" className={`size-5 shrink-0 ${k.lastUsedAt ? "text-mist-500" : "text-status-warning"}`} />
+        <div className="min-w-0 text-adm-base">
           <p className="font-semibold text-navy-900">{lastUsedText(k)}</p>
-          <p className="text-[13px] text-mist-600">{k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : "Nothing has called the API with this key yet."}</p>
+          <p className="text-adm-base text-mist-600">{k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : "Nothing has called the API with this key yet."}</p>
         </div>
       </div>
 
@@ -152,8 +152,8 @@ function KeyDetail({
                 </Badge>
               ))}
             </div>
-            <p className="mt-3 font-mono text-[13px] text-mist-700">{k.keyPreview}</p>
-            <p className="mt-2 text-[14px] text-mist-700">{k.description || <span className="text-mist-500">No description</span>}</p>
+            <p className="mt-3 font-mono text-adm-base text-mist-700">{k.keyPreview}</p>
+            <p className="mt-2 text-adm-base text-mist-700">{k.description || <span className="text-mist-600">No description</span>}</p>
           </div>
         </div>
       )}
@@ -168,9 +168,9 @@ function KeyDetail({
       />
 
       <section className="rounded-xl ring-1 ring-mist-200">
-        <h3 className="border-b border-mist-200 px-4 py-3 text-[14px] font-semibold">Access</h3>
+        <h3 className="border-b border-mist-200 px-4 py-3 text-adm-base font-semibold">Access</h3>
         <div className="grid gap-4 p-4">
-          <div className="text-[13px] font-medium">
+          <div className="text-adm-base font-medium">
             <p className="mb-1.5">What this key can do</p>
             <Select
               label="Access level"
@@ -184,7 +184,7 @@ function KeyDetail({
             />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 pt-4">
-            <p className="text-[14px] text-mist-700">{k.isActive ? "Requests with this key are accepted." : "Requests with this key get 401 until it is enabled."}</p>
+            <p className="text-adm-base text-mist-700">{k.isActive ? "Requests with this key are accepted." : "Requests with this key get 401 until it is enabled."}</p>
             <Button variant="secondary" icon={k.isActive ? "x" : "check"} loading={busy === "toggle"} onClick={() => run("toggle", onToggle)}>
               {k.isActive ? "Disable" : "Enable"}
             </Button>
@@ -198,7 +198,7 @@ function KeyDetail({
             Revoke key
           </Button>
         </div>
-        <p className="text-[12px] text-mist-500">Revoking deletes the key. To pause it, disable it instead.</p>
+        <p className="text-adm-xs text-mist-600">Revoking deletes the key. To pause it, disable it instead.</p>
       </div>
     </div>
   );
@@ -258,11 +258,11 @@ function CreateKey({ onClose, onCreated }: { onClose: () => void; onCreated: () 
         }
       >
         <div className="grid gap-4">
-          <p className="text-[14px] text-mist-700">
+          <p className="text-adm-base text-mist-700">
             <span className="font-semibold text-navy-900">{created.name}</span> ({accessLevelMeta(created.level).summary}). This is the only time the full key is shown.
           </p>
           <div className="flex flex-col gap-2 rounded-lg bg-mist-100 p-3 sm:flex-row sm:items-center">
-            <code className="min-w-0 flex-1 select-all break-all font-mono text-[13px] text-navy-900">{created.key}</code>
+            <code className="min-w-0 flex-1 select-all break-all font-mono text-adm-base text-navy-900">{created.key}</code>
             <Button
               size="sm"
               variant="secondary"
@@ -281,12 +281,12 @@ function CreateKey({ onClose, onCreated }: { onClose: () => void; onCreated: () 
               {copied ? "Copied" : "Copy"}
             </Button>
           </div>
-          <label className="flex min-h-10 cursor-pointer items-center gap-3 text-[14px] text-navy-900">
+          <label className="flex min-h-10 cursor-pointer items-center gap-3 text-adm-base text-navy-900">
             <input type="checkbox" checked={stored} onChange={(e) => setStored(e.target.checked)} className="size-4 accent-ocean-600" />
             I&apos;ve stored this key somewhere safe
           </label>
           {nudge && !stored && (
-            <p role="alert" className="rounded-lg bg-[#fffaeb] px-3 py-2 text-[13px] text-[#b54708] ring-1 ring-inset ring-[#fedf89]">
+            <p role="alert" className="rounded-lg bg-status-warning-soft px-3 py-2 text-adm-base text-status-warning ring-1 ring-inset ring-status-warning-line">
               Copy the key and tick the box first. Once this closes, the key can&apos;t be shown again.
             </p>
           )}
@@ -320,16 +320,16 @@ function CreateKey({ onClose, onCreated }: { onClose: () => void; onCreated: () 
           <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={LIMITS.short} className={inputCls} />
         </Field>
         <fieldset>
-          <legend className="text-[13px] font-medium text-navy-900">
-            Access <span className="text-[#b42318]">*</span>
+          <legend className="text-adm-base font-medium text-navy-900">
+            Access <span className="text-status-danger">*</span>
           </legend>
           <div className="mt-2 grid gap-2">
             {API_ACCESS_LEVELS.map((l) => (
               <label key={l.id} className={`flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 ring-inset ${level === l.id ? "bg-ocean-50 ring-ocean-600" : "ring-mist-300 hover:bg-mist-50"}`}>
                 <input type="radio" name="access" value={l.id} checked={level === l.id} onChange={() => setLevel(l.id)} className="mt-0.5 size-4 accent-ocean-600" />
-                <span className="text-[14px]">
+                <span className="text-adm-base">
                   <span className="block font-medium text-navy-900">{l.label}</span>
-                  <span className="block text-[13px] text-mist-600">{l.description}</span>
+                  <span className="block text-adm-base text-mist-600">{l.description}</span>
                 </span>
               </label>
             ))}
@@ -350,10 +350,10 @@ function Reference() {
             {ENDPOINTS.map((e) => (
               <li key={e.method + e.path} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-mist-50 px-3 py-2.5">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className={`rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold ${methodTone[e.method]}`}>{e.method}</span>
-                  <span className="truncate font-mono text-[13px] text-navy-900">{e.path}</span>
+                  <span className={`rounded px-1.5 py-0.5 font-mono text-adm-xs font-semibold ${methodTone[e.method]}`}>{e.method}</span>
+                  <span className="truncate font-mono text-adm-base text-navy-900">{e.path}</span>
                 </span>
-                <span className="text-[12px] text-mist-600">
+                <span className="text-adm-xs text-mist-600">
                   {e.note} · <span className="font-mono">{e.scope}</span>
                 </span>
               </li>
@@ -361,12 +361,12 @@ function Reference() {
           </ul>
         </Panel>
         <Panel title="Example">
-          <pre className="scroll-thin overflow-x-auto overflow-y-hidden rounded-lg bg-navy-900 p-4 font-mono text-[12px] leading-relaxed text-tide-200">
+          <pre className="scroll-thin overflow-x-auto overflow-y-hidden rounded-lg bg-navy-900 p-4 font-mono text-adm-xs leading-normal text-tide-200">
             {`curl -H "x-api-key: obk_live_…" \\\n  "${SITE_URL}/api/v1/jobs?status=active&limit=20"`}
           </pre>
         </Panel>
         <Panel title="Rules">
-          <ul className="grid gap-3 text-[14px] leading-relaxed text-mist-700">
+          <ul className="grid gap-3 text-adm-base leading-normal text-mist-700">
             <li>
               Query parameters on the list: {QUERY_PARAMS.map((p, i) => (
                 <span key={p}>
@@ -386,7 +386,7 @@ function Reference() {
         </Panel>
       </div>
       <Panel title="More">
-        <div className="grid gap-3 text-[14px] text-mist-700">
+        <div className="grid gap-3 text-adm-base text-mist-700">
           <p>The full internal API, AWS services and auth notes are in the docs.</p>
           <div>
             <Button variant="secondary" icon="code" href="/portal/docs#api-reference">
@@ -496,7 +496,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
       cell: (k) => (
         <span className="block min-w-0">
           <span className="block max-w-[16rem] truncate font-medium">{k.name}</span>
-          <span className="block font-mono text-[12px] text-mist-600">{k.keyPreview}</span>
+          <span className="block font-mono text-adm-xs text-mist-600">{k.keyPreview}</span>
         </span>
       ),
     },
@@ -508,7 +508,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
       sortable: true,
       value: (k) => (k.lastUsedAt ? new Date(k.lastUsedAt).getTime() : 0),
       cell: (k) => (
-        <span className={`tabular-nums ${k.lastUsedAt ? "font-medium text-navy-900" : "font-medium text-[#b54708]"}`} title={k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : undefined}>
+        <span className={`tabular-nums ${k.lastUsedAt ? "font-medium text-navy-900" : "font-medium text-status-warning"}`} title={k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : undefined}>
           {k.lastUsedAt ? fmtRelative(k.lastUsedAt) : "Never"}
         </span>
       ),

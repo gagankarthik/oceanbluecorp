@@ -91,7 +91,7 @@ function EditApplicationInner() {
           <StickyActions
             status={
               errorCount > 0 ? (
-                <span className="font-medium text-[#b42318]">Fix the highlighted fields to save.</span>
+                <span className="font-medium text-status-danger">Fix the highlighted fields to save.</span>
               ) : form.dirty ? (
                 "Unsaved changes"
               ) : (

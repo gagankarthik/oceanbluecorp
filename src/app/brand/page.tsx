@@ -67,10 +67,10 @@ export default function BrandPage() {
       <section aria-labelledby="logo-title" className="bg-field-paper">
         <div className="gutter grid gap-12 pb-24 md:pb-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 id="logo-title" className="display text-[clamp(2rem,3.4vw,3rem)]">
+            <h2 id="logo-title" className="display text-head">
               Logo
             </h2>
-            <p className="mt-4 max-w-[34ch] text-mist-600">
+            <p className="mt-4 max-w-measure-narrow text-mist-600">
               The primary wordmark. Keep clear space around it, and never recolour, stretch or redraw it.
             </p>
             <ul className="mt-6 grid gap-1">
@@ -100,7 +100,7 @@ export default function BrandPage() {
       {chapterFields.map((f) => (
         <section key={f.token} className={f.cls}>
           <div className="gutter flex min-h-[34svh] flex-wrap items-end justify-between gap-6 py-10">
-            <p className="display text-[clamp(2rem,4vw,3.5rem)]">{f.name}</p>
+            <p className="display text-head">{f.name}</p>
             <p className="text-right">
               <span className="block font-medium">
                 {f.hex}, bg-{f.token}
@@ -113,13 +113,13 @@ export default function BrandPage() {
 
       <section aria-labelledby="rules-title" className="bg-field-mist">
         <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
-          <h2 id="rules-title" className="display side text-[clamp(2rem,3.4vw,3rem)]" data-reveal>
+          <h2 id="rules-title" className="display side text-head" data-reveal>
             Using colour
           </h2>
           <dl className="axis grid gap-x-12 gap-y-10 sm:grid-cols-2">
             {colourRules.map((r, i) => (
               <div key={r.title} data-reveal style={{ "--d": i % 2 } as React.CSSProperties}>
-                <dt className="text-[20px] font-medium">{r.title}</dt>
+                <dt className="text-title font-medium">{r.title}</dt>
                 <dd className="mt-2 text-mist-700">{r.body}</dd>
               </div>
             ))}
@@ -129,7 +129,7 @@ export default function BrandPage() {
 
       <section aria-labelledby="scales-title" className="bg-field-paper">
         <div className="gutter py-24">
-          <h2 id="scales-title" className="display text-[clamp(2rem,4vw,3.5rem)]">
+          <h2 id="scales-title" className="display text-head">
             Full scales
           </h2>
           <div className="mt-12 grid gap-12">
@@ -140,7 +140,7 @@ export default function BrandPage() {
                   {s.steps.map(([step, hex]) => (
                     <li key={step}>
                       <span className="block h-20" style={{ background: hex }} />
-                      <span className="mt-2 block text-[length:var(--text-small)]">
+                      <span className="mt-2 block text-small">
                         {step} <span className="text-mist-600">{hex}</span>
                       </span>
                     </li>

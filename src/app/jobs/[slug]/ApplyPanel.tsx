@@ -26,12 +26,12 @@ export default function ApplyPanel({ jobId, title }: { jobId: string; title: str
 
   return (
     <div id="apply" ref={ref} className="scroll-mt-28">
-      <h2 className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">Apply for this role</h2>
+      <h2 className="display text-head-md">Apply for this role</h2>
       {open ? (
         <ApplyForm jobId={jobId} title={title} />
       ) : (
         <div className="mt-6 flex flex-wrap items-center gap-5 bg-mist-100 p-6 md:p-7">
-          <p className="max-w-[44ch] text-mist-600">Takes a few minutes. Have your resume ready as a PDF or Word file, or your LinkedIn profile.</p>
+          <p className="max-w-measure-narrow text-mist-600">Takes a few minutes. Have your resume ready as a PDF or Word file, or your LinkedIn profile.</p>
           <button
             type="button"
             onClick={() => setOpen(true)}

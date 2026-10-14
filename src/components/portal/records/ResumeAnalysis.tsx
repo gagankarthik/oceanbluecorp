@@ -20,7 +20,7 @@ function Chips({ items, tone = "blue" }: { items?: string[]; tone?: "blue" | "gr
       {list.map((it, i) => (
         <li
           key={`${it}-${i}`}
-          className={`inline-flex max-w-full items-center rounded-md px-2 py-0.5 text-[12px] font-medium ${tone === "blue" ? "bg-ocean-50 text-ocean-700" : "bg-mist-100 text-mist-700"}`}
+          className={`inline-flex max-w-full items-center rounded-md px-2 py-0.5 text-adm-xs font-medium ${tone === "blue" ? "bg-ocean-50 text-ocean-700" : "bg-mist-100 text-mist-700"}`}
         >
           <span className="min-w-0 truncate">{it}</span>
         </li>
@@ -29,15 +29,15 @@ function Chips({ items, tone = "blue" }: { items?: string[]; tone?: "blue" | "gr
   );
 }
 
-const Count = ({ n }: { n: number }) => <span className="ml-2 text-[13px] font-medium tabular-nums text-mist-500">{n}</span>;
+const Count = ({ n }: { n: number }) => <span className="ml-2 text-adm-base font-medium tabular-nums text-mist-600">{n}</span>;
 
 /** One signal; blanks are skipped rather than shown as data. */
 function Signal({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;
   return (
     <div className="min-w-0 rounded-lg bg-mist-50 px-3.5 py-3 ring-1 ring-inset ring-mist-200">
-      <dt className="text-[12px] font-medium text-mist-600">{label}</dt>
-      <dd className="mt-1 truncate text-[16px] font-semibold tabular-nums text-navy-900" title={String(value)}>
+      <dt className="text-adm-xs font-medium text-mist-600">{label}</dt>
+      <dd className="mt-1 truncate text-adm-md font-semibold tabular-nums text-navy-900" title={String(value)}>
         {value}
       </dd>
     </div>
@@ -78,8 +78,8 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
       <span aria-hidden className={`absolute -left-[7px] top-1.5 size-3 rounded-full ring-2 ring-mist-0 ${w.is_current ? "bg-ocean-600" : "bg-mist-400"}`} />
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold text-navy-900">{w.job_title || "Role"}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-mist-600">
+          <p className="text-adm-base font-semibold text-navy-900">{w.job_title || "Role"}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-adm-base text-mist-600">
             {w.company_name && (
               <span className="inline-flex min-w-0 items-center gap-1.5">
                 <Icon name="building" className="size-4 shrink-0 text-mist-500" />
@@ -94,12 +94,12 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
             )}
           </p>
         </div>
-        {range && <span className="shrink-0 text-[13px] tabular-nums text-mist-600">{range}</span>}
+        {range && <span className="shrink-0 text-adm-base tabular-nums text-mist-600">{range}</span>}
       </div>
       {!!w.responsibilities?.length && (
         <ul className="mt-3 grid max-w-[72ch] gap-1">
           {w.responsibilities.map((r, i) => (
-            <li key={i} className={`${bullet} text-[14px] leading-relaxed text-mist-700 before:bg-mist-400`}>
+            <li key={i} className={`${bullet} text-adm-base leading-normal text-mist-700 before:bg-mist-400`}>
               {r}
             </li>
           ))}
@@ -108,7 +108,7 @@ function WorkEntry({ w }: { w: ResumeWorkExperience }) {
       {!!w.achievements?.length && (
         <ul className="mt-3 grid max-w-[72ch] gap-1" aria-label="Achievements">
           {w.achievements.map((a, i) => (
-            <li key={i} className={`${bullet} text-[14px] leading-relaxed text-navy-900 before:bg-[#17b26a]`}>
+            <li key={i} className={`${bullet} text-adm-base leading-normal text-navy-900 before:bg-status-success`}>
               {a}
             </li>
           ))}
@@ -129,13 +129,13 @@ function EduEntry({ e }: { e: ResumeEducation }) {
   return (
     <li className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0">
       <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-navy-900">{e.institution_name || "Institution"}</p>
-        {degree && <p className="mt-0.5 text-[13px] text-mist-600">{degree}</p>}
+        <p className="text-adm-base font-semibold text-navy-900">{e.institution_name || "Institution"}</p>
+        {degree && <p className="mt-0.5 text-adm-base text-mist-600">{degree}</p>}
         {(e.gpa || e.grade || e.percentage) && (
-          <p className="mt-0.5 text-[12px] tabular-nums text-mist-500">{e.gpa ? `GPA ${e.gpa}` : e.percentage ? `${e.percentage}%` : e.grade}</p>
+          <p className="mt-0.5 text-adm-xs tabular-nums text-mist-600">{e.gpa ? `GPA ${e.gpa}` : e.percentage ? `${e.percentage}%` : e.grade}</p>
         )}
       </div>
-      {range && <span className="shrink-0 text-[13px] tabular-nums text-mist-600">{range}</span>}
+      {range && <span className="shrink-0 text-adm-base tabular-nums text-mist-600">{range}</span>}
     </li>
   );
 }
@@ -172,15 +172,15 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
             {signals}
             {!!a?.job_functions?.length && (
               <div>
-                <p className="mb-2 text-[12px] font-semibold text-mist-500">Job functions</p>
+                <p className="mb-2 text-adm-xs font-semibold text-mist-600">Job functions</p>
                 <Chips items={a.job_functions} tone="grey" />
               </div>
             )}
-            {analysis.professional_summary && <p className="max-w-[72ch] whitespace-pre-line text-[14px] leading-relaxed text-mist-700">{analysis.professional_summary}</p>}
+            {analysis.professional_summary && <p className="max-w-[72ch] whitespace-pre-line text-adm-base leading-normal text-mist-700">{analysis.professional_summary}</p>}
             {analysis.objective && (
               <div>
-                <p className="mb-1 text-[12px] font-semibold text-mist-500">Objective</p>
-                <p className="max-w-[72ch] whitespace-pre-line text-[14px] leading-relaxed text-mist-700">{analysis.objective}</p>
+                <p className="mb-1 text-adm-xs font-semibold text-mist-600">Objective</p>
+                <p className="max-w-[72ch] whitespace-pre-line text-adm-base leading-normal text-mist-700">{analysis.objective}</p>
               </div>
             )}
           </div>
@@ -192,7 +192,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
           <dl className="grid gap-4">
             {skills.map((g, i) => (
               <div key={i} className="grid gap-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
-                {g.label ? <dt className="pt-0.5 text-[13px] font-medium text-mist-600">{g.label}</dt> : <dt className="sr-only">Skills</dt>}
+                {g.label ? <dt className="pt-0.5 text-adm-base font-medium text-mist-600">{g.label}</dt> : <dt className="sr-only">Skills</dt>}
                 <dd className={g.label ? "" : "sm:col-span-2"}>
                   <Chips items={g.items} />
                 </dd>
@@ -229,10 +229,10 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
                 {certs.map((c, i) => (
                   <li key={i} className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0">
                     <div className="min-w-0">
-                      <p className="text-[14px] font-semibold text-navy-900">{c.name}</p>
-                      {c.issuing_organization && <p className="mt-0.5 text-[13px] text-mist-600">{c.issuing_organization}</p>}
+                      <p className="text-adm-base font-semibold text-navy-900">{c.name}</p>
+                      {c.issuing_organization && <p className="mt-0.5 text-adm-base text-mist-600">{c.issuing_organization}</p>}
                     </div>
-                    {(c.issue_date || c.expiry_date) && <span className="shrink-0 text-[13px] tabular-nums text-mist-600">{dateRange(c.issue_date, c.expiry_date)}</span>}
+                    {(c.issue_date || c.expiry_date) && <span className="shrink-0 text-adm-base tabular-nums text-mist-600">{dateRange(c.issue_date, c.expiry_date)}</span>}
                   </li>
                 ))}
               </ul>
@@ -249,14 +249,14 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
               return (
                 <li key={i} className="grid gap-2 py-4 first:pt-0 last:pb-0">
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <p className="text-[14px] font-semibold text-navy-900">{p.name}</p>
-                    {range && <span className="text-[13px] tabular-nums text-mist-600">{range}</span>}
+                    <p className="text-adm-base font-semibold text-navy-900">{p.name}</p>
+                    {range && <span className="text-adm-base tabular-nums text-mist-600">{range}</span>}
                   </div>
-                  {p.description && <p className="max-w-[72ch] text-[14px] leading-relaxed text-mist-700">{p.description}</p>}
+                  {p.description && <p className="max-w-[72ch] text-adm-base leading-normal text-mist-700">{p.description}</p>}
                   {!!p.highlights?.length && (
                     <ul className="grid max-w-[72ch] gap-1">
                       {p.highlights.map((h, j) => (
-                        <li key={j} className={`${bullet} text-[14px] leading-relaxed text-mist-700 before:bg-mist-400`}>
+                        <li key={j} className={`${bullet} text-adm-base leading-normal text-mist-700 before:bg-mist-400`}>
                           {h}
                         </li>
                       ))}
@@ -277,8 +277,8 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
               <ul className="divide-y divide-mist-100">
                 {awards.map((aw, i) => (
                   <li key={i} className="py-3 first:pt-0 last:pb-0">
-                    <p className="text-[14px] font-semibold text-navy-900">{aw.title}</p>
-                    {(aw.issuer || aw.date) && <p className="mt-0.5 text-[13px] text-mist-600">{[aw.issuer, aw.date].filter(Boolean).join(" · ")}</p>}
+                    <p className="text-adm-base font-semibold text-navy-900">{aw.title}</p>
+                    {(aw.issuer || aw.date) && <p className="mt-0.5 text-adm-base text-mist-600">{[aw.issuer, aw.date].filter(Boolean).join(" · ")}</p>}
                   </li>
                 ))}
               </ul>
@@ -288,7 +288,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
             <Panel title={<>Languages<Count n={langs.length} /></>}>
               <ul className="flex flex-wrap gap-2">
                 {langs.map((l, i) => (
-                  <li key={i} className="inline-flex items-center gap-1.5 rounded-lg bg-mist-50 px-3 py-1.5 text-[13px] ring-1 ring-inset ring-mist-200">
+                  <li key={i} className="inline-flex items-center gap-1.5 rounded-lg bg-mist-50 px-3 py-1.5 text-adm-base ring-1 ring-inset ring-mist-200">
                     <span className="font-medium text-navy-900">{l.language}</span>
                     {l.proficiency && <span className="text-mist-600">{l.proficiency}</span>}
                   </li>

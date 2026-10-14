@@ -163,7 +163,7 @@ export function PipelinePanel({
         title={
           <>
             Pipeline
-            {records.length > 0 && <span className="ml-2 text-[13px] font-medium tabular-nums text-mist-500">{records.length}</span>}
+            {records.length > 0 && <span className="ml-2 text-adm-base font-medium tabular-nums text-mist-600">{records.length}</span>}
           </>
         }
         description="Submissions, interviews and the placement"
@@ -223,7 +223,7 @@ export function PipelinePanel({
             })}
             {unattached.length > 0 && (
               <div className="px-5 py-4">
-                <p className="mb-3 text-[12px] font-semibold text-mist-500">Not tied to a submission</p>
+                <p className="mb-3 text-adm-xs font-semibold text-mist-600">Not tied to a submission</p>
                 <div className="grid gap-3">
                   {unattached.map((record) =>
                     record.kind === "interview" ? (
@@ -331,7 +331,7 @@ function Meta({ items }: { items: (React.ReactNode | false | null | undefined)[]
   const shown = items.filter(Boolean);
   if (!shown.length) return null;
   return (
-    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-mist-600">
+    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-adm-base text-mist-600">
       {shown.map((it, i) => (
         <span key={i} className="inline-flex min-w-0 items-center gap-1.5">
           {it}
@@ -343,8 +343,8 @@ function Meta({ items }: { items: (React.ReactNode | false | null | undefined)[]
 
 function Glyph({ name, tone = "grey" }: { name: IconName; tone?: "grey" | "green" }) {
   return (
-    <span aria-hidden className={`hidden size-9 shrink-0 place-items-center rounded-lg sm:grid ${tone === "green" ? "bg-[#ecfdf3] text-[#067647]" : "bg-mist-100 text-mist-600"}`}>
-      <Icon name={name} className="size-[18px]" />
+    <span aria-hidden className={`hidden size-9 shrink-0 place-items-center rounded-lg sm:grid ${tone === "green" ? "bg-status-success-soft text-status-success" : "bg-mist-100 text-mist-600"}`}>
+      <Icon name={name} className="size-5" />
     </span>
   );
 }
@@ -366,7 +366,7 @@ function SubmissionRow({
         <Glyph name="building" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="min-w-0 truncate text-[15px] font-semibold text-navy-900">{target}</p>
+            <p className="min-w-0 truncate text-adm-base font-semibold text-navy-900">{target}</p>
             <Badge tone={kitTone(submissionTone(submission.status))} dot>
               {SUBMISSION_STATUS_LABELS[submission.status]}
             </Badge>
@@ -380,8 +380,8 @@ function SubmissionRow({
               submission.jobTitle && `for ${submission.jobTitle}`,
             ]}
           />
-          {submission.rejectionReason && <p className="mt-1.5 text-[13px] text-[#b42318]">Rejected: {submission.rejectionReason}</p>}
-          {submission.notes && <p className="mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-mist-700">{submission.notes}</p>}
+          {submission.rejectionReason && <p className="mt-1.5 text-adm-base text-status-danger">Rejected: {submission.rejectionReason}</p>}
+          {submission.notes && <p className="mt-1.5 whitespace-pre-line text-adm-base leading-normal text-mist-700">{submission.notes}</p>}
         </div>
         <RowActions record={submission} onEdit={onEdit} onDelete={onDelete} />
       </div>
@@ -418,7 +418,7 @@ function InterviewLine({ interview, onEdit, onDelete }: RowHandlers & { intervie
       <Glyph name="calendar" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[14px] font-semibold text-navy-900">
+          <p className="text-adm-base font-semibold text-navy-900">
             Round {interview.round} · {INTERVIEW_MODE_LABELS[interview.mode]}
           </p>
           <Badge tone={kitTone(interviewTone(interview.status, interview.outcome))} dot>
@@ -433,7 +433,7 @@ function InterviewLine({ interview, onEdit, onDelete }: RowHandlers & { intervie
             !!interview.panel?.length && `with ${interview.panel.join(", ")}`,
           ]}
         />
-        {interview.feedback && <p className="mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-mist-700">{interview.feedback}</p>}
+        {interview.feedback && <p className="mt-1.5 whitespace-pre-line text-adm-base leading-normal text-mist-700">{interview.feedback}</p>}
       </div>
       <RowActions
         record={interview}
@@ -453,7 +453,7 @@ function PlacementLine({ placement, onEdit, onDelete }: RowHandlers & { placemen
       <Glyph name="award" tone="green" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[14px] font-semibold text-navy-900">Placement</p>
+          <p className="text-adm-base font-semibold text-navy-900">Placement</p>
           <Badge tone={kitTone(placementTone(placement.status))} dot>
             {PLACEMENT_STATUS_LABELS[placement.status]}
           </Badge>
@@ -464,7 +464,7 @@ function PlacementLine({ placement, onEdit, onDelete }: RowHandlers & { placemen
             typeof placement.billRate === "number" && <span className="tabular-nums">Bill {formatRate(placement.billRate, placement.rateUnit, placement.currency)}</span>,
             typeof placement.payRate === "number" && <span className="tabular-nums">Pay {formatRate(placement.payRate, placement.rateUnit, placement.currency)}</span>,
             marginPct !== null && marginAmt !== null && (
-              <span className={`font-semibold tabular-nums ${marginPct >= 0 ? "text-[#067647]" : "text-[#b42318]"}`}>
+              <span className={`font-semibold tabular-nums ${marginPct >= 0 ? "text-status-success" : "text-status-danger"}`}>
                 {marginPct.toFixed(1)}% margin ({formatRate(marginAmt, placement.rateUnit, placement.currency)})
               </span>
             ),
@@ -700,7 +700,7 @@ export function PipelineRecordDrawer({
         }
       >
         <form id={FORM_ID} noValidate onSubmit={handleSubmit} className="grid gap-5">
-          <p className="-mt-1 flex items-center gap-2 text-[13px] text-mist-600">
+          <p className="-mt-1 flex items-center gap-2 text-adm-base text-mist-600">
             <Icon name={meta.icon} className="size-4 shrink-0 text-mist-500" />
             <span className="min-w-0 truncate">{under}</span>
           </p>
@@ -847,7 +847,7 @@ export function PipelineRecordDrawer({
             </>
           )}
 
-          <Field label="Notes" htmlFor="pl-notes" optional helper="Visible to staff only.">
+          <Field label="Notes" htmlFor="pl-notes" optional>
             <TextArea id="pl-notes" rows={3} value={v.notes} onChange={(e) => set("notes", e.target.value)} />
           </Field>
         </form>

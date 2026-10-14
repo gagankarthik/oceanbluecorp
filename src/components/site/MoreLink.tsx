@@ -17,7 +17,7 @@ export default function MoreLink({
 }) {
   const color = tone === "light" ? "text-white" : "text-ocean-700 hover:text-ocean-800";
   return (
-    <Link href={href} className={`group inline-flex w-fit items-center gap-2 text-[15px] font-medium ${inline ? "py-1" : "min-h-10"} ${color} ${className}`}>
+    <Link href={href} className={`group inline-flex w-fit items-center gap-2 text-small font-medium ${inline ? "py-1" : "min-h-10"} ${color} ${className}`}>
       <span className="relative">
         {label}
         <span

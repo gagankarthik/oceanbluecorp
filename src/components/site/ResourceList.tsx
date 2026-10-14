@@ -18,12 +18,12 @@ export default function ResourceList({ items, showCategory = true }: { items: Re
               label ? "md:grid-cols-[9rem_1fr_auto]" : "md:grid-cols-[1fr_auto]"
             }`}
           >
-            {label && <span className="text-[15px] text-mist-600">{label}</span>}
+            {label && <span className="text-small text-mist-600">{label}</span>}
             <span>
-              <span className="display block text-[clamp(1.5rem,2vw,2rem)] group-hover:text-ocean-700">{r.title}</span>
-              <span className="mt-2 block max-w-[62ch] text-mist-600">{r.summary}</span>
+              <span className="display block text-head-sm group-hover:text-ocean-700">{r.title}</span>
+              <span className="mt-2 block max-w-measure text-mist-600">{r.summary}</span>
             </span>
-            <span className="text-[15px] font-medium text-ocean-700">Read</span>
+            <span className="text-small font-medium text-ocean-700">Read</span>
           </Link>
         </li>
         );

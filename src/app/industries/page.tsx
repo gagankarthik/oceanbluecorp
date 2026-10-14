@@ -63,25 +63,25 @@ export default function IndustriesPage() {
                 <Photo name={ind.photo} className="aspect-[4/5]" position={ind.photo === "plant" ? "0% 50%" : "center"} />
               </div>
               <div className={flip ? "lg:col-span-7 lg:col-start-1 lg:row-start-1" : "lg:col-span-7 lg:col-start-6"}>
-                <h2 className="display text-[clamp(2.25rem,4vw,3.75rem)]" data-reveal>
+                <h2 className="display text-head" data-reveal>
                   {ind.name}
                 </h2>
-                <p className={`mt-6 max-w-[40ch] text-[clamp(1.25rem,1.6vw,1.5rem)] leading-snug ${l.soft}`} data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+                <p className={`mt-6 max-w-measure-narrow text-title leading-snug ${l.soft}`} data-reveal style={{ "--d": 1 } as React.CSSProperties}>
                   {ind.body}
                 </p>
-                <p className="mt-12 text-[20px] font-medium" data-reveal style={{ "--d": 2 } as React.CSSProperties}>
+                <p className="mt-12 text-title font-medium" data-reveal style={{ "--d": 2 } as React.CSSProperties}>
                   Where clients in this sector usually start
                 </p>
                 <ul className="mt-4 grid gap-2" data-reveal style={{ "--d": 2 } as React.CSSProperties}>
                   {ind.services.map((slug) => (
                     <li key={slug}>
-                      <Link href={`/services/${slug}`} className={`display text-[clamp(1.5rem,2vw,2rem)] transition-colors ${l.hover}`}>
+                      <Link href={`/services/${slug}`} className={`display text-head-sm transition-colors ${l.hover}`}>
                         {getService(slug)!.name}
                       </Link>
                     </li>
                   ))}
                 </ul>
-                <p className={`mt-6 max-w-[48ch] ${l.soft}`} data-reveal style={{ "--d": 3 } as React.CSSProperties}>
+                <p className={`mt-6 max-w-measure-narrow ${l.soft}`} data-reveal style={{ "--d": 3 } as React.CSSProperties}>
                   Need something else? We also offer {also.join(", ")} and the rest of our {services.length} services.{" "}
                   <Link href="/services" className={`font-medium underline underline-offset-4 ${l.link}`}>
                     See all services

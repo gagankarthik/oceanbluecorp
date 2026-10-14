@@ -53,7 +53,7 @@ function Detail({ icon, label, children }: { icon: IconName; label: string; chil
     <div className="flex min-w-0 items-start gap-3 py-2.5">
       <Icon name={icon} className="mt-0.5 size-4 shrink-0 text-mist-500" />
       <div className="min-w-0">
-        <dt className="text-adm-xs font-medium text-mist-500">{label}</dt>
+        <dt className="text-adm-xs font-medium text-mist-600">{label}</dt>
         <dd className="break-words text-adm-base text-navy-900">{children}</dd>
       </div>
     </div>

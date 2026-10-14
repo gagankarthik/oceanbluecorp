@@ -63,7 +63,7 @@ function DrawerBody({
         footer={
           <>
             {Object.keys(form.errors).length > 0 && (
-              <p className="mr-auto text-[13px] font-medium text-[#b42318]">Fix the highlighted fields to save.</p>
+              <p className="mr-auto text-adm-base font-medium text-status-danger">Fix the highlighted fields to save.</p>
             )}
             <Button variant="ghost" onClick={requestClose} disabled={form.busy}>
               Cancel

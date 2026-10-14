@@ -29,7 +29,7 @@ export default function BlueIQDemo() {
     <div data-ui className="grid overflow-hidden border border-white/10 bg-navy-950/60 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* Document */}
       <div className="relative border-b border-white/10 p-6 md:border-b-0 md:border-r">
-        <p className="text-[length:var(--text-small)] font-medium text-tide-300">scan_0412.jpg, phone photo</p>
+        <p className="text-small font-medium text-tide-300">scan_0412.jpg, phone photo</p>
         <div className="relative mt-4 aspect-[3/4] rotate-[-1.2deg] bg-mist-50 shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
           {/* simulated invoice content */}
           <div className="absolute inset-0 p-[7%] text-navy-900">
@@ -75,8 +75,8 @@ export default function BlueIQDemo() {
       {/* Extracted fields */}
       <div className="p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-[length:var(--text-small)] font-medium text-on-deep">Extracted fields</p>
-          <label className="flex cursor-pointer items-center gap-3 text-[0.875rem] text-tide-300">
+          <p className="text-small font-medium text-on-deep">Extracted fields</p>
+          <label className="flex cursor-pointer items-center gap-3 text-small text-tide-300">
             <span>Needs review only</span>
             <input type="checkbox" className="peer sr-only" checked={onlyReview} onChange={(e) => setOnlyReview(e.target.checked)} />
             <span
@@ -99,21 +99,21 @@ export default function BlueIQDemo() {
                   onBlur={() => setFocus(null)}
                   className="grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 border-t border-white/10 py-4 text-left transition-colors hover:bg-white/[0.03]" /* taste-skill-ignore: data-ui fragment */
                 >
-                  <span className="text-[0.8125rem] text-tide-300">{f.label}</span>
-                  <span className={`row-span-2 flex items-center gap-3 text-[0.875rem] tabular-nums ${review ? "text-buoy-300" : "text-on-deep"}`}>
+                  <span className="text-caption text-tide-300">{f.label}</span>
+                  <span className={`row-span-2 flex items-center gap-3 text-small tabular-nums ${review ? "text-buoy-300" : "text-on-deep"}`}>
                     <span className="relative h-1 w-14 overflow-hidden rounded-full bg-white/10">
                       <span className={`absolute inset-y-0 left-0 rounded-full ${review ? "bg-buoy-400" : "bg-ocean-400"}`} style={{ width: `${f.confidence * 100}%` }} />
                     </span>
                     {f.confidence.toFixed(2)}
                   </span>
-                  <span className="text-[1.0625rem] text-on-deep">{f.value}</span>
+                  <span className="text-body text-on-deep">{f.value}</span>
                 </button>
               </li>
             );
           })}
         </ul>
 
-        <p className="mt-2 flex items-start gap-3 border-t border-white/10 pt-5 text-[0.9375rem] leading-relaxed text-buoy-300" /* taste-skill-ignore: real table or data-ui fragment */>
+        <p className="mt-2 flex items-start gap-3 border-t border-white/10 pt-5 text-small leading-normal text-buoy-300" /* taste-skill-ignore: real table or data-ui fragment */>
           <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-buoy-400" />
           The due date could be read two ways, so Blue-IQ flags it for a person instead of guessing.
         </p>

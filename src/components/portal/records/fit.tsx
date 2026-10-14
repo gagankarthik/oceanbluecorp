@@ -44,8 +44,8 @@ export function FitScore({ score, size = "md" }: { score: number; size?: "md" | 
   return (
     <span className={`inline-grid shrink-0 gap-1.5 ${size === "lg" ? "w-28" : "w-16"}`}>
       <span className="flex items-baseline justify-end tabular-nums">
-        <span className={`font-semibold leading-none tracking-tight ${size === "lg" ? "text-[30px]" : "text-[20px]"} ${fit ? "text-[#067647]" : "text-[#b42318]"}`}>{score}</span>
-        <span className="ml-0.5 text-[12px] font-medium text-mist-500">/100</span>
+        <span className={`font-semibold leading-none tracking-tight ${size === "lg" ? "text-adm-2xl" : "text-adm-lg"} ${fit ? "text-status-success" : "text-status-danger"}`}>{score}</span>
+        <span className="ml-0.5 text-adm-xs font-medium text-mist-600">/100</span>
       </span>
       <span
         role="meter"
@@ -55,7 +55,7 @@ export function FitScore({ score, size = "md" }: { score: number; size?: "md" | 
         aria-valuemax={100}
         className="block h-1.5 w-full overflow-hidden rounded-full bg-mist-200"
       >
-        <span className={`block h-full rounded-full ${fit ? "bg-[#17b26a]" : "bg-[#f04438]"}`} style={{ width: `${pct}%` }} />
+        <span className={`block h-full rounded-full ${fit ? "bg-status-success" : "bg-status-danger-mark"}`} style={{ width: `${pct}%` }} />
       </span>
     </span>
   );
@@ -72,14 +72,14 @@ export function SkillChips({ matched: rawMatched, missing: rawMissing }: { match
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label={`${matched.length} skills matched, ${missing.length} missing`}>
       {matched.map((s) => (
-        <li key={`m-${s}`} className="inline-flex max-w-full items-center gap-1 rounded-md bg-[#ecfdf3] px-2 py-0.5 text-[12px] font-medium text-[#067647]">
+        <li key={`m-${s}`} className="inline-flex max-w-full items-center gap-1 rounded-md bg-status-success-soft px-2 py-0.5 text-adm-xs font-medium text-status-success">
           <Icon name="check" className="size-3 shrink-0" />
           <span className="sr-only">Has </span>
           <span className="min-w-0 truncate">{s}</span>
         </li>
       ))}
       {missing.map((s) => (
-        <li key={`x-${s}`} className="inline-flex max-w-full items-center gap-1 rounded-md bg-mist-100 px-2 py-0.5 text-[12px] font-medium text-mist-700">
+        <li key={`x-${s}`} className="inline-flex max-w-full items-center gap-1 rounded-md bg-mist-100 px-2 py-0.5 text-adm-xs font-medium text-mist-700">
           <Icon name="x" className="size-3 shrink-0 text-mist-500" />
           <span className="sr-only">Missing </span>
           <span className="min-w-0 truncate">{s}</span>

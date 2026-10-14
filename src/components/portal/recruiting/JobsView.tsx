@@ -26,9 +26,9 @@ import {
   jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, stageColors, tally,
 } from "./model";
 
-const COPY: Record<JobCategory, { title: string; noun: string; icon: "capitol" | "briefcase"; description: string; post: string; query: string }> = {
-  state: { title: "State Roles", noun: "state role", icon: "capitol", description: "State agency requisitions, deadlines and applicants.", post: "Post a state role", query: "" },
-  open: { title: "Open Roles", noun: "open role", icon: "briefcase", description: "Commercial client requisitions.", post: "Post an open role", query: "?category=open" },
+const COPY: Record<JobCategory, { title: string; noun: string; icon: "capitol" | "briefcase"; post: string; query: string }> = {
+  state: { title: "State roles", noun: "state role", icon: "capitol", post: "Post a state role", query: "" },
+  open: { title: "Open roles", noun: "open role", icon: "briefcase", post: "Post an open role", query: "?category=open" },
 };
 
 const LIVE = jobStatusLabel("active");
@@ -45,20 +45,20 @@ type TableState = { query: string; filters: Record<string, string> };
 
 // Roles still being worked; a deadline on a draft or closed role is history, not a warning.
 const isWorking = (j: Job) => j.status === "active" || j.status === "open";
-const RED = "text-[#b42318]";
-const AMBER = "text-[#b54708]";
+const RED = "text-status-danger";
+const AMBER = "text-status-warning";
 
 /** Overdue and today red, within three days amber. */
 function DueCell({ job }: { job: Job }) {
   const d = daysUntil(job.submissionDueDate);
-  if (d === null) return <span className="text-mist-400">&mdash;</span>;
+  if (d === null) return <span className="text-mist-600">&mdash;</span>;
   if (!isWorking(job)) return <span className="text-mist-600">{fmtDate(job.submissionDueDate)}</span>;
   const tone = d <= 0 ? RED : d <= 3 ? AMBER : "";
   const note = d < 0 ? `Overdue by ${-d} day${d === -1 ? "" : "s"}` : d === 0 ? "Due today" : `In ${d} day${d === 1 ? "" : "s"}`;
   return (
     <span className="flex flex-col">
       <span className={tone ? `font-semibold ${tone}` : ""}>{fmtDate(job.submissionDueDate)}</span>
-      <span className={`flex items-center gap-1 text-[12px] ${tone || "text-mist-500"}`}>
+      <span className={`flex items-center gap-1 text-adm-xs ${tone || "text-mist-600"}`}>
         {tone && <Icon name={d <= 0 ? "alert" : "timer"} className="size-3.5" />}
         {note}
       </span>
@@ -86,7 +86,7 @@ function PipelineCells({ job }: { job: Job }) {
               background: n ? (s === "pending" ? "var(--color-mist-200)" : c.fill) : undefined,
               color: n ? c.onFill : undefined,
             }}
-            className={`inline-flex h-6 w-9 items-center justify-center pl-1.5 text-[12px] font-semibold tabular-nums ${i ? "-ml-[3px]" : ""} ${
+            className={`inline-flex h-6 w-9 items-center justify-center pl-1.5 text-adm-xs font-semibold tabular-nums ${i ? "-ml-[3px]" : ""} ${
               n ? "" : "bg-mist-50 font-medium text-mist-600"
             }`}
           >
@@ -143,10 +143,10 @@ function DeadlineList({ jobs, onPick }: { jobs: Job[]; onPick: (j: Job) => void 
       {due.slice(0, 7).map(({ j, d }) => (
         <li key={j.id}>
           <button type="button" onClick={() => onPick(j)} className="grid min-h-10 w-full grid-cols-[3rem_1fr] items-center gap-3 rounded-lg p-2 text-left transition-colors duration-150 hover:bg-mist-50">
-            <span className={`rounded-md py-1 text-center text-[12px] font-semibold tabular-nums ${d === 0 ? "bg-[#fef3f2] text-[#b42318]" : d <= 3 ? "bg-[#fffaeb] text-[#b54708]" : "bg-ocean-50 text-ocean-700"}`}>{d === 0 ? "Today" : `${d}d`}</span>
+            <span className={`rounded-md py-1 text-center text-adm-xs font-semibold tabular-nums ${d === 0 ? "bg-status-danger-soft text-status-danger" : d <= 3 ? "bg-status-warning-soft text-status-warning" : "bg-ocean-50 text-ocean-700"}`}>{d === 0 ? "Today" : `${d}d`}</span>
             <span className="min-w-0">
-              <span className="block truncate text-[14px] font-medium text-navy-900">{j.title}</span>
-              <span className="block truncate text-[12px] text-mist-600">{[j.postingId, fmtDate(j.submissionDueDate)].filter(Boolean).join(", ")}</span>
+              <span className="block truncate text-adm-base font-medium text-navy-900">{j.title}</span>
+              <span className="block truncate text-adm-xs text-mist-600">{[j.postingId, fmtDate(j.submissionDueDate)].filter(Boolean).join(", ")}</span>
             </span>
           </button>
         </li>
@@ -263,9 +263,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
 
   const dated = useMemo(() => jobs.filter((j) => (!from || j.createdAt.slice(0, 10) >= from) && (!to || j.createdAt.slice(0, 10) <= to)), [jobs, from, to]);
 
-  const description = res.jobs
-    ? `${jobs.length} ${copy.noun}${jobs.length === 1 ? "" : "s"}${canPrice ? `, ${applicants} applicant${applicants === 1 ? "" : "s"}` : ""}. ${copy.description}`
-    : copy.description;
+
 
   const columns: Column<Job>[] = [
     {
@@ -277,7 +275,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
       cell: (j) => (
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-semibold text-navy-900" title={j.title}>{j.title}</span>
-          <span className="font-mono text-[12px] text-mist-500">{j.postingId || "No ID"}</span>
+          <span className="font-mono text-adm-xs text-mist-600">{j.postingId || "No ID"}</span>
         </span>
       ),
     },
@@ -294,7 +292,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
           { key: "client", header: "Client", sortable: true, grow: 15, card: false, hideBelow: "lg" as const, value: (j: Job) => j.clientName ?? "", cell: (j: Job) => <span className="block truncate text-mist-700" title={j.clientName || undefined}>{j.clientName || "—"}</span> },
         ]
       : []),
-    { key: "postingId", header: "Job ID", sortable: true, card: false, defaultHidden: true, value: (j) => j.postingId ?? "", cell: (j) => <span className="font-mono text-[13px] text-mist-600">{j.postingId || "—"}</span> },
+    { key: "postingId", header: "Job ID", sortable: true, card: false, defaultHidden: true, value: (j) => j.postingId ?? "", cell: (j) => <span className="font-mono text-adm-base text-mist-600">{j.postingId || "—"}</span> },
     ...(canPrice
       ? [
           { key: "vendor", header: "Vendor", sortable: true, card: false, defaultHidden: true, value: (j: Job) => j.vendorName ?? "", cell: (j: Job) => <span className="text-mist-700">{j.vendorName || "—"}</span> },
@@ -346,7 +344,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
           </Badge>
         ),
     },
-    { key: "created", header: "Posted", sortable: true, card: false, hideBelow: "2xl", value: (j) => j.createdAt, cell: (j) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(j.createdAt)}</span> },
+    { key: "created", header: "Posted", sortable: true, card: false, hideBelow: "2xl", value: (j) => j.createdAt, cell: (j) => <span className="text-adm-base tabular-nums text-mist-600">{fmtDate(j.createdAt)}</span> },
   ];
 
   const opts = (vals: string[]) => [...new Set(vals.filter(Boolean))].sort();
@@ -381,7 +379,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
       : []),
   ];
 
-  const dateCls = "h-10 min-w-0 rounded-lg bg-mist-0 px-2.5 text-[13px] text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600";
+  const dateCls = "h-10 min-w-0 rounded-lg bg-mist-0 px-2.5 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600";
   const detailFor = (job: Job) => (
     <JobDetail
       job={jobs.find((x) => x.id === job.id) ?? job}
@@ -527,7 +525,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
           searchPlaceholder="Search title, client, location or ID"
           emptyTitle={`No ${copy.noun}s match your filters`}
           filterExtras={
-            <span className="flex shrink-0 items-center gap-1.5 text-[13px] text-mist-600">
+            <span className="flex shrink-0 items-center gap-1.5 text-adm-base text-mist-600">
               <span className="whitespace-nowrap">Posted between</span>
               <label className="sr-only" htmlFor={`${category}-from`}>Posted from</label>
               <input id={`${category}-from`} type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={dateCls} title="Posted from" />
@@ -555,7 +553,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
         section="recruiting"
         icon={copy.icon}
         title={copy.title}
-        description={description}
+
         actions={
           (jobs.length > 0 || canPost) && (
             <>
@@ -660,13 +658,13 @@ function JobDetail({
         <Badge tone={JOB_STATUS_TONE[job.status] ?? "grey"} dot>
           {jobStatusShort(job.status)}
         </Badge>
-        {!isPubliclyOpen(job.status) && <span className="text-[13px] text-mist-600">Not on the careers site</span>}
+        {!isPubliclyOpen(job.status) && <span className="text-adm-base text-mist-600">Not on the careers site</span>}
       </div>
       <KeyValue items={facts} />
       <section>
         <div className="flex items-baseline justify-between">
-          <h3 className="text-[14px] font-semibold text-navy-900">Applicants</h3>
-          <span className="text-[13px] tabular-nums text-mist-600">{total} total</span>
+          <h3 className="text-adm-base font-semibold text-navy-900">Applicants</h3>
+          <span className="text-adm-base tabular-nums text-mist-600">{total} total</span>
         </div>
         {/* Media's projection carries the count without the stage breakdown. */}
         {total > 0 ? (
@@ -675,19 +673,19 @@ function JobDetail({
               {PIPELINE.filter((s) => (job.pipeline?.[s] ?? 0) > 0).map((s) => (
                 <li key={s} className="flex items-center justify-between rounded-lg bg-mist-50 px-3 py-2">
                   <StageBadge stage={s} />
-                  <span className="text-[14px] font-semibold tabular-nums">{job.pipeline?.[s]}</span>
+                  <span className="text-adm-base font-semibold tabular-nums">{job.pipeline?.[s]}</span>
                 </li>
               ))}
             </ul>
           )
         ) : (
-          <p className="mt-2 rounded-lg bg-mist-50 p-3 text-[14px] text-mist-600">No applicants yet.</p>
+          <p className="mt-2 rounded-lg bg-mist-50 p-3 text-adm-base text-mist-600">No applicants yet.</p>
         )}
       </section>
       <section>
-        <h3 className="text-[14px] font-semibold text-navy-900">Description</h3>
+        <h3 className="text-adm-base font-semibold text-navy-900">Description</h3>
         {descError ? (
-          <p className="mt-2 text-[14px] text-mist-600">Couldn&apos;t load the description. Open the job page to read it.</p>
+          <p className="mt-2 text-adm-base text-mist-600">Couldn&apos;t load the description. Open the job page to read it.</p>
         ) : description === null ? (
           <div className="mt-2 grid gap-2" role="status" aria-label="Loading description">
             <Skeleton className="h-3 w-full rounded" />
@@ -695,9 +693,9 @@ function JobDetail({
             <Skeleton className="h-3 w-4/5 rounded" />
           </div>
         ) : description ? (
-          <div className="prose prose-sm mt-2 max-w-none text-[14px] text-navy-900" dangerouslySetInnerHTML={renderRichText(description)} />
+          <div className="prose prose-sm mt-2 max-w-none text-adm-base text-navy-900" dangerouslySetInnerHTML={renderRichText(description)} />
         ) : (
-          <p className="mt-2 text-[14px] text-mist-600">No description yet.</p>
+          <p className="mt-2 text-adm-base text-mist-600">No description yet.</p>
         )}
       </section>
       {/* One primary, one secondary, the rest in the overflow */}

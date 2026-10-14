@@ -66,7 +66,7 @@ const jumps = [
   ["#report", "Reporting a vulnerability"],
 ];
 
-const H2 = "display text-[clamp(2rem,3.4vw,3.25rem)]";
+const H2 = "display text-head";
 const delay = (d: number) => ({ "--d": d }) as React.CSSProperties;
 
 export default function SecurityPage() {
@@ -101,7 +101,7 @@ export default function SecurityPage() {
               We place engineers inside client systems and we run managed services on client infrastructure, so the honest answer to most security
               questions is that your controls govern your estate and ours govern ours. This page covers ours.
             </p>
-            <p className="leading-relaxed text-mist-600">
+            <p className="leading-normal text-mist-600">
               Where we hold a certification we say so. Where we do not, we say that too, further down this page. A security page that only lists
               strengths is not useful to anyone evaluating a supplier, and the gaps are the part you would find in diligence anyway.
             </p>
@@ -117,9 +117,9 @@ export default function SecurityPage() {
           <ul className="mt-10 grid gap-2 md:grid-cols-2">
             {protections.map((p, i) => (
               <li key={p.title} className="bg-mist-0 p-7 md:p-9" data-reveal style={delay(i % 2)}>
-                <p className="font-mono text-[14px] text-ocean-700">{String(i + 1).padStart(2, "0")}</p>
-                <h3 className="mt-3 text-[clamp(1.25rem,1.6vw,1.5rem)] font-semibold">{p.title}</h3>
-                <p className="mt-2 max-w-[54ch] leading-relaxed text-mist-600">{p.body}</p>
+                <p className="font-mono text-small text-ocean-700">{String(i + 1).padStart(2, "0")}</p>
+                <h3 className="mt-3 text-title font-semibold">{p.title}</h3>
+                <p className="mt-2 max-w-measure-narrow leading-normal text-mist-600">{p.body}</p>
               </li>
             ))}
           </ul>
@@ -136,20 +136,20 @@ export default function SecurityPage() {
           <ul className="axis divide-y divide-mist-200 border-y border-mist-200">
             {accessControls.map((a) => (
               <li key={a.title} className="grid gap-2 py-7 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-8" data-reveal>
-                <h3 className="text-[20px] font-semibold leading-snug">{a.title}</h3>
-                <p className="leading-relaxed text-mist-600">{a.body}</p>
+                <h3 className="text-title font-semibold leading-snug">{a.title}</h3>
+                <p className="leading-normal text-mist-600">{a.body}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <section id="residency" aria-labelledby="residency-h" className="scroll-mt-24 bg-navy-900 text-mist-50">
+      <section id="residency" aria-labelledby="residency-h" className="on-dark scroll-mt-24 bg-navy-900 text-mist-50">
         <div className="gutter grid gap-10 py-20 md:py-24 lg:grid-cols-12">
           <h2 id="residency-h" className={`side ${H2}`} data-reveal>
             Where data lives, and who reaches it
           </h2>
-          <div className="axis grid max-w-[68ch] gap-5 leading-relaxed text-tide-300" data-reveal>
+          <div className="axis grid max-w-measure gap-5 leading-normal text-tide-300" data-reveal>
             <p>
               Application data is stored and processed in Amazon Web Services in the{" "}
               <strong className="font-semibold text-white">US East (Ohio) region</strong>, us-east-2.
@@ -173,7 +173,7 @@ export default function SecurityPage() {
             <h2 id="certs-h" className={H2}>
               Certifications we hold
             </h2>
-            <p className="mt-4 max-w-[40ch] text-mist-600">
+            <p className="mt-4 max-w-measure-narrow text-mist-600">
               These are supplier-diversity certifications. They speak to ownership and procurement eligibility, not to information security, and we
               do not present them as security credentials.
             </p>
@@ -193,7 +193,7 @@ export default function SecurityPage() {
             {/* The absences, stated rather than omitted */}
             <div className="mt-8 border-l-2 border-ocean-600 bg-mist-100 px-6 py-5">
               <p className="font-semibold">What we do not hold</p>
-              <p className="mt-2 max-w-[58ch] leading-relaxed text-mist-700">
+              <p className="mt-2 max-w-measure leading-normal text-mist-700">
                 Oceanblue is not SOC 2 audited and does not hold ISO 27001. We have not commissioned a third-party penetration test. If your
                 procurement process requires either, tell us early and we will tell you honestly whether we can meet the timeline rather than let it
                 surface late in the process.
@@ -209,19 +209,19 @@ export default function SecurityPage() {
             <h2 id="report-h" className={H2}>
               Reporting a vulnerability
             </h2>
-            <p className="mt-6 max-w-[56ch] leading-relaxed">
+            <p className="mt-6 max-w-measure leading-normal">
               If you have found a security problem in this site or any Oceanblue system, email{" "}
               <a href={reportHref} className="text-ocean-700 underline underline-offset-4">
                 {company.email}
               </a>{" "}
               with &ldquo;Security report&rdquo; in the subject line.
             </p>
-            <p className="mt-5 max-w-[56ch] leading-relaxed">
+            <p className="mt-5 max-w-measure leading-normal">
               Include what you found, where, and the steps to reproduce it. We will confirm receipt and keep you updated as we work through it. We
               ask that you give us a reasonable window to fix the issue before publishing it, and that you avoid accessing or altering data that is
               not your own while testing.
             </p>
-            <p className="mt-5 max-w-[56ch] text-mist-600">We do not run a paid bug bounty. We will credit you if you would like to be named.</p>
+            <p className="mt-5 max-w-measure text-mist-600">We do not run a paid bug bounty. We will credit you if you would like to be named.</p>
             <a
               href={reportHref}
               className="mt-8 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
@@ -231,12 +231,12 @@ export default function SecurityPage() {
           </div>
 
           <div className="bg-mist-0 p-7 sm:p-10 lg:col-span-5" data-reveal style={delay(1)}>
-            <h2 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-semibold">Incident history</h2>
-            <p className="mt-4 max-w-[46ch] leading-relaxed text-mist-600">
+            <h2 className="text-head-sm font-semibold">Incident history</h2>
+            <p className="mt-4 max-w-measure-narrow leading-normal text-mist-600">
               We have not disclosed a security incident affecting client or candidate data. If that changes, the incident and its resolution will be
               recorded here with dates.
             </p>
-            <p className="mt-6 max-w-[46ch] border-t border-mist-200 pt-6 text-[15px] text-mist-600">
+            <p className="mt-6 max-w-measure-narrow border-t border-mist-200 pt-6 text-small text-mist-600">
               For live availability of the AWS services this product runs on, see the{" "}
               <Link href="/status" className="text-ocean-700 underline underline-offset-4">
                 status page

@@ -33,8 +33,8 @@ export default function ProtectedRoute({
     return (
       <div role="status" className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
-          <div aria-hidden="true" className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-cobalt border-t-transparent" />
-          <p className="mt-4 text-[14px] text-ink-muted">Checking your sign-in…</p>
+          <div aria-hidden="true" className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-ocean-600 border-t-transparent" />
+          <p className="mt-4 text-[14px] text-mist-600">Checking your sign-in…</p>
         </div>
       </div>
     );

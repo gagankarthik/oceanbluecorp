@@ -31,8 +31,8 @@ export function StageSelect({
   label?: string;
   disabled?: boolean;
 }) {
-  const dot = STAGE_DOT[value as Stage] ?? "#99a2af";
-  const h = size === "sm" ? "h-8 text-[13px] pl-7 pr-8" : "h-10 text-[14px] pl-8 pr-9";
+  const dot = STAGE_DOT[value as Stage] ?? "var(--color-mist-400)";
+  const h = size === "sm" ? "h-8 text-adm-base pl-7 pr-8" : "h-10 text-adm-base pl-8 pr-9";
   return (
     <div className={`relative ${size === "sm" ? "w-36" : "w-full"}`} onClick={(e) => e.stopPropagation()}>
       <span aria-hidden className={`pointer-events-none absolute top-1/2 size-2 -translate-y-1/2 rounded-full ${size === "sm" ? "left-2.5" : "left-3"}`} style={{ background: dot }} />

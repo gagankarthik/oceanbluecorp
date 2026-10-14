@@ -32,13 +32,13 @@ const columns: Record<LayerId, { title: string; lead: string; highlight: string;
 /** What we offer, in three columns a customer can scan */
 export default function ServicesOverview() {
   return (
-    <section aria-labelledby="services-title" className="bg-navy-900 text-mist-50">
+    <section aria-labelledby="services-title" className="on-dark bg-navy-900 text-mist-50">
       <div className="gutter py-24 md:py-32">
         <div className="grid gap-6 lg:grid-cols-12">
-          <h2 id="services-title" className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-6" data-reveal>
+          <h2 id="services-title" className="display text-head lg:col-span-6" data-reveal>
             Our services
           </h2>
-          <div className="max-w-[52ch] text-tide-300 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+          <div className="max-w-measure-narrow text-tide-300 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
             <p>
               Ten services across three areas. Use one, or bring them together under a single contract with one team accountable for the
               result.
@@ -59,8 +59,8 @@ export default function ServicesOverview() {
               <article key={id} id={`practice-${id}`} className="group flex flex-col bg-navy-800" data-reveal style={{ "--d": i } as React.CSSProperties}>
                 <Photo name={c.photo} className="aspect-[16/10]" sizes="(min-width: 1024px) 33vw, 100vw" zoom />
                 <div className="flex flex-1 flex-col p-6 md:p-8">
-                  <p className="text-[15px] font-medium text-cyan-300">{c.highlight}</p>
-                  <h3 className="display mt-3 text-[clamp(1.5rem,2vw,1.875rem)]">{c.title}</h3>
+                  <p className="text-small font-medium text-cyan-300">{c.highlight}</p>
+                  <h3 className="display mt-3 text-head-sm">{c.title}</h3>
                   <p className="mt-3 text-tide-300">{c.lead}</p>
 
                   <ul className="mt-8 grid flex-1 content-start gap-1">

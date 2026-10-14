@@ -24,9 +24,9 @@ export function SkillChips({ skills, max }: { skills?: string[]; max: number }) 
   return (
     <span className="flex min-w-0 flex-wrap gap-1 py-1">
       {all.slice(0, max).map((s) => (
-        <span key={s} className="max-w-full truncate rounded-md bg-mist-100 px-1.5 py-0.5 text-[11px] font-medium text-mist-700">{s}</span>
+        <span key={s} className="max-w-full truncate rounded-md bg-mist-100 px-1.5 py-0.5 text-adm-xs font-medium text-mist-700">{s}</span>
       ))}
-      {all.length > max && <span className="px-1 py-0.5 text-[11px] font-medium tabular-nums text-mist-500">+{all.length - max}</span>}
+      {all.length > max && <span className="px-1 py-0.5 text-adm-xs font-medium tabular-nums text-mist-600">+{all.length - max}</span>}
     </span>
   );
 }
@@ -34,7 +34,7 @@ export function SkillChips({ skills, max }: { skills?: string[]; max: number }) 
 function ShowMore({ hidden, onClick }: { hidden: number; onClick: () => void }) {
   if (hidden <= 0) return null;
   return (
-    <button type="button" onClick={onClick} className="w-full rounded-md px-2 py-1.5 text-[12px] font-medium text-ocean-700 hover:bg-mist-0">
+    <button type="button" onClick={onClick} className="w-full rounded-md px-2 py-1.5 text-adm-xs font-medium text-ocean-700 hover:bg-mist-0">
       Show {Math.min(hidden, PAGE)} more{hidden > PAGE ? ` of ${hidden}` : ""}
     </button>
   );
@@ -83,7 +83,7 @@ export function ViewSwitch<V extends string>({
               on ? "bg-mist-100 text-navy-900" : "text-mist-600 hover:bg-mist-50 hover:text-navy-900"
             }`}
           >
-            <Icon name={o.icon} className="size-[18px]" />
+            <Icon name={o.icon} className="size-5" />
           </button>
         );
       })}
@@ -167,15 +167,15 @@ export function BoardView({
               className={`flex w-[min(15rem,calc(100vw-4rem))] min-w-0 shrink-0 grow snap-start flex-col rounded-lg transition-colors ${isOver ? "bg-ocean-50 ring-2 ring-ocean-600" : "bg-mist-50 ring-1 ring-inset ring-mist-200"}`}
             >
               <header className="flex items-center justify-between gap-2 px-3 py-2.5">
-                <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-navy-900">
+                <span className="flex min-w-0 items-center gap-2 text-adm-base font-semibold text-navy-900">
                   <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: stageDot(stage) }} />
                   <span className="truncate">{STAGE_LABEL[stage]}</span>
                 </span>
-                <span className="text-[12px] font-medium tabular-nums text-mist-600">{items.length}</span>
+                <span className="text-adm-xs font-medium tabular-nums text-mist-600">{items.length}</span>
               </header>
               <ul className="scroll-thin grid max-h-[70dvh] content-start gap-2 overflow-y-auto px-2 pb-2">
                 {items.length === 0 && (
-                  <li className={`px-1 py-3 text-center text-[12px] ${isOver ? "font-medium text-ocean-700" : "text-mist-500"}`}>{isOver ? "Drop here" : "No candidates"}</li>
+                  <li className={`px-1 py-3 text-center text-adm-xs ${isOver ? "font-medium text-ocean-700" : "text-mist-600"}`}>{isOver ? "Drop here" : "No candidates"}</li>
                 )}
                 {items.slice(0, limit).map((a) => {
                   const nxt = nextStage(a.status);
@@ -201,8 +201,8 @@ export function BoardView({
                           onClick={() => onOpen(a)}
                           className="min-w-0 flex-1 text-left after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ocean-600"
                         >
-                          <span className="block truncate text-[13px] font-semibold text-navy-900 group-hover:text-ocean-700" title={name}>{name}</span>
-                          <span className="block truncate text-[12px] text-mist-600" title={a.jobTitle || undefined}>{a.jobTitle || "No position"}</span>
+                          <span className="block truncate text-adm-base font-semibold text-navy-900 group-hover:text-ocean-700" title={name}>{name}</span>
+                          <span className="block truncate text-adm-xs text-mist-600" title={a.jobTitle || undefined}>{a.jobTitle || "No position"}</span>
                         </button>
                         {menu && (
                           <span className="relative z-10 -mr-1 -mt-1">
@@ -225,16 +225,16 @@ export function BoardView({
                           </span>
                         )}
                       </div>
-                      <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] text-mist-500">
+                      <div className="mt-1 flex min-w-0 items-center gap-1.5 text-adm-xs text-mist-600">
                         {done ? (
                           <span className="tabular-nums">{fmtDate(a.appliedAt)}</span>
                         ) : (
-                          <span className={`shrink-0 tabular-nums ${days >= STALE_DAYS ? "font-medium text-[#b54708]" : ""}`}>{days}d in stage</span>
+                          <span className={`shrink-0 tabular-nums ${days >= STALE_DAYS ? "font-medium text-status-warning" : ""}`}>{days}d in stage</span>
                         )}
                         {!done && owner && (
                           <>
                             <span aria-hidden>·</span>
-                            <span className={`truncate ${a.ownershipName ? "" : "font-medium text-[#b42318]"}`} title={owner}>{owner}</span>
+                            <span className={`truncate ${a.ownershipName ? "" : "font-medium text-status-danger"}`} title={owner}>{owner}</span>
                           </>
                         )}
                       </div>
@@ -247,7 +247,7 @@ export function BoardView({
                               onClick={() => onMove(a, nxt)}
                               title={`Move to ${STAGE_LABEL[nxt]}`}
                               aria-label={`Move ${name} to ${STAGE_LABEL[nxt]}`}
-                              className="relative z-10 -mr-1 ml-auto inline-flex min-h-8 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-[12px] font-medium text-mist-600 hover:bg-mist-100 hover:text-ocean-700"
+                              className="relative z-10 -mr-1 ml-auto inline-flex min-h-8 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-adm-xs font-medium text-mist-600 hover:bg-mist-100 hover:text-ocean-700"
                             >
                               {STAGE_LABEL[nxt]}
                               <Icon name="chevronRight" className="size-3.5" />
@@ -318,17 +318,17 @@ export function SavedViewsMenu<S>({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={`inline-flex h-10 items-center gap-2 rounded-lg px-3 text-[14px] font-medium ring-1 ring-inset ${
+        className={`inline-flex h-10 items-center gap-2 rounded-lg px-3 text-adm-base font-medium ring-1 ring-inset ${
           activeId ? "bg-ocean-50 text-ocean-800 ring-ocean-300" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
         }`}
       >
-        <Icon name="star" className="size-[18px]" />
+        <Icon name="star" className="size-5" />
         My views
       </button>
       {open && (
         <div className="absolute right-0 top-12 z-30 w-72 rounded-xl bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
           {items.length === 0 ? (
-            <p className="px-1 py-2 text-[13px] text-mist-600">Save the current view, search and filters to come back to them.</p>
+            <p className="px-1 py-2 text-adm-base text-mist-600">Save the current view, search and filters to come back to them.</p>
           ) : (
             <ul className="scroll-thin max-h-60 overflow-y-auto">
               {items.map((s) => (
@@ -339,7 +339,7 @@ export function SavedViewsMenu<S>({
                       onApply(s);
                       setOpen(false);
                     }}
-                    className={`min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-left text-[14px] hover:bg-mist-50 ${s.id === activeId ? "font-semibold text-ocean-700" : "text-navy-900"}`}
+                    className={`min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-left text-adm-base hover:bg-mist-50 ${s.id === activeId ? "font-semibold text-ocean-700" : "text-navy-900"}`}
                   >
                     {s.name}
                   </button>
@@ -347,7 +347,8 @@ export function SavedViewsMenu<S>({
                     type="button"
                     onClick={() => onDelete(s.id)}
                     aria-label={`Delete saved view ${s.name}`}
-                    className="grid size-7 shrink-0 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900"
+                    title={`Delete saved view ${s.name}`}
+                    className="adm-hit grid size-7 shrink-0 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900"
                   >
                     <Icon name="x" className="size-3.5" />
                   </button>
@@ -364,12 +365,12 @@ export function SavedViewsMenu<S>({
               placeholder={full ? `Limit of ${MAX_SAVED} reached` : "Name this view"}
               disabled={full}
               maxLength={60}
-              className="h-9 min-w-0 flex-1 rounded-md bg-mist-50 px-2.5 text-[14px] ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50"
+              className="h-9 min-w-0 flex-1 rounded-md bg-mist-50 px-2.5 text-adm-base ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!name.trim() || full}
-              className="h-9 rounded-md bg-ocean-600 px-3 text-[13px] font-semibold text-white hover:bg-ocean-700 disabled:opacity-40"
+              className="h-9 rounded-md bg-ocean-600 px-3 text-adm-base font-semibold text-white hover:bg-ocean-700 disabled:opacity-40"
             >
               Save
             </button>

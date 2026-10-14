@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RoleGate } from "@/components/portal/session";
 import ArticleWorkspace from "@/components/portal/publishing/ArticleWorkspace";
 
-export const metadata: Metadata = { title: "Customer Stories" };
+export const metadata: Metadata = { title: "Customer stories" };
 
 export default function Page() {
   return (

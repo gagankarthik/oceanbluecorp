@@ -104,7 +104,7 @@ export function AdminDialog({
                   {title}
                 </D.Title>
                 {description && (
-                  <D.Description className="mt-0.5 text-adm-xs leading-relaxed text-[var(--adm-ink-mute)]">
+                  <D.Description className="mt-0.5 text-adm-xs leading-normal text-[var(--adm-ink-mute)]">
                     {description}
                   </D.Description>
                 )}

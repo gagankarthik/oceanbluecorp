@@ -128,12 +128,12 @@ function Sidebar({
         )}
       </div>
 
-      <nav id="portal-nav" aria-label="Portal" className="scroll-thin flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-3" onScroll={() => setTip(null)}>
+      <nav id="portal-nav" aria-label="Portal" className="scroll-thin flex-1 overflow-y-auto overflow-x-hidden px-3 py-3" onScroll={() => setTip(null)}>
         {groups.map((group, gi) => (
-          <div key={group.title} className={gi === 0 ? "" : collapsed ? "mt-2 border-t border-mist-200 pt-2" : "mt-3"}>
-            {labelled && !collapsed && <p className="px-2.5 pb-1 text-[12px] font-medium text-mist-500">{group.title}</p>}
+          <div key={group.title} className={gi === 0 ? "" : collapsed ? "mt-3 border-t border-mist-200 pt-3" : "mt-4"}>
+            {labelled && !collapsed && <p className="px-3 pb-1 text-adm-xs font-medium leading-4 text-mist-600">{group.title}</p>}
             {labelled && collapsed && <span className="sr-only">{group.title}</span>}
-            <ul className="grid gap-0.5">
+            <ul className="grid gap-1">
               {group.items.map((item) => {
                 const active = item.href === activeHref;
                 return (
@@ -143,11 +143,11 @@ function Sidebar({
                       onClick={onNavigate}
                       aria-current={active ? "page" : undefined}
                       {...tipProps(item.label)}
-                      className={`group relative flex min-h-8 items-center rounded-lg text-[14px] font-medium transition-colors ${
-                        collapsed ? "mx-auto w-10 justify-center" : "gap-2.5 px-2.5"
+                      className={`group relative flex min-h-8 items-center rounded-lg text-adm-base font-medium transition-colors ${
+                        collapsed ? "mx-auto w-10 justify-center" : "gap-3 px-3"
                       } ${active ? "bg-ocean-50 text-ocean-700" : "text-mist-700 hover:bg-mist-100 hover:text-navy-900"}`}
                     >
-                      {active && <span aria-hidden className="absolute -left-2.5 top-1 bottom-1 w-1 rounded-r bg-ocean-600" />}
+                      {active && <span aria-hidden className="absolute -left-3 top-1 bottom-1 w-1 rounded-r bg-ocean-600" />}
                       <Icon name={item.icon} className={`size-4 shrink-0 ${active ? "text-ocean-600" : "text-mist-500 group-hover:text-navy-900"}`} />
                       <span className={collapsed ? "sr-only" : "truncate whitespace-nowrap"}>{item.label}</span>
                     </Link>
@@ -163,7 +163,7 @@ function Sidebar({
       {collapsed && tip && (
         <span
           aria-hidden
-          className="pointer-events-none fixed left-[72px] z-40 -translate-y-1/2 whitespace-nowrap rounded-md bg-navy-900 px-2.5 py-1.5 text-[13px] font-medium text-white shadow-lg"
+          className="pointer-events-none fixed left-[72px] z-40 -translate-y-1/2 whitespace-nowrap rounded-md bg-navy-900 px-2.5 py-1.5 text-adm-base font-medium text-white shadow-lg"
           style={{ top: tip.top }}
         >
           {tip.label}
@@ -229,10 +229,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <ChromeProvider value={chrome}>
-    <div className="min-h-svh bg-mist-50">
+    <div data-portal-shell className="min-h-svh bg-mist-50">
       <a
         href="#portal-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[70] focus:rounded-lg focus:bg-ocean-600 focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[70] focus:rounded-lg focus:bg-ocean-600 focus:px-3 focus:py-2 focus:text-adm-base focus:font-medium focus:text-white"
       >
         Skip to content
       </a>
@@ -254,7 +254,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className={`fixed top-8 z-40 hidden size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-mist-0 text-mist-600 shadow-sm ring-1 ring-mist-300 transition-[left,color] duration-200 ease-[var(--ease-standard)] hover:text-navy-900 hover:ring-mist-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 motion-reduce:transition-none lg:grid ${
+        className={`adm-hit fixed top-8 z-40 hidden size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-mist-0 text-mist-600 shadow-sm ring-1 ring-mist-300 transition-[left,color] duration-200 ease-[var(--ease-standard)] hover:text-navy-900 hover:ring-mist-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 motion-reduce:transition-none lg:grid ${
           collapsed ? "left-16" : "left-54 2xl:left-60"
         }`}
       >
@@ -280,7 +280,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             <Icon name="menu" />
           </button>
 
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ml-auto flex items-center gap-2">
             {canSearch && <PortalSearch ref={search} />}
             {/* Only while an admin previews another role: says so, and one click returns */}
             {realRole === "admin" && role !== realRole && (
@@ -288,7 +288,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={() => setRole(realRole)}
                 title="Back to your own view"
-                className="hidden h-8 items-center gap-1.5 rounded-full bg-[#fffaeb] pl-3 pr-2 text-[13px] font-medium text-[#b54708] ring-1 ring-inset ring-[#fedf89] hover:bg-[#fef0c7] sm:inline-flex"
+                className="hidden h-8 items-center gap-1.5 rounded-full bg-status-warning-soft pl-3 pr-2 text-adm-base font-medium text-status-warning ring-1 ring-inset ring-status-warning-line hover:bg-status-warning-hover sm:inline-flex"
               >
                 Previewing as {roles[role].label}
                 <Icon name="x" className="size-3.5" />
@@ -305,21 +305,21 @@ function Shell({ children }: { children: React.ReactNode }) {
                 className="relative grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100"
               >
                 <Icon name="bell" />
-                {notes.unreadCount > 0 && <span className="absolute right-2 top-2 size-2 rounded-full bg-[#f04438] ring-2 ring-mist-0" />}
+                {notes.unreadCount > 0 && <span className="absolute right-2 top-2 size-2 rounded-full bg-status-danger-mark ring-2 ring-mist-0" />}
               </button>
               {menu === "bell" && (
                 <div className="absolute right-0 top-12 w-80 rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200">
                   <div className="flex items-center justify-between border-b border-mist-200 px-4 py-3">
-                    <p className="text-[14px] font-semibold">Notifications</p>
+                    <p className="text-adm-base font-semibold">Notifications</p>
                     {notes.unreadCount > 0 && (
-                      <button type="button" onClick={() => void notes.markAllAsRead()} className="text-[13px] font-medium text-ocean-700 hover:underline">
+                      <button type="button" onClick={() => void notes.markAllAsRead()} className="text-adm-base font-medium text-ocean-700 hover:underline">
                         Mark all read
                       </button>
                     )}
                   </div>
                   <ul className="max-h-80 overflow-y-auto py-1">
                     {notes.notifications.length === 0 && (
-                      <li className="px-4 py-6 text-center text-[13px] text-mist-600">{notes.loading ? "Loading…" : "You're all caught up."}</li>
+                      <li className="px-4 py-6 text-center text-adm-base text-mist-600">{notes.loading ? "Loading…" : "You're all caught up."}</li>
                     )}
                     {notes.notifications.map((n) => (
                       <li key={n.id}>
@@ -332,27 +332,25 @@ function Shell({ children }: { children: React.ReactNode }) {
                           }}
                           className="flex w-full gap-3 px-4 py-3 text-left hover:bg-mist-50"
                         >
-                          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-ocean-50 text-ocean-700">
-                            <Icon name={NOTE_ICON[n.type] ?? "bell"} className="size-4" />
-                          </span>
+                          <Icon name={NOTE_ICON[n.type] ?? "bell"} className="mt-0.5 size-4 shrink-0 text-mist-600" />
                           <span className="flex-1">
-                            <span className="block text-[13px] font-medium text-navy-900">{n.title}</span>
-                            <span className="block text-[13px] text-mist-700">{n.message}</span>
-                            <span className="block text-[12px] text-mist-500">{formatTimeAgo(n.createdAt)}</span>
+                            <span className="block text-adm-base font-medium text-navy-900">{n.title}</span>
+                            <span className="block text-adm-base text-mist-700">{n.message}</span>
+                            <span className="block text-adm-xs text-mist-600">{formatTimeAgo(n.createdAt)}</span>
                           </span>
                           {!n.isRead && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-ocean-600" />}
                         </button>
                       </li>
                     ))}
                   </ul>
-                  <Link href="/portal/notifications" className="block border-t border-mist-200 px-4 py-3 text-center text-[13px] font-medium text-ocean-700 hover:bg-mist-50">
+                  <Link href="/portal/notifications" className="block border-t border-mist-200 px-4 py-3 text-center text-adm-base font-medium text-ocean-700 hover:bg-mist-50">
                     See all notifications
                   </Link>
                 </div>
               )}
             </div>
 
-            <Link href="/portal/help" aria-label="Help and team directory" className="grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100">
+            <Link href="/portal/help" aria-label="Help and team directory" title="Help and team directory" className="grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100">
               <Icon name="help" />
             </Link>
 
@@ -370,18 +368,18 @@ function Shell({ children }: { children: React.ReactNode }) {
               >
                 <UserAvatar id={user.id} name={user.name} failed={avatarFailed} onFail={() => setAvatarFailed(true)} />
                 <span className="hidden text-left leading-tight sm:block">
-                  <span className="block text-[13px] font-semibold text-navy-900">{user.name}</span>
-                  <span className="block text-[12px] text-mist-600">{roles[role].label}</span>
+                  <span className="block text-adm-base font-semibold text-navy-900">{user.name}</span>
+                  <span className="block text-adm-xs text-mist-600">{roles[role].label}</span>
                 </span>
                 <Icon name="chevronDown" className="hidden size-4 text-mist-500 sm:block" />
               </button>
               {menu === "user" && (
-                <div className="absolute right-0 top-12 w-72 rounded-xl bg-mist-0 p-1.5 shadow-xl ring-1 ring-mist-200">
-                  <div className="flex items-center gap-3 px-2.5 py-2.5">
+                <div className="absolute right-0 top-12 w-72 rounded-xl bg-mist-0 p-2 shadow-xl ring-1 ring-mist-200">
+                  <div className="flex items-center gap-3 px-3 py-3">
                     <UserAvatar id={user.id} name={user.name} failed={avatarFailed} onFail={() => setAvatarFailed(true)} />
                     <div className="min-w-0">
-                      <p className="truncate text-[14px] font-semibold text-navy-900">{user.name}</p>
-                      <p className="truncate text-[12px] text-mist-600">{user.email}</p>
+                      <p className="truncate text-adm-base font-semibold text-navy-900">{user.name}</p>
+                      <p className="truncate text-adm-xs text-mist-600">{user.email}</p>
                     </div>
                   </div>
                   <div className="my-1 h-px bg-mist-200" />
@@ -398,22 +396,20 @@ function Shell({ children }: { children: React.ReactNode }) {
                         onClick={() => setViewAs((v) => !v)}
                         aria-expanded={viewAs}
                         aria-haspopup="true"
-                        className={`flex h-10 w-full items-center gap-3 rounded-lg px-2.5 text-[14px] text-navy-900 hover:bg-mist-50 ${viewAs ? "bg-mist-50" : ""}`}
+                        className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-adm-base text-navy-900 hover:bg-mist-50 ${viewAs ? "bg-mist-50" : ""}`}
                       >
-                        <span className="grid size-7 place-items-center rounded-md bg-mist-100 text-navy-800">
-                          <Icon name="eye" className="size-4" />
-                        </span>
+                        <Icon name="eye" className="size-4 shrink-0 text-mist-600" />
                         View portal as
-                        <span className="ml-auto text-[13px] text-mist-600">{roles[role].label}</span>
+                        <span className="ml-auto text-adm-base text-mist-600">{roles[role].label}</span>
                         <Icon name="chevronRight" className={`size-4 text-mist-500 transition-transform max-sm:rotate-90 ${viewAs ? "sm:rotate-180" : ""}`} />
                       </button>
                       {viewAs && (
                         <div
                           role="radiogroup"
                           aria-label="View portal as"
-                          className="mt-1 grid gap-0.5 rounded-lg bg-mist-50 p-1 sm:absolute sm:right-full sm:top-0 sm:mr-3 sm:mt-0 sm:max-h-[calc(100svh-8rem)] sm:w-52 sm:overflow-y-auto sm:bg-mist-0 sm:p-1.5 sm:shadow-xl sm:ring-1 sm:ring-mist-200"
+                          className="mt-1 grid gap-0.5 rounded-lg bg-mist-50 p-1 sm:absolute sm:right-full sm:top-0 sm:mr-3 sm:mt-0 sm:max-h-[calc(100svh-8rem)] sm:w-52 sm:overflow-y-auto sm:bg-mist-0 sm:p-2 sm:shadow-xl sm:ring-1 sm:ring-mist-200"
                         >
-                          <p className="hidden px-2.5 pb-1 pt-1.5 text-[12px] font-medium text-mist-500 sm:block">Preview the portal as</p>
+                          <p className="hidden px-3 pb-1 pt-2 text-adm-xs font-medium text-mist-600 sm:block">Preview the portal as</p>
                           {(Object.keys(roles) as Role[]).map((r) => (
                             <button
                               key={r}
@@ -425,13 +421,13 @@ function Shell({ children }: { children: React.ReactNode }) {
                                 close();
                               }}
                               title={roles[r].description}
-                              className={`flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-left ${r === role ? "bg-ocean-50" : "hover:bg-mist-50"}`}
+                              className={`flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left ${r === role ? "bg-ocean-50" : "hover:bg-mist-50"}`}
                             >
                               <span className={`grid size-4 shrink-0 place-items-center rounded-full ${r === role ? "bg-ocean-600" : "ring-1 ring-inset ring-mist-400"}`}>
                                 {r === role && <span className="size-1.5 rounded-full bg-white" />}
                               </span>
-                              <span className="text-[14px] font-medium text-navy-900">{roles[r].label}</span>
-                              {r === realRole && <span className="ml-auto text-[12px] text-mist-500">You</span>}
+                              <span className="text-adm-base font-medium text-navy-900">{roles[r].label}</span>
+                              {r === realRole && <span className="ml-auto text-adm-xs text-mist-600">You</span>}
                             </button>
                           ))}
                         </div>
@@ -443,11 +439,9 @@ function Shell({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={signOut}
-                    className="flex h-10 w-full items-center gap-3 rounded-lg px-2.5 text-[14px] text-[#b42318] hover:bg-[#fef3f2]"
+                    className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-adm-base text-status-danger hover:bg-status-danger-soft"
                   >
-                    <span className="grid size-7 place-items-center rounded-md bg-[#fef3f2]">
-                      <Icon name="logout" className="size-4" />
-                    </span>
+                    <Icon name="logout" className="size-4 shrink-0" />
                     Sign out
                   </button>
                 </div>
@@ -475,14 +469,12 @@ function UserAvatar({ id, name, failed, onFail }: { id: string; name: string; fa
   );
 }
 
-/** Account menu row: icon tile, label, and an arrow when it leaves the portal */
+/** Account menu row: icon, label, and an arrow when it leaves the portal */
 function MenuItem({ href, icon, label, external, onClick }: { href: string; icon: IconName; label: string; external?: boolean; onClick?: () => void }) {
-  const cls = "flex h-10 items-center gap-3 rounded-lg px-2.5 text-[14px] text-navy-900 hover:bg-mist-50";
+  const cls = "flex h-10 items-center gap-3 rounded-lg px-3 text-adm-base text-navy-900 hover:bg-mist-50";
   const body = (
     <>
-      <span className="grid size-7 place-items-center rounded-md bg-mist-100 text-navy-800">
-        <Icon name={icon} className="size-4" />
-      </span>
+      <Icon name={icon} className="size-4 shrink-0 text-mist-600" />
       {label}
       {external && <Icon name="external" className="ml-auto size-3.5 text-mist-500" />}
     </>

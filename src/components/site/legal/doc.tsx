@@ -9,7 +9,7 @@ export type DocMeta = { label: string; value: React.ReactNode };
 export type DocToc = { id: string; label: string }[];
 
 const PROSE =
-  "grid gap-4 leading-relaxed [&_strong]:font-semibold [&_a:not(.plain)]:text-ocean-700 [&_a:not(.plain)]:underline [&_a:not(.plain)]:underline-offset-4";
+  "grid gap-4 leading-normal [&_strong]:font-semibold [&_a:not(.plain)]:text-ocean-700 [&_a:not(.plain)]:underline [&_a:not(.plain)]:underline-offset-4";
 
 export function Arrow({ className = "size-4" }: { className?: string }) {
   return (
@@ -46,7 +46,7 @@ export function DocPage({
     <article className="bg-field-paper">
       <header id="top" className="gutter pb-12 pt-14 md:pb-16 md:pt-20">
         {current && <LegalNav current={current} />}
-        <h1 className={`display text-[clamp(2.5rem,5vw,4.5rem)] ${current ? "mt-10" : ""}`}>{title}</h1>
+        <h1 className={`display text-head-xl ${current ? "mt-10" : ""}`}>{title}</h1>
         {meta && meta.length > 0 && (
           <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-mist-600">
             {meta.map((m) => (
@@ -57,15 +57,15 @@ export function DocPage({
             ))}
           </dl>
         )}
-        {lede && <div className="mt-8 max-w-[68ch] text-[clamp(1.0625rem,1.2vw,1.1875rem)] leading-relaxed">{lede}</div>}
+        {lede && <div className="mt-8 max-w-measure text-body leading-normal">{lede}</div>}
       </header>
 
       <div className="gutter grid gap-12 pb-24 md:pb-32 lg:grid-cols-12">
         <aside className="lg:col-span-3">
           <div className="lg:sticky lg:top-24">
             <nav aria-label="On this page" className="bg-mist-100 p-5">
-              <p className="text-[14px] font-semibold text-mist-600">On this page</p>
-              <ol className="mt-3 grid gap-1.5 text-[15px]">
+              <p className="text-small font-semibold text-mist-600">On this page</p>
+              <ol className="mt-3 grid gap-1.5 text-small">
                 {contents.map((s) => (
                   <li key={s.id}>
                     <a href={`#${s.id}`} className="text-navy-900 hover:text-ocean-700 hover:underline">
@@ -79,7 +79,7 @@ export function DocPage({
           </div>
         </aside>
 
-        <div className="min-w-0 max-w-[68ch] lg:col-span-8 lg:col-start-5">
+        <div className="min-w-0 max-w-measure lg:col-span-8 lg:col-start-5">
           {children}
           {history && history.length > 0 && (
             <DocSection id="version-history" title="Version history">
@@ -102,7 +102,7 @@ export function DocPage({
 export function DocSection({ id, number, title, children }: { id: string; number?: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-28 border-t border-mist-200 py-10 first:border-t-0 first:pt-0">
-      <h2 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-semibold">
+      <h2 className="text-head-sm font-semibold">
         {number && <span className="mr-2 font-mono text-mist-500">{number}</span>}
         {title}
       </h2>
@@ -157,7 +157,7 @@ export function RelatedLinks({ links }: { links: { href: string; label: string }
 export function DocTable({ head, rows }: { head: { label: string; className?: string }[]; rows: { key: string; cells: { node: React.ReactNode; className?: string }[] }[] }) {
   return (
     <div className="overflow-x-auto overflow-y-hidden bg-mist-0">
-      <table className="w-full text-left text-[15px]">
+      <table className="w-full text-left text-small">
         <thead>
           <tr className="bg-mist-100">
             {head.map((h) => (

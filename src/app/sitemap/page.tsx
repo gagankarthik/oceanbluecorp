@@ -83,8 +83,8 @@ export default function SitemapPage() {
       <header id="top" className="bg-field-paper">
         <div className="gutter grid gap-8 pb-12 pt-14 md:pb-16 md:pt-20 lg:grid-cols-12">
           <p className="side text-mist-600 lg:pt-4">{total} pages</p>
-          <h1 className="poster axis text-[clamp(2.75rem,6vw,5.5rem)]">Site map</h1>
-          <p className="axis max-w-[46ch] text-lead leading-snug">Every page on this site, grouped by what you came to do.</p>
+          <h1 className="poster axis text-head-xl">Site map</h1>
+          <p className="axis max-w-measure-narrow text-lead leading-snug">Every page on this site, grouped by what you came to do.</p>
         </div>
       </header>
 
@@ -92,12 +92,12 @@ export default function SitemapPage() {
         <div className="gutter grid gap-2 py-16 sm:grid-cols-2 md:py-20 lg:grid-cols-3">
           {GROUPS.map((g, i) => (
             <nav key={g.group} aria-label={g.group} className="bg-mist-0 p-7" data-reveal style={{ "--d": i % 3 } as React.CSSProperties}>
-              <h2 className="display text-[clamp(1.5rem,2vw,2rem)]">{g.group}</h2>
-              <p className="mt-1 text-[15px] text-mist-600">{g.note}</p>
+              <h2 className="display text-head-sm">{g.group}</h2>
+              <p className="mt-1 text-small text-mist-600">{g.note}</p>
               <ul className="mt-5 grid gap-1">
                 {g.links.map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="inline-flex min-h-9 items-center text-navy-900 underline decoration-navy-900/25 underline-offset-4 hover:text-ocean-700 hover:decoration-ocean-700">
+                    <Link href={l.href} className="inline-flex min-h-10 items-center text-navy-900 underline decoration-navy-900/25 underline-offset-4 hover:text-ocean-700 hover:decoration-ocean-700">
                       {l.name}
                     </Link>
                   </li>

@@ -47,7 +47,7 @@ function Facts({ items, tone = "light" }: { items: { k: string; v: string }[]; t
     <dl className="grid gap-2">
       {items.map((f) => (
         <div key={f.k} className={`grid gap-1 px-5 py-4 ${tone === "mist" ? "bg-mist-100" : "bg-mist-0"}`}>
-          <dt className="text-[15px] font-semibold text-mist-600">{f.k}</dt>
+          <dt className="text-small font-semibold text-mist-600">{f.k}</dt>
           <dd className="text-navy-900">{f.v}</dd>
         </div>
       ))}
@@ -94,19 +94,19 @@ export default function ProductsPage() {
             <h2 id="blue-iq-title" className="sr-only">
               Blue-IQ, document intelligence
             </h2>
-            <p className="max-w-[40ch] text-[clamp(1.375rem,2vw,1.875rem)] leading-[1.3] [text-indent:3em]">
+            <p className="max-w-measure-narrow text-head-sm leading-[1.3] [text-indent:3em]">
               Blue-IQ turns documents into structured data. Every field comes back with a confidence score, and it flags what it is unsure
               of instead of guessing.
             </p>
             <ol className="mt-14 grid gap-10 sm:grid-cols-3">
               {flow.map((f) => (
                 <li key={f.name}>
-                  <p className="text-[20px] font-medium">{f.name}</p>
+                  <p className="text-title font-medium">{f.name}</p>
                   <p className="mt-2">{f.body}</p>
                 </li>
               ))}
             </ol>
-            <h3 className="mt-16 text-[20px] font-medium">What is in it</h3>
+            <h3 className="mt-16 text-title font-medium">What is in it</h3>
             <dl className="mt-6 grid gap-x-12 gap-y-8 sm:grid-cols-2">
               {blueIqModules.map((m) => (
                 <div key={m.name} className="border-t border-mist-300 pt-4">
@@ -119,13 +119,13 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      <section aria-labelledby="demo-title" className="bg-navy-950 text-mist-50">
+      <section aria-labelledby="demo-title" className="on-dark bg-navy-950 text-mist-50">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="demo-title" className="display side text-[clamp(2.25rem,4vw,3.75rem)]" data-reveal>
+            <h2 id="demo-title" className="display side text-head" data-reveal>
               See how Blue-IQ works
             </h2>
-            <p className="axis max-w-[44ch] self-end text-tide-300" data-reveal>
+            <p className="axis max-w-measure-narrow self-end text-tide-300" data-reveal>
               Point at a field to see where it came from on the scan. Switch on &ldquo;needs review only&rdquo; to see what a person would check.
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function ProductsPage() {
             <h2 id="inytes-title" className="poster mt-8 text-poster">
               Inytes
             </h2>
-            <p className="mt-8 max-w-[40ch] text-[clamp(1.25rem,1.6vw,1.5rem)] leading-snug">
+            <p className="mt-8 max-w-measure-narrow text-title leading-snug">
               Digital invitations for weddings, birthdays, baby showers, housewarmings and festivals, built for the Indian celebration market. Built, hosted and supported by the same team that runs client systems.
             </p>
             <div className="mt-12 grid gap-10 xl:grid-cols-2">

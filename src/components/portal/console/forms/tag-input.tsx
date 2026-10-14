@@ -117,15 +117,17 @@ export function TagInput({
       </div>
 
       {unused.length > 0 && !atLimit && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 text-adm-xs">
+          <span className="text-[var(--adm-ink-subtle)]">Suggested</span>
           {unused.slice(0, 8).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => add(s)}
-              className="rounded-[6px] border border-dashed border-[var(--adm-line-control)] px-2 py-0.5 text-adm-xs font-medium text-[var(--adm-ink-subtle)] transition-colors hover:border-[var(--adm-accent)] hover:text-[var(--adm-accent)]"
+              title={`Add ${s}`}
+              className="min-h-8 font-medium text-[var(--adm-accent)] underline-offset-4 hover:underline"
             >
-              + {s}
+              {s}
             </button>
           ))}
         </div>

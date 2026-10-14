@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ArrowRight } from "lucide-react";
-import { CHART_COLORS } from "./theme";
+import { CHART_COLORS, CHART_NEUTRAL } from "./theme";
 import { cn } from "@/lib/utils";
 
 /* Admin chart kit: segmented period control, donut (composition, ≤5 parts
@@ -119,7 +119,7 @@ export function DonutChart({
               const e = polar(cum + deg - gapDeg / 2);
               const large = deg > 180 ? 1 : 0;
               cum += deg;
-              const color = seg.color ?? CHART_COLORS[i % CHART_COLORS.length];
+              const color = seg.color ?? (CHART_COLORS[i] ?? CHART_NEUTRAL);
               return (
                 <path
                   key={seg.label}
@@ -150,7 +150,7 @@ export function DonutChart({
       {/* Legend doubles as the value table, identity is never colour-alone. */}
       <div className="grid w-full grid-cols-2 gap-x-4 gap-y-0.5">
         {shown.map((seg, i) => {
-          const color = seg.color ?? CHART_COLORS[i % CHART_COLORS.length];
+          const color = seg.color ?? (CHART_COLORS[i] ?? CHART_NEUTRAL);
           const Inner = (
             <>
               <span aria-hidden className="h-2 w-2 flex-none rounded-full" style={{ background: color }} />

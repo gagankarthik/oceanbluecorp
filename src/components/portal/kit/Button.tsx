@@ -62,9 +62,9 @@ export function Button({
   const cls = `relative inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors not-disabled:active:scale-[0.98] disabled:cursor-not-allowed ${
     loading ? "cursor-progress" : "disabled:opacity-[var(--opacity-disabled)]"
   } ${
-    children ? (size === "sm" ? "min-h-8 px-3 text-[13px]" : "min-h-10 px-4 text-[14px]") : size === "sm" ? "size-8" : "size-10"
+    children ? (size === "sm" ? "min-h-8 px-3 text-adm-base" : "min-h-10 px-4 text-adm-base") : size === "sm" ? "size-8" : "size-10"
   } ${buttonStyles[variant]} ${className}`;
-  const iconCls = size === "sm" ? "size-4" : "size-[18px]";
+  const iconCls = size === "sm" ? "size-4" : "size-5";
   // With an icon slot the spinner takes it; otherwise it overlays a hidden label.
   const overlay = loading && !icon && !!children;
   const inner = (

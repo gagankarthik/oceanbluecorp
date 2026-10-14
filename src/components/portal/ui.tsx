@@ -36,7 +36,7 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors duration-150 ${
-            size === "sm" ? "px-2.5 py-1 text-[12px]" : "min-h-9 px-3 py-1.5 text-[13px]"
+            size === "sm" ? "px-2.5 py-1 text-adm-xs" : "min-h-9 px-3 py-1.5 text-adm-base"
           } ${value === o.value ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600 hover:text-navy-900"}`}
         >
           {o.icon && <Icon name={o.icon} className="size-4" />}
@@ -62,11 +62,11 @@ export type StatDelta = {
 };
 
 function DeltaPill({ value, goodWhen = "up" }: StatDelta) {
-  if (value === null) return <span className="shrink-0 rounded-md bg-mist-100 px-1.5 py-0.5 text-[12px] font-medium text-mist-700">No data</span>;
+  if (value === null) return <span className="shrink-0 rounded-md bg-mist-100 px-1.5 py-0.5 text-adm-xs font-medium text-mist-700">No data</span>;
   const dir = value > 0 ? "up" : value < 0 ? "down" : "flat";
   const tone = dir === "flat" ? "bg-mist-100 text-mist-700" : dir === goodWhen ? "bg-kelp-50 text-kelp-800" : "bg-coral-50 text-coral-700";
   return (
-    <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[12px] font-medium tabular-nums ${tone}`}>
+    <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-adm-xs font-medium tabular-nums ${tone}`}>
       <svg aria-hidden viewBox="0 0 12 12" className={`size-3 ${dir === "down" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         {dir === "flat" ? <path d="M2.5 6h7" /> : <path d="M6 9.5v-7M2.75 5.75 6 2.5l3.25 3.25" />}
       </svg>
@@ -104,13 +104,13 @@ export function StatCard({
   // Fixed rows (label, value, footer) so every card in a row is the same height
   return (
     <div className="flex h-full min-w-0 flex-col rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200">
-      <p className="truncate text-[13px] font-medium text-mist-600">{label}</p>
+      <p className="truncate text-adm-base font-medium text-mist-600">{label}</p>
       <div className="mt-2 flex h-8 items-end justify-between gap-3">
-        <p className="text-[28px] font-semibold leading-none tracking-tight text-navy-900 tabular-nums">{value}</p>
+        <p className="text-adm-2xl font-semibold leading-none tracking-tight text-navy-900 tabular-nums">{value}</p>
         {spark && <Sparkline values={spark} color={sectionTone[section].spark} width={80} height={28} label={`${label} trend`} />}
       </div>
       {delta && (
-        <div className="mt-auto grid gap-1 pt-3 text-[13px] text-mist-600">
+        <div className="mt-auto grid gap-1 pt-3 text-adm-base text-mist-600">
           <p className="flex min-w-0 items-center gap-1.5">
             <DeltaPill {...delta} />
             {delta.label && <span className="truncate">{delta.label}</span>}
@@ -120,7 +120,7 @@ export function StatCard({
           </p>
         </div>
       )}
-      {!delta && <p className="mt-auto truncate pt-3 text-[13px] text-mist-600" title={footer || undefined}>
+      {!delta && <p className="mt-auto truncate pt-3 text-adm-base text-mist-600" title={footer || undefined}>
         {change && <span className={`font-medium ${trendCls}`}>{change}</span>}
         {change && hint && <span aria-hidden> · </span>}
         {hint}
@@ -167,7 +167,7 @@ const STAGE_ICON: Record<StageTone, IconName> = {
 export function Badge({ children, tone = "grey", dot = false, icon: iconProp }: { children: React.ReactNode; tone?: Tone; dot?: boolean; icon?: IconName }) {
   const icon = iconProp ?? STAGE_ICON[tone as StageTone];
   return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[12px] font-medium ring-1 ring-inset ${toneStyles[tone]}`}>
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-adm-xs font-medium ring-1 ring-inset ${toneStyles[tone]}`}>
       {icon ? <Icon name={icon} className="size-3.5 shrink-0" /> : dot && <span className="size-1.5 rounded-full bg-current" />}
       {children}
     </span>
@@ -211,7 +211,7 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
     .map((p) => p[0]?.toUpperCase())
     .join("");
   const tone = avatarTones[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % avatarTones.length];
-  const sz = size === "sm" ? "size-7 text-[11px]" : size === "lg" ? "size-12 text-[16px]" : "size-9 text-[13px]";
+  const sz = size === "sm" ? "size-7 text-adm-xs" : size === "lg" ? "size-12 text-adm-md" : "size-9 text-adm-base";
   return (
     <span aria-hidden className={`grid shrink-0 place-items-center rounded-full font-semibold ${sz} ${tone}`}>
       {initials}
@@ -234,8 +234,8 @@ export function KeyValue({ items }: { items: { k: string; v: React.ReactNode }[]
     <dl className="grid gap-3 sm:grid-cols-2">
       {items.map((i) => (
         <div key={i.k}>
-          <dt className="text-[12px] font-medium text-mist-600">{i.k}</dt>
-          <dd className="mt-0.5 text-[14px] text-navy-900">{i.v}</dd>
+          <dt className="text-adm-xs font-medium text-mist-600">{i.k}</dt>
+          <dd className="mt-0.5 text-adm-base text-navy-900">{i.v}</dd>
         </div>
       ))}
     </dl>
@@ -249,7 +249,7 @@ export function BarList({ items, format = (n: number) => String(n) }: { items: {
     <ul className="grid gap-3">
       {items.map((i) => (
         <li key={i.label}>
-          <div className="flex items-center justify-between text-[14px]">
+          <div className="flex items-center justify-between text-adm-base">
             <span className="text-navy-900">{i.label}</span>
             <span className="font-medium tabular-nums text-navy-900">{format(i.value)}</span>
           </div>

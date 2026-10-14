@@ -22,7 +22,7 @@ export default function PageHero({
   const cols = cells.length === 6 ? "md:grid-cols-6" : cells.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4";
   return (
     <section id="top" className="bg-field-paper">
-      <div className="p-2 pt-2">
+      <div className="px-4 pt-2">
         <div className={`grid h-[30svh] grid-cols-3 md:h-[42svh] ${cols}`}>
           {cells.map((c, i) => (
             <div key={i} className={`${i >= 3 ? "hidden md:block" : ""} ${i === 0 ? "shutter" : ""}`}>
@@ -38,7 +38,7 @@ export default function PageHero({
 
       <div className="gutter grid gap-8 pb-24 pt-12 md:pb-32 md:pt-16 lg:grid-cols-12">
         {side && (
-          <div data-after-lines className="side order-2 text-[15px] leading-relaxed text-mist-600 lg:order-1 lg:row-span-2 lg:pt-4">
+          <div data-after-lines className="side order-2 text-small leading-normal text-mist-600 lg:order-1 lg:row-span-2 lg:pt-4">
             {side}
           </div>
         )}
@@ -51,7 +51,7 @@ export default function PageHero({
             </span>
           ))}
         </h1>
-        <p data-after-lines className="axis order-1 max-w-[46ch] text-lead leading-snug lg:order-3">
+        <p data-after-lines className="axis order-1 max-w-measure-narrow text-lead leading-snug lg:order-3">
           {standfirst}
         </p>
       </div>

@@ -27,10 +27,10 @@ const ledger = [
 function Head({ id, title, intro, soft = "text-mist-600" }: { id: string; title: string; intro: string; soft?: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-12">
-      <h2 id={id} className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-6" data-reveal>
+      <h2 id={id} className="display text-head lg:col-span-6" data-reveal>
         {title}
       </h2>
-      <p className={`max-w-[46ch] lg:col-span-5 lg:col-start-8 lg:self-end ${soft}`} data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+      <p className={`max-w-measure-narrow lg:col-span-5 lg:col-start-8 lg:self-end ${soft}`} data-reveal style={{ "--d": 1 } as React.CSSProperties}>
         {intro}
       </p>
     </div>
@@ -64,10 +64,10 @@ export default function HowWeWorkPage() {
                   <span className="grid size-14 shrink-0 place-items-center bg-mist-0">
                     <StepIcon step={s.name} className="size-11" />
                   </span>
-                  <h3 className="display min-w-0 text-[clamp(1.25rem,1.6vw,1.5rem)]">{s.name}</h3>
+                  <h3 className="display min-w-0 text-title">{s.name}</h3>
                 </div>
                 <p className="mt-5">{s.body}</p>
-                <ul className="mt-6 grid gap-3 border-t border-mist-300 pt-6 text-[15px] text-mist-600">
+                <ul className="mt-6 grid gap-3 border-t border-mist-300 pt-6 text-small text-mist-600">
                   {s.detail.map((d) => (
                     <li key={d} className="flex gap-3">
                       <span aria-hidden className="mt-2 size-1.5 shrink-0 bg-ocean-600" />
@@ -100,10 +100,10 @@ export default function HowWeWorkPage() {
                   <th scope="col" className="w-[28%] p-5">
                     <span className="sr-only">Question</span>
                   </th>
-                  <th scope="col" className="w-[33%] bg-mist-200 p-5 text-[17px] font-semibold text-mist-700">
+                  <th scope="col" className="w-[33%] bg-mist-200 p-5 text-body font-semibold text-mist-700">
                     Several vendors
                   </th>
-                  <th scope="col" className="bg-ocean-600 p-5 text-[17px] font-semibold text-white">
+                  <th scope="col" className="bg-ocean-600 p-5 text-body font-semibold text-white">
                     <span className="flex items-center gap-2">
                       <svg aria-hidden viewBox="0 0 20 20" className="size-5 text-cyan-300" fill="currentColor">
                         <path d="M10 1.5 12.6 7l6 .7-4.4 4.1 1.2 5.9L10 14.8l-5.4 2.9 1.2-5.9L1.4 7.7l6-.7Z" />
@@ -168,8 +168,8 @@ export default function HowWeWorkPage() {
                 {models.map((m) => (
                   <tr key={m.name} className="border-b border-mist-300 align-baseline last:border-0">
                     <th scope="row" className={`${tableCell} w-[45%] font-normal`}>
-                      <span className="block text-[20px] font-semibold">{m.name}</span>
-                      <span className="mt-1 block max-w-[42ch] text-[15px] text-mist-600">{m.body}</span>
+                      <span className="block text-title font-semibold">{m.name}</span>
+                      <span className="mt-1 block max-w-measure-narrow text-small text-mist-600">{m.body}</span>
                     </th>
                     <td className={tableCell}>{m.direct}</td>
                     <td className={tableCell}>{m.owns}</td>
@@ -183,7 +183,7 @@ export default function HowWeWorkPage() {
 
       <FaqList title="Questions clients ask" items={faqsFor("Working with us", "Talent and delivery")} here="/how-we-work" tone="mist" />
 
-      <section aria-labelledby="reasons-title" className="bg-navy-900 text-mist-50">
+      <section aria-labelledby="reasons-title" className="on-dark bg-navy-900 text-mist-50">
         <div className="gutter py-24 md:py-32">
           <Head
             id="reasons-title"
@@ -195,7 +195,7 @@ export default function HowWeWorkPage() {
             {reasons.map((r, i) => (
               <div key={r.title} className="flex flex-col-reverse justify-end bg-navy-800 p-6 md:p-7" data-reveal style={{ "--d": i } as React.CSSProperties}>
                 <dd className="mt-2 text-tide-300">{r.body}</dd>
-                <dt className="text-[20px] font-semibold text-white">{r.title}</dt>
+                <dt className="text-title font-semibold text-white">{r.title}</dt>
               </div>
             ))}
           </dl>

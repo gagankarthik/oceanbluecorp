@@ -1,440 +1,409 @@
-# Oceanblue Admin Design System
+# Oceanblue Portal Design System
 
-The single source of truth for how the admin app (`/admin/*`) looks, behaves, and grows.
-Anatomy follows the three-layer model from
+How the staff portal (`/portal/*`) looks, behaves and grows. Anatomy follows the
+three-layer model from
 [Pencil & Paper. Anatomy of a Design System](https://www.pencilandpaper.io/articles/anatomy-design-system):
 a **design layer** (principles, style, components, patterns), a **development layer**
-(tokens + coded components, the part people actually use), and a **design-ops layer**
-(governance, contribution, maintenance). Scope is deliberately small: this system serves
-one staff-only ATS/CRM used by four roles, it does not need to rival Material or Polaris,
-it needs to keep ~25 admin screens consistent.
+(tokens and coded components) and a **design-ops layer** (governance, contribution,
+maintenance). Scope is small on purpose: one staff-only ATS/CRM with five roles.
+
+The portal has two layers of code:
+
+- **The portal kit**, `src/components/portal/kit` plus `DataTable.tsx`, `ui.tsx`,
+  `Select.tsx`, `charts.tsx`, `icons.tsx`. Every list page, the dashboard and the
+  record screens. Usage notes in `src/components/portal/README.md`.
+- **The carried-over console**, `src/app/portal/(console)` and
+  `src/components/portal/console`. Detail, editor and utility screens moved from
+  the old `/admin` app, wrapped in `.adm-scope` and reading `--adm-*` tokens that
+  are retuned to the portal palette. New screens use the kit.
 
 ---
 
 ## 1. Principles
 
-1. **Calm density.** Recruiters live in these screens all day. Prefer compact rows,
-   tabular numbers, and generous whitespace *between* groups over decoration *within* them.
-2. **One neutral, one accent.** One navy-tinted neutral ramp (`--p-navy-50…950`,
-   OKLCH, hue 255) is the only neutral family; cobalt (`--adm-accent`, #1d4ed8) is the
-   only brand accent. Green, amber and red appear solely as success, warning and
-   danger (each with `-soft`, `-line` and `-ink` tokens); categories use cobalt steps
-   (`--adm-seq-1…5`) or neutral, always with a label. See `docs/DESIGN_LAWS.md`.
-3. **Components over classes.** Pages compose components; components consume tokens;
-   tokens alias the brand. A page that hand-writes `border-slate-200/80 rounded-2xl …`
-   is a bug to be migrated.
-4. **Don't look generated.** No gradient stat tiles, no icon-chip+subtitle rows as filler,
-   no detached floating dropdowns. Hovers fill or tint; menus connect to their triggers.
-5. **State is always visible.** Filtered lists show chips; empty sections say why they're
-   empty and what to do; loading mirrors the final layout (skeletons, never spinners-in-a-void).
-6. **UI gating is courtesy, not security.** Every role check in the UI must be mirrored
+1. **Calm density.** Recruiters live in these screens all day. Compact rows,
+   tabular numbers, whitespace *between* groups rather than decoration *within* them.
+2. **One neutral, one accent.** `mist` is the only neutral family; `ocean-600`
+   (#0a72c0, the logo blue) is the only accent. Green, amber and red appear only as
+   success, warning and danger. See `docs/DESIGN_LAWS.md`.
+3. **Components over classes.** Pages compose kit components; a page never pads
+   itself or hand-builds a table, dialog or button.
+4. **Don't look generated.** No gradient stat tiles, no tinted icon chips on KPI
+   cards, headers or menu rows, no detached floating dropdowns.
+5. **State is always visible.** Filters show as chips; empty tables say why and what
+   to do; loading mirrors the final layout.
+6. **UI gating is courtesy, not security.** Every role check in the UI is mirrored
    by authorization in the API route.
 
 ---
 
-## 2. Design tokens (development layer, foundation)
+## 2. Design tokens
 
-All tokens live in `src/app/globals.css`. The `TOKENS` block at the top of that
-file is the source; everything below it consumes it.
+### 2.1 Where colour lives
 
-### 2.1 Three tiers, one direction
+`src/styles/colors.css` is the colour source for the site and the portal: the
+`mist`, `tide`, `cyan`, `ocean`, `navy`, `buoy`, `kelp` and `coral` scales, and the
+pipeline stage tokens (§2.5). Kit components use the scale classes directly
+(`bg-ocean-600`, `ring-mist-200`, `text-coral-700`). The console's `--adm-*` tokens
+(ADMIN block in `globals.css`) alias the same scales, so both layers draw the same
+colours.
 
-| Tier | Pattern | Holds | Example |
-|---|---|---|---|
-| Primitive | `--p-{scale}-{step}` | A raw value with no meaning | `--p-blue-700`, `--p-space-4` |
-| Semantic | `--{category}-{property}-{role}[-{state}]` | A purpose | `--color-text-danger`, `--color-action-primary-hover`, `--space-layout-section-gap` |
-| Component | `--{component}-{part}-{property}[-{state}]` | A decision scoped to one element | `--button-primary-background-pressed`, `--skeleton-background` |
+The `TOKENS` block at the top of `globals.css` keeps the three-tier scheme:
 
-A component reads a semantic or component token, **never a primitive**. A
-semantic token points at a primitive; a component token points at a semantic
-one. That is what makes a retheme a change to one block.
+| Tier | Pattern | Example |
+|---|---|---|
+| Primitive | `--p-{scale}-{step}` | `--p-space-4` |
+| Semantic | `--{category}-{property}-{role}[-{state}]` | `--color-border-control`, `--opacity-disabled` |
+| Component | `--{component}-{part}-{property}[-{state}]` | `--skeleton-radius` |
 
-A name is read left to right, general to specific, and states come last
-(`-hover`, `-pressed`, `-selected`, `-disabled`, `-inverse`). If a name needs a
-comment to explain what it is for, the name is wrong.
-
-Two semantic namespaces exist, one per surface:
-
-- **Public site:** `--color-*`, exposed as Tailwind roles (`text-ink`,
-  `bg-paper`, `border-line`, `bg-cobalt`) in `@theme`. Light only, by design.
-- **Console:** `--adm-{role}[-{variant}]`, light only. Declared on `:root`
-  (not `.adm-scope`) so portalled dialogs, sheets and menus resolve them; the
-  public site never reads them. The old dark set was unreachable and is gone.
-
-`--hz-*` is the retired landing namespace. It survives only for the
-announcement bar and the maintenance screen; do not add
-to it.
+The portal reads from it `--color-border-control` (control edges, `mist-500`),
+`--opacity-disabled` (0.45) and `--ease-standard`. Names read general to specific,
+states last.
 
 ### 2.2 Token or hardcoded value
 
-It is a token if **any** of these is true: it is a colour; it repeats on two or
-more screens; it encodes a decision someone could later change system-wide
-(radius, elevation, duration, a control height); it must differ by theme or
-density. It stays a literal if it is geometry local to one component (an icon's
-18px box, a one-off illustration offset) or a Tailwind scale step used for
-layout inside a component (`gap-2`, `p-4` are the base-4 primitives by another
-name).
+It is a token if **any** of these is true: it is a colour; it repeats on two or more
+screens; it encodes a decision someone could later change system-wide (radius,
+elevation, duration, control height). It stays a literal if it is geometry local to
+one component or a Tailwind scale step used for layout inside a component.
 
-Never a raw hex, rgba, pixel font size, shadow or duration in a page.
+Never a raw hex in a portal class: `tests/portal-tokens.test.mjs` fails on a hex
+inside `[...]` anywhere under `src/app/portal` or `src/components/portal`. The only
+literals left are chart constants handed to SVG attributes (`SERIES`, `RAMP`, `SEQ`,
+grid and axis in `charts.tsx`; `CHART_COLORS`, `CHART_TONE`, `FUNNEL_RAMP` in the
+console) and the `#000` of a CSS mask. Inline styles read `var(--color-*)`.
 
 ### 2.3 Adding a token
 
-1. Look for an existing token whose *purpose* matches. Same value is not the
-   test; same meaning is.
-2. If none: add the primitive only if the value is new, then the semantic
-   token that names the purpose. Add a component token only when one element
-   needs to diverge from the semantic default.
-3. A colour that carries text or a control goes into `tests/contrast.test.mjs`
-   with the surfaces it sits on. The test reads `globals.css`, so it fails when
-   the token is retuned below AA (4.5:1 text, 3:1 large text and UI).
-4. Document it in the table below, in the same change.
-5. Review: token changes are system-wide, so the PR carries screenshots of the
-   dashboard, one list page and one form page,
-   and is approved by whoever owns this file.
+1. Look for an existing token whose *purpose* matches. Same value is not the test.
+2. If none, add a scale step to `colors.css` only if the value is new, then the
+   semantic token that names the purpose.
+3. A colour that carries text or a control goes into `tests/contrast.test.mjs` with
+   the surfaces it sits on.
+4. Document it here in the same change.
+5. Token changes are system-wide: screenshot the dashboard, one list page and one
+   form page.
 
-### 2.4 Colour
+### 2.4 Colour roles in the portal
 
-| Group | Tokens | Use |
-|---|---|---|
-| Primitive ramps | `--p-neutral-0`, `--p-slate-50…900`, `--p-gray-50…900`, `--p-blue-50…900`, `--p-green/amber/red/rose-*`, `--p-brand-blue/aqua` | Raw material only |
-| Background | `--color-background-primary / secondary / tertiary / inverse / selected` | Page, alternate section, well, dark band, selected chip |
-| Text | `--color-text-primary / secondary / tertiary / inverse / interactive / brand` | Heading, body, meta, on dark, link, logo blue |
-| Border | `--color-border-default / strong / interactive / focus` | Card, input, hover edge, focus ring |
-| Interactive state | `--color-action-primary`, `-hover`, `-pressed`, `--color-action-on-primary`, `--opacity-disabled`, `--color-background-selected`, `--color-border-focus` | Default, hover, pressed, disabled, selected, focused, on every filled action |
-| Feedback | `--color-text-{success,warning,danger,info}` with `--color-background-{…}` | Alerts, validation, badges, status |
-| Console | `--adm-accent`(`-strong`/`-soft`/`-tint`), `--adm-canvas`, `--adm-surface`(`-2`/`-sunken`), `--adm-line`(`-soft`/`-strong`/`-input`), `--adm-ink`(`-mute`/`-subtle`), `--adm-success/warning/danger/info` with `-ink` (text) and `-soft` (tint), `--adm-scrim` | Same roles. `--adm-line` is a decorative hairline (1.2:1); a control's edge uses `--adm-line-input` (3.4:1). Every overlay dims with `--adm-scrim`. |
-
-**Brand.** Cobalt (`--p-blue-700`, 6.7:1 under white text) carries every text
-and interactive role. Logo blue passes for text (4.9:1). Aqua is 2.7:1 on
-white, so it is restricted to fills and marks.
-
-**Contrast.** Measured pairs are in SITE_DESIGN_LANGUAGE.md §1 and asserted for
-the console in `tests/contrast.test.mjs`. Status colours have a separate `-ink`
-shade because a tone tuned as a fill fails as text, and a tinted background
-eats contrast again.
-
-**Colour is never the only signal.** A status is a dot or icon *and* a text
-label (`StatusBadge`), an error is an icon and a sentence, a sorted column has
-an arrow. Red/green pairs (hired/rejected) therefore survive deuteranopia and
-protanopia; check any new state in greyscale before shipping it.
-
-### 2.5 Space, grid, breakpoints, density
-
-Base unit 4px. Primitives `--p-space-1 2 4 6 8 10 12 16 20 24` = 4, 8, 16, 24,
-32, 40, 48, 64, 80, 96; the step is the multiple, so it matches Tailwind
-(`p-4` = `--p-space-4`).
-
-Two scales, kept apart on purpose:
-
-| Scale | Tokens | For |
-|---|---|---|
-| Component | Tailwind's scale (`p-2 3 4 6`, `gap-1 2 3 4`), which is the same base-4 steps | Padding and gaps *inside* a component |
-| Layout | `--space-layout-gutter` (16 → 24), `--space-layout-section-gap` (64 → 80 → 96), `--space-layout-stack-md` (32 → 40), `--space-layout-stack-lg` (40 → 48) | Distance *between* components; steps up with the breakpoint |
-
-Breakpoints, shared with design: **sm 640, md 768, lg 1024, xl 1280**
-(`--breakpoint-*` in `@theme`; use the Tailwind prefixes, never a bare pixel
-media query).
-
-Column grid, built with Tailwind's `grid-cols-*` inside `CONTAINER`:
-
-| Breakpoint | Columns | Gutter | Margin |
-|---|---|---|---|
-| below md | 4 | 16 (24 from sm) | `--space-layout-gutter` |
-| md | 8 | 24 | 24 |
-| lg and up | 12 | 24 | 24, content capped at `--grid-max` 1240 |
-
-Density, console data grids only (`data-density` on the grid, a user setting
-that persists): **compact 44 · default 56 · relaxed 68** row height
-(`--adm-row-h-*`). Only vertical rhythm changes; type size does not.
-
-Vertical rhythm: control heights are 32/36 in the console and `--size-control-lg/xl` = 40/48 on the site,
-and row heights 44/56/68, all multiples of 4, so stacked controls and rows land
-on the same beat.
-
-### 2.6 Other console tokens
-
-| Group | Tokens | Use |
-|---|---|---|
-| Charts | `CHART_COLORS`, `SERIES` in theme.ts | See §6 |
-| Elevation | `--adm-shadow-sm/md/lg/pop` | Card → popover → modal |
-| Motion | `--adm-ease` (ease-out, entrances), `--adm-ease-in` (exits), `--adm-duration-fast/base/slow` 150/240/300 | Hovers and toggles `fast`; sheets 240ms ease-out in, 160ms ease-in out; nothing functional over 300ms. Loops only for live background work (indexing, saving) |
-| Radius | `--adm-radius-xs` 4 · `-control` 6 · `-chip` 6 · `-input` 8 · `-card` 8 · `-dialog` 12 | Hairline affordances · buttons, nav rows, menu items · badges and tags · fields · cards, panels, popovers, the BrandBand · modals and the command palette |
-| Loading | `--skeleton-background/radius/duration`, `--content-enter-duration` | See "Loading" under §4 |
-
-Type scale (Geist Sans, set on `.adm-scope`): one ratio, **1.2 from a 14px body**,
-six steps as Tailwind utilities from `@theme`: `text-adm-xs` 11.5 · `-base` 14 ·
-`-md` 17 · `-lg` 20 · `-xl` 24 · `-2xl` 29 (line heights 1.45 / 1.5 / 1.4 / 1.25 /
-1.2 / 1.15). Weights 400/500/600 only. Page title `xl` semibold · card and step
-titles `base` semibold · body and control text `base` · secondary text, meta, counts
-and badges `xs`. **No `text-[Npx]` in the console**; a size off the scale is a bug.
-**Sentence case everywhere, no uppercase tracked micro-labels.** Numbers always `tabular-nums`. Buttons, selects and toolbar controls
-36px (`h-9`). Radius comes from the `--adm-radius-*` scale above, never a literal;
-status badges are pills.
-
-Greys are one cool family (`#101828` ink, `#475467` mute, `#606a7e` subtle), all
-AA on white, the `#f5f7fa` canvas and `--adm-surface-2`; `tests/contrast.test.mjs`
-enforces it with a 0.05 margin, so a pair sitting on 4.50 fails.
-
-On the cobalt band, text is white at 85% or more (5.3:1); the selected figure
-cell carries a white underline bar and `aria-pressed`/`aria-current`, because its
-darker fill alone is only 1.3:1 from its neighbours. Focus inside the band
-(`.adm-on-band`) is a white outline, not the accent.
-
-Shell: white 240px sidebar (64px rail, collapsed by default under 1440px) and
-white 60px top bar frame a grey workspace. Navigation recedes: brand colour
-appears only in the full-colour logo (favicon in the rail) and the active item
-(cobalt on a cobalt tint with a 3px edge bar, 6.1:1). Search centred, account
-top-right, no breadcrumbs. Content sits flush on the canvas (`p-4 sm:p-5 lg:p-6`).
-
-**Not generic:** no tinted icon squares on KPI cards or list rows, no gradients or
-glows. Figures lead; hierarchy comes from type scale and hairlines. Density lives
-in the shared atoms so tightening is a one-place change, not a per-page edit.
-
-### 2.7 Rulebook (owner's rules, Oct 2026)
-
-The product owner's UI/UX rules, each mapped to what enforces it here.
-
-| Rule | How it holds in the console |
+| Role | Value |
 |---|---|
-| Spatial grid, S(n) = n × 4px | Tailwind's base-4 scale only; no off-grid `px` spacing |
-| Internal padding < container margin | Cards pad 16 (`p-4`), the canvas gap is 16–24 and sections 24+ |
-| Type scale, F(n+1) = F(n) × R | `text-adm-*`, R = 1.2 (above) |
-| Body line height | 1.57 on the console body, tighter (1.3) only on titles |
-| Fluid layout | Sidebar `max(15vw, 200px)`; panels size off container queries (`@container`) |
-| 60-30-10 colour | Canvas and surfaces neutral, hairlines and ink structure, cobalt only on actions, active state and focus |
-| WCAG AA | Text 4.5:1, large text 3:1, control edges 3:1 (`--adm-line-control`); `tests/contrast.test.mjs` |
-| Semantic tokens | `--adm-*` intent names (surface, line, ink, accent, danger, warning, success); never a raw hue in a component |
-| Icons | One set (`icons.tsx`, 24 viewBox, round caps); row actions are always ⋮ (`RowMenu`); icon-only buttons carry `aria-label` + `title` |
-| Motion | Above (§2.6) |
-| Anti-generic | No gradients, glows, tinted icon squares, dashed "+ filter" chips or hollow cards |
-| F/Z scanning | Title and identity top-left, primary action top-right (`ListHeader`), Create/Save at the end of the reading path (form rail) |
-| Hick, Fitts | §8; the primary action is the largest target in its region |
-| Proximity | Filters live in the panel they filter (`ListToolbar` inside `Workspace`) |
-| Progressive disclosure | Long forms are numbered steps (`StepCard`), optional steps marked so |
-| State feedback | Buttons show busy text ("Creating…"), skeletons mirror the layout, success has its own confirmation |
-| Destructive friction | Delete sits last in a menu behind a rule, styled danger, and confirms (`ConfirmDialog`) |
-| Inline validation | `useFormErrors`, field-level messages on blur; toasts only for background failures |
-| Empty states | Every table has an explanatory empty state with the next action |
-| No dead ends | Back link on every record and form; success dialogs offer next steps |
+| Canvas | `mist-50` |
+| Surfaces (panels, cards, sidebar, top bar) | `mist-0` with a `mist-200` ring or hairline |
+| Ink / secondary / meta | `navy-900` / `mist-700` / `mist-600` |
+| Control edge | `--color-border-control` (`mist-500`, 3.99:1 on white) |
+| Primary action, focus, active nav | `ocean-600`; hover `ocean-700`; selected wash `ocean-50` |
+| Success / warning / danger | The `status-*` roles below; never the raw `kelp` / `buoy` / `coral` steps in a class |
+| Scrim | `navy-950` at 40% (modals, phone sheets), 20% (drawers from sm), 50% (phone nav) |
+
+**Status roles** (`colors.css`, Tailwind classes `text-status-danger`,
+`bg-status-danger-soft`, `ring-status-danger-line`, …). Contrast pinned in
+`tests/contrast.test.mjs`.
+
+| Role | Danger | Warning | Success | Use |
+|---|---|---|---|---|
+| `status-{tone}` | coral-700 | buoy-700 | kelp-700 | Text, icons, links on white or the wash |
+| `-soft` | coral-50 | buoy-50 | kelp-50 | Wash behind a notice, pill or hover |
+| `-line` | coral-200 | buoy-200 | kelp-200 | Rim of that wash |
+| `-hover` | coral-100 | buoy-100 | | Hover on a washed button |
+| `-strong` | coral-800 | buoy-800 | kelp-800 | Body text inside a wash box |
+| `-mark` | coral-600 | buoy-500 | | Dots, stars, invalid edges (non-text) |
+| `-on-dark` | coral-300 | | kelp-300 | Icons on the navy toast |
+
+The console's `--adm-danger*`, `--adm-warning*`, `--adm-success*` tokens keep
+serving `(console)` code.
+
+**Text contrast.** `mist-600` is the lightest text step. `mist-500` (3.99:1) is for
+icons, icon buttons, control edges and list markers; `mist-400` only for disabled
+fills and decorative hairlines. Placeholders use `placeholder:text-placeholder`
+(`mist-550`, 4.92:1).
+
+**Colour is never the only signal.** Badges carry a label and, for semantic tones and
+stages, an icon. Hired and Rejected also differ by lightness, so they survive
+deuteranopia and protanopia.
+
+### 2.5 Stage colour system
+
+Pipeline stages in `colors.css` (`@theme static`, `--color-stage-{stage}-{part}`).
+In-flight stages step down the ocean ramp; only the two outcomes leave it. Each stage
+has `fill`, `on-fill`, `edge`, `badge-bg`, `badge-ink`, `badge-rim`, and an icon.
+
+| Stage (record value) | Fill | Badge | Icon |
+|---|---|---|---|
+| New (`pending`) | white, hollow on a `mist-500` edge | white, navy ink | clock |
+| Screening (`reviewing`) | `ocean-300` | `ocean-50`, `ocean-700` ink | eye |
+| Submitted | `ocean-600` | `ocean-100`, `ocean-800` ink | send |
+| Interview | `ocean-800` | `ocean-700`, white ink | calendar |
+| Offered | `navy-900` | `navy-900`, white ink | mail |
+| Hired | `kelp-700` | `kelp-50`, `kelp-800` ink | check |
+| Rejected | `coral-700` | `coral-50`, `coral-700` ink | x |
+
+Read through `stageColors()` / `stageDotStyle()` (`recruiting/model.ts`) and the
+`stage-*` tones of `Badge` (`ui.tsx`). `StageChevrons` draws the pipeline as a
+chevron chain: current solid, passed tinted with a check, future grey. Contrast is
+pinned in `tests/contrast.test.mjs`.
+
+### 2.6 Space, grid, breakpoints, density
+
+Base unit 4px; Tailwind's scale. Breakpoints are Tailwind's: sm 640, md 768,
+lg 1024, xl 1280, 2xl 1536.
+
+| Measure | Value |
+|---|---|
+| Canvas padding (`<main>` in `PortalShell`) | 20px phones, 24px from sm, 32px from lg. Pages never pad themselves |
+| Page | `Page`: 24px (`gap-6`) between blocks; `default` up to 1600px, `narrow` 64rem, `full` |
+| Panel | 12px radius, 20px padding, 56px header with a hairline |
+| KPI row | 16px gaps; 1 column, 2 from sm, 3 from lg or 4 from xl |
+| Controls | kit `Button` 32 (`sm`) / 40 (`md`); toolbar controls 40 |
+| Table rows | 44 / 56 / 68 (compact / default / relaxed), set in `DataTable` |
+| Containers | Padding and gaps on 4px steps (`py-2`, `py-4`, `px-3`); half steps (`py-1.5`, `gap-1.5`) only inside badges, chips and icon atoms. Icons are `size-3.5` / `4` / `5`, never `size-[18px]` |
+
+### 2.7 Type
+
+General Sans (400/500/600) for text, Geist Mono for codes (`font-mono`). The whole
+portal, kit and console, sizes text from one scale, `text-adm-*`: ratio 1.2 from a
+14px body.
+
+| Step | Size | Leading | Used for |
+|---|---|---|---|
+| `text-adm-xs` | 11.5 | 1.45 | Badges, chips, labels, group titles, table headers, meta lines |
+| `text-adm-base` | 14 | 1.5 | Body, controls, table cells, descriptions, card names |
+| `text-adm-md` | 17 | 1.4 | Panel, modal and drawer titles; section and empty-state headings |
+| `text-adm-lg` | 20 | 1.25 | Record names in drawers, inline figures |
+| `text-adm-xl` | 24 | 1.2 | Page title (`PageHeader`) |
+| `text-adm-2xl` | 29 | 1.15 | KPI value (`StatCard`), score dials |
+
+`tests/type-scale.test.mjs` fails on a literal `text-[Npx]` anywhere under
+`src/app/portal` or `src/components/portal`. Body copy keeps the scale's leading
+(`leading-normal` where one is set; no `leading-relaxed`); running text in help and
+docs is capped at 65ch. Sentence case for titles, buttons and labels (section names
+too: "Case studies", "Customer stories"). Numbers are `tabular-nums`.
+
+### 2.8 Radius, elevation, motion
+
+| Group | Value |
+|---|---|
+| Radius | Buttons, inputs, nav rows, menus 8 (`rounded-lg`) · badges 6 (`rounded-md`) · panels, stat cards, popovers 12 (`rounded-xl`) · modals 16 (`rounded-2xl`) |
+| Elevation | Resting surfaces are ring-only. Menus and popovers `shadow-xl`; modals and drawers `shadow-2xl`; the batch bar `shadow-xl` |
+| Motion | Backdrop fade 160ms, modal rise 200ms, drawer slide 240ms (up on phones), phone nav 220ms, sidebar width 200ms on `--ease-standard`. Skeleton shimmer 2.4s. All off under reduced motion |
+
+### 2.9 Shell
+
+- **Sidebar**: white, `mist-200` right hairline, 216px wide below 2xl and 240px from
+  1536px. Collapsible to a 64px icon rail from a 24px round toggle on its edge; a
+  stored choice (`portal.sidebar` in localStorage) wins, else it is expanded from
+  1280px and a rail from 1024 to 1279px. Below lg it is an off-canvas drawer (288px,
+  focus trapped). Nav is four groups (Recruiting, Relationships, Publishing,
+  Workspace), filtered per role by `canAccess`. Rows are 32px, 14px medium, 16px
+  icons; the active row is `ocean-700` on `ocean-50` with a 4px `ocean-600` edge bar.
+  In the rail, labels become fixed tooltips and group titles become dividers.
+- **Top bar**: white, 64px, sticky. Phone menu button left; on the right, search
+  (an icon that opens a 320/384px field from md, a full-width field on phones;
+  Ctrl K), the admin "Previewing as" pill, notifications, help, and the account menu
+  with avatar, name and role. No breadcrumbs: a record or form has a `PageHeader`
+  back link.
+- **No top loading bar.** `NavProgressProvider` tracks navigation state but renders
+  nothing; each route's `loading.tsx` skeleton is the feedback.
 
 ---
 
 ## 3. Components (atoms)
 
-**Reuse `src/components/ui/` (shadcn) for base primitives, do not fork parallel admin
-copies.** The ui library is themed to navy `--primary` + cyan `--ring`; the admin language
-is cobalt + slate, so apply a cobalt override class at the admin call site (see
-`PageHeaderButton` and the `checkboxCobalt` pattern).
-Admin-specific atoms that have **no** ui equivalent live in `src/components/portal/console/`.
-
 | Atom | Source | Notes |
 |---|---|---|
-| Button | `WorkspaceButton` (`workspace.tsx`) | The one console button: `primary` (one per view), default, `ghost`, `danger`, and `asChild` for links. Never fork a button. |
-| Checkbox | `ui/checkbox.tsx` | Supports `indeterminate` (DataTable select-all); pass the cobalt override class. |
-| DropdownMenu / Sheet / Tooltip | `ui/*` | Use these; don't recreate. Inputs and selects are the form primitives below; cards are `AdminCard`. |
-| `EmptyState` | `portal/console/empty-state.tsx` | Icon well + title + why + optional action. No ui equivalent. |
-| `Sparkline` | `admin/sparkline.tsx` | Pure-SVG trend shape, no axes/tooltip. No ui equivalent. |
-| `StatusBadge` | `portal/console/status-badge.tsx` | Status text + tone from `statusMeta`. Sentence case, dot + tinted pill; the label is always rendered, so status never rests on colour alone. Tones: stages in progress use neutral or cobalt steps; success only for good outcomes (Hired, Active), danger for Rejected, warning only where action is needed; Closed is neutral (ended, not rejected). |
-| `PeriodSwitcher` | `portal/console/charts.tsx` | The segmented control (date ranges, small view toggles). |
-| `StarRating` | `portal/console/star-rating.tsx` | , |
-| Form controls | `portal/console/forms/primitives.tsx` | `FormInput`, `FormSelect`, `FormTextarea`, `MoneyInput`, `Field`, `FormSection`, admin-form-specific wrappers. |
+| `Button` | `kit/Button.tsx` | `primary` (ocean fill), `secondary` (white, control-edge ring), `ghost`, `danger` (white, coral ring). `sm` 32 / `md` 40, `href` renders a Link, `loading` disables and shows a spinner without changing width, `label` names icon-only buttons. |
+| `Select` | `Select.tsx` | The one select: label, options with counts, 40px. |
+| `Segmented` | `ui.tsx` | Radiogroup for 2–4 views (period, metric). |
+| `Badge` / `StatusBadge` | `ui.tsx` | `text-adm-xs` on a 6px-radius wash with a rim. `statusTone()` maps words to tones; green, red and amber carry check, x and timer icons; stage tones carry the stage icon. |
+| `StatCard` | `ui.tsx` | Label, `text-adm-2xl` value, optional sparkline, footer line. No icon well. Optional `delta` pill: arrow, sign and percent on kelp (good), coral (bad) or mist (flat, or "No data"), with `goodWhen`. |
+| `Avatar`, `ProgressBar`, `KeyValue`, `BarList` | `ui.tsx` | |
+| `EmptyState` / `ErrorState` / `NoAccess` | `kit/states.tsx` | `first-use`, `no-results` (with `onClearFilters`), `plain`; `framed` when it stands alone. `ErrorState` offers retry and help. |
+| `ActionMenu` | `records/Menu.tsx` | Radix overflow menu, horizontal ⋯ trigger, "More actions". |
+| Icons | `icons.tsx` | One set; icon-only buttons carry `aria-label` and `title`. |
+| Toasts | `toast.tsx` | `useToast()(message, { tone, undo })`; reversible actions offer Undo. |
 
-## 4. Patterns (components composed to solve a problem)
+## 4. Patterns
 
-| Pattern | File | Solves |
-|---|---|---|
-| `PageHeader` | `page-header.tsx` | Title + subtitle + meta chips + actions on every page. |
-| `AdminCard` / `AdminCardHeader` | `admin-card.tsx` | The canonical surface. |
-| `SearchInput`, `FilterToggle`, `ViewSwitcher`, `BulkBar` | `toolbar.tsx` | The list-page toolbar kit. |
-| `FilterChips` | `filter-chips.tsx` | Active filters stay visible & dismissible. |
-| `DataTable<T>` | `portal/DataTable.tsx` | Sortable, selectable table: numbered pages, rows-per-page in the footer, density 44/56/68 saved per table, keyboard-openable rows, `numeric` columns right-aligned, status columns `align: "center"`, long-text columns `grow` (share of spare width, truncate with a title), secondary columns `hideBelow`. Header sticks under the top bar; a table too wide for its box scrolls sideways with the first and actions columns pinned. Search plus up to three filters inline (more → first two inline, rest behind "More filters"). Selection opens a floating navy batch bar. |
-| `AssigneePicker` | `forms/primitives.tsx` | Search + chip multi-select. |
-| `AdminDialog` | `admin-dialog.tsx` | Every console modal. Radix Dialog: focus trap, Escape, scrim click, focus return, labelled by its title. Sizes `sm/md/lg/xl`, a `footer` slot, `actions` in the header, `busy` blocks dismissal. A form in the body pairs with a footer submit via `form="id"`. Guard unsaved work by gating `onOpenChange(false)` behind a "Discard changes?" `ConfirmDialog`. |
-| `ConfirmDialog` | `confirm-dialog.tsx` | Confirmations on `AdminDialog` (`alertdialog`), Cancel focused first, `WorkspaceButton` `danger` for destructive. |
-| `CommandPalette` | `command-palette.tsx` | Global ⌘K navigation/search. Combobox: input owns `aria-activedescendant` over a grouped listbox. |
-| `HeaderSearch` | `header-search.tsx` | The centred top-bar search, same combobox pattern, inline results. |
-| Skeletons | `skeletons.tsx` | Loading mirrors layout. See below. |
+### PageHeader (`kit/layout.tsx`)
 
-**Canonical list page** = `PageHeader` → stat strip (optional) → `AdminCard` toolbar
-(`SearchInput` + `FilterToggle` + `ViewSwitcher` + `BulkBar`, `FilterChips` below) →
-`AdminCard` + `DataTable`. Reference implementation: `/admin/contacts` (migrated).
+Title (with optional `meta` beside it), description, `actions` right from md,
+`back={{ href, label }}` above the title, `tabs` below. No icon chip; the `icon` and
+`section` props are accepted for old call sites and ignored.
 
-### Loading
+### Actions: one primary, one secondary, the rest in ⋯
 
-A skeleton (`skeletons.tsx`, the `.skel` class) is used when a view takes long
-enough to notice: a route's `loading.tsx` or a first fetch. Anything that
-resolves at once shows nothing, and an action on an existing view (save,
-delete) puts its state on the button that started it, not over the page.
+A page header, view or panel shows at most one filled button and one secondary;
+everything else goes in an `ActionMenu` (⋯), placed before the primary. Delete sits
+last behind a separator, styled danger. Utilities such as Refresh are icon-only
+ghost buttons with a `label` and do not count.
 
-- **Mirrors the layout.** Same blocks, same sizes, same order as the content,
-  so nothing moves when it lands. When a screen's layout changes, its skeleton
-  changes in the same commit.
-- **Flat and neutral.** `--skeleton-background`, no border, no shadow, radius
-  `--skeleton-radius`. One quiet pulse (`--skeleton-duration`), off under
-  reduced motion.
-- **Says what is loading.** The skeleton root is `role="status"` with a
-  specific label ("Loading candidates"), passed through the `label` prop.
-  "Loading" alone is the fallback.
-- **Hands over with a fade.** Content entering `#adm-main` fades in over
-  `--content-enter-duration`.
-- **Spinners** (`Loader2`) are for an in-flight button only, next to a verb
-  ("Saving…"), inheriting the button's text colour so they read on any ground.
+- **Applications**: My views · ⋯ (Insights) · Add applicant.
+- **Talent bench**: Lead sourcing · ⋯ (Insights) · Add profile.
+- **Dashboard**: Refresh (icon) · Applications · ⋯ (State roles for sales, Resumes
+  for HR) · New role.
+
+`InsightsSheet` takes `open` / `onOpenChange` so a menu item can open it; without
+them it renders its own "Insights" button.
+
+### DataTable (`DataTable.tsx`)
+
+- **Page is the only vertical scroller.** The table never scrolls vertically; its
+  header sticks under the 64px top bar.
+- **Wide tables** (wider than their box) scroll sideways inside it, with the first
+  column and the actions column pinned; a seam and soft shadow appear once content
+  runs under them. The header then sticks to the top of the box.
+- **Columns**: `numeric` (right-aligned, tabular), `align: "center"` (status pills),
+  `grow` (share of spare width, truncates), `minWidth` (floor for a grow column once
+  the table overflows), `hideBelow` (`md` … `2xl`), `defaultHidden`, `card: false`.
+- **Toolbar**: search, then filters inline. Up to three filters all sit inline;
+  past that, two stay (or those flagged `inline`) and the rest open in a second row
+  from a "Filters" button that shows the applied count. Active filters are removable
+  chips. `viewSwitch` sits right after Filters; a settings menu holds columns,
+  density and CSV export ("Export N as CSV").
+- **Density** 44 / 56 / 68, with rows per page (10/25/50) and hidden columns, saved
+  per table in localStorage (`portal.table.{storageKey}`).
+- **Rows** open a `Drawer` (`renderDetail`) on click or keyboard; the last column is a
+  vertical ⋮ row menu ("Row actions").
+- **Selection** opens a floating navy batch bar, bottom-centre, above the page and
+  under overlays; page buttons on it restyle to glass.
+- **Footer**: "1–10 of N", rows-per-page, numbered pages with gaps (1 … 4 5 6 … 12).
+- **`renderGrid`** replaces rows with a custom layout (cards, a board) while search,
+  filters and export still apply; **`gridAll`** hands it every filtered row and hides
+  the pager.
+- **Phones** get one card per row.
+
+**Applications** puts a Table / Board icon switch in `viewSwitch`; the board renders
+through `renderGrid` + `gridAll`, so it lives inside the table panel under the same
+toolbar and chips.
+
+### Overlays (`kit/overlay.tsx`)
+
+- **`useDialog`** for every overlay: focus moves in, Tab is trapped, Escape closes
+  the top overlay only, the page stops scrolling, focus returns to the opener.
+- **`Modal`**: sizes sm/md/lg/xl, `footer`, centred from sm, a bottom sheet on
+  phones, 40% scrim. `role="alertdialog"` available.
+- **`Drawer`**: the record panel. 544px from sm (`lg` 768px), on a 20% scrim so the
+  list stays readable; a 92% bottom sheet on phones on a 40% scrim. `actions` in the
+  header, `footer`.
+- **`ConfirmDialog`**: an `alertdialog` Modal. Cancel takes focus first; `busy`
+  blocks closing. `requireText` keeps confirm disabled until the typed text matches
+  (trimmed, case-insensitive); `deleteConfirmText(name, count)` gives the record's
+  name, "delete N" for a batch, or "delete".
+
+### Insights
+
+`InsightsSheet` puts a list page's charts behind an "Insights" header button in a
+right sheet; `InsightsRow` lays out one primary chart (2/3) and a side visual (1/3).
+
+### Loading, empty, error
+
+- Every list route has a `loading.tsx` with a `ListPageSkeleton` the shape of the
+  page; the dashboard uses `DashboardSkeleton`. Pages that fetch in effects render
+  the same skeleton while loading. The header always renders; only the body swaps.
+- Skeletons are `.kit-skel`: a `mist-100` block with one shimmer swept across the
+  whole page (2.4s), static under reduced motion. Never `animate-pulse`.
+- Saving puts the state on the button that started it (`loading`).
 
 ---
 
-## 5. Role-based access & complexity
+## 5. Role-based access
 
-Hierarchy (in `src/lib/auth/config.ts`): **ADMIN > HR > (RECRUITER = SALES)**; `role`
-may be `null` (authenticated, no access). Three gating altitudes:
+Five roles, ADMIN > HR > (RECRUITER = SALES), and MEDIA beside them (see
+`CLAUDE.md` and `src/lib/auth/config.ts`). In the portal:
 
-1. **Route** , `ProtectedRoute requiredRoles` (layout) + `routeAccess`.
-2. **Navigation** , `roles` arrays on `NAV_GROUPS` items (layout). A role's sidebar *is*
-   its complexity budget: recruiters/sales see Recruitment only; HR adds CRM; admins add
-   Administration. Don't add nav items visible to all roles by default, start narrow.
-3. **In-content** , `RoleGate` / `useCan` (`role-gate.tsx`):
-   - `mode="hide"` (default) when the role will *never* use it (admin settings inside a
-     shared page). Removing beats disabling, fewer dead controls, calmer screens.
-   - `mode="disable"` when the capability exists for the role but isn't currently
-     permitted; preserve layout, pair with a `Tooltip` saying why.
+1. **Route and nav**: `canAccess(role, href)` (`src/lib/portal/roles.ts`) filters
+   the sidebar and guards the `(console)` layout.
+2. **In-content**: `RoleGate` / `useCan` (`components/portal/session.tsx`). Hide what
+   a role will never use; disable, with a reason, what it may not do right now.
+3. Admins can preview another role from the account menu; the API still answers as
+   admin.
 
-Always: server-side check in the API route too. UI gating is UX, not security.
+Always mirror the check in the API route.
 
 ---
 
 ## 6. Data visualization
 
-Strategy for dashboards (implemented in `/admin`):
+Charts are hand-rolled SVG in `charts.tsx` (no charting dependency): `TrendChart`,
+`BarChart`, `DonutChart`, `Funnel`, `StackedBar`, `Heatmap`, `RadialProgress`,
+`Sparkline`, `Legend`.
 
-1. **Layered altitude.** Row 1: the KPI band (value + delta), answer
-   "is anything wrong?" in 5 seconds. Row 2: behavior over time (area chart) + composition
-   (donut). Row 3: process diagnostics (funnel, sources, leaderboards). Row 4: work queues
-   ("Needs attention", recent items), every insight ends in a clickable action.
-2. **Chart choice.** Trend → area/line; composition at a point → donut (≤7 segments,
-   merge the tail into "Other"); stage conversion → funnel with explicit % between stages (hovered band zooms, siblings recede);
-   ranking → horizontal bars; tiny trend in a card/cell → `Sparkline`. No 3D, no dual axes,
-   no pie with >7 slices.
-3. **Color discipline.** Series 1 is always cobalt (`SERIES.primary`), further series
-   step through `--adm-seq-*`; success, danger and warning hues only where the data
-   means that, neutral for "other".
-   Categorical palettes come from `CHART_COLORS` **in order**, never invent hex values
-   in a page.
-4. **Annotation over legend-hunting.** Put numbers on the chart (funnel counts, conversion
-   pills); axis labels `text-adm-xs` in ink-subtle; gridlines horizontal-only, hairline.
-5. **Performance.** Every chart is hand-rolled SVG (`charts.tsx`); there is no charting
-   dependency in the bundle. Aggregate in `useMemo` off one fetched dataset rather
-   than re-fetching per widget. Respect `prefers-reduced-motion` (`useReducedMotion`)
-   for entrance animation; count-ups and bar fills are decorative only.
-6. **Empty & loading.** Every chart has a designed empty state; the dashboard skeleton
-   mirrors the final grid.
+- **Series** take `SERIES` in a fixed order (ocean-600, navy-900, ocean-400,
+  mist-500, ocean-800, mist-400), never cycled; overflow is the neutral. Legends and
+  filter chips beside a chart (`SegmentChips`, `ChartFilter`) colour through
+  `seriesColors()` in the chart's own order (largest first), so chip and slice
+  match; nothing indexes a palette with `%`.
+- **Green and red are never categories**; `seriesColors()` gives Hired kelp-700 and
+  Rejected coral-700 by meaning.
+- `RAMP` (single-hue ocean ordinal) and `SEQ` (heatmaps, light = near zero).
+- One y-axis, 2px lines, recessive grid, hover tooltips; text never wears the series
+  colour.
+- Every chart has an empty state; the dashboard skeleton mirrors the grid.
 
 ---
 
-## 7. Governance & maintenance (design-ops layer)
+## 7. Governance
 
-**Decision rule.** Anything visual used (or usable) on 2+ screens belongs in
-`src/components/portal/console/` and consumes `--adm-*` tokens. One-off page logic stays in the page.
+**Decision rule.** Anything visual used on two or more screens belongs in the kit.
+One-off page logic stays in the page. New screens do not import from
+`components/portal/console`.
 
-**Contribution checklist** (PR review gate for admin UI):
-- [ ] No raw hex/rgba in pages, tokens or `theme.ts` constants only. A new token followed §2.3.
-- [ ] Reused `ui/` primitives (Button, Checkbox, Select, …) with a cobalt override class, did NOT fork a parallel admin copy.
-- [ ] No hand-rolled buttons, search inputs, badges, empty states, or tables, use §3/§4.
-- [ ] New status/tone added to `theme.ts` (`statusMeta`/`tones`), not inline.
-- [ ] Focus ring (`--adm-focus-ring`) visible on every new interactive element; icon-only
-      buttons have `aria-label` or `Tooltip`.
-- [ ] Role checks via `RoleGate`/`useCan` + matching API-route authorization.
-- [ ] Loading skeleton mirrors layout; empty state says why + what to do.
+**Contribution checklist:**
+- [ ] No raw hex in pages; `status-*` roles, scale classes or tokens only.
+- [ ] Text sizes from `text-adm-*`; text no lighter than `mist-600`.
+- [ ] Kit `Button`, `Select`, `DataTable`, `Modal`/`Drawer`/`ConfirmDialog`, `EmptyState`; no hand-rolled copies.
+- [ ] One primary, one secondary, the rest in ⋯.
+- [ ] Focus visible on every new control; icon-only buttons have `label`.
+- [ ] Role checks in the UI and the API route.
+- [ ] `loading.tsx` skeleton mirrors the page; empty state says why and what to do.
 - [ ] Client components never import values from AWS modules (`import type` only).
 
-**Change management.** Token changes = system-wide, need a screenshot pass of dashboard,
-one list page, one form page. Component API changes must keep existing call sites compiling
-(extend, don't break). Deprecations: mark with `@deprecated` JSDoc, migrate call sites,
-then delete, no parallel duplicates.
-
-**Migration backlog** (legacy → system, in this order of payoff):
-1. Replace hand-rolled search/filter toolbars with the `toolbar.tsx` kit. DONE across all pages: contacts, clients, vendors, resumes, users, applications,
-   jobs, bench, jobs/[id] (SearchInput/FilterToggle/ViewSwitcher/BulkBar/FilterChips).
-2. Replace inline empty states with `EmptyState`. DONE on migrated pages (incl. jobs/[id]).
-3. Replace ad-hoc tables with `DataTable` where columns are simple cells (optional; the
-   complex multi-view tables on applications/jobs/bench keep their bespoke rendering).
-4. Replace remaining `--hz-*` references in admin pages with `--adm-*`.
-5. Modal forms on `Field`/`FormInput`/`FormSelect`. DONE: clients, vendors.
-6. Hand-built `fixed inset-0` modals onto `AdminDialog`. DONE: clients, vendors, users,
-   api-keys, help, resumes preview, job-form (add client, add vendor, preview).
-
-**Health metrics.** Adoption = count of hand-rolled search inputs remaining
-(`grep 'placeholder="Search' src/app/admin` → should trend to 0); consistency = no new
-hex values in `src/app/admin` diffs; bundle = `@aws-sdk` count in `.next/static` stays 0.
+**Change management.** Component API changes keep call sites compiling (extend,
+don't break; dead props are accepted and ignored, as `icon` on `PageHeader`).
+Deprecate with `@deprecated`, migrate, then delete.
 
 ---
 
 ## 8. Laws of UX, how they bind here
 
-Reference: [Laws of UX](https://lawsofux.com), Jon Yablonski. Listing a law is
-worthless; what follows is the **rule this codebase enforces** because of it, and
-the measurement that says whether we still comply. Anything unmeasurable is a
-slogan, so each rule below is either a number or a structural check.
-
-Audited 2026-08-07 against the admin app.
+Reference: [Laws of UX](https://lawsofux.com). Each rule below is a number or a
+structural check.
 
 ### Load-bearing, violations are bugs
 
 | Law | The rule here | Check |
 |---|---|---|
-| **Doherty Threshold** | No interaction waits on us past 400ms without saying so. Search debounce is 250ms (lists) / 200ms (global). Anything slower gets a skeleton that mirrors the final layout, never a spinner in a void. | `useDebouncedValue` default ≤ 250; long fetches render `skeletons.tsx` |
-| **Fitts's Law** | A control used while reading a long record is pinned, not parked at the top. The candidate record scrolls ~4,100px, so identity, stage and the primary action ride in a sticky header. | No primary action may require a scroll round-trip to reach |
-| **Miller's Law** | Max ~7 peer items in one view. The candidate record was 10 stacked cards under one tab; it is now 5 labelled tabs. Sidebar is 22 links in 3 named sections, never a flat list. | Count peers per view; if > 7, chunk or tab |
-| **Hick's Law** | Few visible choices. List toolbars (`ListToolbar`) show at most **4** filter selects inline (`FilterPill`, always "Label: Value"); a screen with more puts them all in one `FilterMenu`. Status tabs (`ListTabs`) hide empty views unless selected. | Count inline filter controls per toolbar: ≤ 4 |
-| **Von Restorff** | **Filled = action. Outlined or tinted = state.** Exactly one filled control per surface. This is what stops semantic colour (red "Unclaimed", green owner, stage tints) from cancelling the primary action out, they are different *kinds* of thing, not competing buttons. | One `variant="primary"` per view |
-| **Postel's Law** | Be liberal inbound: ownership matches on email *or* id, case-insensitively (`isOwnRecord`). Conservative outbound: `validate.ts` declares accepted fields; undeclared ones cannot reach a record. | New routes declare a schema |
-| **Tesler's Law** | Irreducible complexity belongs to the system, not the user. Resume parsing extracts name, contact, location, skills and experience so nobody retypes a document we can read. | Prefer a parse/derive over a field |
+| **Doherty Threshold** | Nothing waits past 400ms unannounced. Global search debounces 250ms; list search filters client-side. Slow loads show the route skeleton. | Every list route has `loading.tsx` |
+| **Fitts's Law** | Controls used while reading a long record are pinned: the candidate record's identity strip sticks under the top bar. | No primary action needs a scroll round-trip |
+| **Miller's Law** | ~7 peers per view. The sidebar is 18 links in four named groups. | Count peers; chunk or tab past 7 |
+| **Hick's Law** | At most three filters inline; more go behind "Filters (n)". | Inline filters per toolbar ≤ 3 |
+| **Von Restorff** | Filled = action, outlined or tinted = state. One filled control per surface. | One `primary` per view |
+| **Postel's Law** | Liberal in: `toNumber`, `isPhone` (`src/lib/form-validation.ts`). Strict out: `validate.ts` declares accepted fields. | New routes declare a schema |
+| **Tesler's Law** | Resume parsing fills name, contact, location, skills and experience. | Prefer a parse over a field |
 
-### Structural, followed by construction
+### Structural
 
-- **Law of Common Region / Proximity / Uniform Connectedness.** `AdminCard` is the
-  only grouping device. Related fields share one card; unrelated fields never do.
-  Hairlines separate bands *within* a card, whitespace separates cards.
-- **Law of Similarity.** One status colour per state everywhere it appears,
-  `statusColor()` is the single source, so a stage is the same colour in the rail,
-  the badge, the list cell and the dropdown.
-- **Jakob's Law.** ATS conventions are kept deliberately: record header with
-  tabbed detail, right rail for metadata, list → detail navigation. Novelty is
-  spent on the marketing site, not here.
-- **Chunking.** Long forms are titled sections (`AdminCardHeader`), never one
-  continuous field list.
-- **Selective Attention.** Empty fields are not rendered as data. A grid of nine
-  cells with four em-dashes made the reader parse four cells to learn nothing;
-  they collapse behind one line that says how many are missing.
-- **Zeigarnik Effect.** That same line is the open loop , "4 fields are not
-  recorded" states an incomplete task rather than hiding it.
-- **Goal-Gradient.** The pipeline stepper shows position and distance to hire;
-  progress bars fill toward a stated end.
+- **Common region / proximity.** `Panel` is the grouping device; filters live in the
+  table they filter.
+- **Similarity.** One stage colour per stage everywhere (§2.5); one status tone per
+  word (`statusTone`).
+- **Jakob's Law.** ATS conventions: list → drawer → record, record header with
+  tabbed detail, right rail for metadata.
+- **Destructive friction.** Delete is last in ⋯, styled danger, confirmed; high-impact
+  deletes require typed text.
 
-### Judgement, no automatic check
+### Judgement
 
-- **Aesthetic-Usability Effect.** Justifies polish, never at the cost of the rules
-  above. Decoration that competes with data loses: four marketplace background
-  effects were removed from the marketing site for exactly this reason.
-- **Peak-End Rule.** The end of a flow is a confirmation the user can act on, not
-  a silent redirect.
-- **Paradox of the Active User.** Nobody reads instructions. Empty states carry
-  the next action as a button; hints sit inside the control they describe.
-- **Cognitive Load / Working Memory.** Never make the user hold a value across a
-  scroll. If a decision needs two facts, both are on screen together.
+- **Aesthetic-usability**, **peak-end** (confirmations the user can act on, undo
+  toasts), **paradox of the active user** (empty states carry the next action),
+  **working memory** (two facts a decision needs are on screen together).
 
 ### Known open items
 
-1. **Choice Overload, `FilterMenu`.** Consolidating eight filters into one control
-   fixed Hick's at the toolbar and moved the cost inside the menu. Acceptable while
-   the fields stay labelled and scannable; if a screen needs more than ~8, group
-   them or make the menu two-column. Watch it.
-2. **Checklist gaps, recorded rather than implied.** Not yet built: an account-level audit log; a custom date range on the dashboard; date
-   grouping on the notifications list; list filters surviving a round trip to
-   a record; the pinned first column (`pinFirstColumn`) switched on for the
-   wide grids; exports that name how many rows they hold; the Notifications
-   tab in settings, which is disabled until it has a backend.
-3. **Tables scroll the page, not themselves (decided).** The portal `DataTable`
-   never scrolls vertically: the page is the one scroller and the header sticks
-   under the 64px top bar. Only a table wider than its box scrolls sideways, and
-   then the header sits at the top of that box rather than sticking to the page.
-   The main list pages are tuned (`grow` columns, `hideBelow: "2xl"`) so they do
-   not reach that fallback from 1024px up with the sidebar open.
+1. **Account-level audit log**: not built.
+2. **Custom dashboard date range**: the dashboard offers presets only (7D, 30D, 90D,
+   12M, All).
+3. **List state across a round trip**: rows per page, density and columns persist;
+   search and filters reset when you leave a list (Applications keeps saved searches).
+4. **Carried-over console**: `(console)` screens still use `components/portal/console`
+   (`WorkspaceButton`, `AdminCard`) instead of the kit.

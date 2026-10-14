@@ -8,7 +8,7 @@ export default function Quotes({ title = "What our clients say", more }: { title
     <section aria-labelledby="quotes-title" className="bg-field-paper">
       <div className="gutter py-24 md:py-28">
         <div className="flex flex-wrap items-end justify-between gap-4" data-reveal>
-          <h2 id="quotes-title" className="display text-[clamp(2rem,3vw,2.75rem)]">
+          <h2 id="quotes-title" className="display text-head-md">
             {title}
           </h2>
           {more && <MoreLink href={more.href} label={more.label} />}
@@ -21,13 +21,13 @@ export default function Quotes({ title = "What our clients say", more }: { title
                   <img src={t.logo} alt={t.company} className="h-8 w-auto max-w-[12rem] object-contain" loading="lazy" />
                 ) : (
                   // No logo file supplied yet: the company name holds the same place
-                  <span className="text-[1.375rem] font-medium tracking-tight text-navy-900">{t.company}</span>
+                  <span className="text-title font-medium tracking-tight text-navy-900">{t.company}</span>
                 )}
               </div>
               <blockquote className="mt-6 flex-1">
-                <p className="text-[19px] leading-[1.5]">{t.quote}</p>
+                <p className="text-title leading-normal">{t.quote}</p>
               </blockquote>
-              <figcaption className="mt-10 text-[15px]">
+              <figcaption className="mt-10 text-small">
                 <span className="block font-medium">{t.name}</span>
                 <span className="block text-mist-600">{t.role}</span>
               </figcaption>

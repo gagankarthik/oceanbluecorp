@@ -70,24 +70,30 @@
 
   /* Buoy: status only (50/200/700 are the warning wash, rim and ink) */
   --color-buoy-50: #fffaeb;
+  --color-buoy-100: #fef0c7;
   --color-buoy-200: #fedf89;
   --color-buoy-300: #f8c55a;
   --color-buoy-400: #f5b83d;
   --color-buoy-500: #e99a16;
   --color-buoy-700: #b54708;
+  --color-buoy-800: #93370d;
 
   /* Kelp: success only. Inks spread by lightness from coral and buoy so the
      three stay apart under deuteranopia/protanopia. */
   --color-kelp-50: #ecfdf3;
   --color-kelp-200: #abefc6;
+  --color-kelp-300: #75e0a7; /* on navy only (toast icons) */
   --color-kelp-700: #067647;
   --color-kelp-800: #05603a;
 
   /* Coral: danger only */
   --color-coral-50: #fef3f2;
+  --color-coral-100: #fee4e2;
   --color-coral-200: #fecdca;
+  --color-coral-300: #fda29b; /* on navy only (toast icons) */
   --color-coral-600: #d92d20;
   --color-coral-700: #b42318;
+  --color-coral-800: #912018;
 
   /* Chapter fields: one per section, floor to ceiling */
   --color-field-paper: var(--color-mist-50);
@@ -98,12 +104,13 @@
   --color-field-deep: var(--color-navy-900);
   --color-field-abyss: var(--color-navy-950);
 
-  /* Semantic roles */
+  /* Semantic roles. muted and accent carry a site- prefix: the shadcn
+     primitives in components/ui own --color-muted and --color-accent. */
   --color-canvas: var(--color-field-paper);
   --color-raised: var(--color-mist-0);
   --color-ink: var(--color-navy-900);
-  --color-muted: var(--color-mist-600);
-  --color-accent: var(--color-ocean-600);
+  --color-site-muted: var(--color-mist-600);
+  --color-site-accent: var(--color-ocean-600);
   --color-action: var(--color-navy-900);
   --color-link: var(--color-ocean-700);
   --color-on-field: var(--color-mist-0);
@@ -112,6 +119,27 @@
   --color-on-deep-soft: var(--color-tide-300);
   --color-flag: var(--color-buoy-400);
   --color-placeholder: var(--color-mist-550);
+
+  /* Status roles (portal): text, wash, rim, hover wash, strong text inside
+     a wash box, solid mark (dots, stars, invalid edges), icon on navy. */
+  --color-status-danger: var(--color-coral-700);
+  --color-status-danger-soft: var(--color-coral-50);
+  --color-status-danger-line: var(--color-coral-200);
+  --color-status-danger-hover: var(--color-coral-100);
+  --color-status-danger-strong: var(--color-coral-800);
+  --color-status-danger-mark: var(--color-coral-600);
+  --color-status-danger-on-dark: var(--color-coral-300);
+  --color-status-warning: var(--color-buoy-700);
+  --color-status-warning-soft: var(--color-buoy-50);
+  --color-status-warning-line: var(--color-buoy-200);
+  --color-status-warning-hover: var(--color-buoy-100);
+  --color-status-warning-strong: var(--color-buoy-800);
+  --color-status-warning-mark: var(--color-buoy-500);
+  --color-status-success: var(--color-kelp-700);
+  --color-status-success-soft: var(--color-kelp-50);
+  --color-status-success-line: var(--color-kelp-200);
+  --color-status-success-strong: var(--color-kelp-800);
+  --color-status-success-on-dark: var(--color-kelp-300);
 }
 
 /*

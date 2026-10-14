@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RoleGate } from "@/components/portal/session";
 import StateRolesView from "./View";
 
-export const metadata: Metadata = { title: "State Roles" };
+export const metadata: Metadata = { title: "State roles" };
 
 export default function StateRolesPage() {
   return (

@@ -43,10 +43,10 @@ interface StatusData {
 
 // Text sits on its own container tint, so every label clears AA.
 const ST: Record<S, { label: string; dot: string; chip: string }> = {
-  operational: { label: "Operational", dot: "bg-success", chip: "bg-success-container text-success" },
+  operational: { label: "Operational", dot: "bg-kelp-700", chip: "bg-kelp-50 text-kelp-800" },
   investigating: { label: "Investigating", dot: "bg-ocean-600", chip: "bg-ocean-50 text-ocean-700" },
-  degraded: { label: "Degraded", dot: "bg-buoy-500", chip: "bg-warning-container text-warning" },
-  outage: { label: "Outage", dot: "bg-danger", chip: "bg-danger-container text-danger" },
+  degraded: { label: "Degraded", dot: "bg-buoy-500", chip: "bg-buoy-50 text-buoy-700" },
+  outage: { label: "Outage", dot: "bg-coral-700", chip: "bg-coral-50 text-coral-700" },
   unknown: { label: "Unknown", dot: "bg-mist-400", chip: "bg-mist-100 text-mist-700" },
 };
 
@@ -74,7 +74,7 @@ function relTime(ms: number) {
 }
 
 function Chip({ status }: { status: S }) {
-  return <span className={`inline-flex items-center px-2.5 py-1 text-[14px] font-medium whitespace-nowrap ${ST[status].chip}`}>{ST[status].label}</span>;
+  return <span className={`inline-flex items-center px-2.5 py-1 text-small font-medium whitespace-nowrap ${ST[status].chip}`}>{ST[status].label}</span>;
 }
 
 function Dot({ status, pulse }: { status: S; pulse?: boolean }) {
@@ -101,13 +101,13 @@ function Log({ entries }: { entries: LogEntry[] }) {
       {entries.map((l, i) => (
         <li key={i} className="bg-mist-100 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="flex items-center gap-2 text-[15px] font-medium">
+            <span className="flex items-center gap-2 text-small font-medium">
               <Dot status={l.status} />
               {l.summary}
             </span>
-            <span className="text-[14px] text-mist-600">{relTime(l.time)}</span>
+            <span className="text-small text-mist-600">{relTime(l.time)}</span>
           </div>
-          {l.message && <p className="mt-1.5 text-[15px] leading-relaxed text-mist-600">{l.message}</p>}
+          {l.message && <p className="mt-1.5 text-small leading-normal text-mist-600">{l.message}</p>}
         </li>
       ))}
     </ol>
@@ -121,12 +121,12 @@ function ServiceRow({ svc }: { svc: ServiceItem }) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <Dot status={svc.status} pulse />
         <div className="min-w-0 flex-1">
-          <p className="text-[19px] font-medium">{svc.label}</p>
-          <p className="text-[14px] text-mist-600">{svc.category} · US East (Ohio)</p>
+          <p className="text-title font-medium">{svc.label}</p>
+          <p className="text-small text-mist-600">{svc.category} · US East (Ohio)</p>
         </div>
         <Chip status={svc.status} />
       </div>
-      {svc.message && <p className="mt-3 text-[15px] text-mist-600">{svc.message}</p>}
+      {svc.message && <p className="mt-3 text-small text-mist-600">{svc.message}</p>}
       {svc.recentLogs.length > 0 && (
         <>
           <button
@@ -156,12 +156,12 @@ function IncidentRow({ inc }: { inc: Incident }) {
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
             <Chip status={inc.status} />
-            <span className="text-[14px] text-mist-600">
+            <span className="text-small text-mist-600">
               {inc.regionName} · {inc.serviceName}
             </span>
           </span>
-          <span className="mt-2 block text-[19px] font-medium">{inc.summary}</span>
-          <span className="mt-1 block text-[14px] text-mist-600">
+          <span className="mt-2 block text-title font-medium">{inc.summary}</span>
+          <span className="mt-1 block text-small text-mist-600">
             Started {relTime(inc.startedAt)} · {ts(inc.startedAt)}
           </span>
         </span>
@@ -229,17 +229,17 @@ export default function StatusContent() {
       <header id="top" className="gutter grid gap-8 pb-12 pt-14 md:pb-16 md:pt-20 lg:grid-cols-12">
         <div className="side">
           <p className="font-medium text-mist-600">System status</p>
-          <p className="mt-3 inline-flex items-center gap-2 text-[15px] font-medium">
+          <p className="mt-3 inline-flex items-center gap-2 text-small font-medium">
             <Dot status={overall} pulse />
             {loading ? "Checking" : ST[overall].label}
           </p>
-          <p className="mt-1 text-[15px] text-mist-600">US East (Ohio)</p>
+          <p className="mt-1 text-small text-mist-600">US East (Ohio)</p>
         </div>
         <div className="axis">
-          <h1 className="display text-[clamp(2.5rem,5vw,4.5rem)]" aria-live="polite">
+          <h1 className="display text-head-xl" aria-live="polite">
             {banner.heading}
           </h1>
-          <p className="mt-5 max-w-[52ch] text-lead leading-snug">{banner.sub}</p>
+          <p className="mt-5 max-w-measure-narrow text-lead leading-snug">{banner.sub}</p>
         </div>
       </header>
 
@@ -250,18 +250,18 @@ export default function StatusContent() {
               <dl className="grid grid-cols-2 gap-px">
                 {(["operational", "investigating", "degraded", "outage"] as S[]).map((s) => (
                   <div key={s} className="flex flex-col-reverse bg-mist-0 p-4">
-                    <dt className="mt-1 flex items-center gap-2 text-[14px] text-mist-600">
+                    <dt className="mt-1 flex items-center gap-2 text-small text-mist-600">
                       <Dot status={s} />
                       {ST[s].label}
                     </dt>
-                    <dd className="display text-[28px] tabular-nums">{counts[s] ?? 0}</dd>
+                    <dd className="display text-head-sm tabular-nums">{counts[s] ?? 0}</dd>
                   </div>
                 ))}
               </dl>
             )}
             <div className="bg-mist-100 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[15px] text-mist-600">
+                <p className="text-small text-mist-600">
                   Next check in <span className="tabular-nums text-navy-900">{countdown}s</span>
                 </p>
                 <button
@@ -269,18 +269,18 @@ export default function StatusContent() {
                   onClick={() => void load(true)}
                   disabled={refreshing}
                   aria-busy={refreshing}
-                  className="inline-flex min-h-11 items-center px-4 text-[15px] font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center px-4 text-small font-medium text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline disabled:opacity-50"
                 >
                   {refreshing ? "Checking…" : "Refresh"}
                 </button>
               </div>
               {data?.checkedAt && (
-                <p className="mt-3 text-[14px] text-mist-600">
+                <p className="mt-3 text-small text-mist-600">
                   Last checked {new Date(data.checkedAt).toLocaleString()}. Refreshes every {REFRESH}s.
                 </p>
               )}
               {data?.ok && (
-                <p className="mt-1 text-[14px] text-mist-600">
+                <p className="mt-1 text-small text-mist-600">
                   {data.ohioEvents ?? 0} active event{(data.ohioEvents ?? 0) !== 1 ? "s" : ""} in region.
                 </p>
               )}
@@ -290,7 +290,7 @@ export default function StatusContent() {
 
         <div className="axis grid content-start gap-14">
           <div>
-            <h2 id="services-title" className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+            <h2 id="services-title" className="display text-head-md">
               Platform services
             </h2>
             {loading ? (
@@ -301,7 +301,7 @@ export default function StatusContent() {
               </ul>
             ) : !data?.ok ? (
               <div role="alert" className="mt-6 bg-mist-100 p-8">
-                <p className="text-[20px] font-medium">Could not load status data</p>
+                <p className="text-title font-medium">Could not load status data</p>
                 <p className="mt-2 text-mist-600">The status feed may be temporarily unavailable.</p>
                 <button
                   type="button"
@@ -322,7 +322,7 @@ export default function StatusContent() {
 
           {data?.ok && (
             <div>
-              <h2 className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+              <h2 className="display text-head-md">
                 Active incidents{data.activeIncidents.length > 0 && <span className="text-mist-600"> ({data.activeIncidents.length})</span>}
               </h2>
               {data.activeIncidents.length > 0 ? (
@@ -335,8 +335,8 @@ export default function StatusContent() {
                 <div className="mt-6 flex items-center gap-4 bg-mist-0 p-5 md:p-6">
                   <Dot status="operational" />
                   <div>
-                    <p className="text-[19px] font-medium">No active incidents</p>
-                    <p className="mt-1 text-[15px] text-mist-600">No active events reported for the US East (Ohio) region.</p>
+                    <p className="text-title font-medium">No active incidents</p>
+                    <p className="mt-1 text-small text-mist-600">No active events reported for the US East (Ohio) region.</p>
                   </div>
                 </div>
               )}

@@ -146,7 +146,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
       >
         <label className="relative block flex-1">
           <span className="sr-only">Search roles, applicants and contacts</span>
-          <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-[18px] -translate-y-1/2 text-mist-500" />
+          <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
           <input
             ref={input}
             type="search"
@@ -163,7 +163,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
             onFocus={() => setOpen(true)}
             onKeyDown={onKeyDown}
             placeholder="Search roles, applicants, contacts"
-            className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-11 text-[14px] [&::-webkit-search-cancel-button]:hidden ring-1 ring-inset ring-mist-200 placeholder:text-mist-500 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+            className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-11 text-adm-base [&::-webkit-search-cancel-button]:hidden ring-1 ring-inset ring-mist-200 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
           />
           {/* Close sits inside the field, at its end */}
           <button
@@ -171,7 +171,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
             onClick={fold}
             aria-label="Close search"
             title="Close (Esc)"
-            className="absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-mist-600 hover:bg-mist-200 hover:text-navy-900"
+            className="adm-hit absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-mist-600 hover:bg-mist-200 hover:text-navy-900"
           >
             <Icon name="x" className="size-4" />
           </button>
@@ -180,7 +180,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
         {showPanel && (
           <div className="absolute inset-x-4 top-full z-30 mt-1 overflow-hidden rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200 sm:inset-x-6 md:left-auto md:right-0 md:top-12 md:mt-0 md:w-[28rem]">
             {hits.length === 0 ? (
-              <p role="status" className="px-4 py-5 text-center text-[13px] text-mist-600">
+              <p role="status" className="px-4 py-5 text-center text-adm-base text-mist-600">
                 {loading ? "Searching…" : `No matches for "${q.trim()}"`}
               </p>
             ) : (
@@ -198,19 +198,17 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
                     }}
                     className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 ${i === active ? "bg-ocean-50" : ""}`}
                   >
-                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-mist-100 text-mist-700">
-                      <Icon name={TYPE[h.type].icon} className="size-4" />
-                    </span>
+                    <Icon name={TYPE[h.type].icon} className="size-4 shrink-0 text-mist-600" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium text-navy-900">{h.title}</span>
-                      <span className="block truncate text-[12px] text-mist-600">{h.subtitle}</span>
+                      <span className="block truncate text-adm-base font-medium text-navy-900">{h.title}</span>
+                      <span className="block truncate text-adm-xs text-mist-600">{h.subtitle}</span>
                     </span>
                     {h.status ? (
                       <span className="hidden shrink-0 sm:inline-flex">
                         <HitStatus type={h.type} status={h.status} />
                       </span>
                     ) : (
-                      <span className="shrink-0 text-[12px] text-mist-500">{TYPE[h.type].label}</span>
+                      <span className="shrink-0 text-adm-xs text-mist-600">{TYPE[h.type].label}</span>
                     )}
                   </li>
                 ))}

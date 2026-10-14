@@ -173,7 +173,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   const live = isPubliclyOpen(job.status);
   // Deadlines only warn while the role is being worked: overdue and today red, three days amber.
   const due = job.status === "active" || job.status === "open" ? daysUntil(job.submissionDueDate) : null;
-  const dueTone = due === null ? "" : due <= 0 ? "font-semibold text-[#b42318]" : due <= 3 ? "font-semibold text-[#b54708]" : "";
+  const dueTone = due === null ? "" : due <= 0 ? "font-semibold text-status-danger" : due <= 3 ? "font-semibold text-status-warning" : "";
   const dueNote = due === null || due > 3 ? "" : due < 0 ? "overdue" : due === 0 ? "due today" : `in ${due} day${due === 1 ? "" : "s"}`;
 
   const details: { label: string; value?: React.ReactNode }[] = [
@@ -240,13 +240,13 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
         .filter((s) => s.html)
         .map((s) => (
           <section key={s.title}>
-            <h3 className="mb-2 text-[15px] font-semibold text-navy-900">{s.title}</h3>
+            <h3 className="mb-2 text-adm-base font-semibold text-navy-900">{s.title}</h3>
             <div className={PROSE} dangerouslySetInnerHTML={s.html!} />
           </section>
         ))}
       {job.clientNotes && canPrice && (
         <section className="rounded-lg bg-mist-50 p-4 ring-1 ring-inset ring-mist-200">
-          <h3 className="mb-1.5 text-[13px] font-semibold text-navy-900">Client notes · staff only</h3>
+          <h3 className="mb-1.5 text-adm-base font-semibold text-navy-900">Client notes · staff only</h3>
           <p className={`${PROSE} whitespace-pre-wrap`}>{job.clientNotes}</p>
         </section>
       )}
@@ -272,7 +272,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email"
-            className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+            className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
           />
         </label>
         {stageFilter !== "all" && (
@@ -280,7 +280,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
             {STAGE_LABEL[stageFilter]} only
           </Button>
         )}
-        <span className="ml-auto text-[13px] tabular-nums text-mist-600">
+        <span className="ml-auto text-adm-base tabular-nums text-mist-600">
           {filteredApps.length} of {applications.length}
         </span>
       </div>
@@ -327,16 +327,16 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
               <span className="flex min-w-0 flex-1 basis-56 items-center gap-3">
                 <Avatar name={a.name || a.email} />
                 <span className="min-w-0">
-                  <a href={`/portal/candidates/${a.id}`} onClick={(e) => { e.preventDefault(); router.push(`/portal/candidates/${a.id}`); }} className="block truncate text-[14px] font-medium text-navy-900 after:absolute after:inset-0 hover:text-ocean-700">
+                  <a href={`/portal/candidates/${a.id}`} onClick={(e) => { e.preventDefault(); router.push(`/portal/candidates/${a.id}`); }} className="block truncate text-adm-base font-medium text-navy-900 after:absolute after:inset-0 hover:text-ocean-700">
                     {a.name || "Unnamed"}
                   </a>
-                  <span className="block truncate text-[12px] text-mist-600">
+                  <span className="block truncate text-adm-xs text-mist-600">
                     {[a.email, a.city && `${a.city}${a.state ? `, ${a.state}` : ""}`].filter(Boolean).join(" · ")}
                   </span>
                 </span>
               </span>
-              <span className="hidden w-28 shrink-0 text-[13px] text-mist-600 xl:block">{a.source || "–"}</span>
-              <span className="hidden w-24 shrink-0 text-[13px] tabular-nums text-mist-600 md:block">{fmtDate(a.appliedAt)}</span>
+              <span className="hidden w-28 shrink-0 text-adm-base text-mist-600 xl:block">{a.source || "–"}</span>
+              <span className="hidden w-24 shrink-0 text-adm-base tabular-nums text-mist-600 md:block">{fmtDate(a.appliedAt)}</span>
               <span className="relative z-10 flex shrink-0 items-center gap-1">
                 <StageSelect size="sm" value={a.status} label={`Stage for ${a.name || a.email}`} disabled={moving === a.id} onChange={(s) => void move(a, s)} />
                 <ActionMenu
@@ -365,7 +365,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
         description={
           <FactLine
             items={[
-              ...(job.postingId ? [{ icon: "tag" as const, text: <span className="font-mono text-[12px]">{job.postingId}</span> }] : []),
+              ...(job.postingId ? [{ icon: "tag" as const, text: <span className="font-mono text-adm-xs">{job.postingId}</span> }] : []),
               ...(job.department ? [{ icon: "layers" as const, text: job.department }] : []),
               { icon: "map" as const, text: jobLocationLabel(job) || "Location not set" },
               ...(canPrice && job.clientName ? [{ icon: "building" as const, text: job.clientName }] : []),
@@ -389,13 +389,13 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
                   setStageFilter(s.key);
                   setActiveTab("applicants");
                 }}
-                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-[13px] font-medium ring-1 ring-inset transition-colors ${
+                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-adm-base font-medium ring-1 ring-inset transition-colors ${
                   on ? "bg-navy-900 text-white ring-navy-900" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
                 }`}
               >
                 {s.key !== "all" && <span aria-hidden className="size-2 rounded-full" style={{ background: STAGE_DOT[s.key] }} />}
                 {s.label}
-                <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-500"}`}>{s.count}</span>
+                <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-600"}`}>{s.count}</span>
               </button>
             );
           })}
@@ -415,9 +415,9 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
 
         <aside className="grid min-w-0 gap-6 lg:sticky lg:top-[5.5rem]">
           <Panel title="Requisition" description={live ? "On the careers site" : statusCopy?.detail}>
-            {shown.length > 0 ? <FactRows items={shown} /> : <p className="text-[13px] text-mist-600">Nothing recorded yet.</p>}
+            {shown.length > 0 ? <FactRows items={shown} /> : <p className="text-adm-base text-mist-600">Nothing recorded yet.</p>}
             {notRecorded.length > 0 && (
-              <p className="mt-4 border-t border-mist-100 pt-3 text-[12px] text-mist-600">
+              <p className="mt-4 border-t border-mist-100 pt-3 text-adm-xs text-mist-600">
                 Not recorded: {notRecorded.join(", ")}.
                 {canEdit && (
                   <>

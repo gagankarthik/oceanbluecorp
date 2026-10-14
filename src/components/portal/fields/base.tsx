@@ -7,18 +7,18 @@ import Icon, { type IconName } from "../icons";
    forms: 13px labels, 40px controls on a mist ring, 12px help and error lines. */
 
 export const inputCls =
-  "block h-10 w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-[var(--color-border-control)] transition-shadow placeholder:text-placeholder hover:ring-mist-600 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:cursor-not-allowed disabled:bg-mist-50 disabled:text-mist-600 aria-[invalid=true]:ring-coral-600";
+  "block h-10 w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-[var(--color-border-control)] transition-shadow placeholder:text-placeholder hover:ring-mist-600 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:cursor-not-allowed disabled:bg-mist-50 disabled:text-mist-600 aria-[invalid=true]:ring-coral-600";
 
-export const textareaCls = inputCls.replace("h-10", "min-h-24 py-2.5 leading-relaxed resize-y");
+export const textareaCls = inputCls.replace("h-10", "min-h-24 py-2.5 leading-normal resize-y");
 
 const RED = "text-coral-700";
-const AMBER = "text-[#b54708]";
+const AMBER = "text-status-warning";
 
 /** Error line under a control; `id` pairs with the control's aria-describedby. */
 export function FieldError({ id, children }: { id?: string; children?: React.ReactNode }) {
   if (!children) return null;
   return (
-    <p id={id} role="alert" className={`mt-1.5 flex items-start gap-1.5 text-[12px] font-medium ${RED}`}>
+    <p id={id} role="alert" className={`mt-1.5 flex items-start gap-1.5 text-adm-xs font-medium ${RED}`}>
       <Icon name="alert" className="mt-px size-3.5 shrink-0" />
       <span>{children}</span>
     </p>
@@ -29,7 +29,7 @@ export function FieldError({ id, children }: { id?: string; children?: React.Rea
 export function FieldWarning({ children }: { children?: React.ReactNode }) {
   if (!children) return null;
   return (
-    <p className={`mt-1.5 flex items-start gap-1.5 text-[12px] font-medium ${AMBER}`}>
+    <p className={`mt-1.5 flex items-start gap-1.5 text-adm-xs font-medium ${AMBER}`}>
       <Icon name="alert" className="mt-px size-3.5 shrink-0" />
       <span>{children}</span>
     </p>
@@ -71,7 +71,7 @@ export function Field({
   return (
     <div className={`min-w-0 ${className}`}>
       <div className="mb-1.5 flex items-baseline justify-between gap-3">
-        <label id={labelId} htmlFor={htmlFor} className="text-[13px] font-medium text-navy-900">
+        <label id={labelId} htmlFor={htmlFor} className="text-adm-base font-medium text-navy-900">
           {label}
           {required && (
             <span className={RED} aria-hidden>
@@ -80,7 +80,7 @@ export function Field({
           )}
           {required && <span className="sr-only"> (required)</span>}
         </label>
-        {(hint || optional) && <span className="shrink-0 text-[12px] text-mist-600">{hint ?? "Optional"}</span>}
+        {(hint || optional) && <span className="shrink-0 text-adm-xs text-mist-600">{hint ?? "Optional"}</span>}
       </div>
       {children}
       {error ? (
@@ -88,7 +88,7 @@ export function Field({
       ) : warning ? (
         <FieldWarning>{warning}</FieldWarning>
       ) : helper ? (
-        <p className="mt-1.5 text-[12px] leading-snug text-mist-600">{helper}</p>
+        <p className="mt-1.5 text-adm-xs leading-snug text-mist-600">{helper}</p>
       ) : null}
     </div>
   );
@@ -152,8 +152,8 @@ export function CheckRow({
         className="mt-0.5 size-4 shrink-0 cursor-pointer rounded accent-ocean-600"
       />
       <span className="min-w-0">
-        <span className="block text-[14px] font-medium text-navy-900">{title}</span>
-        {description && <span className="mt-0.5 block text-[12px] leading-snug text-mist-600">{description}</span>}
+        <span className="block text-adm-base font-medium text-navy-900">{title}</span>
+        {description && <span className="mt-0.5 block text-adm-xs leading-snug text-mist-600">{description}</span>}
       </span>
     </label>
   );
@@ -207,7 +207,7 @@ export function Choice<V extends string>({
                 move(i, -1);
               }
             }}
-            className={`inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 ${
+            className={`inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 text-adm-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 ${
               on ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600 hover:text-navy-900"
             }`}
           >
@@ -222,9 +222,9 @@ export function Choice<V extends string>({
 
 const noticeTone = {
   info: { box: "bg-ocean-50 text-navy-900 ring-ocean-200", icon: "text-ocean-700", glyph: "sparkle" as IconName },
-  warning: { box: "bg-[#fffaeb] text-[#93370d] ring-[#fedf89]", icon: "text-[#b54708]", glyph: "alert" as IconName },
-  error: { box: "bg-[#fef3f2] text-[#912018] ring-[#fecdca]", icon: "text-[#b42318]", glyph: "alert" as IconName },
-  success: { box: "bg-[#ecfdf3] text-[#05603a] ring-[#abefc6]", icon: "text-[#067647]", glyph: "check" as IconName },
+  warning: { box: "bg-status-warning-soft text-status-warning-strong ring-status-warning-line", icon: "text-status-warning", glyph: "alert" as IconName },
+  error: { box: "bg-status-danger-soft text-status-danger-strong ring-status-danger-line", icon: "text-status-danger", glyph: "alert" as IconName },
+  success: { box: "bg-status-success-soft text-status-success-strong ring-status-success-line", icon: "text-status-success", glyph: "check" as IconName },
 };
 
 /** A tinted well for status lines inside a form: prefill results, warnings, info. */
@@ -245,8 +245,8 @@ export function Notice({
 }) {
   const t = noticeTone[tone];
   return (
-    <div role={role ?? (tone === "error" ? "alert" : undefined)} className={`flex flex-wrap items-start gap-3 rounded-lg px-4 py-3 text-[14px] leading-snug ring-1 ring-inset ${t.box}`}>
-      <Icon name={icon ?? t.glyph} className={`mt-0.5 size-[18px] shrink-0 ${t.icon}`} />
+    <div role={role ?? (tone === "error" ? "alert" : undefined)} className={`flex flex-wrap items-start gap-3 rounded-lg px-4 py-3 text-adm-base leading-snug ring-1 ring-inset ${t.box}`}>
+      <Icon name={icon ?? t.glyph} className={`mt-0.5 size-5 shrink-0 ${t.icon}`} />
       <div className="min-w-0 flex-1">{children}</div>
       {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
       {onDismiss && (
@@ -310,10 +310,10 @@ export function FormSection({
     <>
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <h2 className="text-[15px] font-semibold text-navy-900">{title}</h2>
+          <h2 className="text-adm-md font-semibold text-navy-900">{title}</h2>
           {badge}
         </span>
-        {description && <span className="mt-0.5 block text-[13px] text-mist-600">{description}</span>}
+        {description && <span className="mt-0.5 block text-adm-base text-mist-600">{description}</span>}
       </span>
     </>
   );
@@ -349,11 +349,11 @@ export function FormSection({
 export function SectionBadge({ tone = "grey", children }: { tone?: "grey" | "red" | "green" | "blue"; children: React.ReactNode }) {
   const cls = {
     grey: "bg-mist-100 text-mist-700",
-    red: "bg-[#fef3f2] text-[#b42318]",
-    green: "bg-[#ecfdf3] text-[#067647]",
+    red: "bg-status-danger-soft text-status-danger",
+    green: "bg-status-success-soft text-status-success",
     blue: "bg-ocean-50 text-ocean-700",
   }[tone];
-  return <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium ${cls}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-adm-xs font-medium ${cls}`}>{children}</span>;
 }
 
 /**
@@ -363,8 +363,8 @@ export function SectionBadge({ tone = "grey", children }: { tone?: "grey" | "red
 export function StickyActions({ status, children }: { status?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="sticky bottom-0 z-20 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-2">
-      <div className="flex flex-col gap-3 rounded-xl bg-mist-0/95 px-4 py-3 shadow-[0_-4px_24px_rgba(16,24,40,0.08)] ring-1 ring-mist-200 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div className="min-w-0 text-[13px] text-mist-600">{status}</div>
+      <div className="flex flex-col gap-3 rounded-xl bg-mist-0 px-4 py-3 ring-1 ring-mist-200 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="min-w-0 text-adm-base text-mist-600">{status}</div>
         <div className="flex flex-wrap items-center gap-2 max-sm:[&>*]:flex-1">{children}</div>
       </div>
     </div>

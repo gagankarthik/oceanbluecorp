@@ -47,7 +47,7 @@ function niceMax(v: number) {
 
 export function Legend({ items }: { items: { label: string; color: string }[] }) {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-mist-600">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-adm-xs text-mist-600">
       {items.map((i) => (
         <li key={i.label} className="flex items-center gap-1.5">
           <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: i.color }} />
@@ -63,7 +63,7 @@ function Tooltip({ x, y, children, containerWidth }: { x: number; y: number; chi
   return (
     <div
       role="presentation"
-      className="pointer-events-none absolute z-10 min-w-36 rounded-lg bg-navy-950 px-3 py-2 text-[12px] text-white shadow-lg"
+      className="pointer-events-none absolute z-10 min-w-36 rounded-lg bg-navy-950 px-3 py-2 text-adm-xs text-white shadow-lg"
       style={{ left: x, top: y, transform: `translate(${flip ? "calc(-100% - 12px)" : "12px"}, -50%)` }}
     >
       {children}
@@ -376,7 +376,7 @@ export function DonutChart({
           {active ? `${Math.round((active.value / total) * 100)}% ${active.label}`.slice(0, 22) : centerLabel}
         </text>
       </svg>
-      <ul className="grid w-full gap-2 text-[13px]">
+      <ul className="grid w-full gap-2 text-adm-base">
         {arcs.map((a, i) => (
           <li
             key={a.label}
@@ -412,7 +412,7 @@ export function Funnel({ stages, title, format = fmtDefault }: { stages: { label
         {stages.map((s, i) => {
           const conv = i > 0 && stages[i - 1].value > 0 ? Math.round((s.value / stages[i - 1].value) * 100) : null;
           return (
-            <li key={s.label} onPointerEnter={() => setHover(i)} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3 text-[13px]">
+            <li key={s.label} onPointerEnter={() => setHover(i)} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3 text-adm-base">
               <span className="truncate text-navy-900">{s.label}</span>
               <span className="relative h-7 overflow-hidden rounded-md bg-mist-100">
                 <span
@@ -422,13 +422,13 @@ export function Funnel({ stages, title, format = fmtDefault }: { stages: { label
               </span>
               <span className="w-20 text-right tabular-nums">
                 <span className="font-semibold text-navy-900">{format(s.value)}</span>
-                {conv !== null && <span className="ml-1 text-[12px] text-mist-600">{conv}%</span>}
+                {conv !== null && <span className="ml-1 text-adm-xs text-mist-600">{conv}%</span>}
               </span>
             </li>
           );
         })}
       </ol>
-      <p className="mt-3 text-[12px] text-mist-600">Percentages show conversion from the previous stage.</p>
+      <p className="mt-3 text-adm-xs text-mist-600">Percentages show conversion from the previous stage.</p>
     </figure>
   );
 }
@@ -455,7 +455,7 @@ export function StackedBar({ data, title, format = fmtDefault }: { data: { label
           />
         ))}
       </div>
-      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-mist-600">
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-adm-xs text-mist-600">
         {data.map((d, i) => (
           <li key={d.label} className="flex items-center gap-1.5">
             <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: colors[i] }} />
@@ -493,7 +493,7 @@ export function Heatmap({
     <figure>
       <figcaption className="sr-only">{title}</figcaption>
       <div className="overflow-x-auto overflow-y-hidden">
-        <table className="border-separate border-spacing-[3px] text-[11px]" onPointerLeave={() => setHover(null)}>
+        <table className="border-separate border-spacing-[3px] text-adm-xs" onPointerLeave={() => setHover(null)}>
           <thead>
             <tr>
               <th />
@@ -530,14 +530,14 @@ export function Heatmap({
           </tbody>
         </table>
       </div>
-      <div className="mt-3 flex items-center gap-2 text-[11px] text-mist-600">
+      <div className="mt-3 flex items-center gap-2 text-adm-xs text-mist-600">
         <span>Fewer</span>
         {SEQ.map((c) => (
           <span key={c} className="size-3 rounded-[3px]" style={{ background: c }} />
         ))}
         <span>More</span>
         {hover && (
-          <span className="ml-auto text-[12px] text-navy-900">
+          <span className="ml-auto text-adm-xs text-navy-900">
             {rows[hover.r]}, {cols[hover.c]}: <span className="font-semibold">{format(values[hover.r]?.[hover.c] ?? 0)}</span>
           </span>
         )}
@@ -574,8 +574,8 @@ export function RadialProgress({ value, max = 100, label, sub, size = 120 }: { v
         </text>
       </svg>
       <figcaption>
-        <p className="text-[14px] font-semibold text-navy-900">{label}</p>
-        {sub && <p className="mt-0.5 text-[13px] text-mist-600">{sub}</p>}
+        <p className="text-adm-base font-semibold text-navy-900">{label}</p>
+        {sub && <p className="mt-0.5 text-adm-base text-mist-600">{sub}</p>}
       </figcaption>
     </figure>
   );

@@ -44,7 +44,7 @@ export default function Error({
           {error.digest && (
             <>
               {" "}
-              and quote <span className="break-all font-mono text-[14px] text-navy-900">{error.digest}</span>
+              and quote <span className="break-all font-mono text-small text-navy-900">{error.digest}</span>
             </>
           )}
           .

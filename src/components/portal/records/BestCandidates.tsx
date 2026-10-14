@@ -160,7 +160,7 @@ export function BestCandidates({ jobId }: { jobId: string }) {
   if (busy || loadingSaved) {
     body = (
       <div role="status" aria-busy="true" className="grid gap-3">
-        <p className="text-[13px] text-mist-600">
+        <p className="text-adm-base text-mist-600">
           {loadingSaved && !busy
             ? "Loading the saved ranking…"
             : runningElsewhere && !loading
@@ -222,10 +222,10 @@ export function BestCandidates({ jobId }: { jobId: string }) {
                 className={`relative min-w-0 rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200 transition-shadow ${opens ? "hover:shadow-md hover:ring-mist-300" : ""}`}
               >
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 w-5 shrink-0 text-right text-[12px] font-medium tabular-nums text-mist-500">{i + 1}</span>
+                  <span className="mt-0.5 w-5 shrink-0 text-right text-adm-xs font-medium tabular-nums text-mist-600">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <p className="min-w-0 max-w-full truncate text-[15px] font-semibold text-navy-900">
+                      <p className="min-w-0 max-w-full truncate text-adm-base font-semibold text-navy-900">
                         {c.profileId ? (
                           <Link href={`/portal/candidates/${c.profileId}`} className={STRETCHED}>
                             {name}
@@ -241,15 +241,15 @@ export function BestCandidates({ jobId }: { jobId: string }) {
                       <OriginBadge origin={c.origin} />
                       <VerdictBadge verdict={c.verdict} />
                     </div>
-                    <p className="mt-0.5 truncate text-[12px] text-mist-600">{[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}</p>
+                    <p className="mt-0.5 truncate text-adm-xs text-mist-600">{[c.email, c.phone].filter(Boolean).join(" · ") || c.fileName || c.resume_id}</p>
                   </div>
                   <FitScore score={c.fit_score} />
                 </div>
                 <div className="mt-3 grid gap-3 sm:pl-8">
-                  {c.rationale && <p className="max-w-[72ch] text-[13px] leading-relaxed text-mist-700">{c.rationale}</p>}
+                  {c.rationale && <p className="max-w-[72ch] text-adm-base leading-normal text-mist-700">{c.rationale}</p>}
                   <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
                   {opens && (
-                    <p aria-hidden className="inline-flex items-center gap-1 text-[13px] font-medium text-ocean-700">
+                    <p aria-hidden className="inline-flex items-center gap-1 text-adm-base font-medium text-ocean-700">
                       {c.profileId ? "Open profile" : "View profile and resume"}
                       <Icon name="chevronRight" className="size-4" />
                     </p>
@@ -267,8 +267,8 @@ export function BestCandidates({ jobId }: { jobId: string }) {
     <div className="grid gap-4 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold text-navy-900">Best candidates{candidates.length > 0 && !busy ? <span className="ml-2 text-[13px] font-medium tabular-nums text-mist-500">{candidates.length}</span> : null}</h3>
-          <p className="mt-0.5 text-[13px] text-mist-600">
+          <h3 className="text-adm-base font-semibold text-navy-900">Best candidates{candidates.length > 0 && !busy ? <span className="ml-2 text-adm-base font-medium tabular-nums text-mist-600">{candidates.length}</span> : null}</h3>
+          <p className="mt-0.5 text-adm-base text-mist-600">
             {matchedAt && candidates.length > 0 && !busy && !stale
               ? `Saved ranking from ${fmtDateTime(matchedAt)}. Re-run after adding resumes.`
               : "Ranked from your resume bank and talent bench for this job."}

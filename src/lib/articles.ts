@@ -72,7 +72,7 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
     kind: "case-study",
     noun: "case study",
     plural: "case studies",
-    label: "Case Studies",
+    label: "Case studies",
     purpose:
       "One engagement, told as challenge → approach → results, with figures a buyer can check.",
     adminPath: "/portal/case-studies",
@@ -103,7 +103,7 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
     kind: "customer-story",
     noun: "customer story",
     plural: "customer stories",
-    label: "Customer Stories",
+    label: "Customer stories",
     purpose:
       "The client's account in their own words, led by a quote. Shorter and warmer than a case study.",
     adminPath: "/portal/customer-stories",

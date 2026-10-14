@@ -20,7 +20,7 @@ function StepBadge({ step, state }: { step: number; state: StepState }) {
   return (
     <span
       aria-hidden
-      className={`grid size-7 shrink-0 place-items-center rounded-full text-[12px] font-semibold tabular-nums transition-colors duration-200 ${
+      className={`grid size-7 shrink-0 place-items-center rounded-full text-adm-xs font-semibold tabular-nums transition-colors duration-200 ${
         state === "done" ? "bg-ocean-600 text-white" : "bg-mist-0 text-mist-700 ring-1 ring-inset ring-mist-300"
       }`}
     >
@@ -30,11 +30,11 @@ function StepBadge({ step, state }: { step: number; state: StepState }) {
 }
 
 function StateTag({ state, required }: { state: StepState; required?: boolean }) {
-  if (state === "done") return <span className="rounded-md bg-[#ecfdf3] px-2 py-0.5 text-[12px] font-medium text-[#067647]">Done</span>;
+  if (state === "done") return <span className="rounded-md bg-status-success-soft px-2 py-0.5 text-adm-xs font-medium text-status-success">Done</span>;
   return required ? (
-    <span className="rounded-md bg-[#fef3f2] px-2 py-0.5 text-[12px] font-medium text-[#b42318]">Required</span>
+    <span className="rounded-md bg-status-danger-soft px-2 py-0.5 text-adm-xs font-medium text-status-danger">Required</span>
   ) : (
-    <span className="rounded-md bg-mist-100 px-2 py-0.5 text-[12px] font-medium text-mist-700">Optional</span>
+    <span className="rounded-md bg-mist-100 px-2 py-0.5 text-adm-xs font-medium text-mist-700">Optional</span>
   );
 }
 
@@ -67,10 +67,10 @@ export function StepCard({
     <>
       <StepBadge step={step} state={state} />
       <span className="min-w-0 flex-1">
-        <span id={`${id}-title`} className="block text-[15px] font-semibold text-navy-900">
+        <span id={`${id}-title`} className="block text-adm-md font-semibold text-navy-900">
           {title}
         </span>
-        {description && <span className="mt-0.5 block text-[13px] leading-snug text-mist-600">{description}</span>}
+        {description && <span className="mt-0.5 block text-adm-base leading-snug text-mist-600">{description}</span>}
       </span>
       {aside}
       <StateTag state={state} required={required} />
@@ -143,13 +143,13 @@ export function StepList({ steps, active, onJump }: { steps: StepInfo[]; active?
               type="button"
               onClick={() => onJump(s.id)}
               aria-current={active === s.id ? "step" : undefined}
-              className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-[13px] transition-colors ${
+              className={`flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-adm-base transition-colors ${
                 active === s.id ? "bg-ocean-50 font-medium text-navy-900" : "text-mist-700 hover:bg-mist-50 hover:text-navy-900"
               }`}
             >
               <StepBadge step={i + 1} state={s.state} />
               <span className="min-w-0 flex-1 truncate">{s.title}</span>
-              {s.state !== "done" && <span className="shrink-0 text-[12px] text-mist-500">{s.required ? "Required" : "Optional"}</span>}
+              {s.state !== "done" && <span className="shrink-0 text-adm-xs text-mist-600">{s.required ? "Required" : "Optional"}</span>}
             </button>
           </li>
         ))}
@@ -165,8 +165,8 @@ export function RequiredProgress({ steps }: { steps: StepInfo[] }) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-[13px] font-semibold text-navy-900">{done === required.length ? "Ready to save" : "Required steps"}</p>
-        <p className="text-[12px] tabular-nums text-mist-600">
+        <p className="text-adm-base font-semibold text-navy-900">{done === required.length ? "Ready to save" : "Required steps"}</p>
+        <p className="text-adm-xs tabular-nums text-mist-600">
           {done} of {required.length}
         </p>
       </div>

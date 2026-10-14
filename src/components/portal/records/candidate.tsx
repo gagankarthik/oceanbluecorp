@@ -54,7 +54,7 @@ export function StageTrack({
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {rejected ? (
-          <span role="status" title="Pick a stage to reopen" className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#fef3f2] px-2.5 text-[13px] font-medium text-[#b42318] ring-1 ring-inset ring-[#f3c4bf]">
+          <span role="status" title="Pick a stage to reopen" className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-status-danger-soft px-2.5 text-adm-base font-medium text-status-danger ring-1 ring-inset ring-status-danger-line">
             <Icon name="alert" className="size-3.5" />
             Rejected
             <span className="sr-only">. Pick a stage to reopen.</span>
@@ -62,21 +62,21 @@ export function StageTrack({
         ) : (
           <>
             {hired ? (
-              <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#ecfdf3] px-2.5 text-[13px] font-medium text-[#067647] ring-1 ring-inset ring-[#abefc6]">
+              <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-status-success-soft px-2.5 text-adm-base font-medium text-status-success ring-1 ring-inset ring-status-success-line">
                 <Icon name="check" className="size-3.5" />
                 <span className="tabular-nums">{daysInStage ? `Hired ${daysInStage}d ago` : "Hired today"}</span>
               </span>
             ) : staleOffer ? (
-              <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-[#fffaeb] px-2.5 text-[13px] font-medium tabular-nums text-[#b54708] ring-1 ring-inset ring-[#fedf89]">
+              <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-status-warning-soft px-2.5 text-adm-base font-medium tabular-nums text-status-warning ring-1 ring-inset ring-status-warning-line">
                 <Icon name="alert" className="size-3.5" />
                 Offer out {daysInStage}d
               </span>
             ) : (
               daysInStage !== null && (
-                <span className="text-[13px] tabular-nums text-mist-600">{daysInStage === 0 ? "Moved today" : `${daysInStage}d in stage`}</span>
+                <span className="text-adm-base tabular-nums text-mist-600">{daysInStage === 0 ? "Moved today" : `${daysInStage}d in stage`}</span>
               )
             )}
-            <Button size="sm" variant="ghost" icon="x" className="text-[#b42318]! hover:bg-[#fef3f2]!" onClick={() => onStage("rejected")} disabled={saving}>
+            <Button size="sm" variant="ghost" icon="x" className="text-status-danger! hover:bg-status-danger-soft!" onClick={() => onStage("rejected")} disabled={saving}>
               Reject
             </Button>
             {next && (
@@ -115,9 +115,9 @@ function VisaExpiry({ iso }: { iso: string }) {
   if (days === null || days > VISA_WARN_DAYS) return date;
   const lapsed = days < 0;
   return (
-    <span className={`inline-flex flex-wrap items-center gap-x-1.5 font-medium ${lapsed ? "text-[#b42318]" : "text-[#b54708]"}`}>
+    <span className={`inline-flex flex-wrap items-center gap-x-1.5 font-medium ${lapsed ? "text-status-danger" : "text-status-warning"}`}>
       {date}
-      <span className="text-[12px] tabular-nums">{lapsed ? "Expired" : days === 0 ? "Expires today" : `in ${days}d`}</span>
+      <span className="text-adm-xs tabular-nums">{lapsed ? "Expired" : days === 0 ? "Expires today" : `in ${days}d`}</span>
     </span>
   );
 }
@@ -163,8 +163,8 @@ export function ApplicantDetails({ candidate, onEdit }: { candidate: Application
         <dl className="grid grid-cols-1 gap-x-6 gap-y-4 min-[420px]:grid-cols-2 xl:grid-cols-3">
           {shown.map((f) => (
             <div key={f.label} className="min-w-0">
-              <dt className="text-[12px] font-medium text-mist-500">{f.label}</dt>
-              <dd className="mt-0.5 break-words text-[14px] text-navy-900">{empty(f) ? <span className="text-mist-400">Not recorded</span> : f.value}</dd>
+              <dt className="text-adm-xs font-medium text-mist-600">{f.label}</dt>
+              <dd className="mt-0.5 break-words text-adm-base text-navy-900">{empty(f) ? <span className="text-mist-600">Not recorded</span> : f.value}</dd>
             </div>
           ))}
         </dl>
@@ -174,7 +174,7 @@ export function ApplicantDetails({ candidate, onEdit }: { candidate: Application
           type="button"
           onClick={() => setShowEmpty((v) => !v)}
           aria-expanded={showEmpty}
-          className={`min-h-8 text-[13px] text-mist-600 hover:text-ocean-700 ${shown.length ? "mt-4" : ""}`}
+          className={`min-h-8 text-adm-base text-mist-600 hover:text-ocean-700 ${shown.length ? "mt-4" : ""}`}
         >
           {showEmpty ? "Hide empty fields" : `${blanks.length} ${blanks.length === 1 ? "field is" : "fields are"} not recorded. Show`}
         </button>
@@ -209,7 +209,7 @@ export function RecordRail({
   onViewResume: () => void;
   onOpenTasks?: () => void;
 }) {
-  const head = "text-[12px] font-semibold text-mist-500";
+  const head = "text-adm-xs font-semibold text-mist-600";
   const open = (candidate.tasks || []).filter((t) => !t.done);
   const overdue = open.filter((t) => dueState(t.dueAt) === "overdue").length;
   const dueToday = open.filter((t) => dueState(t.dueAt) === "today").length;
@@ -220,16 +220,16 @@ export function RecordRail({
           <h2 className={head}>Position</h2>
           {candidate.jobId ? (
             <Link href={`/portal/jobs/${candidate.jobId}`} className="group mt-1.5 block">
-              <span className="text-[14px] font-semibold text-navy-900 group-hover:text-ocean-700">{candidate.jobTitle}</span>
-              <span className="mt-0.5 block text-[12px] text-mist-600">
+              <span className="text-adm-base font-semibold text-navy-900 group-hover:text-ocean-700">{candidate.jobTitle}</span>
+              <span className="mt-0.5 block text-adm-xs text-mist-600">
                 {[candidate.jobDepartment, candidate.jobLocation, candidate.jobType?.replace(/-/g, " ")].filter(Boolean).join(" · ")}
               </span>
-              <span className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-ocean-700">
+              <span className="mt-2 inline-flex items-center gap-1 text-adm-base font-medium text-ocean-700">
                 View job posting <Icon name="chevronRight" className="size-4" />
               </span>
             </Link>
           ) : (
-            <p className="mt-1.5 text-[14px] font-semibold text-navy-900">{candidate.jobTitle}</p>
+            <p className="mt-1.5 text-adm-base font-semibold text-navy-900">{candidate.jobTitle}</p>
           )}
         </div>
       )}
@@ -240,8 +240,8 @@ export function RecordRail({
             <div className="flex min-w-0 items-center gap-3">
               <Avatar name={candidate.ownershipName} size="sm" />
               <div className="min-w-0">
-                <p className="truncate text-[14px] font-medium text-navy-900">{candidate.ownershipName}</p>
-                {candidate.ownershipClaimedAt && <p className="text-[12px] tabular-nums text-mist-600">Since {fmtDate(candidate.ownershipClaimedAt)}</p>}
+                <p className="truncate text-adm-base font-medium text-navy-900">{candidate.ownershipName}</p>
+                {candidate.ownershipClaimedAt && <p className="text-adm-xs tabular-nums text-mist-600">Since {fmtDate(candidate.ownershipClaimedAt)}</p>}
               </div>
             </div>
             {isOwner && (
@@ -251,12 +251,12 @@ export function RecordRail({
             )}
           </div>
         ) : (
-          <div className="mt-2 grid gap-2.5 rounded-lg bg-[#fef3f2] p-3 ring-1 ring-inset ring-[#f3c4bf]">
-            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-[#b42318]">
+          <div className="mt-2 grid gap-2.5 rounded-lg bg-status-danger-soft p-3 ring-1 ring-inset ring-status-danger-line">
+            <p className="flex items-center gap-1.5 text-adm-base font-semibold text-status-danger">
               <Icon name="alert" className="size-4 shrink-0" />
               Unclaimed. No one owns this candidate.
             </p>
-            <Button icon="userCheck" loading={ownerSaving} onClick={onClaim} className="w-full">
+            <Button variant="secondary" icon="userCheck" loading={ownerSaving} onClick={onClaim} className="w-full">
               Claim it
             </Button>
           </div>
@@ -287,20 +287,20 @@ export function RecordRail({
           <button type="button" onClick={onViewResume} className="group mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left ring-1 ring-inset ring-mist-300 hover:bg-mist-50">
             <Icon name="resume" className="size-5 shrink-0 text-mist-600" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[14px] font-medium text-navy-900">{candidate.resumeFileName || "resume.pdf"}</span>
-              <span className="block text-[12px] text-mist-600">View or download</span>
+              <span className="block truncate text-adm-base font-medium text-navy-900">{candidate.resumeFileName || "resume.pdf"}</span>
+              <span className="block text-adm-xs text-mist-600">View or download</span>
             </span>
             <Icon name="download" className="size-4 shrink-0 text-mist-500 group-hover:text-navy-900" />
           </button>
         ) : (
-          <p className="mt-1.5 text-[13px] text-mist-600">No resume on file.</p>
+          <p className="mt-1.5 text-adm-base text-mist-600">No resume on file.</p>
         )}
       </div>
       <div className="p-5">
         <h2 className={`${head} mb-2`}>Application</h2>
         <FactRows
           items={[
-            { label: "ID", value: <span className="font-mono text-[12px]">{candidate.applicationId || candidate.id?.slice(0, 8)}</span> },
+            { label: "ID", value: <span className="font-mono text-adm-xs">{candidate.applicationId || candidate.id?.slice(0, 8)}</span> },
             ...(candidate.addToTalentBench ? [{ label: "Pool", value: `${POOL_LABEL[poolOf(candidate)]} (${POOL_META[poolOf(candidate)].badge})` }] : []),
             { label: "Applied", value: <span className="tabular-nums">{fmtDate(candidate.appliedAt)}</span> },
             ...(candidate.updatedAt ? [{ label: "Updated", value: <span className="tabular-nums">{fmtDate(candidate.updatedAt)}</span> }] : []),
@@ -346,7 +346,7 @@ export function NotesTab({
       <Panel>
         <div className="flex items-center gap-2">
           <Avatar name={authorName} size="sm" />
-          <span className="text-[14px] font-medium text-navy-900">{authorName}</span>
+          <span className="text-adm-base font-medium text-navy-900">{authorName}</span>
         </div>
         <label className="mt-3 block">
           <span className="sr-only">New note</span>
@@ -359,12 +359,12 @@ export function NotesTab({
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSubmit();
             }}
             placeholder="Interview feedback, next steps, anything the team should know…"
-            className="block min-h-24 w-full resize-y rounded-lg bg-mist-0 px-3 py-2.5 text-[14px] leading-relaxed text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+            className="block min-h-24 w-full resize-y rounded-lg bg-mist-0 px-3 py-2.5 text-adm-base leading-normal text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
           />
         </label>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[12px] text-mist-600">{value.length > 0 ? <span className="tabular-nums">{value.length.toLocaleString()} / 5,000 · Ctrl+Enter posts</span> : "Visible to your team"}</p>
-          <Button size="sm" icon="plus" loading={saving} disabled={!value.trim()} onClick={onSubmit}>
+          <p className="text-adm-xs text-mist-600">{value.length > 0 ? <span className="tabular-nums">{value.length.toLocaleString()} / 5,000 · Ctrl+Enter posts</span> : "Visible to your team"}</p>
+          <Button size="sm" variant="secondary" icon="plus" loading={saving} disabled={!value.trim()} onClick={onSubmit}>
             Post note
           </Button>
         </div>
@@ -390,17 +390,15 @@ function NoteRow({ name, at, text, legacy }: { name: string; at?: string; text: 
     <li className="px-5 py-4">
       <div className="flex items-center gap-3">
         {legacy ? (
-          <span className="grid size-7 place-items-center rounded-full bg-mist-100 text-mist-600">
-            <Icon name="quote" className="size-4" />
-          </span>
+          <Icon name="quote" className="size-7 shrink-0 p-1.5 text-mist-500" />
         ) : (
           <Avatar name={name} size="sm" />
         )}
-        <span className="min-w-0 truncate text-[14px] font-medium text-navy-900">{name}</span>
+        <span className="min-w-0 truncate text-adm-base font-medium text-navy-900">{name}</span>
         {legacy && <Badge>From the profile</Badge>}
-        {at && <span className="ml-auto shrink-0 text-[12px] tabular-nums text-mist-500">{legacy ? fmtDate(at) : fmtDateTime(at)}</span>}
+        {at && <span className="ml-auto shrink-0 text-adm-xs tabular-nums text-mist-600">{legacy ? fmtDate(at) : fmtDateTime(at)}</span>}
       </div>
-      <p className="mt-2 whitespace-pre-line pl-10 text-[14px] leading-relaxed text-mist-700">{text}</p>
+      <p className="mt-2 whitespace-pre-line pl-10 text-adm-base leading-normal text-mist-700">{text}</p>
     </li>
   );
 }
@@ -487,18 +485,18 @@ export function TasksTab({
     <Panel title="Tasks" description={open.length ? `${open.length} open` : undefined} padded={false}>
       <form onSubmit={add} className="grid gap-3 border-b border-mist-200 p-5 sm:grid-cols-[minmax(0,1fr)_10rem] lg:grid-cols-[minmax(0,1fr)_10rem_12rem_auto] lg:items-end">
         <label className="sm:col-span-2 lg:col-span-1">
-          <span className="mb-1.5 block text-[13px] font-medium text-navy-900">Task</span>
+          <span className="mb-1.5 block text-adm-base font-medium text-navy-900">Task</span>
           <TextInput value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder="e.g. Call about availability" />
         </label>
         <label>
-          <span className="mb-1.5 block text-[13px] font-medium text-navy-900">Due</span>
+          <span className="mb-1.5 block text-adm-base font-medium text-navy-900">Due</span>
           <TextInput type="date" value={due} onChange={(e) => setDue(e.target.value)} className="tabular-nums" />
         </label>
         <div>
-          <span className="mb-1.5 block text-[13px] font-medium text-navy-900">Assignee</span>
+          <span className="mb-1.5 block text-adm-base font-medium text-navy-900">Assignee</span>
           <StaffPicker label="Assignee" people={people} keyBy="sub" meKey={me.id} allowNone={false} value={assignee} onChange={(k) => setAssignee(k || me.id)} />
         </div>
-        <Button type="submit" icon="plus" loading={adding} disabled={!text.trim()} className="sm:col-span-2 lg:col-span-1">
+        <Button type="submit" variant="secondary" icon="plus" loading={adding} disabled={!text.trim()} className="sm:col-span-2 lg:col-span-1">
           Add task
         </Button>
       </form>
@@ -506,14 +504,14 @@ export function TasksTab({
         <EmptyState compact icon="check" title="No tasks yet" body="Add a follow-up with a due date so it shows on the assignee's dashboard." />
       ) : (
         <>
-          {open.length > 0 ? <ul className="divide-y divide-mist-100">{open.map(row)}</ul> : <p className="px-5 py-4 text-[13px] text-mist-600">All tasks are done.</p>}
+          {open.length > 0 ? <ul className="divide-y divide-mist-100">{open.map(row)}</ul> : <p className="px-5 py-4 text-adm-base text-mist-600">All tasks are done.</p>}
           {done.length > 0 && (
             <div className="border-t border-mist-200">
               <button
                 type="button"
                 onClick={() => setShowDone((v) => !v)}
                 aria-expanded={showDone}
-                className="flex min-h-11 w-full items-center gap-2 px-5 text-left text-[13px] font-medium text-mist-700 hover:bg-mist-50"
+                className="flex min-h-11 w-full items-center gap-2 px-5 text-left text-adm-base font-medium text-mist-700 hover:bg-mist-50"
               >
                 <Icon name="chevronDown" className={`size-4 transition-transform ${showDone ? "rotate-180" : ""}`} />
                 {showDone ? "Hide" : "Show"} completed ({done.length})
@@ -547,13 +545,13 @@ export function TasksTab({
   );
 }
 
-const DUE_CLS = { overdue: "text-[#b42318] font-medium", today: "text-[#b54708] font-medium", upcoming: "text-mist-600", none: "text-mist-600" } as const;
+const DUE_CLS = { overdue: "text-status-danger font-medium", today: "text-status-warning font-medium", upcoming: "text-mist-600", none: "text-mist-600" } as const;
 
 function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; meId: string; busy: boolean; onToggle: () => void; onDelete: () => void }) {
   const state = task.done ? "none" : dueState(task.dueAt);
   const unassigned = !task.assigneeId && !task.assigneeName;
   const assignee = task.assigneeId === meId ? "You" : task.assigneeName || "Unassigned";
-  const accent = state === "overdue" ? "shadow-[inset_3px_0_0_#d03b3b] bg-[#fef3f2]/50" : state === "today" ? "shadow-[inset_3px_0_0_#eda100]" : "";
+  const accent = state === "overdue" ? "shadow-[inset_3px_0_0_var(--color-status-danger-mark)] bg-status-danger-soft/50" : state === "today" ? "shadow-[inset_3px_0_0_var(--color-status-warning-mark)]" : "";
   return (
     <li className={`flex items-start gap-3 px-5 py-3.5 ${accent}`}>
       <button
@@ -561,6 +559,7 @@ function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; me
         role="checkbox"
         aria-checked={task.done}
         aria-label={task.done ? `Reopen: ${task.text}` : `Mark done: ${task.text}`}
+        title={task.done ? "Reopen" : "Mark done"}
         onClick={onToggle}
         disabled={busy}
         className={`-m-2 grid size-9 shrink-0 place-items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 disabled:opacity-60`}
@@ -570,8 +569,8 @@ function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; me
         </span>
       </button>
       <div className="min-w-0 flex-1">
-        <p className={`break-words text-[14px] ${task.done ? "text-mist-500 line-through" : "text-navy-900"}`}>{task.text}</p>
-        <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-mist-600">
+        <p className={`break-words text-adm-base ${task.done ? "text-mist-600 line-through" : "text-navy-900"}`}>{task.text}</p>
+        <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-adm-xs text-mist-600">
           {task.dueAt && (
             <span className={`inline-flex items-center gap-1 tabular-nums ${DUE_CLS[state]}`}>
               <Icon name="calendar" className="size-3.5" />
@@ -579,7 +578,7 @@ function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; me
               {fmtDue(task.dueAt)}
             </span>
           )}
-          <span className={`inline-flex items-center gap-1 ${unassigned ? "font-medium text-[#b42318]" : ""}`}>
+          <span className={`inline-flex items-center gap-1 ${unassigned ? "font-medium text-status-danger" : ""}`}>
             <Icon name="userCheck" className="size-3.5" />
             {assignee}
           </span>
@@ -591,7 +590,8 @@ function TaskRow({ task, meId, busy, onToggle, onDelete }: { task: TaskEntry; me
         onClick={onDelete}
         disabled={busy}
         aria-label={`Delete task: ${task.text}`}
-        className="-my-1 grid size-9 shrink-0 place-items-center rounded-lg text-mist-500 hover:bg-[#fef3f2] hover:text-[#b42318] disabled:opacity-50"
+        title="Delete task"
+        className="-my-1 grid size-9 shrink-0 place-items-center rounded-lg text-mist-500 hover:bg-status-danger-soft hover:text-status-danger disabled:opacity-50"
       >
         <Icon name="trash" className="size-4" />
       </button>
@@ -627,9 +627,9 @@ export function ActivityTab({ history, activity }: { history: HistoryEntry[]; ac
         {items.map((it, i) =>
           it.type === "stage" ? (
             <li key={`s-${i}-${it.at}`} className="relative">
-              <span aria-hidden className="absolute -left-7 top-1 size-[18px] rounded-full ring-4 ring-mist-0" style={{ background: STAGE_DOT[it.e.status as Stage] ?? "#99a2af" }} />
+              <span aria-hidden className="absolute -left-7 top-1 size-5 rounded-full ring-4 ring-mist-0" style={{ background: STAGE_DOT[it.e.status as Stage] ?? "var(--color-mist-400)" }} />
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                <p className="flex flex-wrap items-center gap-1.5 text-[14px] text-mist-700">
+                <p className="flex flex-wrap items-center gap-1.5 text-adm-base text-mist-700">
                   Moved to <StageBadge status={it.e.status} />
                   {it.e.changedByName && (
                     <span>
@@ -637,24 +637,24 @@ export function ActivityTab({ history, activity }: { history: HistoryEntry[]; ac
                     </span>
                   )}
                 </p>
-                <span className="text-[12px] tabular-nums text-mist-500">{fmtDateTime(it.at)}</span>
+                <span className="text-adm-xs tabular-nums text-mist-600">{fmtDateTime(it.at)}</span>
               </div>
-              {it.e.notes && <p className="mt-2 rounded-lg bg-mist-50 px-3 py-2 text-[13px] text-mist-700">{it.e.notes}</p>}
+              {it.e.notes && <p className="mt-2 rounded-lg bg-mist-50 px-3 py-2 text-adm-base text-mist-700">{it.e.notes}</p>}
             </li>
           ) : (
             <li key={it.e.id} className="relative">
-              <span aria-hidden className="absolute -left-7 top-0 grid size-[18px] place-items-center rounded-full bg-mist-0 text-mist-500 ring-4 ring-mist-0">
+              <span aria-hidden className="absolute -left-7 top-0 grid size-5 place-items-center rounded-full bg-mist-0 text-mist-600 ring-4 ring-mist-0">
                 <Icon name={KIND_ICON[it.e.kind] ?? "activity"} className="size-4" />
               </span>
               <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                <p className="min-w-0 text-[14px] text-navy-900">
+                <p className="min-w-0 text-adm-base text-navy-900">
                   {it.e.summary}
                   {it.e.byName && <span className="text-mist-700"> by <span className="font-medium text-navy-900">{it.e.byName}</span></span>}
                 </p>
-                <span className="text-[12px] tabular-nums text-mist-500">{fmtDateTime(it.at)}</span>
+                <span className="text-adm-xs tabular-nums text-mist-600">{fmtDateTime(it.at)}</span>
               </div>
               {it.e.kind === "edit" && it.e.fields && it.e.fields.length > 0 && (
-                <p className="mt-1 text-[12px] text-mist-600">Changed: {it.e.fields.map(fieldLabel).join(", ")}</p>
+                <p className="mt-1 text-adm-xs text-mist-600">Changed: {it.e.fields.map(fieldLabel).join(", ")}</p>
               )}
             </li>
           ),

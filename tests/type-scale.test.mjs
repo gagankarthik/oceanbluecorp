@@ -1,4 +1,4 @@
-// The console type scale (DESIGN_SYSTEM §2.6): sizes come from text-adm-*,
+// The portal type scale (DESIGN_SYSTEM §2.7): sizes come from text-adm-*,
 // one ratio from a 14px body. A literal pixel size is a size off the scale.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -12,9 +12,9 @@ function files(dir) {
   });
 }
 
-test("admin code sizes text only from the type scale", () => {
+test("portal code sizes text only from the type scale", () => {
   const offenders = [];
-  for (const f of [...files("src/app/portal/(console)"), ...files("src/components/portal/console")]) {
+  for (const f of [...files("src/app/portal"), ...files("src/components/portal")]) {
     const hits = readFileSync(f, "utf8").match(/text-\[\d+(?:\.\d+)?px\]/g);
     if (hits) offenders.push(`${f}: ${[...new Set(hits)].join(", ")}`);
   }

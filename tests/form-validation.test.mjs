@@ -14,6 +14,14 @@ describe("predicates", () => {
     assert.equal(fv.isEmail("jane@acme.c"), false);
   });
 
+  test("toE164 normalises loose phone formats for Cognito", () => {
+    assert.equal(fv.toE164("(614) 555-0100"), "+16145550100");
+    assert.equal(fv.toE164("614.555.0100 ext. 12"), "+16145550100");
+    assert.equal(fv.toE164("1 614 555 0100"), "+16145550100");
+    assert.equal(fv.toE164("+44 20 7946 0958"), "+442079460958");
+    assert.equal(fv.toE164("0044 20 7946 0958"), "+442079460958");
+  });
+
   test("isPhone is lenient on punctuation, strict on digit count", () => {
     assert.equal(fv.isPhone("(614) 555-0100"), true);
     assert.equal(fv.isPhone("+1 614.555.0100"), true);

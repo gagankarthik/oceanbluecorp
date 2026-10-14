@@ -5,7 +5,7 @@ import Icon, { type IconName } from "../icons";
 // Form primitives for the publishing screens (article editor, content).
 
 export const inputCls =
-  "block w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-[#f04438] disabled:bg-mist-50 disabled:text-mist-600";
+  "block w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-status-danger-mark disabled:bg-mist-50 disabled:text-mist-600";
 
 /** `n/limit`: amber past the soft (guidance) limit, red past the hard (schema) one. */
 export function Counter({ value, hard, soft }: { value: number; hard?: number; soft?: number }) {
@@ -13,10 +13,10 @@ export function Counter({ value, hard, soft }: { value: number; hard?: number; s
   if (shown === undefined) return null;
   const over = hard !== undefined && value > hard;
   const long = !over && soft !== undefined && value > soft;
-  const tone = over ? "text-[#b42318]" : long ? "text-[#b54708]" : "text-mist-500";
+  const tone = over ? "text-status-danger" : long ? "text-status-warning" : "text-mist-600";
   const tip = soft !== undefined && hard !== undefined ? `About ${soft} shown in search; ${hard} at most` : undefined;
   return (
-    <span className={`shrink-0 text-[12px] font-normal tabular-nums ${tone}`} title={tip}>
+    <span className={`shrink-0 text-adm-xs font-normal tabular-nums ${tone}`} title={tip}>
       {value}/{shown}
       {over && soft !== undefined && ` · max ${hard}`}
     </span>
@@ -31,14 +31,14 @@ export function FieldIssues({ blockers = [], warnings = [] }: Issues) {
   return (
     <ul className="mt-1.5 grid gap-1">
       {blockers.map((b) => (
-        <li key={b} className="flex gap-1.5 text-[12px] font-medium text-[#b54708]">
+        <li key={b} className="flex gap-1.5 text-adm-xs font-medium text-status-warning">
           <Icon name="alert" className="mt-px size-3.5 shrink-0" />
           {b}
         </li>
       ))}
       {warnings.map((w) => (
-        <li key={w} className="flex gap-1.5 text-[12px] text-mist-600">
-          <Icon name="help" className="mt-px size-3.5 shrink-0 text-mist-400" />
+        <li key={w} className="flex gap-1.5 text-adm-xs text-mist-600">
+          <Icon name="help" className="mt-px size-3.5 shrink-0 text-mist-500" />
           {w}
         </li>
       ))}
@@ -84,21 +84,21 @@ export function Field({
   return (
     <div className={`grid min-w-0 content-start gap-1.5 ${className}`}>
       <div className="flex min-h-5 items-center justify-between gap-3">
-        <label id={labelId} htmlFor={id} className="text-[13px] font-medium text-navy-900">
+        <label id={labelId} htmlFor={id} className="text-adm-base font-medium text-navy-900">
           {label}
-          {required && <span className="text-[#b42318]"> *</span>}
-          {publishRequired && <span className="ml-1.5 text-[12px] font-normal text-mist-500">Needed to publish</span>}
+          {required && <span className="text-status-danger"> *</span>}
+          {publishRequired && <span className="ml-1.5 text-adm-xs font-normal text-mist-600">Needed to publish</span>}
         </label>
         {counter ?? aside}
       </div>
       {children}
       {error && (
-        <p id={id ? `${id}-error` : undefined} role="alert" className="text-[12px] text-[#b42318]">
+        <p id={id ? `${id}-error` : undefined} role="alert" className="text-adm-xs text-status-danger">
           {error}
         </p>
       )}
       {issues && <FieldIssues {...issues} />}
-      {helper && <p className="text-[12px] text-mist-500">{helper}</p>}
+      {helper && <p className="text-adm-xs text-mist-600">{helper}</p>}
     </div>
   );
 }
@@ -119,7 +119,7 @@ type AreaProps = Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "onChan
 
 export function TextArea({ value, onChange, className = "", rows = 3, ...rest }: AreaProps) {
   return (
-    <textarea {...rest} rows={rows} value={value} onChange={(e) => onChange(e.target.value)} className={`${inputCls} resize-y py-2 leading-relaxed ${className}`} />
+    <textarea {...rest} rows={rows} value={value} onChange={(e) => onChange(e.target.value)} className={`${inputCls} resize-y py-2 leading-normal ${className}`} />
   );
 }
 
@@ -164,8 +164,8 @@ export function CheckRow({
     <label htmlFor={id} className="flex min-h-10 cursor-pointer items-start gap-3 py-1">
       <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-ocean-600" />
       <span className="min-w-0">
-        <span className="block text-[14px] font-medium text-navy-900">{label}</span>
-        {hint && <span className="block text-[12px] text-mist-600">{hint}</span>}
+        <span className="block text-adm-base font-medium text-navy-900">{label}</span>
+        {hint && <span className="block text-adm-xs text-mist-600">{hint}</span>}
       </span>
     </label>
   );
@@ -176,11 +176,11 @@ export function Group({ title, icon, description, children }: { title: string; i
   return (
     <div className="grid gap-4">
       <div>
-        <p className="flex items-center gap-2 text-[13px] font-semibold text-navy-900">
+        <p className="flex items-center gap-2 text-adm-base font-semibold text-navy-900">
           {icon && <Icon name={icon} className="size-4 text-mist-500" />}
           {title}
         </p>
-        {description && <p className="mt-0.5 text-[12px] text-mist-600">{description}</p>}
+        {description && <p className="mt-0.5 text-adm-xs text-mist-600">{description}</p>}
       </div>
       {children}
     </div>

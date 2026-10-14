@@ -107,7 +107,7 @@ export default function CallbackPage() {
 
   const primaryCls =
     "flex min-h-12 w-full items-center justify-center gap-2 bg-ocean-600 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.99]";
-  const title = "display text-[clamp(2rem,3vw,2.5rem)]";
+  const title = "display text-head-md";
 
   return (
     <AuthShell>
@@ -129,7 +129,7 @@ export default function CallbackPage() {
                       <span className="size-3 animate-spin rounded-full border-2 border-mist-200 border-t-ocean-600" />
                     )}
                   </span>
-                  <span className={`text-[15px] ${st.completed ? "text-navy-900" : "text-mist-600"}`}>{st.label}</span>
+                  <span className={`text-small ${st.completed ? "text-navy-900" : "text-mist-600"}`}>{st.label}</span>
                 </li>
               ))}
             </ol>
@@ -152,7 +152,7 @@ export default function CallbackPage() {
               ) : null}
               .
             </p>
-            <p className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-ocean-700">
+            <p className="mt-6 inline-flex items-center gap-2 text-small font-medium text-ocean-700">
               Taking you to the console <Glyph name="arrow" className="size-4" />
             </p>
           </>
@@ -165,7 +165,7 @@ export default function CallbackPage() {
             </Mark>
             <h1 className={`mt-6 ${title}`}>Email verified</h1>
             <p className="mt-2 text-mist-600">Your email has been verified. Please sign in to continue.</p>
-            <p className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-ocean-700">
+            <p className="mt-6 inline-flex items-center gap-2 text-small font-medium text-ocean-700">
               Taking you to sign in <Glyph name="arrow" className="size-4" />
             </p>
           </>
@@ -198,7 +198,7 @@ export default function CallbackPage() {
             <p className="mt-2 text-mist-600">
               We couldn&apos;t finish signing you in. Nothing is lost; if it keeps failing, your administrator can check the account.
             </p>
-            {error && <p className="mt-5 bg-buoy-300/30 px-4 py-3 text-[15px] text-navy-900">{error}</p>}
+            {error && <p className="mt-5 bg-buoy-300/30 px-4 py-3 text-small text-navy-900">{error}</p>}
             <div className="mt-8 grid gap-2">
               <button type="button" onClick={() => router.push("/auth/sign-in")} className={primaryCls}>
                 <Glyph name="refresh" className="size-4" /> Try again

@@ -100,7 +100,7 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
   return (
     <div>
       {/* Column heads from md, where rows line up as a table. */}
-      <div aria-hidden className="hidden gap-4 border-b border-mist-200 px-5 py-2.5 text-[12px] font-medium text-mist-600 md:flex">
+      <div aria-hidden className="hidden gap-4 border-b border-mist-200 px-5 py-2.5 text-adm-xs font-medium text-mist-600 md:flex">
         <span className="min-w-0 flex-1">Candidate</span>
         <span className="w-24 shrink-0 text-right">Rate</span>
         <span className="w-24 shrink-0">Sent</span>
@@ -115,26 +115,26 @@ export function JobSubmissions({ jobId }: { jobId: string }) {
           return (
             <li key={s.id} className="relative flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-3.5 hover:bg-mist-50">
               <span className="min-w-0 flex-1 basis-56">
-                <Link href={`/portal/candidates/${s.applicationId}`} className="block truncate text-[14px] font-medium text-navy-900 after:absolute after:inset-0 hover:text-ocean-700">
+                <Link href={`/portal/candidates/${s.applicationId}`} className="block truncate text-adm-base font-medium text-navy-900 after:absolute after:inset-0 hover:text-ocean-700">
                   {s.candidateName || "Unnamed candidate"}
                 </Link>
-                <span className="block truncate text-[12px] text-mist-600">
+                <span className="block truncate text-adm-xs text-mist-600">
                   {target ? `To ${target}` : "Recipient not recorded"}
                   {s.clientName && s.vendorName && ` via ${s.vendorName}`}
                   {s.submittedTo && ` · ${s.submittedTo}`}
                 </span>
               </span>
-              <span className="text-[13px] tabular-nums text-mist-700 md:w-24 md:shrink-0 md:text-right">
+              <span className="text-adm-base tabular-nums text-mist-700 md:w-24 md:shrink-0 md:text-right">
                 <span className="md:hidden">Rate </span>
                 {formatRate(s.rate, s.rateUnit, s.currency)}
               </span>
-              <span className="text-[13px] tabular-nums text-mist-600 md:w-24 md:shrink-0">
+              <span className="text-adm-base tabular-nums text-mist-600 md:w-24 md:shrink-0">
                 <span className="md:hidden">Sent </span>
                 {fmtDate(s.occurredAt)}
               </span>
-              <span className="hidden w-48 shrink-0 text-[12px] text-mist-600 lg:block">
+              <span className="hidden w-48 shrink-0 text-adm-xs text-mist-600 lg:block">
                 {count === 0 ? (
-                  <span className="text-mist-400">–</span>
+                  <span className="text-mist-600">–</span>
                 ) : (
                   <span className="inline-flex min-w-0 items-center gap-1.5 tabular-nums">
                     <Icon name="calendar" className="size-3.5 shrink-0 text-mist-500" />

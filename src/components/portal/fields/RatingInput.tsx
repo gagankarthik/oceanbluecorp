@@ -44,7 +44,7 @@ export function RatingInput({
       >
         {[1, 2, 3, 4, 5].map((n) => {
           const on = shown >= n;
-          const cls = `${star} ${on ? "fill-[#f5a524] text-[#f5a524]" : "text-mist-300"}`;
+          const cls = `${star} ${on ? "fill-status-warning-mark text-status-warning-mark" : "text-mist-300"}`;
           return onChange ? (
             <button
               key={n}
@@ -67,7 +67,7 @@ export function RatingInput({
           );
         })}
       </div>
-      {showValue && <span className="text-[13px] tabular-nums text-mist-600">{value ? `${value}/5` : "Not rated"}</span>}
+      {showValue && <span className="text-adm-base tabular-nums text-mist-600">{value ? `${value}/5` : "Not rated"}</span>}
     </div>
   );
 }

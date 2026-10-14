@@ -60,9 +60,9 @@ export default function AccountMenu() {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Account: ${user.name}`}
-        className="flex min-h-11 items-center gap-2 pl-1 pr-2 text-[15px] font-medium text-navy-900 transition-colors hover:text-ocean-700"
+        className="flex min-h-11 items-center gap-2 pl-1 pr-2 text-small font-medium text-navy-900 transition-colors hover:text-ocean-700"
       >
-        <span aria-hidden className="grid size-9 place-items-center rounded-full bg-ocean-50 text-[13px] font-semibold text-ocean-700 ring-1 ring-inset ring-ocean-200">
+        <span aria-hidden className="grid size-9 place-items-center rounded-full bg-ocean-50 text-caption font-semibold text-ocean-700 ring-1 ring-inset ring-ocean-200">
           {initials(user.name)}
         </span>
         <span className="hidden sm:inline">{first}</span>
@@ -74,23 +74,23 @@ export default function AccountMenu() {
         <div role="menu" className="absolute right-0 top-[calc(100%+12px)] z-50 w-64 bg-mist-0 p-2 shadow-xl ring-1 ring-mist-200">
           <div className="px-3 py-2">
             <p className="font-semibold text-navy-900">{user.name}</p>
-            <p className="truncate text-[14px] text-mist-600">{user.email}</p>
-            {user.role && <p className="mt-1 text-[13px] font-medium text-ocean-700">{ROLE_LABEL[user.role]}</p>}
+            <p className="truncate text-small text-mist-600">{user.email}</p>
+            {user.role && <p className="mt-1 text-caption font-medium text-ocean-700">{ROLE_LABEL[user.role]}</p>}
           </div>
           <div className="my-1 h-px bg-mist-200" />
           {links(user).map((l) =>
             l.external ? (
-              <a key={l.label} role="menuitem" href={l.href} target="_blank" rel="noopener" className="flex min-h-10 items-center px-3 text-[15px] hover:bg-mist-100">
+              <a key={l.label} role="menuitem" href={l.href} target="_blank" rel="noopener" className="flex min-h-10 items-center px-3 text-small hover:bg-mist-100">
                 {l.label}
               </a>
             ) : (
-              <Link key={l.label} role="menuitem" href={l.href} onClick={() => setOpen(false)} className="flex min-h-10 items-center px-3 text-[15px] hover:bg-mist-100">
+              <Link key={l.label} role="menuitem" href={l.href} onClick={() => setOpen(false)} className="flex min-h-10 items-center px-3 text-small hover:bg-mist-100">
                 {l.label}
               </Link>
             ),
           )}
           <div className="my-1 h-px bg-mist-200" />
-          <button type="button" role="menuitem" onClick={() => void signOutStaff()} className="flex min-h-10 w-full items-center px-3 text-left text-[15px] text-[#b42318] hover:bg-[#fef3f2]">
+          <button type="button" role="menuitem" onClick={() => void signOutStaff()} className="flex min-h-10 w-full items-center px-3 text-left text-small text-coral-700 hover:bg-coral-50">
             Sign out
           </button>
         </div>
@@ -106,23 +106,23 @@ export function MobileAccount() {
   return (
     <div className="gutter mt-6 border-b border-mist-200 pb-5">
       <p className="font-semibold text-navy-900">{user.name}</p>
-      <p className="truncate text-[14px] text-mist-600">{user.email}</p>
+      <p className="truncate text-small text-mist-600">{user.email}</p>
       <ul className="mt-3 grid">
         {links(user).map((l) => (
           <li key={l.label}>
             {l.external ? (
-              <a href={l.href} target="_blank" rel="noopener" className="flex min-h-12 items-center text-[17px] font-medium">
+              <a href={l.href} target="_blank" rel="noopener" className="flex min-h-12 items-center text-body font-medium">
                 {l.label}
               </a>
             ) : (
-              <Link href={l.href} className="flex min-h-12 items-center text-[17px] font-medium">
+              <Link href={l.href} className="flex min-h-12 items-center text-body font-medium">
                 {l.label}
               </Link>
             )}
           </li>
         ))}
         <li>
-          <button type="button" onClick={() => void signOutStaff()} className="flex min-h-12 w-full items-center text-left text-[17px] font-medium text-[#b42318]">
+          <button type="button" onClick={() => void signOutStaff()} className="flex min-h-12 w-full items-center text-left text-body font-medium text-coral-700">
             Sign out
           </button>
         </li>

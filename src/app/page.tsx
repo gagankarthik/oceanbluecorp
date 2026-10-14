@@ -99,11 +99,11 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(homeJsonLd) }} />
 
       {/* Hero: a two-by-two board */}
-      <section id="top" aria-label="Introduction" className="bg-field-paper p-2">
-        <div className="grid gap-2 md:h-[calc(100svh-88px)] md:min-h-[38rem] md:grid-cols-2 md:grid-rows-[1.25fr_1fr]">
+      <section id="top" aria-label="Introduction" className="bg-field-paper px-4 py-2">
+        <div className="grid gap-2 md:h-[calc(100svh-88px-var(--ann-h,0px))] md:min-h-[32rem] md:grid-cols-2 md:grid-rows-[1.25fr_1fr]">
           <div className="@container relative flex flex-col justify-end overflow-hidden bg-mist-0 p-6 md:col-start-1 md:row-start-1 md:p-8 lg:p-10">
             <WaveField />
-            <h1 className="lines display relative whitespace-nowrap text-[clamp(1.5rem,7.2cqi,4.25rem)] leading-[1.02]">
+            <h1 className="lines display relative whitespace-nowrap text-hero">
               <span className="line">
                 <span data-line style={{ "--i": 0 } as React.CSSProperties}>
                   The people and platforms
@@ -116,7 +116,7 @@ export default function Home() {
               </span>
             </h1>
             <div data-after-lines className="relative">
-              <p className="mt-5 max-w-[46ch] text-[clamp(1.0625rem,1.2vw,1.25rem)] leading-snug text-mist-600">
+              <p className="mt-5 max-w-measure-narrow text-body leading-snug text-mist-600">
                 IT and engineering talent, cloud, security, ERP, data, managed services and training from one accountable team.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
@@ -143,20 +143,20 @@ export default function Home() {
               href="/services/it-staffing"
               className="@container group flex min-h-56 flex-col justify-between gap-6 bg-navy-900 p-5 text-mist-50 transition-colors hover:bg-navy-800 md:min-h-0 md:p-7"
             >
-              <span className="text-[15px] text-tide-300">For hiring managers</span>
+              <span className="text-small text-tide-300">For hiring managers</span>
               <span>
-                <span className="display block text-[clamp(1.5rem,11cqi,2.75rem)] leading-[1.05]">A shortlist in 48 hours</span>
-                <span className="mt-3 block text-[15px] text-tide-300 group-hover:text-white">Vetted engineers, matched to the role</span>
+                <span className="display block text-hero-tile">A shortlist in 48 hours</span>
+                <span className="mt-3 block text-small text-tide-300 group-hover:text-white">Vetted engineers, matched to the role</span>
               </span>
             </Link>
             <Link
               href="/services"
               className="@container group flex min-h-56 flex-col justify-between gap-6 bg-ocean-600 p-5 text-white transition-colors hover:bg-ocean-700 md:min-h-0 md:p-7"
             >
-              <span className="text-[15px]">For technology leaders</span>
+              <span className="text-small">For technology leaders</span>
               <span>
-                <span className="display block text-[clamp(1.5rem,11cqi,2.75rem)] leading-[1.05]">One team, one contract</span>
-                <span className="mt-3 block text-[15px]">People, platforms and operations</span>
+                <span className="display block text-hero-tile">One team, one contract</span>
+                <span className="mt-3 block text-small">People, platforms and operations</span>
               </span>
             </Link>
           </div>
@@ -164,9 +164,9 @@ export default function Home() {
       </section>
 
       {/* Clients, directly under the hero */}
-      <section aria-labelledby="clients-title" className="bg-field-paper px-2 pb-2">
+      <section aria-labelledby="clients-title" className="bg-field-paper px-4 pb-2">
         <div className="bg-mist-100 px-5 py-10 md:px-8">
-          <h2 id="clients-title" className="text-[clamp(1.25rem,1.6vw,1.5rem)] font-medium">
+          <h2 id="clients-title" className="text-title font-medium">
             Trusted by enterprises and public agencies
           </h2>
           <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
@@ -181,10 +181,10 @@ export default function Home() {
       <section aria-labelledby="problem-title" className="bg-field-paper">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="problem-title" className="display text-[clamp(2.25rem,4vw,3.75rem)] lg:col-span-6" data-reveal>
+            <h2 id="problem-title" className="display text-head lg:col-span-6" data-reveal>
               How we help
             </h2>
-            <div className="max-w-[44ch] text-[clamp(1.125rem,1.3vw,1.25rem)] leading-snug lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+            <div className="max-w-measure-narrow text-title leading-snug lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
               <p>
                 Usually each of these is a different vendor, a different contract and a different phone number. We do all of it, as one
                 team, under one contract.
@@ -200,9 +200,9 @@ export default function Home() {
                   href={p.href}
                   className="group grid gap-6 bg-mist-100 p-6 transition-colors hover:bg-tide-100 md:p-8 lg:grid-cols-12 lg:items-center"
                 >
-                  <span className="display text-[clamp(1.5rem,2.2vw,2.25rem)] leading-[1.1] lg:col-span-5">{p.need}</span>
+                  <span className="display text-head-sm lg:col-span-5">{p.need}</span>
                   <span className="lg:col-span-5 lg:col-start-7">
-                    <span className="block text-[15px] font-medium text-ocean-700">{p.service}</span>
+                    <span className="block text-small font-medium text-ocean-700">{p.service}</span>
                     <span className="mt-1 block">{p.answer}</span>
                   </span>
                   <span className="lg:col-span-1 lg:col-start-12 lg:justify-self-end">
@@ -224,7 +224,7 @@ export default function Home() {
       </section>
 
       {/* A band of two photographs */}
-      <section aria-hidden className="grid h-[34svh] grid-cols-3 gap-2 bg-field-paper px-2 md:h-[52svh]">
+      <section aria-hidden className="grid h-[34svh] grid-cols-3 gap-2 bg-field-paper px-4 md:h-[52svh]">
         <Photo name="facade" className="h-full" sizes="33vw" position="50% 40%" />
         <Photo name="bridge" className="h-full" sizes="33vw" />
         <Photo name="lattice" className="h-full" sizes="33vw" />
@@ -237,10 +237,10 @@ export default function Home() {
       <section aria-labelledby="industries-title" className="bg-field-mist">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="industries-title" className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-7" data-reveal>
+            <h2 id="industries-title" className="display text-head lg:col-span-7" data-reveal>
               Industries we serve
             </h2>
-            <p className="max-w-[44ch] lg:col-span-4 lg:col-start-9 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+            <p className="max-w-measure-narrow lg:col-span-4 lg:col-start-9 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
               Sectors where delivery, compliance and uptime all matter at once, and where a vendor that disappears after the contract is
               signed is not an option.
             </p>
@@ -257,9 +257,9 @@ export default function Home() {
                     zoom
                   />
                   <span className="flex flex-1 flex-col p-5">
-                    <span className="text-[19px] font-semibold leading-snug text-navy-900 group-hover:text-ocean-700">{ind.name}</span>
-                    <span className="mt-2 flex-1 text-[15px] leading-relaxed text-mist-600">{ind.body.split(".")[0]}.</span>
-                    <span className="relative mt-4 w-fit text-[15px] font-medium text-ocean-700">
+                    <span className="text-title font-semibold leading-snug text-navy-900 group-hover:text-ocean-700">{ind.name}</span>
+                    <span className="mt-2 flex-1 text-small leading-normal text-mist-600">{ind.body.split(".")[0]}.</span>
+                    <span className="relative mt-4 w-fit text-small font-medium text-ocean-700">
                       See how we help
                       <span
                         aria-hidden
@@ -279,10 +279,10 @@ export default function Home() {
       <section aria-labelledby="many-heading" className="bg-field-paper">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="many-heading" className="display text-[clamp(2.25rem,4vw,3.5rem)] lg:col-span-7" data-reveal>
+            <h2 id="many-heading" className="display text-head lg:col-span-7" data-reveal>
               Why one accountable partner
             </h2>
-            <div className="max-w-[44ch] lg:col-span-4 lg:col-start-9 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+            <div className="max-w-measure-narrow lg:col-span-4 lg:col-start-9 lg:self-end" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
               <p>
                 When something breaks, the real choice is between one team that owns the outcome and several vendors pointing at each
                 other.
@@ -293,7 +293,7 @@ export default function Home() {
 
           <div className="mt-14 grid gap-2 lg:grid-cols-2">
             <div className="flex flex-col bg-mist-100 p-7 md:p-10" data-reveal>
-              <h3 className="display text-[clamp(1.5rem,2.2vw,2.25rem)] text-mist-700">Working with several vendors</h3>
+              <h3 className="display text-head-sm text-mist-700">Working with several vendors</h3>
               <ul className="mt-8 grid gap-4">
                 {without.map((t) => (
                   <li key={t} className="flex gap-4 text-mist-700">
@@ -308,8 +308,8 @@ export default function Home() {
               </ul>
             </div>
 
-            <div className="flex flex-col bg-ocean-600 p-7 text-white md:p-10" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
-              <h3 className="display text-[clamp(1.5rem,2.2vw,2.25rem)]">One partner for all of it</h3>
+            <div className="on-dark flex flex-col bg-ocean-600 p-7 text-white md:p-10" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
+              <h3 className="display text-head-sm">One partner for all of it</h3>
               <ul className="mt-8 grid gap-4">
                 {withUs.map((t) => (
                   <li key={t} className="flex gap-4">
@@ -350,7 +350,7 @@ export default function Home() {
             ).map((x, i) => (
               <li key={x.name} className="flex flex-col bg-mist-100 p-6 md:p-7" data-reveal style={{ "--d": i } as React.CSSProperties}>
                 <ManyIntoOne part={x.part} className="h-36 w-full md:h-40" />
-                <p className="mt-6 text-[18px] font-semibold">{x.name}</p>
+                <p className="mt-6 text-body font-semibold">{x.name}</p>
                 <p className="mt-1.5 text-mist-600">{x.body}</p>
               </li>
             ))}
@@ -361,14 +361,14 @@ export default function Home() {
       {/* Certifications and platform partners: two panels */}
       <section aria-labelledby="proof-title" className="bg-field-mist">
         <div className="gutter py-24 md:py-32">
-          <h2 id="proof-title" className="display max-w-[20ch] text-[clamp(2.25rem,4vw,3.75rem)]" data-reveal>
+          <h2 id="proof-title" className="display max-w-[20ch] text-head" data-reveal>
             Certifications and partnerships
           </h2>
 
           <div className="mt-12 grid gap-2 lg:grid-cols-2">
             <div className="flex flex-col bg-mist-0 p-6 md:p-8" data-reveal>
-              <h3 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-medium">Supplier-diversity certifications</h3>
-              <p className="mt-2 max-w-[48ch] text-mist-600">
+              <h3 className="text-head-sm font-medium">Supplier-diversity certifications</h3>
+              <p className="mt-2 max-w-measure-narrow text-mist-600">
                 Minority-owned and women-owned, certified at national, state and city level. Work placed with us counts toward your
                 diversity goals.
               </p>
@@ -386,8 +386,8 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col bg-mist-0 p-6 md:p-8" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
-              <h3 className="text-[clamp(1.375rem,1.8vw,1.75rem)] font-medium">Technology partners</h3>
-              <p className="mt-2 max-w-[48ch] text-mist-600">
+              <h3 className="text-head-sm font-medium">Technology partners</h3>
+              <p className="mt-2 max-w-measure-narrow text-mist-600">
                 Our cloud, data and AI work runs on the platforms our clients use, so you get people who already know the stack.
               </p>
               <ul className="mt-8 grid flex-1 grid-cols-2 gap-2">

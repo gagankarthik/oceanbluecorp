@@ -57,11 +57,11 @@ function Field({ id, label, required: req, error, hint, children }: { id: string
     <div className="min-w-0">
       <label htmlFor={id} className="block text-adm-base font-medium text-navy-900">
         {label}
-        {req && <span className="text-[#b42318]"> *</span>}
+        {req && <span className="text-status-danger"> *</span>}
       </label>
       {children}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-adm-xs text-[#b42318]">
+        <p id={`${id}-error`} role="alert" className="mt-1 text-adm-xs text-status-danger">
           {error}
         </p>
       ) : (
@@ -75,7 +75,7 @@ function StatusLine({ status }: { status: Status }) {
   if (!status) return <span aria-live="polite" />;
   const ok = status.tone === "ok";
   return (
-    <p role={ok ? "status" : "alert"} className={`flex min-w-0 items-start gap-1.5 text-adm-base ${ok ? "text-[#067647]" : "text-[#b42318]"}`}>
+    <p role={ok ? "status" : "alert"} className={`flex min-w-0 items-start gap-1.5 text-adm-base ${ok ? "text-status-success" : "text-status-danger"}`}>
       <Icon name={ok ? "check" : "alert"} className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">{status.text}</span>
     </p>
@@ -386,6 +386,7 @@ function PasswordCard() {
           type="button"
           onClick={() => setShow({ ...show, [key]: !show[key] })}
           aria-label={`${show[key] ? "Hide" : "Show"} ${label.toLowerCase()}`}
+          title={`${show[key] ? "Hide" : "Show"} ${label.toLowerCase()}`}
           aria-pressed={show[key]}
           className="absolute bottom-0 right-0 grid size-10 place-items-center rounded-lg text-mist-500 hover:text-navy-900"
         >

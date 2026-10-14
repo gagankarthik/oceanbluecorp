@@ -409,7 +409,7 @@ export function CandidateDetail({ id }: { id: string }) {
   const analysisCta = candidate.resumeId ? (
     analysing ? (
       <div className="grid gap-4">
-        <p role="status" className="flex items-start gap-2.5 rounded-lg bg-ocean-50 px-4 py-3 text-[14px] text-navy-900 ring-1 ring-inset ring-ocean-200">
+        <p role="status" className="flex items-start gap-2.5 rounded-lg bg-ocean-50 px-4 py-3 text-adm-base text-navy-900 ring-1 ring-inset ring-ocean-200">
           <Spinner className="mt-0.5 size-4 text-ocean-700" />
           <span>
             <span className="font-semibold">Analyzing the resume…</span> Extracting experience, education and skills. Usually under a minute; the page updates by itself.
@@ -512,7 +512,7 @@ export function CandidateDetail({ id }: { id: string }) {
       />
 
       {/* Pinned while the record scrolls: where they are, the next move, and the tabs. */}
-      <div ref={stripRef} className="sticky top-16 z-20 grid gap-3 rounded-xl bg-mist-0/95 p-4 shadow-[0_8px_24px_-12px_rgba(16,24,40,0.12)] ring-1 ring-mist-200 backdrop-blur sm:pb-0">
+      <div ref={stripRef} className="sticky top-16 z-20 grid gap-3 rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200 sm:pb-0">
         <StageTrack status={candidate.status} saving={statusSaving} daysInStage={daysInStage} onStage={(s) => void handleStage(s)} />
         <RecordTabs label="Candidate record" tabs={tabs} value={activeTab} onChange={setActiveTab} />
       </div>
@@ -525,12 +525,12 @@ export function CandidateDetail({ id }: { id: string }) {
               <ApplicantDetails candidate={candidate} onEdit={() => setEditing(candidate)} />
               {!hasAnalysis && candidate.experience && (
                 <Panel title="Experience">
-                  <p className="whitespace-pre-line text-[14px] leading-relaxed text-mist-700">{candidate.experience}</p>
+                  <p className="whitespace-pre-line text-adm-base leading-normal text-mist-700">{candidate.experience}</p>
                 </Panel>
               )}
               {candidate.coverLetter && (
                 <Panel title="Cover letter">
-                  <p className="whitespace-pre-line text-[14px] leading-relaxed text-mist-700">{candidate.coverLetter}</p>
+                  <p className="whitespace-pre-line text-adm-base leading-normal text-mist-700">{candidate.coverLetter}</p>
                 </Panel>
               )}
               {isTerminal && hasAnalysis && <JobFitCard applicationId={id} />}
@@ -543,8 +543,8 @@ export function CandidateDetail({ id }: { id: string }) {
               <>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="text-[17px] font-semibold text-navy-900">Resume analysis</h2>
-                    {candidate.resumeAnalyzedAt && <p className="text-[13px] text-mist-600">Last analyzed <span className="tabular-nums">{fmtDateTime(candidate.resumeAnalyzedAt)}</span></p>}
+                    <h2 className="text-adm-md font-semibold text-navy-900">Resume analysis</h2>
+                    {candidate.resumeAnalyzedAt && <p className="text-adm-base text-mist-600">Last analyzed <span className="tabular-nums">{fmtDateTime(candidate.resumeAnalyzedAt)}</span></p>}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="secondary" icon="edit" onClick={() => setAnalysisEditOpen(true)}>

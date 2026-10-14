@@ -2,9 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
+const SETTLE_MS = 4500;
+
 /**
- * A field of small dots that moves like gentle water and ripples away from
- * the pointer. Decorative only; static when the visitor prefers less motion.
+ * A field of small dots that drifts like water once, slows to rest within
+ * SETTLE_MS, then only ripples away from the pointer. Decorative; fully
+ * static when the visitor prefers less motion.
  */
 export default function WaveField({ className = "", color = "10, 114, 192" }: { className?: string; color?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -20,7 +23,9 @@ export default function WaveField({ className = "", color = "10, 114, 192" }: { 
     let w = 0;
     let h = 0;
     let raf = 0;
-    let visible = true;
+    let start = 0;
+    // Wave time; decelerates to a stop, so the last frame is the resting one.
+    let tau = 0;
     const gap = 22;
 
     const resize = () => {
@@ -61,28 +66,31 @@ export default function WaveField({ className = "", color = "10, 114, 192" }: { 
       }
     };
 
-    const loop = (t: number) => {
-      if (visible) draw(t);
-      raf = requestAnimationFrame(loop);
+    const loop = (now: number) => {
+      start ||= now;
+      const p = Math.min((now - start) / SETTLE_MS, 1);
+      tau = SETTLE_MS * (p - (p * p) / 2);
+      draw(tau);
+      raf = p < 1 ? requestAnimationFrame(loop) : 0;
     };
 
     const onMove = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       pointer.x = e.clientX - rect.left;
       pointer.y = e.clientY - rect.top;
+      const was = pointer.active;
       pointer.active = pointer.x >= 0 && pointer.y >= 0 && pointer.x <= w && pointer.y <= h;
-      if (reduce) draw(0);
+      // Settled: redraw only for the ripple, and once more to clear it on leaving.
+      if (!raf && (pointer.active || was)) draw(tau);
     };
 
     resize();
     const ro = new ResizeObserver(() => {
       resize();
-      if (reduce) draw(0);
+      if (!raf) draw(tau);
     });
     ro.observe(canvas);
-    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
-    io.observe(canvas);
-    window.addEventListener("pointermove", onMove, { passive: true });
+    if (!reduce) window.addEventListener("pointermove", onMove, { passive: true });
 
     if (reduce) draw(0);
     else raf = requestAnimationFrame(loop);
@@ -90,7 +98,6 @@ export default function WaveField({ className = "", color = "10, 114, 192" }: { 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      io.disconnect();
       window.removeEventListener("pointermove", onMove);
     };
   }, [color]);

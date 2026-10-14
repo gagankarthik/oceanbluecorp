@@ -10,7 +10,7 @@ import DataTable, { type Column, type Filter } from "@/components/portal/DataTab
 import Icon, { type IconName } from "@/components/portal/icons";
 import Select, { type SelectOption } from "@/components/portal/Select";
 import { RoleGate, useSession } from "@/components/portal/session";
-import { BarChart, DonutChart, SERIES } from "@/components/portal/charts";
+import { BarChart, DonutChart } from "@/components/portal/charts";
 import {
   Avatar,
   Badge,
@@ -133,11 +133,11 @@ function UserDetail({
       <div className="flex items-center gap-4">
         <Avatar name={u.name || u.email} size="lg" />
         <div className="min-w-0">
-          <p className="text-[18px] font-semibold text-navy-900">
+          <p className="text-adm-md font-semibold text-navy-900">
             {u.name || "Unnamed"}
-            {isSelf && <span className="ml-2 text-[13px] font-normal text-mist-500">(you)</span>}
+            {isSelf && <span className="ml-2 text-adm-base font-normal text-mist-600">(you)</span>}
           </p>
-          <p className="truncate text-[14px] text-mist-600">{u.email}</p>
+          <p className="truncate text-adm-base text-mist-600">{u.email}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <RoleBadge role={u.role} />
             <StatusChip status={u.status} />
@@ -166,15 +166,15 @@ function UserDetail({
       />
 
       <section className="rounded-xl ring-1 ring-mist-200">
-        <h3 className="border-b border-mist-200 px-4 py-3 text-[14px] font-semibold">Access</h3>
+        <h3 className="border-b border-mist-200 px-4 py-3 text-adm-base font-semibold">Access</h3>
         <div className="grid gap-4 p-4">
           {!canManage && (
-            <p className="flex items-start gap-2 rounded-lg bg-mist-50 px-3 py-2.5 text-[13px] text-mist-700">
+            <p className="flex items-start gap-2 rounded-lg bg-mist-50 px-3 py-2.5 text-adm-base text-mist-700">
               <Icon name="shield" className="mt-0.5 size-4 shrink-0 text-mist-500" />
               {isSelf ? "You can't change your own account here." : "Only an administrator can change an Admin or HR account."}
             </p>
           )}
-          <div className="text-[13px] font-medium">
+          <div className="text-adm-base font-medium">
             <p className="mb-1.5">Role</p>
             {canManage ? (
               <div className="flex flex-wrap items-center gap-2">
@@ -194,12 +194,12 @@ function UserDetail({
                 </Button>
               </div>
             ) : (
-              <p className="flex h-10 items-center rounded-lg bg-mist-100 px-3 text-[14px] font-medium text-mist-700">{roleLabel(u.role)}</p>
+              <p className="flex h-10 items-center rounded-lg bg-mist-100 px-3 text-adm-base font-medium text-mist-700">{roleLabel(u.role)}</p>
             )}
           </div>
           {canManage && u.status !== "pending" && (
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 pt-4">
-              <p className="text-[14px] text-mist-700">{u.status === "active" ? "This person can sign in." : "Sign-in is turned off for this account."}</p>
+              <p className="text-adm-base text-mist-700">{u.status === "active" ? "This person can sign in." : "Sign-in is turned off for this account."}</p>
               {u.status === "active" ? (
                 <Button variant="secondary" icon="x" loading={busy === "status"} onClick={() => run("status", () => onStatus("inactive"))}>
                   Deactivate
@@ -212,7 +212,7 @@ function UserDetail({
             </div>
           )}
           {u.status === "pending" && (
-            <p className="border-t border-mist-200 pt-4 text-[13px] text-mist-600">Invite sent. They finish setting up the account on first sign-in.</p>
+            <p className="border-t border-mist-200 pt-4 text-adm-base text-mist-600">Invite sent. They finish setting up the account on first sign-in.</p>
           )}
         </div>
       </section>
@@ -264,11 +264,11 @@ function RolesPanel() {
           const n = SCREENS.filter((s) => canAccess(r, s.href)).length;
           return (
             <div key={r} className="flex min-w-0 flex-col gap-2 rounded-xl bg-mist-0 p-5 ring-1 ring-mist-200">
-              <p className="text-[14px] font-semibold text-navy-900">{roles[r].label}</p>
-              <p className="text-[13px] tabular-nums text-mist-600">
-                <span className="text-[22px] font-semibold text-navy-900">{n}</span> of {SCREENS.length} screens
+              <p className="text-adm-base font-semibold text-navy-900">{roles[r].label}</p>
+              <p className="text-adm-base tabular-nums text-mist-600">
+                <span className="text-adm-lg font-semibold text-navy-900">{n}</span> of {SCREENS.length} screens
               </p>
-              <p className="text-[13px] leading-snug text-mist-600">{roles[r].description}</p>
+              <p className="text-adm-base leading-snug text-mist-600">{roles[r].description}</p>
             </div>
           );
         })}
@@ -276,9 +276,9 @@ function RolesPanel() {
 
       <Panel title="Who can open each screen" description="Read from the same access rules the portal enforces. Change a teammate's role from the Users tab." padded={false}>
         <div className="scroll-thin overflow-x-auto overflow-y-hidden">
-          <table className="w-full min-w-[36rem] border-collapse text-[14px]">
+          <table className="w-full min-w-[36rem] border-collapse text-adm-base">
             <thead>
-              <tr className="border-b border-mist-200 bg-mist-50 text-[12px] text-mist-600">
+              <tr className="border-b border-mist-200 bg-mist-50 text-adm-xs text-mist-600">
                 <th scope="col" className="px-4 py-3 text-left font-medium">
                   Screen
                 </th>
@@ -302,12 +302,12 @@ function RolesPanel() {
         <ul className="grid gap-x-8 gap-y-5 md:grid-cols-2">
           {DATA_RULES.map((d) => (
             <li key={d.title} className="flex gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#eeebfb] text-[#4a3aa7]">
-                <Icon name={d.icon} className="size-[18px]" />
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-ocean-50 text-ocean-700">
+                <Icon name={d.icon} className="size-5" />
               </span>
               <span className="min-w-0">
-                <span className="block text-[14px] font-semibold text-navy-900">{d.title}</span>
-                <span className="mt-0.5 block text-[13px] leading-relaxed text-mist-600">{d.body}</span>
+                <span className="block text-adm-base font-semibold text-navy-900">{d.title}</span>
+                <span className="mt-0.5 block text-adm-base leading-normal text-mist-600">{d.body}</span>
               </span>
             </li>
           ))}
@@ -321,7 +321,7 @@ function PermGroup({ title, items }: { title: string; items: { href: string; lab
   return (
     <>
       <tr className="bg-mist-50/60">
-        <th colSpan={ROLE_KEYS.length + 1} scope="colgroup" className="px-4 pb-1.5 pt-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-mist-500">
+        <th colSpan={ROLE_KEYS.length + 1} scope="colgroup" className="px-4 pb-1.5 pt-3 text-left text-adm-xs font-semibold uppercase tracking-[0.08em] text-mist-600">
           {title}
         </th>
       </tr>
@@ -336,7 +336,7 @@ function PermGroup({ title, items }: { title: string; items: { href: string; lab
           {ROLE_KEYS.map((r) => (
             <td key={r} className="px-3 py-2.5 text-center">
               {canAccess(r, i.href) ? (
-                <span className="inline-grid size-6 place-items-center rounded-full bg-[#ecfdf3] text-[#067647]">
+                <span className="inline-grid size-6 place-items-center rounded-full bg-status-success-soft text-status-success">
                   <Icon name="check" className="size-3.5" title={`${roles[r].label} can open ${i.label}`} />
                 </span>
               ) : (
@@ -405,12 +405,12 @@ function InviteForm({ existing, allowedRoles, onClose, onSent }: { existing: Use
         <Field label="Work email" required error={fieldError} hint="They set their name, phone and password on first sign-in.">
           <input type="email" value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="name@oceanbluecorp.com" aria-invalid={!!fieldError || undefined} className={inputCls} autoComplete="off" autoFocus />
         </Field>
-        <div className="text-[13px] font-medium">
+        <div className="text-adm-base font-medium">
           <p className="mb-1.5">
-            Role <span className="text-[#b42318]">*</span>
+            Role <span className="text-status-danger">*</span>
           </p>
           <Select label="Role" value={role} onChange={(v) => setRole(v as StaffRole)} options={roleOptions(allowedRoles)} width="w-full" variant="field" showLabel={false} />
-          {allowedRoles.length < ROLE_ORDER.length && <p className="mt-1 text-[12px] font-normal text-mist-500">Only an administrator can grant Admin or HR.</p>}
+          {allowedRoles.length < ROLE_ORDER.length && <p className="mt-1 text-adm-xs font-normal text-mist-600">Only an administrator can grant Admin or HR.</p>}
         </div>
         <button type="submit" hidden />
       </form>
@@ -532,9 +532,9 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
           <span className="min-w-0">
             <span className="block truncate font-medium">
               {u.name || "Unnamed"}
-              {isSelf(u) && <span className="ml-1.5 text-[12px] font-normal text-mist-500">(you)</span>}
+              {isSelf(u) && <span className="ml-1.5 text-adm-xs font-normal text-mist-600">(you)</span>}
             </span>
-            <span className="block max-w-[16rem] truncate text-[12px] text-mist-600" title={u.email}>
+            <span className="block max-w-[16rem] truncate text-adm-xs text-mist-600" title={u.email}>
               {u.email}
             </span>
           </span>
@@ -562,7 +562,7 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
           title="Users"
           icon="shield"
           section="workspace"
-          description="Staff accounts, roles and sign-in access."
+
           actions={
             <>
               {tab === "users" && loaded && users.length > 0 && (
@@ -588,7 +588,6 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
                               setRoleFilter(v);
                               close();
                             }}
-                            colors={SERIES}
                           />
                         </div>
                       </Panel>
@@ -650,14 +649,14 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
             </KpiRow>
 
             {(focus || roleFilter !== "All") && (
-              <div className="flex flex-wrap items-center gap-2 text-[13px]">
+              <div className="flex flex-wrap items-center gap-2 text-adm-base">
                 <span className="text-mist-600">Showing</span>
                 {[focus && { text: FOCUS[focus].label, clear: () => setFocus(null) }, roleFilter !== "All" && { text: roleFilter, clear: () => setRoleFilter("All") }]
                   .filter((c): c is { text: string; clear: () => void } => !!c)
                   .map((c) => (
                     <span key={c.text} className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 py-1 pl-3 pr-1 font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200">
                       {c.text}
-                      <button type="button" onClick={c.clear} aria-label={`Clear ${c.text}`} className="grid size-6 place-items-center rounded-full hover:bg-ocean-100">
+                      <button type="button" onClick={c.clear} aria-label={`Clear ${c.text}`} title={`Clear ${c.text}`} className="adm-hit grid size-6 place-items-center rounded-full hover:bg-ocean-100">
                         <Icon name="x" className="size-3.5" />
                       </button>
                     </span>

@@ -136,7 +136,7 @@ export function JobPreviewDrawer({
                   </p>
                 ) : description ? (
                   <div
-                    className="mt-2 max-w-[65ch] text-adm-base leading-relaxed text-[var(--adm-ink-mute)] [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+                    className="mt-2 max-w-[65ch] text-adm-base leading-normal text-[var(--adm-ink-mute)] [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
                     dangerouslySetInnerHTML={renderRichText(description)}
                   />
                 ) : (

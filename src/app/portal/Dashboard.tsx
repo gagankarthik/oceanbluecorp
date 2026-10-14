@@ -20,6 +20,7 @@ import { useResource, type Resource } from "@/hooks/use-resource";
 import { fmtRelative } from "@/lib/format";
 import { isPubliclyOpen, jobCategory } from "@/lib/job-status";
 import { DAY, OFFER_STALE_DAYS, STALE_DAYS, TERMINAL, enteredStageAt, everReached, isStale, median } from "@/lib/pipeline";
+import { ActionMenu } from "@/components/portal/records/Menu";
 import { DashboardBodySkeleton } from "./DashboardSkeleton";
 
 const RANGES = [
@@ -58,7 +59,7 @@ function TabbedPanel({ tabs, className = "" }: { tabs: { id: string; label: stri
             type="button"
             aria-selected={t.id === active}
             onClick={() => setActive(t.id)}
-            className={`-mb-px min-h-10 shrink-0 whitespace-nowrap border-b-2 px-3 text-[14px] font-medium transition-colors duration-150 ${
+            className={`-mb-px min-h-10 shrink-0 whitespace-nowrap border-b-2 px-3 text-adm-base font-medium transition-colors duration-150 ${
               t.id === active ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
             }`}
           >
@@ -75,19 +76,19 @@ function TabbedPanel({ tabs, className = "" }: { tabs: { id: string; label: stri
 
 /** One attention row: a count and where to act on it. Two targets when the count spans both role lists. */
 function AttentionRow({ label, hint, value, tone, href, split }: { label: string; hint: string; value: number; tone: "red" | "amber"; href: string; split?: { label: string; href: string }[] }) {
-  const badge = !value ? "bg-mist-100 text-mist-500" : tone === "red" ? "bg-[#fef3f2] text-[#b42318]" : "bg-[#fffaeb] text-[#b54708]";
-  const count = <span className={`grid h-8 min-w-10 shrink-0 place-items-center rounded-md px-2 text-[14px] font-semibold tabular-nums ${badge}`}>{value}</span>;
+  const badge = !value ? "bg-mist-100 text-mist-600" : tone === "red" ? "bg-status-danger-soft text-status-danger" : "bg-status-warning-soft text-status-warning";
+  const count = <span className={`grid h-8 min-w-10 shrink-0 place-items-center rounded-md px-2 text-adm-base font-semibold tabular-nums ${badge}`}>{value}</span>;
   if (split)
     return (
       // Rail width: the two targets sit under the label rather than beside it
       <div className="flex min-h-12 items-start gap-3 rounded-lg p-2">
         {count}
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] font-medium text-navy-900">{label}</span>
-          <span className="block truncate text-[12px] text-mist-600">{hint}</span>
+          <span className="block truncate text-adm-base font-medium text-navy-900">{label}</span>
+          <span className="block truncate text-adm-xs text-mist-600">{hint}</span>
           <span className="-ml-2 mt-1 flex flex-wrap gap-1">
             {split.map((s) => (
-              <Link key={s.href} href={s.href} className="inline-flex min-h-8 items-center gap-0.5 rounded-md px-2 text-[13px] font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50">
+              <Link key={s.href} href={s.href} className="inline-flex min-h-8 items-center gap-0.5 rounded-md px-2 text-adm-base font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50">
                 {s.label}
                 <Icon name="chevronRight" className="size-3.5" />
               </Link>
@@ -100,10 +101,10 @@ function AttentionRow({ label, hint, value, tone, href, split }: { label: string
     <Link href={href} className="flex min-h-12 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
       {count}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-medium text-navy-900">{label}</span>
-        <span className="block truncate text-[12px] text-mist-600">{hint}</span>
+        <span className="block truncate text-adm-base font-medium text-navy-900">{label}</span>
+        <span className="block truncate text-adm-xs text-mist-600">{hint}</span>
       </span>
-      <Icon name="chevronRight" className="size-4 shrink-0 text-mist-400" />
+      <Icon name="chevronRight" className="size-4 shrink-0 text-mist-500" />
     </Link>
   );
 }
@@ -148,10 +149,10 @@ function MyTasks() {
       title={`My tasks${tasks.length ? ` (${tasks.length})` : ""}`}
       action={
         overdue || dueToday ? (
-          <span className="text-[13px] font-medium">
-            {overdue > 0 && <span className="text-[#b42318]">{overdue} overdue</span>}
-            {overdue > 0 && dueToday > 0 && <span className="text-mist-500">, </span>}
-            {dueToday > 0 && <span className="text-[#b54708]">{dueToday} due today</span>}
+          <span className="text-adm-base font-medium">
+            {overdue > 0 && <span className="text-status-danger">{overdue} overdue</span>}
+            {overdue > 0 && dueToday > 0 && <span className="text-mist-600">, </span>}
+            {dueToday > 0 && <span className="text-status-warning">{dueToday} due today</span>}
           </span>
         ) : undefined
       }
@@ -181,6 +182,7 @@ function MyTasks() {
                 <button
                   type="button"
                   aria-label={`Mark "${t.text}" done`}
+                  title="Mark done"
                   disabled={busy === t.id}
                   onClick={() => void setDone(t, true)}
                   className="group grid size-10 shrink-0 place-items-center rounded-lg disabled:opacity-50"
@@ -190,16 +192,16 @@ function MyTasks() {
                   </span>
                 </button>
                 <Link href={`/portal/candidates/${t.applicationId}`} className="group min-w-0 flex-1 py-2 pr-2">
-                  <span className="block truncate text-[14px] text-navy-900 group-hover:underline">{t.text}</span>
-                  <span className="block truncate text-[12px] text-mist-600">
+                  <span className="block truncate text-adm-base text-navy-900 group-hover:underline">{t.text}</span>
+                  <span className="block truncate text-adm-xs text-mist-600">
                     {t.candidateName || "Unnamed"}
-                    {t.dueAt && <span className={late ? "font-medium text-[#b42318]" : ""}>, due {dueLabel(t.dueAt)}</span>}
+                    {t.dueAt && <span className={late ? "font-medium text-status-danger" : ""}>, due {dueLabel(t.dueAt)}</span>}
                   </span>
                 </Link>
               </li>
             );
           })}
-          {tasks.length > 6 && <li className="px-2 pt-1 text-[12px] text-mist-600">+{tasks.length - 6} more on candidate records</li>}
+          {tasks.length > 6 && <li className="px-2 pt-1 text-adm-xs text-mist-600">+{tasks.length - 6} more on candidate records</li>}
         </ul>
       )}
     </Panel>
@@ -247,31 +249,24 @@ export default function Dashboard() {
   const apps = useMemo(() => (start === null ? all : all.filter((a) => new Date(a.appliedAt).getTime() >= start)), [all, start]);
 
   const first = user.name.split(" ")[0];
-  const date = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
   const header = (
     <PageHeader
       icon="dashboard"
       title={first ? `Welcome back, ${first}` : "Welcome back"}
-      description={
-        <>
-          {date}
-          {loadedAt && <>, updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</>}
-        </>
-      }
+      description={loadedAt ? `Updated ${loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : undefined}
       actions={
         <>
           <Button
             variant="ghost"
             icon="refresh"
+            label="Refresh"
             loading={appsRes.isValidating || jobsRes.isValidating}
             onClick={() => void Promise.all([appsRes.reload(), jobsRes.reload(), statsRes.reload()])}
-          >
-            Refresh
-          </Button>
-          {role === "sales" && <Button href="/portal/state-roles" variant="secondary" icon="capitol">State roles</Button>}
-          {role === "hr" && <Button href="/portal/resumes" variant="secondary" icon="resume">Resumes</Button>}
+          />
           <Button href="/portal/applications" variant="secondary" icon="inbox">Applications</Button>
+          {role === "sales" && <ActionMenu items={[{ label: "State roles", icon: "capitol", onSelect: () => router.push("/portal/state-roles") }]} />}
+          {role === "hr" && <ActionMenu items={[{ label: "Resumes", icon: "resume", onSelect: () => router.push("/portal/resumes") }]} />}
           {canEditJobs && <Button href="/portal/jobs/new" icon="plus">New role</Button>}
         </>
       }
@@ -481,7 +476,7 @@ function Overview({
                 series={[{ name: "Applications", values: appliedSeries }, { name: "Hired", values: hiredSeries }, { name: "Rejected", values: rejectedSeries }]}
                 area
               />
-              <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-mist-200 pt-3 text-[13px]">
+              <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-mist-200 pt-3 text-adm-base">
                 {[
                   { label: "Applications", value: apps.length },
                   { label: "Placements", value: placements.length },
@@ -505,13 +500,13 @@ function Overview({
             {openJobs.length > 0 && (
               <div className="mb-3 grid gap-2 border-b border-mist-200 pb-4">
                 <div className="flex items-baseline justify-between gap-3">
-                  <Link href="/portal/state-roles?focus=live" className="text-[14px] font-medium text-navy-900 hover:underline">
-                    <span className="text-[20px] font-semibold tabular-nums">{openJobs.length}</span> live role{openJobs.length === 1 ? "" : "s"}
+                  <Link href="/portal/state-roles?focus=live" className="text-adm-base font-medium text-navy-900 hover:underline">
+                    <span className="text-adm-lg font-semibold tabular-nums">{openJobs.length}</span> live role{openJobs.length === 1 ? "" : "s"}
                   </Link>
-                  <span className="truncate text-[13px] text-mist-600">{liveBy.state} state, {liveBy.open} open</span>
+                  <span className="truncate text-adm-base text-mist-600">{liveBy.state} state, {liveBy.open} open</span>
                 </div>
                 <ProgressBar value={((openJobs.length - starved) / openJobs.length) * 100} tone={starved ? "amber" : "green"} />
-                <p className="text-[12px] text-mist-600">
+                <p className="text-adm-xs text-mist-600">
                   {openJobs.length - starved} of {openJobs.length} have candidates in progress
                 </p>
               </div>
@@ -545,7 +540,7 @@ function Overview({
             <div className="grid gap-4">
               <StageFunnel stages={funnel} onSelect={(label) => { const s = funnel.find((f) => f.label === label)?.key; if (s) onStage(s); }} />
               {bottleneck && (
-                <p className="text-[13px] text-mist-600">
+                <p className="text-adm-base text-mist-600">
                   <span className="font-medium text-navy-900">{STAGE_LABEL[bottleneck.s]}</span> is the slowest stage, at a median of {bottleneck.age} days.
                 </p>
               )}
@@ -570,15 +565,15 @@ function Overview({
               label: "Role coverage",
               content: coverage.length ? (
                 <div className="grid gap-3">
-                  <p className="text-[13px] text-mist-600">Candidates in progress per live role, thinnest first.</p>
+                  <p className="text-adm-base text-mist-600">Candidates in progress per live role, thinnest first.</p>
                   <ul className="grid gap-1">
                     {coverage.slice(0, 8).map(({ j, n }) => (
                       <li key={j.id}>
                         <Link href={`/portal/jobs/${j.id}`} className="flex min-h-10 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
-                          <span className={`w-10 shrink-0 rounded-md py-1 text-center text-[13px] font-semibold tabular-nums ${n === 0 ? "bg-[#fef3f2] text-[#b42318]" : n < 3 ? "bg-[#fffaeb] text-[#b54708]" : "bg-ocean-50 text-ocean-700"}`}>{n}</span>
+                          <span className={`w-10 shrink-0 rounded-md py-1 text-center text-adm-base font-semibold tabular-nums ${n === 0 ? "bg-status-danger-soft text-status-danger" : n < 3 ? "bg-status-warning-soft text-status-warning" : "bg-ocean-50 text-ocean-700"}`}>{n}</span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[14px] font-medium text-navy-900">{j.title}</span>
-                            <span className="block truncate text-[12px] text-mist-600">{j.clientName || j.department || j.postingId}</span>
+                            <span className="block truncate text-adm-base font-medium text-navy-900">{j.title}</span>
+                            <span className="block truncate text-adm-xs text-mist-600">{j.clientName || j.department || j.postingId}</span>
                           </span>
                         </Link>
                       </li>
@@ -601,9 +596,9 @@ function Overview({
                 <div className="grid gap-4">
                   <BarList items={clientMix} />
                   {topClientShare !== null && topClientShare >= 40 && (
-                    <p className="text-[13px] text-mist-600">
+                    <p className="text-adm-base text-mist-600">
                       <span className="font-medium text-navy-900">{clientMix[0].label}</span> holds{" "}
-                      <span className="font-semibold text-[#b54708]">{topClientShare}%</span> of the pipeline.
+                      <span className="font-semibold text-status-warning">{topClientShare}%</span> of the pipeline.
                     </p>
                   )}
                 </div>
@@ -650,8 +645,8 @@ function Overview({
                   <Link href={`/portal/candidates/${a.id}`} className="flex min-h-12 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
                     <Avatar name={a.name || a.email} size="sm" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium text-navy-900">{a.name || "Unnamed"}</span>
-                      <span className="block truncate text-[12px] text-mist-600">{a.jobTitle || "No role"}, {fmtRelative(a.appliedAt)}</span>
+                      <span className="block truncate text-adm-base font-medium text-navy-900">{a.name || "Unnamed"}</span>
+                      <span className="block truncate text-adm-xs text-mist-600">{a.jobTitle || "No role"}, {fmtRelative(a.appliedAt)}</span>
                     </span>
                     <StageBadge stage={a.status} />
                   </Link>

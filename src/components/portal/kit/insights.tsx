@@ -18,22 +18,32 @@ export function InsightsSheet({
   title = "Insights",
   description,
   children,
+  open: openProp,
+  onOpenChange,
 }: {
   title?: string;
   description?: React.ReactNode;
   children: React.ReactNode | ((close: () => void) => React.ReactNode);
+  /** Controlled: the page opens it (e.g. from a header ⋯ menu) and no button renders */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openState;
+  const setOpen = (v: boolean) => (controlled ? onOpenChange?.(v) : setOpenState(v));
   const close = () => setOpen(false);
   return (
     <>
-      <Button variant="secondary" icon="chart" onClick={() => setOpen(true)} aria-haspopup="dialog">
-        Insights
-      </Button>
+      {!controlled && (
+        <Button variant="secondary" icon="chart" onClick={() => setOpen(true)}>
+          Insights
+        </Button>
+      )}
       {open && (
         <Drawer title={title} width="lg" onClose={close}>
           <InSheet.Provider value={true}>
-            {description && <p className="-mt-1 mb-5 text-[14px] text-mist-600">{description}</p>}
+            {description && <p className="-mt-1 mb-5 text-adm-base text-mist-600">{description}</p>}
             <div className="grid gap-5 [&>*]:min-w-0">{typeof children === "function" ? children(close) : children}</div>
           </InSheet.Provider>
         </Drawer>

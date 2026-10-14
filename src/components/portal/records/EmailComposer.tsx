@@ -125,7 +125,7 @@ function Composer({
         <>
           <a
             href={candidate.email ? `mailto:${candidate.email}` : undefined}
-            className={`mr-auto text-[13px] text-mist-600 underline-offset-4 hover:text-navy-900 hover:underline ${candidate.email ? "" : "pointer-events-none opacity-50"}`}
+            className={`mr-auto text-adm-base text-mist-600 underline-offset-4 hover:text-navy-900 hover:underline ${candidate.email ? "" : "pointer-events-none opacity-50"}`}
           >
             Open in my mail app
           </a>
@@ -145,7 +145,7 @@ function Composer({
         }}
         className="grid gap-5"
       >
-        <p className="text-[13px] text-mist-600">To {candidate.email || "no address on file"} · replies come to you</p>
+        <p className="text-adm-base text-mist-600">To {candidate.email || "no address on file"} · replies come to you</p>
         <Field label="Template" htmlFor="ec-template">
           <NativeSelect id="ec-template" value={templateId} onChange={(e) => pickTemplate(e.target.value)}>
             <option value="">Blank message</option>
@@ -194,13 +194,13 @@ function Composer({
         </div>
         {(finalSubject || finalBody) && (
           <div>
-            <button type="button" onClick={() => setPreview((v) => !v)} aria-expanded={preview} className="min-h-8 text-[13px] font-medium text-ocean-700 hover:underline">
+            <button type="button" onClick={() => setPreview((v) => !v)} aria-expanded={preview} className="min-h-8 text-adm-base font-medium text-ocean-700 hover:underline">
               {preview ? "Hide preview" : "Preview what they receive"}
             </button>
             {preview && (
               <div className="mt-2 rounded-lg bg-mist-50 p-4 ring-1 ring-inset ring-mist-200">
-                <p className="text-[14px] font-semibold text-navy-900">{finalSubject || "(no subject)"}</p>
-                <p className="mt-2 whitespace-pre-wrap text-[14px] leading-relaxed text-mist-700">{finalBody}</p>
+                <p className="text-adm-base font-semibold text-navy-900">{finalSubject || "(no subject)"}</p>
+                <p className="mt-2 whitespace-pre-wrap text-adm-base leading-normal text-mist-700">{finalBody}</p>
               </div>
             )}
           </div>

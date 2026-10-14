@@ -42,18 +42,18 @@ export function JobCreatedDialog({
     >
       <div className="grid gap-4">
         <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#ecfdf3] text-[#067647]">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-status-success-soft text-status-success">
             <Icon name="check" className="size-5" />
           </span>
-          <p className="text-[14px] leading-relaxed text-mist-700">
+          <p className="text-adm-base leading-normal text-mist-700">
             {live
               ? "It's live on the careers site and taking applications."
               : "It's off the careers site until you publish it from the job page or the list."}
           </p>
         </div>
         <div className="rounded-lg bg-mist-50 px-4 py-3 ring-1 ring-inset ring-mist-200">
-          <p className="truncate text-[14px] font-semibold text-navy-900">{job.title}</p>
-          <p className="mt-0.5 truncate text-[13px] text-mist-600">{[job.postingId, where].filter(Boolean).join(" · ")}</p>
+          <p className="truncate text-adm-base font-semibold text-navy-900">{job.title}</p>
+          <p className="mt-0.5 truncate text-adm-base text-mist-600">{[job.postingId, where].filter(Boolean).join(" · ")}</p>
         </div>
       </div>
     </Modal>

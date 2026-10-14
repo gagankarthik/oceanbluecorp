@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { downloadCsv } from "@/lib/csv";
 import Icon from "./icons";
@@ -391,7 +391,7 @@ export default function DataTable<T extends { id: string }>({
       <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-3">
           <label className={`relative block min-w-0 flex-1 sm:min-w-48 sm:max-w-sm ${inlineFilters.length ? "basis-full sm:basis-auto" : ""}`}>
             <span className="sr-only">{searchPlaceholder}</span>
-            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-[18px] -translate-y-1/2 text-mist-500" />
+            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
             <input
               type="search"
               value={query}
@@ -400,7 +400,7 @@ export default function DataTable<T extends { id: string }>({
                 setPage(0);
               }}
               placeholder={searchPlaceholder}
-              className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-mist-500 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+              className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
             />
           </label>
         {inlineFilters.map((f) => filterSelect(f, "w-auto min-w-[8.5rem] max-w-[13rem] flex-1 sm:flex-none"))}
@@ -411,14 +411,14 @@ export default function DataTable<T extends { id: string }>({
             aria-expanded={filtersOpen}
             aria-controls={filterRowId}
             aria-label={moreCount ? `Filters, ${moreCount} applied` : "Filters"}
-            className={`inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 text-[14px] font-medium ring-1 ring-inset transition-colors sm:px-3 ${
+            className={`inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 text-adm-base font-medium ring-1 ring-inset transition-colors sm:px-3 ${
               filtersOpen || moreCount ? "bg-ocean-50 text-ocean-800 ring-ocean-300" : "text-navy-900 ring-mist-300 hover:bg-mist-50"
             }`}
           >
-            <Icon name="filter" className="size-[18px]" />
+            <Icon name="filter" className="size-5" />
             Filters
             {moreCount > 0 && (
-              <span className="grid min-w-5 place-items-center rounded-full bg-ocean-600 px-1.5 text-[12px] font-semibold tabular-nums text-white">{moreCount}</span>
+              <span className="grid min-w-5 place-items-center rounded-full bg-ocean-600 px-1.5 text-adm-xs font-semibold tabular-nums text-white">{moreCount}</span>
             )}
           </button>
         )}
@@ -434,15 +434,15 @@ export default function DataTable<T extends { id: string }>({
               title="Columns, density and export"
               className={`grid size-10 place-items-center rounded-lg ring-1 ring-inset transition-colors ${menu ? "bg-mist-100 text-navy-900 ring-mist-400" : "text-navy-900 ring-mist-300 hover:bg-mist-50"}`}
             >
-              <Icon name="sliders" className="size-[18px]" />
+              <Icon name="sliders" className="size-5" />
             </button>
             {menu && (
               <div className="absolute right-0 top-12 z-30 w-64 rounded-xl bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
-                <p className="px-1 text-[12px] font-semibold text-mist-500">Columns</p>
+                <p className="px-1 text-adm-xs font-semibold text-mist-600">Columns</p>
                 <ul className="scroll-thin mt-1.5 max-h-56 overflow-y-auto">
                   {columns.map((c) => (
                     <li key={c.key}>
-                      <label className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1.5 text-[14px] hover:bg-mist-50">
+                      <label className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1.5 text-adm-base hover:bg-mist-50">
                         <input
                           type="checkbox"
                           checked={!hidden.has(c.key)}
@@ -463,7 +463,7 @@ export default function DataTable<T extends { id: string }>({
                   ))}
                 </ul>
                 <div className="my-2.5 h-px bg-mist-200" />
-                <p className="px-1 text-[12px] font-semibold text-mist-500">Density</p>
+                <p className="px-1 text-adm-xs font-semibold text-mist-600">Density</p>
                 <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg bg-mist-100 p-1">
                   {DENSITIES.map((o) => (
                     <button
@@ -471,7 +471,7 @@ export default function DataTable<T extends { id: string }>({
                       type="button"
                       onClick={() => setDensity(o.v)}
                       aria-pressed={density === o.v}
-                      className={`rounded-md py-1.5 text-[13px] font-medium ${density === o.v ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600"}`}
+                      className={`rounded-md py-1.5 text-adm-base font-medium ${density === o.v ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600"}`}
                     >
                       {o.l}
                     </button>
@@ -484,9 +484,9 @@ export default function DataTable<T extends { id: string }>({
                     exportCsv();
                     setMenu(false);
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-md px-1 py-1.5 text-left text-[14px] font-medium text-navy-900 hover:bg-mist-50"
+                  className="flex w-full items-center gap-2.5 rounded-md px-1 py-1.5 text-left text-adm-base font-medium text-navy-900 hover:bg-mist-50"
                 >
-                  <Icon name="download" className="size-[18px] text-mist-600" />
+                  <Icon name="download" className="size-5 text-mist-600" />
                   Export {filtered.length === rows.length ? "all" : filtered.length} as CSV
                 </button>
               </div>
@@ -506,7 +506,7 @@ export default function DataTable<T extends { id: string }>({
       {/* Active filter chips */}
       {chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-2.5">
-          <span className="text-[13px] text-mist-600">
+          <span className="text-adm-base text-mist-600">
             {filtered.length} of {rows.length}
           </span>
           {chips.map((c) => (
@@ -517,7 +517,7 @@ export default function DataTable<T extends { id: string }>({
                 c.clear();
                 setPage(0);
               }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 py-1 pl-3 pr-2 text-[13px] font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200 hover:bg-ocean-100"
+              className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 py-1 pl-3 pr-2 text-adm-base font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200 hover:bg-ocean-100"
             >
               {c.label}
               <Icon name="x" className="size-3.5" />
@@ -532,7 +532,7 @@ export default function DataTable<T extends { id: string }>({
               extraChips.forEach((c) => c.clear());
               setPage(0);
             }}
-            className="text-[13px] font-medium text-ocean-700 hover:underline"
+            className="text-adm-base font-medium text-ocean-700 hover:underline"
           >
             Clear all
           </button>
@@ -576,12 +576,12 @@ export default function DataTable<T extends { id: string }>({
                       />
                     )}
                     <div onClick={() => renderDetail && setOpen(r)} className={`min-w-0 flex-1 ${renderDetail ? "cursor-pointer" : ""}`}>
-                      <div className="text-[15px] font-medium text-navy-900">{first.cell ? first.cell(r) : String(getValue(first, r) ?? "")}</div>
+                      <div className="text-adm-base font-medium text-navy-900">{first.cell ? first.cell(r) : String(getValue(first, r) ?? "")}</div>
                       <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2">
                         {rest.filter((c) => c.card !== false).map((c) => (
                           <div key={c.key} className="min-w-0">
-                            <dt className="text-[11px] font-medium text-mist-500">{c.header}</dt>
-                            <dd className="mt-0.5 truncate text-[13px] text-navy-900">{c.cell ? c.cell(r) : String(getValue(c, r) ?? "")}</dd>
+                            <dt className="text-adm-xs font-medium text-mist-600">{c.header}</dt>
+                            <dd className="mt-0.5 truncate text-adm-base text-navy-900">{c.cell ? c.cell(r) : String(getValue(c, r) ?? "")}</dd>
                           </div>
                         ))}
                       </dl>
@@ -601,12 +601,14 @@ export default function DataTable<T extends { id: string }>({
             data-right={edges.right || undefined}
             className={`dt-scroll relative isolate hidden md:block ${edges.wide ? "scroll-thin overflow-x-auto overflow-y-hidden" : ""}`}
           >
-            <table className="w-full min-w-[44rem] border-separate border-spacing-0 text-left text-[14px]">
+            <table className="w-full min-w-[44rem] border-separate border-spacing-0 text-left text-adm-base">
               <thead>
-                <tr className="text-[12px] font-medium text-mist-600">
+                <tr className="text-adm-xs font-medium text-mist-600">
                   {selectable && (
                     <th scope="col" className={`${head} left-0 z-30 w-12 min-w-12`}>
-                      <input ref={selectAllRef} type="checkbox" aria-label="Select all on this page" checked={allVisibleSelected} onChange={toggleAll} className="size-4 accent-ocean-600" />
+                      <label className="adm-hit inline-grid cursor-pointer place-items-center align-middle">
+                        <input ref={selectAllRef} type="checkbox" aria-label="Select all on this page" checked={allVisibleSelected} onChange={toggleAll} className="size-4 cursor-pointer accent-ocean-600" />
+                      </label>
                     </th>
                   )}
                   {shown.map((c, i) => {
@@ -664,7 +666,9 @@ export default function DataTable<T extends { id: string }>({
                   >
                     {selectable && (
                       <td className={`${cellPad} ${PIN} left-0 w-12 min-w-12`} onClick={(e) => e.stopPropagation()}>
-                        <input type="checkbox" aria-label="Select row" checked={selected.has(r.id)} onChange={() => toggleRow(r.id)} className="size-4 accent-ocean-600" />
+                        <label className="adm-hit inline-grid cursor-pointer place-items-center align-middle">
+                          <input type="checkbox" aria-label="Select row" checked={selected.has(r.id)} onChange={() => toggleRow(r.id)} className="size-4 cursor-pointer accent-ocean-600" />
+                        </label>
                       </td>
                     )}
                     {shown.map((c, i) => (
@@ -702,7 +706,7 @@ export default function DataTable<T extends { id: string }>({
 
       {/* Pagination */}
       {!unpaged && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-[13px] text-mist-600">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-adm-base text-mist-600">
           <div className="flex items-center gap-4">
             <span className="tabular-nums">{filtered.length === 0 ? "0 results" : `${current * perPage + 1}–${Math.min(filtered.length, (current + 1) * perPage)} of ${filtered.length}`}</span>
             <label className="hidden items-center gap-2 sm:flex">
@@ -713,7 +717,7 @@ export default function DataTable<T extends { id: string }>({
                   setPerPage(Number(e.target.value));
                   setPage(0);
                 }}
-                className="h-8 rounded-md bg-mist-0 px-2 text-[13px] tabular-nums text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-2 focus:outline-ocean-600"
+                className="h-8 rounded-md bg-mist-0 px-2 text-adm-base tabular-nums text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-2 focus:outline-ocean-600"
               >
                 {PER_PAGE.map((n) => (
                   <option key={n} value={n}>
@@ -774,7 +778,7 @@ export default function DataTable<T extends { id: string }>({
             role="region"
             aria-label="Selected rows"
             inert={!barOn}
-            className={`dt-batch fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl bg-navy-900 py-2 pl-4 pr-2 text-[14px] text-white shadow-xl transition-[opacity,translate,visibility] motion-reduce:transition-none ${
+            className={`dt-batch fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl bg-navy-900 py-2 pl-4 pr-2 text-adm-base text-white shadow-xl transition-[opacity,translate,visibility] motion-reduce:transition-none ${
               barOn ? "visible translate-y-0 opacity-100 duration-200 ease-out" : "invisible translate-y-4 opacity-0 duration-150 ease-in"
             }`}
           >
@@ -787,7 +791,7 @@ export default function DataTable<T extends { id: string }>({
             <button
               type="button"
               onClick={() => setSelected(new Set())}
-              className="min-h-8 whitespace-nowrap rounded-lg px-3 text-[13px] font-medium text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="min-h-8 whitespace-nowrap rounded-lg px-3 text-adm-base font-medium text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               Deselect all
             </button>
@@ -817,28 +821,38 @@ export function TableTabs<T extends string>({
   label: string;
   value: T;
   onChange: (v: T) => void;
-  options: { value: T; label: string; count?: number }[];
+  /** `divider` rules off the tab from the ones before it; `attention` flags a non-zero count (icon + amber). */
+  options: { value: T; label: string; count?: number; tone?: "attention"; divider?: boolean }[];
 }) {
   return (
-    <div role="tablist" aria-label={label} className=" -mb-px flex scroll-strip">
-      {options.map((o) => {
+    <div role="tablist" aria-label={label} className="-mb-px flex items-stretch scroll-strip">
+      {options.map((o, i) => {
         const on = o.value === value;
+        // Zero hides the number, except on the first ("All") tab
+        const showCount = o.count !== undefined && (o.count > 0 || i === 0);
+        const flagged = o.tone === "attention" && (o.count ?? 0) > 0;
         return (
-          <button
-            key={o.value}
-            type="button"
-            role="tab"
-            aria-selected={on}
-            onClick={() => onChange(o.value)}
-            className={`inline-flex min-h-12 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 text-[14px] font-medium transition-colors duration-150 ${
-              on ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
-            }`}
-          >
-            {o.label}
-            {o.count !== undefined && (
-              <span className={`min-w-6 rounded-full px-1.5 text-center text-[12px] tabular-nums ${on ? "bg-ocean-600 text-white" : "bg-mist-100 text-mist-600"}`}>{o.count}</span>
-            )}
-          </button>
+          <Fragment key={o.value}>
+            {o.divider && <span aria-hidden className="mx-1 h-5 w-px shrink-0 self-center bg-mist-200" />}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-label={o.count !== undefined ? `${o.label}, ${o.count}` : undefined}
+              onClick={() => onChange(o.value)}
+              className={`inline-flex min-h-12 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-adm-base transition-colors duration-150 ${
+                on ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
+              }`}
+            >
+              {flagged && <Icon name="alert" className="size-4 shrink-0 text-status-warning" />}
+              {/* Bold copy reserves the active width, so switching tabs never shifts the strip */}
+              <span className="inline-grid">
+                <span aria-hidden className="invisible font-semibold [grid-area:1/1]">{o.label}</span>
+                <span className={`[grid-area:1/1] ${on ? "font-semibold" : "font-medium"}`}>{o.label}</span>
+              </span>
+              {showCount && <span className={`tabular-nums ${flagged ? "text-status-warning" : on ? "text-navy-900" : "text-mist-600"}`}>{o.count}</span>}
+            </button>
+          </Fragment>
         );
       })}
     </div>

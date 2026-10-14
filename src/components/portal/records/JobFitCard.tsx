@@ -132,15 +132,15 @@ export function JobFitCard({ applicationId }: { applicationId: string }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="grid gap-1.5">
                 <VerdictBadge verdict={fit.verdict} />
-                <p className="text-[13px] text-mist-600">{fit.qualified ? "Meets the core requirements" : "Gaps against the core requirements"}</p>
+                <p className="text-adm-base text-mist-600">{fit.qualified ? "Meets the core requirements" : "Gaps against the core requirements"}</p>
               </div>
               <FitScore score={fit.fitScore} size="lg" />
             </div>
-            {fit.rationale && <p className="max-w-[72ch] text-[14px] leading-relaxed text-mist-700">{fit.rationale}</p>}
+            {fit.rationale && <p className="max-w-[72ch] text-adm-base leading-normal text-mist-700">{fit.rationale}</p>}
             <SkillChips matched={fit.matchedSkills} missing={fit.missingSkills} />
           </div>
         ) : (
-          !error && <p className="text-[14px] leading-relaxed text-mist-600">Score this candidate&apos;s resume against the job they applied for. Requires a parsed resume.</p>
+          !error && <p className="text-adm-base leading-normal text-mist-600">Score this candidate&apos;s resume against the job they applied for. Requires a parsed resume.</p>
         )}
       </div>
     </Panel>

@@ -47,7 +47,7 @@ export function FormSection({
           <div className="min-w-0">
             <h3 className="text-adm-md font-semibold text-[var(--adm-ink)]">{title}</h3>
             {description && (
-              <p className="mt-0.5 text-adm-xs leading-relaxed text-[var(--adm-ink-subtle)]">{description}</p>
+              <p className="mt-0.5 text-adm-xs leading-normal text-[var(--adm-ink-subtle)]">{description}</p>
             )}
           </div>
         </div>
@@ -207,7 +207,7 @@ export function FormTextarea({
     <textarea
       autoComplete="off"
       {...props}
-      className={cn(controlBase, "resize-y px-3 py-2 leading-relaxed", className)}
+      className={cn(controlBase, "resize-y px-3 py-2 leading-normal", className)}
     />
   );
 }

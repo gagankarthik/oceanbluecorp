@@ -27,7 +27,7 @@ const isPdf = (name?: string) => /\.pdf$/i.test(name || "");
 function Section({ title, children, flush = false }: { title: string; children: React.ReactNode; flush?: boolean }) {
   return (
     <section className="min-w-0 overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
-      <h3 className="border-b border-mist-200 px-4 py-2.5 text-[13px] font-semibold text-navy-900">{title}</h3>
+      <h3 className="border-b border-mist-200 px-4 py-2.5 text-adm-base font-semibold text-navy-900">{title}</h3>
       <div className={flush ? "" : "p-4"}>{children}</div>
     </section>
   );
@@ -82,17 +82,17 @@ function Body({ c, onClose }: { c: MatchProfile; onClose: () => void }) {
               <a
                 href={url}
                 download={c.fileName || "resume"}
-                className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 text-[14px] font-medium ${
+                className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 text-adm-base font-medium ${
                   c.email ? "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50" : "bg-ocean-600 text-white hover:bg-ocean-700"
                 }`}
               >
-                <Icon name="download" className="size-[18px]" />
+                <Icon name="download" className="size-5" />
                 Download resume
               </a>
             )}
             {c.email && (
-              <a href={`mailto:${c.email}`} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ocean-600 px-4 text-[14px] font-medium text-white hover:bg-ocean-700">
-                <Icon name="mail" className="size-[18px]" />
+              <a href={`mailto:${c.email}`} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-ocean-600 px-4 text-adm-base font-medium text-white hover:bg-ocean-700">
+                <Icon name="mail" className="size-5" />
                 Email candidate
               </a>
             )}
@@ -107,7 +107,7 @@ function Body({ c, onClose }: { c: MatchProfile; onClose: () => void }) {
             <div className="flex flex-wrap items-center gap-2">
               <OriginBadge origin={c.origin} />
             </div>
-            <p className="mt-1 truncate text-[13px] text-mist-600">{c.fileName || "Resume bank"}</p>
+            <p className="mt-1 truncate text-adm-base text-mist-600">{c.fileName || "Resume bank"}</p>
           </div>
         </div>
 
@@ -116,18 +116,18 @@ function Body({ c, onClose }: { c: MatchProfile; onClose: () => void }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="grid gap-1.5">
                 <VerdictBadge verdict={c.verdict} />
-                <p className="text-[13px] text-mist-600">{c.qualified ? "Meets the core requirements" : "Gaps against the core requirements"}</p>
+                <p className="text-adm-base text-mist-600">{c.qualified ? "Meets the core requirements" : "Gaps against the core requirements"}</p>
               </div>
               <FitScore score={c.fit_score} size="lg" />
             </div>
-            {c.rationale && <p className="text-[14px] leading-relaxed text-mist-700">{c.rationale}</p>}
+            {c.rationale && <p className="text-adm-base leading-normal text-mist-700">{c.rationale}</p>}
             <SkillChips matched={c.matched_skills} missing={c.missing_skills} />
           </div>
         </Section>
 
         <Section title="Contact">
           {c.email || c.phone ? (
-            <ul className="grid gap-2 text-[14px]">
+            <ul className="grid gap-2 text-adm-base">
               {c.email && (
                 <li className="flex min-w-0 items-center gap-2">
                   <Icon name="mail" className="size-4 shrink-0 text-mist-500" />
@@ -146,13 +146,13 @@ function Body({ c, onClose }: { c: MatchProfile; onClose: () => void }) {
               )}
             </ul>
           ) : (
-            <p className="text-[14px] text-mist-600">No contact details were found in the resume.</p>
+            <p className="text-adm-base text-mist-600">No contact details were found in the resume.</p>
           )}
         </Section>
 
         <Section title="Resume" flush>
           {!c.bankId ? (
-            <p className="px-4 py-6 text-center text-[14px] text-mist-600">No resume file is attached to this match.</p>
+            <p className="px-4 py-6 text-center text-adm-base text-mist-600">No resume file is attached to this match.</p>
           ) : fileError ? (
             <div className="p-4">
               <Notice
@@ -178,7 +178,7 @@ function Body({ c, onClose }: { c: MatchProfile; onClose: () => void }) {
           ) : (
             <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
               <Icon name="resume" className="size-7 text-mist-500" />
-              <p className="max-w-xs text-[14px] text-mist-600">Word documents can&apos;t be shown in the browser. Download the file to read it.</p>
+              <p className="max-w-xs text-adm-base text-mist-600">Word documents can&apos;t be shown in the browser. Download the file to read it.</p>
             </div>
           )}
         </Section>

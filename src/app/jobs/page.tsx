@@ -21,7 +21,7 @@ export default async function JobsPage() {
     <>
       <section id="top" className="bg-field-paper">
         <div className="gutter grid gap-8 pb-12 pt-16 md:pt-24 lg:grid-cols-12">
-          <h1 className="lines poster text-[clamp(3rem,7vw,7rem)] lg:col-span-7">
+          <h1 className="lines poster text-poster lg:col-span-7">
             <span className="line">
               <span data-line style={{ "--i": 0 } as React.CSSProperties}>
                 Find a job
@@ -29,10 +29,10 @@ export default async function JobsPage() {
             </span>
           </h1>
           <div data-after-lines className="lg:col-span-4 lg:col-start-9 lg:self-end">
-            <p className="text-[clamp(1.125rem,1.4vw,1.375rem)] leading-snug">
+            <p className="text-title leading-snug">
               Open roles with our clients in IT and engineering. Search, filter and apply in a few minutes.
             </p>
-            <p className="mt-3 text-[15px] text-mist-600">
+            <p className="mt-3 text-small text-mist-600">
               Want to work at Oceanblue?{" "}
               <Link href="/careers" className="text-ocean-700 underline underline-offset-4">
                 Careers at Oceanblue
@@ -45,17 +45,17 @@ export default async function JobsPage() {
       <section className="bg-field-paper">
         <div className="gutter pb-24 md:pb-32">
           <JobBoard jobs={jobs} />
-          <p className="mt-6 text-[15px] text-mist-600">
+          <p className="mt-6 text-small text-mist-600">
             Oceanblue is an equal opportunity employer.{" "}
             <Link href="/equal-opportunity" className="text-ocean-700 underline underline-offset-4">
               Read our statement
             </Link>
           </p>
 
-          <div className="mt-16 grid gap-6 bg-navy-900 p-8 text-mist-50 md:grid-cols-[1fr_auto] md:items-center md:p-10">
+          <div className="on-dark mt-16 grid gap-6 bg-navy-900 p-8 text-mist-50 md:grid-cols-[1fr_auto] md:items-center md:p-10">
             <div>
-              <p className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">Don&apos;t see the right role?</p>
-              <p className="mt-2 max-w-[52ch] text-tide-300">Send your resume and tell us the work you want. We will contact you when a role fits.</p>
+              <p className="display text-head-md">Don&apos;t see the right role?</p>
+              <p className="mt-2 max-w-measure-narrow text-tide-300">Send your resume and tell us the work you want. We will contact you when a role fits.</p>
             </div>
             <a
               href={`mailto:${company.email}?subject=Resume`}

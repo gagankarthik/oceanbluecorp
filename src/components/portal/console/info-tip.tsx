@@ -26,7 +26,7 @@ export function InfoTip({
       <button
         type="button"
         aria-label={`About ${label}`}
-        className="grid h-5 w-5 place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
+        className="adm-hit grid h-5 w-5 place-items-center rounded-full text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)]"
       >
         <IconInfo className="h-3.5 w-3.5" aria-hidden="true" />
       </button>

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import PageHero from "@/components/site/PageHero";
+import BackLink from "@/components/site/BackLink";
 import Closing from "@/components/site/Closing";
 import CopyText from "./CopyText";
 import { company, milestones, partners } from "@/lib/site-content";
@@ -94,12 +95,15 @@ export default function MediaKitPage() {
         lines={["Media kit"]}
         standfirst="Logos, company descriptions, facts and brand colours for press, partners and procurement teams."
         side={
-          <p>
-            Media enquiries:{" "}
-            <a href={`mailto:${company.email}?subject=Media%20enquiry`} className="text-navy-900 underline underline-offset-4">
-              {company.email}
-            </a>
-          </p>
+          <>
+            <BackLink href="/resources" label="All resources" />
+            <p className="mt-4">
+              Media enquiries:{" "}
+              <a href={`mailto:${company.email}?subject=Media%20enquiry`} className="text-navy-900 underline underline-offset-4">
+                {company.email}
+              </a>
+            </p>
+          </>
         }
       />
 
@@ -107,10 +111,10 @@ export default function MediaKitPage() {
       <section aria-labelledby="logos-title" className="bg-field-paper">
         <div className="gutter pb-24 md:pb-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="logos-title" className="display text-[clamp(2rem,3.4vw,3rem)] lg:col-span-6" data-reveal>
+            <h2 id="logos-title" className="display text-head lg:col-span-6" data-reveal>
               Logos
             </h2>
-            <p className="max-w-[46ch] text-mist-600 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
+            <p className="max-w-measure-narrow text-mist-600 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
               Use SVG wherever you can; it stays sharp at any size. PNG files have transparent backgrounds.
             </p>
           </div>
@@ -122,14 +126,14 @@ export default function MediaKitPage() {
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <p className="font-semibold">{l.name}</p>
-                  <p className="mt-1 flex-1 text-[15px] text-mist-600">{l.use}</p>
+                  <p className="mt-1 flex-1 text-small text-mist-600">{l.use}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {l.files.map((f) => (
                       <a
                         key={f.label}
                         href={f.href}
                         download
-                        className="inline-flex min-h-10 items-center gap-2 bg-ocean-600 px-4 text-[15px] font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
+                        className="inline-flex min-h-10 items-center gap-2 bg-ocean-600 px-4 text-small font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98]"
                       >
                         <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6">
                           <path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10" />
@@ -148,10 +152,10 @@ export default function MediaKitPage() {
       {/* Descriptions */}
       <section aria-labelledby="about-title" className="bg-field-mist">
         <div className="gutter py-24 md:py-32">
-          <h2 id="about-title" className="display text-[clamp(2rem,3.4vw,3rem)]" data-reveal>
+          <h2 id="about-title" className="display text-head" data-reveal>
             Company descriptions
           </h2>
-          <p className="mt-4 max-w-[60ch] text-mist-600" data-reveal>
+          <p className="mt-4 max-w-measure text-mist-600" data-reveal>
             Approved wording for articles, event programs, partner pages and supplier profiles.
           </p>
           <div className="mt-12 grid gap-2 lg:grid-cols-2">
@@ -169,10 +173,10 @@ export default function MediaKitPage() {
       <section aria-labelledby="facts-title" className="bg-field-paper">
         <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 id="facts-title" className="display text-[clamp(2rem,3.4vw,3rem)]">
+            <h2 id="facts-title" className="display text-head">
               Fact sheet
             </h2>
-            <p className="mt-4 max-w-[34ch] text-mist-600">The essentials for a profile, a bid or a press release.</p>
+            <p className="mt-4 max-w-measure-narrow text-mist-600">The essentials for a profile, a bid or a press release.</p>
           </div>
           <dl className="axis grid gap-2" data-reveal>
             {facts.map((f) => (
@@ -189,10 +193,10 @@ export default function MediaKitPage() {
       <section aria-labelledby="colours-title" className="bg-field-mist">
         <div className="gutter py-24 md:py-32">
           <div className="grid gap-6 lg:grid-cols-12">
-            <h2 id="colours-title" className="display text-[clamp(2rem,3.4vw,3rem)] lg:col-span-6" data-reveal>
+            <h2 id="colours-title" className="display text-head lg:col-span-6" data-reveal>
               Brand colours
             </h2>
-            <p className="max-w-[46ch] text-mist-600 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
+            <p className="max-w-measure-narrow text-mist-600 lg:col-span-5 lg:col-start-8 lg:self-end" data-reveal>
               The two blues come from the logo.{" "}
               <Link href="/brand" className="font-medium text-ocean-700 underline underline-offset-4">
                 See the full palette
@@ -202,16 +206,16 @@ export default function MediaKitPage() {
           <ul className="mt-12 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {colours.map((c) => (
               <li key={c.hex} className={`flex min-h-44 flex-col justify-between p-6 ${c.cls}`} data-reveal>
-                <p className="text-[19px] font-semibold">{c.name}</p>
+                <p className="text-title font-semibold">{c.name}</p>
                 <div>
                   <p className="font-medium tabular-nums">{c.hex}</p>
-                  <p className="mt-1 text-[14px] opacity-85">{c.note}</p>
+                  <p className="mt-1 text-small opacity-85">{c.note}</p>
                 </div>
               </li>
             ))}
           </ul>
 
-          <h3 className="display mt-20 text-[clamp(1.5rem,2.4vw,2.25rem)]" data-reveal>
+          <h3 className="display mt-20 text-head-sm" data-reveal>
             Using the logo
           </h3>
           <ul className="mt-8 grid gap-2 md:grid-cols-2">

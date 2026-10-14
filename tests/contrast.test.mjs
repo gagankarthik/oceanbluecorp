@@ -222,14 +222,13 @@ describe("record and page headers", () => {
   const ws = readFileSync("src/components/portal/console/workspace.tsx", "utf8");
   const slice = (from, to) => ws.slice(ws.indexOf(from), ws.indexOf(to, ws.indexOf(from)));
   const header = slice("export function BackLink", "export function RecordFact");
-  const bar = readFileSync("src/components/portal/console/candidate/record-bar.tsx", "utf8");
 
   test("the header components were found", () => {
     assert.ok(header.includes("export function RecordHeader"), "RecordHeader not found");
   });
 
   test("no white text on a fill in the headers", () => {
-    for (const [name, src] of [["RecordHeader/BackLink", header], ["RecordBar", bar]]) {
+    for (const [name, src] of [["RecordHeader/BackLink", header]]) {
       assert.doesNotMatch(src, /text-white/, `${name} still sets white text`);
     }
   });
@@ -330,5 +329,27 @@ describe("pipeline stage tokens (colors.css)", () => {
   test("the placeholder token reads at AA on white", () => {
     const r = ratioOn(token("color-text-placeholder"), SURFACE);
     assert.ok(r >= NEED.text, `--color-text-placeholder is ${r.toFixed(2)}:1`);
+  });
+});
+
+describe("portal status roles (colors.css)", () => {
+  for (const tone of ["danger", "warning", "success"]) {
+    test(`${tone} text and strong text read at AA on white and on their wash`, () => {
+      const soft = token(`color-status-${tone}-soft`);
+      for (const ink of [`color-status-${tone}`, `color-status-${tone}-strong`]) {
+        for (const surf of [SURFACE, soft]) {
+          const r = ratioOn(token(ink), surf);
+          assert.ok(r >= NEED.text, `--${ink} on ${surf} is ${r.toFixed(2)}:1`);
+        }
+      }
+    });
+    if (tone !== "warning") test(`${tone} on-dark icons clear 3:1 on navy`, () => {
+      const r = ratioOn(token(`color-status-${tone}-on-dark`), token("color-navy-900"));
+      assert.ok(r >= NEED.nonText, `--color-status-${tone}-on-dark is ${r.toFixed(2)}:1`);
+    });
+  }
+  test("danger mark clears 3:1 on white", () => {
+    const r = ratioOn(token("color-status-danger-mark"), SURFACE);
+    assert.ok(r >= NEED.nonText, `${r.toFixed(2)}:1`);
   });
 });

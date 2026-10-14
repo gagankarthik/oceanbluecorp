@@ -32,11 +32,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             role="status"
-            className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl bg-navy-900 px-4 py-3 text-[14px] text-white shadow-xl"
+            className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl bg-navy-900 px-4 py-3 text-adm-base text-white shadow-xl"
           >
             <Icon
               name={t.tone === "error" ? "alert" : t.tone === "info" ? "bell" : "check"}
-              className={`size-[18px] shrink-0 ${t.tone === "error" ? "text-[#fda29b]" : t.tone === "info" ? "text-cyan-300" : "text-[#75e0a7]"}`}
+              className={`size-5 shrink-0 ${t.tone === "error" ? "text-status-danger-on-dark" : t.tone === "info" ? "text-cyan-300" : "text-status-success-on-dark"}`}
             />
             <span className="min-w-0 flex-1">{t.message}</span>
             {t.undo && (
@@ -51,7 +51,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 Undo
               </button>
             )}
-            <button type="button" aria-label="Dismiss" onClick={() => dismiss(t.id)} className="grid size-7 place-items-center rounded-md text-white/70 hover:bg-white/10 hover:text-white">
+            <button type="button" aria-label="Dismiss" onClick={() => dismiss(t.id)} title="Dismiss" className="adm-hit grid size-7 place-items-center rounded-md text-white/70 hover:bg-white/10 hover:text-white">
               <Icon name="x" className="size-4" />
             </button>
           </div>

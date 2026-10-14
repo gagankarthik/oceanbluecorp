@@ -42,15 +42,15 @@ export default function ServicesPage() {
           <section key={id} id={id} className={l.field}>
             <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
               <div className="side" data-reveal>
-                <h2 className="display text-[clamp(2.5rem,5vw,5rem)]">{layers[id].name}</h2>
-                <p className={`mt-4 max-w-[30ch] ${l.soft}`}>{layers[id].summary}</p>
+                <h2 className="display text-head-xl">{layers[id].name}</h2>
+                <p className={`mt-4 max-w-measure-narrow ${l.soft}`}>{layers[id].summary}</p>
               </div>
               <ul className="axis grid gap-12">
                 {servicesByLayer(id).map((s, i) => (
                   <li key={s.slug} data-reveal style={{ "--d": i % 3 } as React.CSSProperties}>
                     <Link href={`/services/${s.slug}`} className="group block">
-                      <span className={`display block text-[clamp(1.75rem,3vw,3rem)] transition-colors ${l.hover}`}>{s.name}</span>
-                      <span className={`mt-3 block max-w-[46ch] ${l.soft}`}>{s.tagline}</span>
+                      <span className={`display block text-head-md transition-colors ${l.hover}`}>{s.name}</span>
+                      <span className={`mt-3 block max-w-measure-narrow ${l.soft}`}>{s.tagline}</span>
                     </Link>
                   </li>
                 ))}
@@ -63,8 +63,8 @@ export default function ServicesPage() {
       <section className="bg-field-paper">
         <div className="gutter grid gap-12 py-24 md:py-32 lg:grid-cols-12">
           <div className="side" data-reveal>
-            <h2 className="display text-[clamp(2.25rem,4vw,3.75rem)]">Engagement models</h2>
-            <p className="mt-4 max-w-[30ch] text-mist-600">
+            <h2 className="display text-head">Engagement models</h2>
+            <p className="mt-4 max-w-measure-narrow text-mist-600">
               Every engagement runs on the same four steps, whichever practice leads it.{" "}
               <Link href="/how-we-work" className="text-navy-900 underline underline-offset-4 hover:text-ocean-700">
                 See how we work
@@ -75,9 +75,9 @@ export default function ServicesPage() {
           <dl className="axis grid gap-x-12 gap-y-12 sm:grid-cols-2">
             {models.map((m, i) => (
               <div key={m.name} data-reveal style={{ "--d": i % 2 } as React.CSSProperties}>
-                <dt className="text-[20px] font-medium">{m.name}</dt>
-                <dd className="mt-2 max-w-[34ch]">{m.body}</dd>
-                <dd className="mt-2 text-[15px] text-mist-600">Who owns the outcome: {m.owns}.</dd>
+                <dt className="text-title font-medium">{m.name}</dt>
+                <dd className="mt-2 max-w-measure-narrow">{m.body}</dd>
+                <dd className="mt-2 text-small text-mist-600">Who owns the outcome: {m.owns}.</dd>
               </div>
             ))}
           </dl>

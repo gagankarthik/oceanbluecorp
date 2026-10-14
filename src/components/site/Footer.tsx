@@ -80,16 +80,16 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="bg-navy-950 text-mist-50">
+    <footer className="on-dark bg-navy-950 text-mist-50">
       <div className="gutter grid gap-14 pb-14 pt-20 lg:grid-cols-12">
         {/* Company and contact */}
         <div className="flex flex-col lg:col-span-4 lg:-mb-14">
           <Link href="/" aria-label="Oceanblue Solutions home" className="inline-block">
             <Logo variant="white" className="h-11 w-[9.4rem]" />
           </Link>
-          <p className="mt-5 max-w-[36ch] text-tide-300">{company.position}</p>
+          <p className="mt-5 max-w-measure-narrow text-tide-300">{company.position}</p>
 
-          <dl className="mt-8 grid gap-4 text-[15px]">
+          <dl className="mt-8 grid gap-4 text-small">
             <div>
               <dt className="text-tide-300">Call us</dt>
               <dd>
@@ -137,7 +137,7 @@ export default function Footer() {
         </div>
 
         {/* Link columns */}
-        <div className="grid grid-cols-2 gap-10 text-[15px] sm:grid-cols-4 lg:col-span-8 lg:col-start-5">
+        <div className="grid grid-cols-2 gap-10 text-small sm:grid-cols-4 lg:col-span-8 lg:col-start-5">
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>
               <p className="font-semibold text-white">{col.title}</p>
@@ -199,7 +199,7 @@ export default function Footer() {
       </div>
 
       <div data-footer-bar className="gutter bg-black/25">
-        <div className="flex flex-col items-center gap-4 py-6 text-center text-[length:var(--text-small)] text-tide-300 lg:flex-row lg:justify-between lg:text-left">
+        <div className="flex flex-col items-center gap-4 py-6 text-center text-small text-tide-300 lg:flex-row lg:justify-between lg:text-left">
           <p>
             &copy; {new Date().getFullYear()} {company.name} All rights reserved.
           </p>
