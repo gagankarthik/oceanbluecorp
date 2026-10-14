@@ -150,14 +150,14 @@ export default function TeamPerformance({ period }: { period: Period }) {
         </span>
       ),
     },
-    { key: "active", header: "Active", sortable: true, hideBelow: "lg", value: (r) => r.active, cell: (r) => <span className="tabular-nums">{r.active}</span> },
-    { key: "submitted", header: "Submitted", sortable: true, value: (r) => r.submitted, cell: (r) => <span className="tabular-nums">{r.submitted}</span> },
-    { key: "interviews", header: "Interviews", sortable: true, hideBelow: "md", value: (r) => r.interviews, cell: (r) => <span className="tabular-nums">{r.interviews}</span> },
-    { key: "offers", header: "Offers", sortable: true, defaultHidden: true, value: (r) => r.offers },
-    { key: "placements", header: "Placed", sortable: true, value: (r) => r.placements, cell: (r) => <span className="font-semibold tabular-nums">{r.placements}</span> },
-    { key: "s2i", header: "Submit to interview", sortable: true, hideBelow: "xl", value: (r) => (r.submitToInterview ?? -1) * 100, cell: (r) => <span className="tabular-nums">{pct(r.submitToInterview)}</span> },
-    { key: "i2h", header: "Interview to hire", sortable: true, hideBelow: "xl", value: (r) => (r.interviewToHire ?? -1) * 100, cell: (r) => <span className="tabular-nums">{pct(r.interviewToHire)}</span> },
-    { key: "days", header: "Days to hire", sortable: true, defaultHidden: true, value: (r) => r.daysToHire ?? -1, cell: (r) => <span className="tabular-nums">{r.daysToHire ?? "—"}</span> },
+    { key: "active", header: "Active", sortable: true, numeric: true, hideBelow: "lg", value: (r) => r.active, cell: (r) => <span className="tabular-nums">{r.active}</span> },
+    { key: "submitted", header: "Submitted", sortable: true, numeric: true, value: (r) => r.submitted, cell: (r) => <span className="tabular-nums">{r.submitted}</span> },
+    { key: "interviews", header: "Interviews", sortable: true, numeric: true, hideBelow: "md", value: (r) => r.interviews, cell: (r) => <span className="tabular-nums">{r.interviews}</span> },
+    { key: "offers", header: "Offers", sortable: true, numeric: true, defaultHidden: true, value: (r) => r.offers },
+    { key: "placements", header: "Placed", sortable: true, numeric: true, value: (r) => r.placements, cell: (r) => <span className="font-semibold tabular-nums">{r.placements}</span> },
+    { key: "s2i", header: "Submit to interview", sortable: true, numeric: true, hideBelow: "xl", value: (r) => (r.submitToInterview ?? -1) * 100, cell: (r) => <span className="tabular-nums">{pct(r.submitToInterview)}</span> },
+    { key: "i2h", header: "Interview to hire", sortable: true, numeric: true, hideBelow: "xl", value: (r) => (r.interviewToHire ?? -1) * 100, cell: (r) => <span className="tabular-nums">{pct(r.interviewToHire)}</span> },
+    { key: "days", header: "Days to hire", sortable: true, numeric: true, defaultHidden: true, value: (r) => r.daysToHire ?? -1, cell: (r) => <span className="tabular-nums">{r.daysToHire ?? "—"}</span> },
     { key: "trend", header: "Placements", hideBelow: "xl", value: (r) => r.trend.join(" "), cell: (r) => <Sparkline values={r.trend} width={72} height={22} label={`${r.name} placements, ${p.label.toLowerCase()}`} /> },
   ];
 

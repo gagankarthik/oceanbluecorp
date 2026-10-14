@@ -13,7 +13,7 @@ import Icon from "@/components/portal/icons";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  Avatar, BarList, Button, EmptyState, ErrorState, KpiRow, Page, PageHeader, Panel, Segmented, Skeleton, StatCard, usePortalRouter,
+  Avatar, BarList, Button, EmptyState, ErrorState, KpiRow, Page, PageHeader, Panel, ProgressBar, Segmented, Skeleton, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
 import { MY_TASKS_KEY, refreshApplications, refreshTasks, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { useResource, type Resource } from "@/hooks/use-resource";
@@ -40,6 +40,8 @@ type Stats = {
   closedJobs: number;
   monthlyApplications: { month: string; applications: number }[];
 };
+/** KPI card as a link: hover firms the hairline instead of lifting a shadow */
+const kpiLink = "block rounded-xl [&>div]:transition-shadow [&>div]:duration-150 hover:[&>div]:ring-mist-400";
 type MyTask = TaskEntry & { applicationId: string; candidateName?: string; jobTitle?: string };
 
 /** One panel, several views: keeps secondary charts off the page until asked for */
@@ -77,19 +79,20 @@ function AttentionRow({ label, hint, value, tone, href, split }: { label: string
   const count = <span className={`grid h-8 min-w-10 shrink-0 place-items-center rounded-md px-2 text-[14px] font-semibold tabular-nums ${badge}`}>{value}</span>;
   if (split)
     return (
-      <div className="flex min-h-12 items-center gap-3 rounded-lg p-2">
+      // Rail width: the two targets sit under the label rather than beside it
+      <div className="flex min-h-12 items-start gap-3 rounded-lg p-2">
         {count}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-medium text-navy-900">{label}</span>
           <span className="block truncate text-[12px] text-mist-600">{hint}</span>
-        </span>
-        <span className="flex shrink-0 gap-1">
-          {split.map((s) => (
-            <Link key={s.href} href={s.href} className="inline-flex min-h-8 items-center gap-0.5 rounded-md px-2 text-[13px] font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50">
-              {s.label}
-              <Icon name="chevronRight" className="size-3.5" />
-            </Link>
-          ))}
+          <span className="-ml-2 mt-1 flex flex-wrap gap-1">
+            {split.map((s) => (
+              <Link key={s.href} href={s.href} className="inline-flex min-h-8 items-center gap-0.5 rounded-md px-2 text-[13px] font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50">
+                {s.label}
+                <Icon name="chevronRight" className="size-3.5" />
+              </Link>
+            ))}
+          </span>
         </span>
       </div>
     );
@@ -385,6 +388,19 @@ function Overview({
   const delta = (now: number, before: number) => (prev && before > 0 ? Math.round(((now - before) / before) * 100) : null);
   const appliedDelta = delta(apps.length, prevApplied);
   const placedDelta = delta(placements.length, prevPlaced);
+  // In progress at time t: applied by then and not yet hired or rejected.
+  const inProgressAt = (t: number) => all.filter((a) => new Date(a.appliedAt).getTime() <= t && !(TERMINAL.has(a.status) && enteredStageAt(a) <= t)).length;
+  const inProgressSeries = bs.map((b) => inProgressAt(b.end));
+  const inProgressDelta = prev ? delta(inProgress.length, inProgressAt(prev.end)) : null;
+  const interviews = all.filter((a) => {
+    const t = reachedAt(a, "interview");
+    return t !== null && (start === null || t >= start);
+  }).length;
+  const interviewDelta = delta(interviews, prev ? all.filter((a) => inPrev(reachedAt(a, "interview"))).length : 0);
+  const interviewingNow = all.filter((a) => a.status === "interview").length;
+  const span = r.long.replace(/^last /, "");
+  // No delta row for "all time": there is no previous window.
+  const vsPrev = (value: number | null) => (prev ? { value, label: value === null ? `for previous ${span}` : `vs previous ${span}` } : undefined);
   const offeredEver = apps.filter((a) => everReached(a, "offered"));
   const decided = offeredEver.filter((a) => a.status === "hired" || a.status === "rejected");
   const offerAcceptance = decided.length ? Math.round((decided.filter((a) => a.status === "hired").length / decided.length) * 100) : null;
@@ -439,88 +455,92 @@ function Overview({
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-2 lg:[&>*:only-child]:col-span-2">
-        <Panel title="Needs attention" description="Right now, across every role">
-          <div className="grid gap-1">
-            <AttentionRow
-              label="Roles with no candidates"
-              hint="Live on the website, nobody in play"
-              value={starved}
-              tone="red"
-              href={`/portal/${starvedBy.open > starvedBy.state ? "open" : "state"}-roles?focus=starved`}
-              split={
-                starvedBy.state && starvedBy.open
-                  ? [
-                      { label: `${starvedBy.state} state`, href: "/portal/state-roles?focus=starved" },
-                      { label: `${starvedBy.open} open`, href: "/portal/open-roles?focus=starved" },
-                    ]
-                  : undefined
-              }
-            />
-            <AttentionRow label="Offers awaiting response" hint={`No answer for ${OFFER_STALE_DAYS}+ days`} value={offersAtRisk} tone="red" href="/portal/applications?status=offered" />
-            <AttentionRow label="Stalled candidates" hint={`In progress, no stage change for ${STALE_DAYS}+ days`} value={stalled} tone="amber" href="/portal/applications?saved=stale" />
-            <AttentionRow label="Unassigned candidates" hint="In progress, nobody owns them" value={unassigned} tone="red" href="/portal/applications?status=inprogress&owner=unassigned" />
-          </div>
-        </Panel>
-        <MyTasks />
-      </div>
-
       <KpiRow>
-        <Link href="/portal/state-roles?focus=live" className="block rounded-xl transition-shadow duration-150 hover:shadow-md">
-          <StatCard section="recruiting" label="Live roles" value={openJobs.length} icon="briefcase" change={`${liveBy.state} state, ${liveBy.open} open`} trend="flat" hint="now" />
+        <Link href="/portal/applications" className={kpiLink}>
+          <StatCard section="recruiting" label="Applications" value={apps.length} delta={vsPrev(appliedDelta)} change={sources[0] && sources[0].label !== "Unattributed" ? `Top source: ${sources[0].label}` : undefined} hint={prev ? undefined : r.long} spark={appliedSeries} />
         </Link>
-        <Link href="/portal/applications?status=inprogress" className="block rounded-xl transition-shadow duration-150 hover:shadow-md">
-          <StatCard section="recruiting" label="Candidates in progress" value={inProgress.length} icon="inbox" change={`${apps.length} applied`} trend="flat" hint={r.long} spark={appliedSeries} />
+        <Link href="/portal/applications?status=inprogress" className={kpiLink}>
+          <StatCard section="recruiting" label="Candidates in progress" value={inProgress.length} delta={vsPrev(inProgressDelta)} change={`${openJobs.length ? (inProgress.length / openJobs.length).toFixed(1) : "0"} per live role`} hint="now" spark={inProgressSeries} />
         </Link>
-        <Link href="/portal/applications?status=interview" className="block rounded-xl transition-shadow duration-150 hover:shadow-md">
-          <StatCard section="recruiting" label="Interviewing" value={all.filter((a) => a.status === "interview").length} icon="calendar" change={`${openJobs.length ? (inProgress.length / openJobs.length).toFixed(1) : "0"} per live role`} trend="flat" hint="now" spark={interviewSeries} />
+        <Link href="/portal/applications?status=interview" className={kpiLink}>
+          <StatCard section="recruiting" label="Interviews" value={interviews} delta={vsPrev(interviewDelta)} change={`${interviewingNow} interviewing now`} hint={prev ? undefined : r.long} spark={interviewSeries} />
         </Link>
-        <Link href="/portal/applications?status=hired" className="block rounded-xl transition-shadow duration-150 hover:shadow-md">
-          <StatCard section="recruiting" label="Placements" value={placements.length} icon="target" change={timeToHire !== null ? `${timeToHire}d median to hire` : "No hires yet"} trend="flat" hint={r.long} spark={hiredSeries} />
+        <Link href="/portal/applications?status=hired" className={kpiLink}>
+          <StatCard section="recruiting" label="Placements" value={placements.length} delta={vsPrev(placedDelta)} change={timeToHire !== null ? `${timeToHire}d median to hire` : "No hires yet"} hint={prev ? undefined : r.long} spark={hiredSeries} />
         </Link>
       </KpiRow>
 
-      {/* Trend across the full width, then the funnel beside recent applications */}
-      <Panel title="Applications and hires">
-        {apps.length || placements.length ? (
-          <div className="grid gap-4">
-            <TrendChart
-              title={`Applications received, hires and rejections, ${r.long}`}
-              labels={bs.map((b) => b.label)}
-              series={[{ name: "Applications", values: appliedSeries }, { name: "Hired", values: hiredSeries }, { name: "Rejected", values: rejectedSeries }]}
-              area
-            />
-            <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-mist-200 pt-3 text-[13px]">
-              {[
-                { label: "Applications", value: apps.length, change: appliedDelta },
-                { label: "Placements", value: placements.length, change: placedDelta },
-                { label: "Rejected", value: rejectedSeries.reduce((n, v) => n + v, 0), change: null },
-                { label: "Offer acceptance", value: offerAcceptance !== null ? `${offerAcceptance}%` : "–", change: null },
-              ].map((x) => (
-                <div key={x.label} className="flex items-baseline gap-1.5">
-                  <dt className="text-mist-600">{x.label}</dt>
-                  <dd className="font-semibold tabular-nums text-navy-900">{x.value}</dd>
-                  {x.change !== null && (
-                    <dd
-                      className={`text-[12px] font-medium tabular-nums ${x.change > 0 ? "text-[#067647]" : x.change < 0 ? "text-[#b42318]" : "text-mist-600"}`}
-                      title={`Against the previous ${r.long.replace(/^last /, "")}`}
-                    >
-                      {x.change > 0 ? "+" : ""}
-                      {x.change}% vs previous
-                    </dd>
-                  )}
+      {/* Z order: trend wide on the left, the queues in a rail on the right; below xl the rail follows the trend */}
+      <div className="grid gap-6 xl:grid-cols-3 xl:grid-rows-[auto_1fr]">
+        <Panel title="Applications and hires" className="xl:col-span-2">
+          {apps.length || placements.length ? (
+            <div className="grid gap-4">
+              <TrendChart
+                title={`Applications received, hires and rejections, ${r.long}`}
+                labels={bs.map((b) => b.label)}
+                series={[{ name: "Applications", values: appliedSeries }, { name: "Hired", values: hiredSeries }, { name: "Rejected", values: rejectedSeries }]}
+                area
+              />
+              <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-mist-200 pt-3 text-[13px]">
+                {[
+                  { label: "Applications", value: apps.length },
+                  { label: "Placements", value: placements.length },
+                  { label: "Rejected", value: rejectedSeries.reduce((n, v) => n + v, 0) },
+                  { label: "Offer acceptance", value: offerAcceptance !== null ? `${offerAcceptance}%` : "–" },
+                ].map((x) => (
+                  <div key={x.label} className="flex items-baseline gap-1.5">
+                    <dt className="text-mist-600">{x.label}</dt>
+                    <dd className="font-semibold tabular-nums text-navy-900">{x.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : (
+            quiet("No applications in this period", "Pick a longer range to see the trend.")
+          )}
+        </Panel>
+
+        <aside aria-label="Needs attention and tasks" className="grid min-w-0 content-start gap-6 lg:grid-cols-2 lg:[&>*:only-child]:col-span-2 xl:col-start-3 xl:row-span-2 xl:row-start-1 xl:grid-cols-1">
+          <Panel title="Needs attention" description="Right now, across every role">
+            {openJobs.length > 0 && (
+              <div className="mb-3 grid gap-2 border-b border-mist-200 pb-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <Link href="/portal/state-roles?focus=live" className="text-[14px] font-medium text-navy-900 hover:underline">
+                    <span className="text-[20px] font-semibold tabular-nums">{openJobs.length}</span> live role{openJobs.length === 1 ? "" : "s"}
+                  </Link>
+                  <span className="truncate text-[13px] text-mist-600">{liveBy.state} state, {liveBy.open} open</span>
                 </div>
-              ))}
-            </dl>
-          </div>
-        ) : (
-          quiet("No applications in this period", "Pick a longer range to see the trend.")
-        )}
-      </Panel>
+                <ProgressBar value={((openJobs.length - starved) / openJobs.length) * 100} tone={starved ? "amber" : "green"} />
+                <p className="text-[12px] text-mist-600">
+                  {openJobs.length - starved} of {openJobs.length} have candidates in progress
+                </p>
+              </div>
+            )}
+            <div className="grid gap-1">
+              <AttentionRow
+                label="Roles with no candidates"
+                hint="Live on the website, nobody in play"
+                value={starved}
+                tone="red"
+                href={`/portal/${starvedBy.open > starvedBy.state ? "open" : "state"}-roles?focus=starved`}
+                split={
+                  starvedBy.state && starvedBy.open
+                    ? [
+                        { label: `${starvedBy.state} state`, href: "/portal/state-roles?focus=starved" },
+                        { label: `${starvedBy.open} open`, href: "/portal/open-roles?focus=starved" },
+                      ]
+                    : undefined
+                }
+              />
+              <AttentionRow label="Offers awaiting response" hint={`No answer for ${OFFER_STALE_DAYS}+ days`} value={offersAtRisk} tone="red" href="/portal/applications?status=offered" />
+              <AttentionRow label="Stalled candidates" hint={`In progress, no stage change for ${STALE_DAYS}+ days`} value={stalled} tone="amber" href="/portal/applications?saved=stale" />
+              <AttentionRow label="Unassigned candidates" hint="In progress, nobody owns them" value={unassigned} tone="red" href="/portal/applications?status=inprogress&owner=unassigned" />
+            </div>
+          </Panel>
+          <MyTasks />
+        </aside>
 
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="Hiring funnel" description="Click a stage to open it">
+        <Panel title="Hiring funnel" className="xl:col-span-2" description="Click a stage to open it">
           {apps.length ? (
             <div className="grid gap-4">
               <StageFunnel stages={funnel} onSelect={(label) => { const s = funnel.find((f) => f.label === label)?.key; if (s) onStage(s); }} />
@@ -534,6 +554,77 @@ function Overview({
             quiet("No applications in this period")
           )}
         </Panel>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <TabbedPanel
+          className="xl:col-span-2"
+          tabs={[
+            {
+              id: "team",
+              label: "Team",
+              content: <TeamPerformancePanel applications={all} titles={titles} onOpen={onTeam} />,
+            },
+            {
+              id: "coverage",
+              label: "Role coverage",
+              content: coverage.length ? (
+                <div className="grid gap-3">
+                  <p className="text-[13px] text-mist-600">Candidates in progress per live role, thinnest first.</p>
+                  <ul className="grid gap-1">
+                    {coverage.slice(0, 8).map(({ j, n }) => (
+                      <li key={j.id}>
+                        <Link href={`/portal/jobs/${j.id}`} className="flex min-h-10 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
+                          <span className={`w-10 shrink-0 rounded-md py-1 text-center text-[13px] font-semibold tabular-nums ${n === 0 ? "bg-[#fef3f2] text-[#b42318]" : n < 3 ? "bg-[#fffaeb] text-[#b54708]" : "bg-ocean-50 text-ocean-700"}`}>{n}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[14px] font-medium text-navy-900">{j.title}</span>
+                            <span className="block truncate text-[12px] text-mist-600">{j.clientName || j.department || j.postingId}</span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                quiet("No live roles", "Set a role to Active to put it on the website.")
+              ),
+            },
+            {
+              id: "sources",
+              label: "Sources",
+              content: sources.length ? <DonutChart title="Applications by source" data={sources} centerLabel="Applications" size={160} /> : quiet("No source data yet"),
+            },
+            {
+              id: "clients",
+              label: "Pipeline by client",
+              content: clientMix.length ? (
+                <div className="grid gap-4">
+                  <BarList items={clientMix} />
+                  {topClientShare !== null && topClientShare >= 40 && (
+                    <p className="text-[13px] text-mist-600">
+                      <span className="font-medium text-navy-900">{clientMix[0].label}</span> holds{" "}
+                      <span className="font-semibold text-[#b54708]">{topClientShare}%</span> of the pipeline.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                quiet("No client data yet")
+              ),
+            },
+            {
+              id: "reqs",
+              label: "Requisitions",
+              content: statsBody(() => (reqMix.length ? <DonutChart title="Requisitions by status" data={reqMix} centerLabel="Roles" size={160} /> : quiet("No roles posted yet"))),
+            },
+            {
+              id: "monthly",
+              label: "Six months",
+              content: statsBody((s) => (
+                <BarChart title="Applications per month, last six months" labels={s.monthlyApplications.map((m) => m.month)} series={[{ name: "Applications", values: s.monthlyApplications.map((m) => m.applications) }]} height={220} />
+              )),
+            },
+          ]}
+        />
         <Panel
           title="Recent applications"
           action={
@@ -570,74 +661,6 @@ function Overview({
           )}
         </Panel>
       </div>
-
-      <TabbedPanel
-        tabs={[
-          {
-            id: "team",
-            label: "Team",
-            content: <TeamPerformancePanel applications={all} titles={titles} onOpen={onTeam} />,
-          },
-          {
-            id: "coverage",
-            label: "Role coverage",
-            content: coverage.length ? (
-              <div className="grid gap-3">
-                <p className="text-[13px] text-mist-600">Candidates in progress per live role, thinnest first.</p>
-                <ul className="grid gap-1">
-                  {coverage.slice(0, 8).map(({ j, n }) => (
-                    <li key={j.id}>
-                      <Link href={`/portal/jobs/${j.id}`} className="flex min-h-10 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
-                        <span className={`w-10 shrink-0 rounded-md py-1 text-center text-[13px] font-semibold tabular-nums ${n === 0 ? "bg-[#fef3f2] text-[#b42318]" : n < 3 ? "bg-[#fffaeb] text-[#b54708]" : "bg-ocean-50 text-ocean-700"}`}>{n}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-medium text-navy-900">{j.title}</span>
-                          <span className="block truncate text-[12px] text-mist-600">{j.clientName || j.department || j.postingId}</span>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              quiet("No live roles", "Set a role to Active to put it on the website.")
-            ),
-          },
-          {
-            id: "sources",
-            label: "Sources",
-            content: sources.length ? <DonutChart title="Applications by source" data={sources} centerLabel="Applications" size={160} /> : quiet("No source data yet"),
-          },
-          {
-            id: "clients",
-            label: "Pipeline by client",
-            content: clientMix.length ? (
-              <div className="grid gap-4">
-                <BarList items={clientMix} />
-                {topClientShare !== null && topClientShare >= 40 && (
-                  <p className="text-[13px] text-mist-600">
-                    <span className="font-medium text-navy-900">{clientMix[0].label}</span> holds{" "}
-                    <span className="font-semibold text-[#b54708]">{topClientShare}%</span> of the pipeline.
-                  </p>
-                )}
-              </div>
-            ) : (
-              quiet("No client data yet")
-            ),
-          },
-          {
-            id: "reqs",
-            label: "Requisitions",
-            content: statsBody(() => (reqMix.length ? <DonutChart title="Requisitions by status" data={reqMix} centerLabel="Roles" size={160} /> : quiet("No roles posted yet"))),
-          },
-          {
-            id: "monthly",
-            label: "Six months",
-            content: statsBody((s) => (
-              <BarChart title="Applications per month, last six months" labels={s.monthlyApplications.map((m) => m.month)} series={[{ name: "Applications", values: s.monthlyApplications.map((m) => m.applications) }]} height={220} />
-            )),
-          },
-        ]}
-      />
     </>
   );
 }

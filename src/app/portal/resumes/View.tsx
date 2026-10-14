@@ -347,9 +347,9 @@ export default function ResumesView() {
     { key: "type", header: "Type", sortable: true, card: false, hideBelow: "xl", value: (r) => formatLabel(r.fileType) },
     { key: "candidate", header: "Candidate", sortable: true, hideBelow: "md", value: (r) => r.candidateName ?? "", cell: (r) => r.candidateName || <span className="text-mist-400">&mdash;</span> },
     { key: "uploader", header: "Uploaded by", sortable: true, card: false, hideBelow: "xl", value: (r) => r.uploaderEmail, cell: (r) => <span className="text-[13px] text-mist-700">{r.uploaderEmail}</span> },
-    { key: "size", header: "Size", sortable: true, card: false, hideBelow: "lg", value: (r) => r.fileSize || 0, cell: (r) => <span className="tabular-nums text-mist-600">{fmtSize(r.fileSize || 0)}</span> },
+    { key: "size", header: "Size", sortable: true, numeric: true, card: false, hideBelow: "lg", value: (r) => r.fileSize || 0, cell: (r) => <span className="tabular-nums text-mist-600">{fmtSize(r.fileSize || 0)}</span> },
     { key: "uploadedAt", header: "Uploaded", sortable: true, hideBelow: "md", value: (r) => r.uploadedAt, cell: (r) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(r.uploadedAt)}</span> },
-    { key: "indexed", header: "Search", sortable: true, value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => <IndexCell r={r} /> },
+    { key: "indexed", header: "Search", sortable: true, align: "center", value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => <IndexCell r={r} /> },
   ];
   const filters: Filter<BankResume>[] = [
     { key: "type", label: "Type", options: ["PDF", "Word"], value: (r) => formatLabel(r.fileType) },

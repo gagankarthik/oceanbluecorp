@@ -8,7 +8,7 @@ import Icon from "@/components/portal/icons";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  Badge, Button, ConfirmDialog, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader,
+  Badge, Button, ConfirmDialog, deleteConfirmText, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader,
   Panel, Skeleton, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
 import { refreshApplications, refreshJobs, useJobSummaries } from "@/hooks/use-console-data";
@@ -269,10 +269,11 @@ export default function JobsView({ category }: { category: JobCategory }) {
       key: "title",
       header: "Role",
       sortable: true,
+      grow: 40,
       value: (j) => `${j.title} ${j.postingId ?? ""}`,
       cell: (j) => (
         <span className="flex min-w-0 flex-col">
-          <span className="font-semibold text-navy-900">{j.title}</span>
+          <span className="truncate font-semibold text-navy-900" title={j.title}>{j.title}</span>
           <span className="font-mono text-[12px] text-mist-500">{j.postingId || "No ID"}</span>
         </span>
       ),
@@ -287,7 +288,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
             value: (j: Job) => assigneesOf(j).join(", "),
             cell: (j: Job) => <AvatarStack names={assigneesOf(j)} />,
           },
-          { key: "client", header: "Client", sortable: true, card: false, hideBelow: "lg" as const, value: (j: Job) => j.clientName ?? "", cell: (j: Job) => <span className="text-mist-700">{j.clientName || "—"}</span> },
+          { key: "client", header: "Client", sortable: true, grow: 15, card: false, hideBelow: "lg" as const, value: (j: Job) => j.clientName ?? "", cell: (j: Job) => <span className="block truncate text-mist-700" title={j.clientName || undefined}>{j.clientName || "—"}</span> },
         ]
       : []),
     { key: "postingId", header: "Job ID", sortable: true, card: false, defaultHidden: true, value: (j) => j.postingId ?? "", cell: (j) => <span className="font-mono text-[13px] text-mist-600">{j.postingId || "—"}</span> },
@@ -298,18 +299,18 @@ export default function JobsView({ category }: { category: JobCategory }) {
         ]
       : []),
     { key: "department", header: "Department", sortable: true, card: false, defaultHidden: true, value: (j) => j.department ?? "" },
-    { key: "location", header: "Location", sortable: true, card: false, hideBelow: "xl", value: (j) => jobLocationLabel(j), cell: (j) => <span className="text-mist-700">{jobLocationLabel(j) || "—"}</span> },
+    { key: "location", header: "Location", sortable: true, card: false, hideBelow: "2xl", value: (j) => jobLocationLabel(j), cell: (j) => <span className="text-mist-700">{jobLocationLabel(j) || "—"}</span> },
     { key: "type", header: "Type", sortable: true, card: false, defaultHidden: true, value: (j) => JOB_TYPE_LABEL[j.type] ?? j.type },
     ...(canPrice
       ? [
-          { key: "payRate", header: "Pay", sortable: true, card: false, defaultHidden: true, value: (j: Job) => j.payRate ?? 0, cell: (j: Job) => <span className="tabular-nums">{j.payRate ? `$${j.payRate}/hr` : "—"}</span> },
-          { key: "billRate", header: "Bill", sortable: true, card: false, defaultHidden: true, value: (j: Job) => j.clientBillRate ?? 0, cell: (j: Job) => <span className="tabular-nums">{j.clientBillRate ? `$${j.clientBillRate}/hr` : "—"}</span> },
+          { key: "payRate", header: "Pay", sortable: true, numeric: true, card: false, defaultHidden: true, value: (j: Job) => j.payRate ?? 0, cell: (j: Job) => <span className="tabular-nums">{j.payRate ? `$${j.payRate}/hr` : "—"}</span> },
+          { key: "billRate", header: "Bill", sortable: true, numeric: true, card: false, defaultHidden: true, value: (j: Job) => j.clientBillRate ?? 0, cell: (j: Job) => <span className="tabular-nums">{j.clientBillRate ? `$${j.clientBillRate}/hr` : "—"}</span> },
         ]
       : []),
-    { key: "due", header: "Deadline", sortable: true, hideBelow: "md", value: (j) => j.submissionDueDate ?? "", cell: (j) => <DueCell job={j} /> },
+    { key: "due", header: "Deadline", sortable: true, hideBelow: "md", className: "whitespace-nowrap", value: (j) => j.submissionDueDate ?? "", cell: (j) => <DueCell job={j} /> },
     ...(canPrice
       ? [
-          { key: "applicants", header: "Applicants", sortable: true, hideBelow: "md" as const, className: "text-center", value: (j: Job) => j.applicationsCount || 0, cell: (j: Job) =>
+          { key: "applicants", header: "Applicants", sortable: true, hideBelow: "md" as const, numeric: true, value: (j: Job) => j.applicationsCount || 0, cell: (j: Job) =>
             needsCandidates(j) ? (
               <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${RED}`} title="Live with no candidates in play">
                 <Icon name="alert" className="size-3.5" />
@@ -318,13 +319,14 @@ export default function JobsView({ category }: { category: JobCategory }) {
             ) : (
               <span className="tabular-nums">{j.applicationsCount || 0}</span>
             ) },
-          { key: "pipeline", header: "Pipeline by stage", card: false, hideBelow: "xl" as const, value: () => "", cell: (j: Job) => <PipelineCells job={j} /> },
+          { key: "pipeline", header: "Pipeline by stage", card: false, hideBelow: "2xl" as const, value: () => "", cell: (j: Job) => <PipelineCells job={j} /> },
         ]
       : []),
     {
       key: "status",
       header: "Status",
       sortable: true,
+      align: "center",
       value: (j) => jobStatusLabel(j.status),
       cell: (j) =>
         canEditJobs ? (
@@ -341,7 +343,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
           </Badge>
         ),
     },
-    { key: "created", header: "Posted", sortable: true, card: false, hideBelow: "xl", value: (j) => j.createdAt, cell: (j) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(j.createdAt)}</span> },
+    { key: "created", header: "Posted", sortable: true, card: false, hideBelow: "2xl", value: (j) => j.createdAt, cell: (j) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(j.createdAt)}</span> },
   ];
 
   const opts = (vals: string[]) => [...new Set(vals.filter(Boolean))].sort();
@@ -591,6 +593,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
           title="Delete this job?"
           body="This is permanent. The posting and every application attached to it are removed."
           confirmLabel="Delete job"
+          requireText={deleteConfirmText(res.jobs?.find((j) => j.id === deleteId)?.title)}
           busy={busy === deleteId}
           onCancel={() => setDeleteId(null)}
           onConfirm={() => void remove()}

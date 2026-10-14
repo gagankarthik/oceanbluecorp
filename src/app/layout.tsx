@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Providers from "@/components/providers/Providers";
@@ -238,7 +237,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
+        className={`${GeistMono.variable} font-sans antialiased`}
       >
         {/* GDPR / CCPA cookie consent, outside Providers so it always shows, and
             first in the DOM so it is reached before the page (it is fixed to

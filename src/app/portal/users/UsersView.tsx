@@ -16,6 +16,7 @@ import {
   Badge,
   Button,
   ConfirmDialog,
+  deleteConfirmText,
   EmptyState,
   ErrorState,
   InsightsSheet,
@@ -541,7 +542,7 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
       ),
     },
     { key: "role", header: "Role", sortable: true, value: (u) => roleLabel(u.role), cell: (u) => <RoleBadge role={u.role} /> },
-    { key: "status", header: "Status", sortable: true, value: (u) => STATUS[u.status]?.label ?? u.status, cell: (u) => <StatusChip status={u.status} /> },
+    { key: "status", header: "Status", sortable: true, align: "center", value: (u) => STATUS[u.status]?.label ?? u.status, cell: (u) => <StatusChip status={u.status} /> },
     { key: "phone", header: "Phone", hideBelow: "xl", value: (u) => u.phone || "" },
     { key: "createdAt", header: "Joined", sortable: true, hideBelow: "lg", value: (u) => new Date(u.createdAt).getTime(), cell: (u) => <span className="tabular-nums text-mist-700">{fmtDate(u.createdAt)}</span> },
     { key: "email", header: "Email", defaultHidden: true, value: (u) => u.email },
@@ -700,6 +701,7 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
           title="Delete this user?"
           body={`${confirmDelete.name || confirmDelete.email} loses their account and access permanently. This cannot be undone.`}
           confirmLabel="Delete"
+          requireText={deleteConfirmText(confirmDelete.name || confirmDelete.email)}
           busy={deleting}
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => void confirmRemove()}

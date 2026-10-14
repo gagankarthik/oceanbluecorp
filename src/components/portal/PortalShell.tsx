@@ -130,7 +130,7 @@ function Sidebar({
 
       <nav id="portal-nav" aria-label="Portal" className="scroll-thin flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-3" onScroll={() => setTip(null)}>
         {groups.map((group, gi) => (
-          <div key={group.title} className={gi === 0 ? "" : collapsed ? "mt-2.5 border-t border-mist-200 pt-2.5" : "mt-4"}>
+          <div key={group.title} className={gi === 0 ? "" : collapsed ? "mt-2 border-t border-mist-200 pt-2" : "mt-3"}>
             {labelled && !collapsed && <p className="px-2.5 pb-1 text-[12px] font-medium text-mist-500">{group.title}</p>}
             {labelled && collapsed && <span className="sr-only">{group.title}</span>}
             <ul className="grid gap-0.5">
@@ -143,11 +143,11 @@ function Sidebar({
                       onClick={onNavigate}
                       aria-current={active ? "page" : undefined}
                       {...tipProps(item.label)}
-                      className={`group relative flex min-h-9 items-center rounded-lg text-[14px] font-medium transition-colors ${
+                      className={`group relative flex min-h-8 items-center rounded-lg text-[14px] font-medium transition-colors ${
                         collapsed ? "mx-auto w-10 justify-center" : "gap-2.5 px-2.5"
                       } ${active ? "bg-ocean-50 text-ocean-700" : "text-mist-700 hover:bg-mist-100 hover:text-navy-900"}`}
                     >
-                      {active && <span aria-hidden className="absolute -left-2.5 top-1.5 bottom-1.5 w-1 rounded-r bg-ocean-600" />}
+                      {active && <span aria-hidden className="absolute -left-2.5 top-1 bottom-1 w-1 rounded-r bg-ocean-600" />}
                       <Icon name={item.icon} className={`size-4 shrink-0 ${active ? "text-ocean-600" : "text-mist-500 group-hover:text-navy-900"}`} />
                       <span className={collapsed ? "sr-only" : "truncate whitespace-nowrap"}>{item.label}</span>
                     </Link>
@@ -240,7 +240,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar: full width or an icon rail */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden transition-[width] duration-200 ease-[var(--ease-standard)] motion-reduce:transition-none lg:block ${
-          collapsed ? "w-16" : "w-60"
+          collapsed ? "w-16" : "w-54 2xl:w-60"
         }`}
       >
         <Sidebar activeHref={activeHref} collapsed={collapsed} />
@@ -255,7 +255,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className={`fixed top-8 z-40 hidden size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-mist-0 text-mist-600 shadow-sm ring-1 ring-mist-300 transition-[left,color] duration-200 ease-[var(--ease-standard)] hover:text-navy-900 hover:ring-mist-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 motion-reduce:transition-none lg:grid ${
-          collapsed ? "left-16" : "left-60"
+          collapsed ? "left-16" : "left-54 2xl:left-60"
         }`}
       >
         <Icon name={collapsed ? "chevronRight" : "chevronLeft"} className="size-3.5" />
@@ -265,7 +265,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
       <div
         className={`flex min-h-svh min-w-0 flex-col transition-[padding] duration-200 ease-[var(--ease-standard)] motion-reduce:transition-none ${
-          collapsed ? "lg:pl-16" : "lg:pl-60"
+          collapsed ? "lg:pl-16" : "lg:pl-54 2xl:pl-60"
         }`}
       >
         {/* Top bar */}

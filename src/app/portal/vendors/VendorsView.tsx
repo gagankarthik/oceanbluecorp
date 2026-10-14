@@ -10,7 +10,7 @@ import { useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
+import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
 import { BarChart, DonutChart } from "@/components/portal/charts";
 import Select from "@/components/portal/Select";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, LinkedRoles, errorText, inputCls, send, useDiscardGuard, useToast } from "@/components/portal/relationships/shared";
@@ -313,7 +313,7 @@ export default function VendorsView() {
         ),
     },
     { key: "location", header: "Location", sortable: true, hideBelow: "xl", value: locationOf },
-    { key: "roles", header: "Roles", sortable: true, value: (v) => (v.openJobCount ?? 0) * 10_000 + (v.jobCount ?? 0), cell: (v) => <RoleCount open={v.openJobCount} all={v.jobCount} /> },
+    { key: "roles", header: "Roles", sortable: true, numeric: true, value: (v) => (v.openJobCount ?? 0) * 10_000 + (v.jobCount ?? 0), cell: (v) => <RoleCount open={v.openJobCount} all={v.jobCount} /> },
     {
       key: "lead",
       header: "Vendor lead",
@@ -481,6 +481,7 @@ export default function VendorsView() {
           title="Delete this vendor?"
           body={`${confirmDelete.name} is removed permanently. Roles that name it keep their copy of the name. This cannot be undone.`}
           confirmLabel="Delete"
+          requireText={deleteConfirmText(confirmDelete.name)}
           busy={deleting}
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => void confirmRemove()}

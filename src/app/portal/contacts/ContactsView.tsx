@@ -216,6 +216,7 @@ export default function ContactsView() {
       key: "name",
       header: "Name",
       sortable: true,
+      grow: 40,
       value: (c) => contactName(c),
       cell: (c) => {
         const unread = c.status === "new";
@@ -225,7 +226,7 @@ export default function ContactsView() {
             <span className="min-w-0">
               {/* Unread reads as bold plus the New status column; no dot */}
               <span className={`flex items-center truncate ${unread ? "font-semibold" : "font-medium"}`}>
-                <span className="truncate">{contactName(c)}</span>
+                <span className="truncate" title={contactName(c)}>{contactName(c)}</span>
                 {unread && <span className="sr-only">(unread)</span>}
               </span>
               <span className="block max-w-[14rem] truncate text-[12px] font-normal text-mist-600" title={c.email}>
@@ -241,12 +242,13 @@ export default function ContactsView() {
       key: "company",
       header: "Company",
       sortable: true,
+      grow: 20,
       hideBelow: "lg",
       value: (c) => c.company || "",
       cell: (c) => (c.company ? <span className="block max-w-[14rem] truncate" title={c.company}>{c.company}</span> : <span className="text-mist-400">–</span>),
     },
-    { key: "topic", header: "Enquiry / area", sortable: true, hideBelow: "xl", value: topicOf },
-    { key: "status", header: "Status", sortable: true, value: (c) => contactStatusMeta(c.status).label, cell: (c) => <ContactStatusBadge status={c.status} /> },
+    { key: "topic", header: "Enquiry / area", sortable: true, grow: 15, hideBelow: "xl", value: topicOf },
+    { key: "status", header: "Status", sortable: true, align: "center", value: (c) => contactStatusMeta(c.status).label, cell: (c) => <ContactStatusBadge status={c.status} /> },
     {
       key: "createdAt",
       header: "Received",

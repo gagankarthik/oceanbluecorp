@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import Icon, { type IconName } from "./icons";
+
+/** Which way the listbox opens; "top" for selects docked at the viewport bottom (batch bar) */
+export const SelectSide = createContext<"bottom" | "top">("bottom");
 
 export type SelectOption = {
   value: string;
@@ -48,6 +51,7 @@ export default function Select({
   disabled?: boolean;
 }) {
   const id = useId();
+  const side = useContext(SelectSide);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -148,7 +152,7 @@ export default function Select({
 
       {open && (
         <div
-          className={`absolute top-[calc(100%+6px)] z-40 ${width} max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200 ${
+          className={`absolute ${side === "top" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"} z-40 ${width} max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >

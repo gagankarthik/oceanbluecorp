@@ -186,33 +186,35 @@ export default function TalentBenchView() {
       key: "name",
       header: "Candidate",
       sortable: true,
+      grow: 35,
       value: (a) => a.name || a.email,
       cell: (a) => (
         <span className="flex min-w-0 items-center gap-3">
           <Avatar name={a.name || a.email} size="sm" />
           <span className="flex min-w-0 flex-col">
-            <span className="truncate font-semibold">{a.name || "Unknown"}</span>
+            <span className="truncate font-semibold" title={a.name || undefined}>{a.name || "Unknown"}</span>
             <span className="truncate text-[12px] text-mist-500">{a.jobTitle || a.applicationId || ""}</span>
           </span>
         </span>
       ),
     },
-    ...(canFilterByAdder ? [{ key: "adder", header: "Added by", sortable: true, card: false, hideBelow: "xl" as const, value: (a: Row) => a.adder }] : []),
-    { key: "email", header: "Email", card: false, hideBelow: "xl", value: (a) => a.email },
+    ...(canFilterByAdder ? [{ key: "adder", header: "Added by", sortable: true, card: false, hideBelow: "2xl" as const, value: (a: Row) => a.adder }] : []),
+    { key: "email", header: "Email", card: false, hideBelow: "2xl", value: (a) => a.email },
     { key: "phone", header: "Phone", card: false, defaultHidden: true, value: (a) => a.phone ?? "" },
     { key: "position", header: "Last position", card: false, defaultHidden: true, value: (a) => a.jobTitle ?? "" },
     { key: "appId", header: "App ID", card: false, defaultHidden: true, value: (a) => a.applicationId || a.id.slice(0, 8) },
-    { key: "skills", header: "Skills", hideBelow: "md", value: (a) => [a.skills?.join(", "), a.searchText].filter(Boolean).join(" "), cell: (a) => (a.skills?.length ? <Tags items={a.skills.slice(0, 3).concat(a.skills.length > 3 ? [`+${a.skills.length - 3}`] : [])} /> : <span className="text-mist-400">&mdash;</span>) },
-    { key: "location", header: "Location", sortable: true, hideBelow: "lg", value: (a) => locationOf(a) },
-    { key: "age", header: "On bench", sortable: true, hideBelow: "xl", value: (a) => daysOnBench(a) ?? -1, cell: (a) => { const d = daysOnBench(a); return d === null ? <span className="text-mist-400">&mdash;</span> : <span className={`tabular-nums ${d >= IDLE_DAYS ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>; } },
-    { key: "rating", header: "Rating", sortable: true, card: false, hideBelow: "md", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
-    { key: "hireType", header: "Hire type", sortable: true, card: false, hideBelow: "xl", value: (a) => hireTypeLabel(a.hireType) },
+    { key: "skills", header: "Skills", grow: 20, hideBelow: "md", value: (a) => [a.skills?.join(", "), a.searchText].filter(Boolean).join(" "), cell: (a) => (a.skills?.length ? <Tags items={a.skills.slice(0, 3).concat(a.skills.length > 3 ? [`+${a.skills.length - 3}`] : [])} /> : <span className="text-mist-400">&mdash;</span>) },
+    { key: "location", header: "Location", sortable: true, grow: 15, hideBelow: "lg", value: (a) => locationOf(a) },
+    { key: "age", header: "On bench", sortable: true, numeric: true, hideBelow: "xl", value: (a) => daysOnBench(a) ?? -1, cell: (a) => { const d = daysOnBench(a); return d === null ? <span className="text-mist-400">&mdash;</span> : <span className={`tabular-nums ${d >= IDLE_DAYS ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>; } },
+    { key: "rating", header: "Rating", sortable: true, card: false, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
+    { key: "hireType", header: "Hire type", sortable: true, card: false, hideBelow: "2xl", value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
-    { key: "pool", header: "Pool", sortable: true, card: false, hideBelow: "xl", value: (a) => POOL_META[poolOf(a)].label, cell: (a) => <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge> },
+    { key: "pool", header: "Pool", sortable: true, card: false, hideBelow: "2xl", value: (a) => POOL_META[poolOf(a)].label, cell: (a) => <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge> },
     {
       key: "status",
       header: "Stage",
       sortable: true,
+      align: "center",
       value: (a) => stageLabel(a.status),
       cell: (a) => (
         <InlineSelect

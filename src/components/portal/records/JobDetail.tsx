@@ -14,7 +14,7 @@ import { jobLocationLabel } from "@/lib/workplace";
 import { JOB_STATUS_COPY } from "@/lib/job-options";
 import { SALARY_PERIODS } from "@/components/portal/console/theme";
 import { usePageCrumb, useNavSection } from "@/components/portal/console/provider";
-import { Avatar, Badge, Button, ConfirmDialog, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
+import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
 import { useToast } from "@/components/portal/toast";
 import { StageSelect } from "@/components/portal/fields";
 import {
@@ -440,6 +440,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
           title="Delete this job?"
           body="This is permanent. The posting and every application attached to it are removed."
           confirmLabel="Delete job"
+          requireText={deleteConfirmText(job.title)}
           busy={deleting}
           onCancel={() => setConfirmDelete(false)}
           onConfirm={() => void remove()}

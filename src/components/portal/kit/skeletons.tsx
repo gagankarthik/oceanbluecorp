@@ -46,28 +46,29 @@ export function HeaderSkeleton({ actions = 1, back = false, icon = true }: { act
   );
 }
 
-/** StatCard: label and icon chip, value, change line. */
-export function StatCardSkeleton() {
+/** StatCard: label, value and sparkline, change line(s). */
+export function StatCardSkeleton({ lines = 1 }: { lines?: 1 | 2 }) {
   return (
-    <div className={`${card} p-5`}>
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-3.5 w-24" />
-        <Skeleton className="size-9 rounded-lg" />
+    <div className={`${card} p-4`}>
+      <Skeleton className="h-4 w-24" />
+      <div className="mt-2 flex h-8 items-end justify-between gap-3">
+        <Skeleton className="h-7 w-16" />
+        <Skeleton className="h-6 w-20" />
       </div>
-      <Skeleton className="mt-3 h-[30px] w-20" />
-      <Skeleton className="mt-3 h-[22px] w-28" />
+      <Skeleton className="mt-3 h-5 w-32" />
+      {lines === 2 && <Skeleton className="mt-1 h-4 w-24" />}
     </div>
   );
 }
 
 /** KpiRow of `count` StatCards, same columns as KpiRow. */
-export function KpiRowSkeleton({ count = 4 }: { count?: number }) {
+export function KpiRowSkeleton({ count = 4, lines = 1 }: { count?: number; lines?: 1 | 2 }) {
   const cols = count >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : count === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
   return (
     <div className={`grid grid-cols-1 gap-4 ${cols}`}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className={count === 3 && i === 2 ? "sm:max-lg:col-span-2" : ""}>
-          <StatCardSkeleton />
+          <StatCardSkeleton lines={lines} />
         </div>
       ))}
     </div>

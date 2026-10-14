@@ -10,7 +10,7 @@ import { InlineSelect, KpiButton, StageBadge, StageFunnel, StarInput, Tags, stag
 import { BOARD, FLOW, STAGE_LABEL, buckets, countIn, locationOf, reachedAt, stageLabel, tally, type Stage } from "@/components/portal/recruiting/model";
 import { BoardView, FilterBar, SavedViewsMenu, nextStage, type SavedSearch } from "@/components/portal/recruiting/applications-views";
 import {
-  Avatar, Badge, Button, ConfirmDialog, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
+  Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
   Segmented, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
@@ -249,12 +249,13 @@ export default function ApplicationsView() {
       key: "name",
       header: "Applicant",
       sortable: true,
+      grow: 30,
       value: (a) => a.name || a.email,
       cell: (a) => (
         <span className="flex min-w-0 items-center gap-3">
           <Avatar name={a.name || a.email} size="sm" />
           <span className="flex min-w-0 flex-col">
-            <span className="truncate font-semibold">{a.name || a.email}</span>
+            <span className="truncate font-semibold" title={a.name || a.email}>{a.name || a.email}</span>
             <span className="truncate text-[12px] text-mist-500">{a.applicationId || locationOf(a)}</span>
           </span>
         </span>
@@ -262,11 +263,12 @@ export default function ApplicationsView() {
     },
     { key: "email", header: "Email", card: false, defaultHidden: true, value: (a) => a.email },
     { key: "phone", header: "Phone", card: false, defaultHidden: true, value: (a) => a.phone ?? "" },
-    { key: "jobTitle", header: "Position", sortable: true, hideBelow: "md", value: (a) => a.jobTitle ?? "", cell: (a) => <span className="text-mist-700">{a.jobTitle || "—"}</span> },
+    { key: "jobTitle", header: "Position", sortable: true, grow: 20, hideBelow: "md", value: (a) => a.jobTitle ?? "", cell: (a) => <span className="block truncate text-mist-700" title={a.jobTitle || undefined}>{a.jobTitle || "—"}</span> },
     {
       key: "status",
       header: "Stage",
       sortable: true,
+      align: "center",
       value: (a) => stageLabel(a.status),
       cell: (a) => (
         <InlineSelect
@@ -282,6 +284,7 @@ export default function ApplicationsView() {
       key: "age",
       header: "In stage",
       sortable: true,
+      numeric: true,
       hideBelow: "xl",
       value: (a) => (TERMINAL.has(a.status) ? -1 : daysInStage(a)),
       cell: (a) => {
@@ -290,14 +293,14 @@ export default function ApplicationsView() {
         return <span className={`tabular-nums ${d >= STALE_DAYS ? "font-semibold text-[#b54708]" : "text-mist-600"}`}>{d}d</span>;
       },
     },
-    { key: "location", header: "Location", sortable: true, card: false, hideBelow: "xl", value: (a) => locationOf(a) },
+    { key: "location", header: "Location", sortable: true, card: false, hideBelow: "2xl", value: (a) => locationOf(a) },
     { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="text-[13px]">{a.ownershipName}</span> : <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>) },
     { key: "source", header: "Source", sortable: true, card: false, defaultHidden: true, value: (a) => a.source ?? "" },
     { key: "hireType", header: "Hire type", sortable: true, card: false, defaultHidden: true, value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
     { key: "skills", header: "Skills", card: false, defaultHidden: true, value: (a) => a.skills?.join(", ") ?? "" },
-    { key: "appliedAt", header: "Applied", sortable: true, card: false, hideBelow: "lg", value: (a) => a.appliedAt, cell: (a) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(a.appliedAt)}</span> },
-    { key: "rating", header: "Rating", sortable: true, hideBelow: "md", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => void rate(a, n)} label={`Rating for ${a.name}`} /> },
+    { key: "appliedAt", header: "Applied", sortable: true, card: false, hideBelow: "2xl", value: (a) => a.appliedAt, cell: (a) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(a.appliedAt)}</span> },
+    { key: "rating", header: "Rating", sortable: true, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => void rate(a, n)} label={`Rating for ${a.name}`} /> },
   ];
 
   const filters: Filter<Row>[] = [
@@ -698,6 +701,7 @@ export default function ApplicationsView() {
           title={deleteIds.length > 1 ? `Delete ${deleteIds.length} applications?` : "Delete this application?"}
           body="This is permanent and cannot be undone."
           confirmLabel="Delete"
+          requireText={deleteConfirmText(rows.find((r) => r.id === deleteIds[0])?.name, deleteIds.length)}
           busy={deleting}
           onCancel={() => setDeleteIds(null)}
           onConfirm={() => void removeMany()}

@@ -16,6 +16,7 @@ import {
   Badge,
   Button,
   ConfirmDialog,
+  deleteConfirmText,
   EmptyState,
   ErrorState,
   KpiRow,
@@ -500,7 +501,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
       ),
     },
     { key: "access", header: "Access", sortable: true, value: (k) => accessLevelMeta(k.accessLevel).summary, cell: (k) => <Badge tone={k.accessLevel === "write" ? "amber" : "blue"}>{accessLevelMeta(k.accessLevel).summary}</Badge> },
-    { key: "status", header: "Status", sortable: true, value: (k) => (k.isActive ? "Active" : "Disabled"), cell: (k) => <KeyStatus active={k.isActive} /> },
+    { key: "status", header: "Status", sortable: true, align: "center", value: (k) => (k.isActive ? "Active" : "Disabled"), cell: (k) => <KeyStatus active={k.isActive} /> },
     {
       key: "lastUsedAt",
       header: "Last used",
@@ -627,6 +628,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
             </>
           }
           confirmLabel="Revoke key"
+          requireText={deleteConfirmText(revoking.name)}
           busy={revokeBusy}
           onConfirm={() => void revoke()}
           onCancel={() => setRevoking(null)}

@@ -32,7 +32,7 @@ export default function Photo({
         sizes={sizes}
         preload={preload}
         loading={preload || eager ? "eager" : undefined}
-        className={`treated object-cover ${zoom ? "transition-transform duration-700 ease-[var(--ease-out-strong)] group-hover:scale-[1.05]" : ""}`}
+        className={`treated object-cover ${zoom ? "transition-transform duration-300 ease-[var(--ease-out-strong)] group-hover:scale-[1.05]" : ""}`}
         style={{ objectPosition: position }}
       />
     </div>

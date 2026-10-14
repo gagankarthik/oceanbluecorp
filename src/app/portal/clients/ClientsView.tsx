@@ -11,7 +11,7 @@ import { useJobSummaries } from "@/hooks/use-console-data";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { Avatar, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
+import { Avatar, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
 import { BarChart, StackedBar } from "@/components/portal/charts";
 import Select from "@/components/portal/Select";
 import Icon from "@/components/portal/icons";
@@ -329,10 +329,11 @@ export default function ClientsView() {
       key: "roles",
       header: "Roles",
       sortable: true,
+      numeric: true,
       value: (c) => (c.openJobCount ?? 0) * 10_000 + (c.jobCount ?? 0),
       cell: (c) => <RoleCount open={c.openJobCount} all={c.jobCount} />,
     },
-    { key: "status", header: "Status", sortable: true, value: (c) => statusLabel(c.status), cell: (c) => <ActiveBadge active={c.status === "active"} /> },
+    { key: "status", header: "Status", sortable: true, align: "center", value: (c) => statusLabel(c.status), cell: (c) => <ActiveBadge active={c.status === "active"} /> },
     { key: "createdAt", header: "Added", sortable: true, hideBelow: "xl", value: (c) => new Date(c.createdAt).getTime(), cell: (c) => <span className="tabular-nums text-mist-700">{fmtDate(c.createdAt)}</span> },
     { key: "website", header: "Website", defaultHidden: true, value: (c) => c.websiteUrl },
     { key: "email", header: "Email", defaultHidden: true, value: (c) => c.email || "" },
@@ -512,6 +513,7 @@ export default function ClientsView() {
           title="Delete this client?"
           body={`${confirmDelete.name} is removed permanently. Roles that name it keep their copy of the name. This cannot be undone.`}
           confirmLabel="Delete"
+          requireText={deleteConfirmText(confirmDelete.name)}
           busy={deleting}
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => void confirmRemove()}

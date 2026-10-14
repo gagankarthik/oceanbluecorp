@@ -51,7 +51,8 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      // Not while a dialog holds focus: the field sits behind its scrim.
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && !document.querySelector('[aria-modal="true"]')) {
         e.preventDefault();
         focus();
       }

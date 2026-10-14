@@ -13,13 +13,13 @@ export default function Closing({
 }) {
   return (
     <section aria-label="Contact" className="relative overflow-hidden bg-ocean-600 text-white">
-      {/* Slow drifting wave lines, a nod to the name */}
+      {/* Wave lines that settle into place once, a nod to the name */}
       <svg aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-full w-[200%] text-white" viewBox="0 0 2400 400" preserveAspectRatio="none">
         {[0, 1, 2, 3].map((i) => (
           <path
             key={i}
             className="wave-drift"
-            style={{ animationDuration: `${26 + i * 8}s`, opacity: 0.07 + i * 0.03 } as React.CSSProperties}
+            style={{ animationDuration: `${3 + i * 0.5}s`, opacity: 0.07 + i * 0.03 } as React.CSSProperties}
             d={`M0 ${250 + i * 34} C 200 ${200 + i * 34}, 400 ${300 + i * 34}, 600 ${250 + i * 34} S 1000 ${200 + i * 34}, 1200 ${250 + i * 34} S 1600 ${300 + i * 34}, 1800 ${250 + i * 34} S 2200 ${200 + i * 34}, 2400 ${250 + i * 34}`}
             fill="none"
             stroke="currentColor"

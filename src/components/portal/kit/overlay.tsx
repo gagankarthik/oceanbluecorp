@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react"
 import { createPortal } from "react-dom";
 import Icon from "../icons";
 import { Button } from "./Button";
+import { FieldError, inputCls } from "../fields/base";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -23,6 +24,8 @@ export function useDialog<T extends HTMLElement>(onClose: () => void, enabled = 
   // Read during render: by the effect, autoFocus has already moved focus inside.
   const [opener] = useState(() => (typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)));
   const closeRef = useRef(onClose);
+  // The autoFocus target, so a re-run effect (Strict Mode) restores it rather than the panel.
+  const initial = useRef<HTMLElement | null>(null);
   useEffect(() => {
     closeRef.current = onClose;
   });
@@ -32,15 +35,17 @@ export function useDialog<T extends HTMLElement>(onClose: () => void, enabled = 
     const id = Symbol("dialog");
     stack.push(id);
     const panel = ref.current;
+    const inside = !!panel?.contains(document.activeElement);
     // Panels that stay mounted (enabled toggles) read the opener here instead.
-    const back = panel?.contains(document.activeElement) ? opener : (document.activeElement as HTMLElement | null);
+    const back = inside ? opener : (document.activeElement as HTMLElement | null);
 
     if (locks++ === 0) {
       savedOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
     }
 
-    if (panel && !panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
+    if (inside) initial.current = document.activeElement as HTMLElement;
+    else if (panel) (initial.current && panel.contains(initial.current) ? initial.current : panel).focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent) => {
       if (stack[stack.length - 1] !== id || !panel) return;
@@ -115,6 +120,7 @@ export function Modal({
   children,
   footer,
   size = "md",
+  role = "dialog",
 }: {
   title: string;
   description?: React.ReactNode;
@@ -122,6 +128,7 @@ export function Modal({
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: keyof typeof modalWidth;
+  role?: "dialog" | "alertdialog";
 }) {
   const ref = useDialog<HTMLDivElement>(onClose);
   const titleId = useId();
@@ -131,7 +138,7 @@ export function Modal({
         <div aria-hidden className="kit-fade absolute inset-0 bg-navy-950/40" onClick={onClose} />
         <div
           ref={ref}
-          role="dialog"
+          role={role}
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
@@ -154,9 +161,16 @@ export function Modal({
   );
 }
 
+const typed = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
+/** `requireText` for a delete: "delete N" for a batch, else the record's name, else "delete". */
+export const deleteConfirmText = (name?: string | null, count = 1) => (count > 1 ? `delete ${count}` : name?.trim() || "delete");
+
 /**
  * Confirmation for an irreversible action. Cancel takes focus first, so Enter
  * never destroys anything by accident. Closing is blocked while `busy`.
+ * `requireText` adds typed friction: confirm stays disabled until it matches
+ * (trimmed, case-insensitive). Reserve it for high-impact deletes.
  */
 export function ConfirmDialog({
   title,
@@ -166,6 +180,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   tone = "danger",
+  requireText,
 }: {
   title: string;
   body: React.ReactNode;
@@ -175,31 +190,75 @@ export function ConfirmDialog({
   onCancel: () => void;
   /** "danger" for deletes (trash icon); "primary" for a weighty but safe action */
   tone?: "danger" | "primary";
+  /** Text the user must type before confirming, e.g. the record's name */
+  requireText?: string;
 }) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const inputId = useId();
+  const bodyId = useId();
+  const needed = requireText?.trim() || undefined;
+  const ok = !needed || typed(value) === typed(needed);
   const cancel = () => !busy && onCancel();
+  const confirm = () => {
+    if (busy) return;
+    if (!ok) return setError(`Type "${needed}" exactly to confirm.`);
+    onConfirm();
+  };
   return (
     <Modal
       title={title}
       size="sm"
+      role="alertdialog"
       onClose={cancel}
       footer={
         <>
           <Button variant="ghost" onClick={cancel} disabled={busy} autoFocus>
             Cancel
           </Button>
-          <Button variant={tone} icon={tone === "danger" ? "trash" : undefined} onClick={onConfirm} loading={busy}>
+          <Button variant={tone} icon={tone === "danger" ? "trash" : undefined} onClick={confirm} loading={busy} disabled={!ok}>
             {confirmLabel}
           </Button>
         </>
       }
     >
-      <div className="text-[14px] leading-relaxed text-mist-700">{body}</div>
+      <div id={bodyId} className="text-[14px] leading-relaxed text-mist-700">{body}</div>
+      {needed && (
+        <div className="mt-4">
+          <label htmlFor={inputId} className="mb-1.5 block text-[13px] text-navy-900">
+            Type <strong className="font-semibold">{needed}</strong> to confirm
+          </label>
+          <input
+            id={inputId}
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              if (error) setError("");
+            }}
+            onBlur={() => value.trim() && !ok && setError(`Type "${needed}" exactly to confirm.`)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              confirm();
+            }}
+            disabled={busy}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${inputId}-error` : bodyId}
+            className={inputCls}
+          />
+          <FieldError id={`${inputId}-error`}>{error}</FieldError>
+        </div>
+      )}
     </Modal>
   );
 }
 
 /**
- * Record panel. Slides in from the right (max 36rem) from sm; a bottom sheet
+ * Record panel. Slides in from the right (max 34rem, `lg` 48rem) from sm; a bottom sheet
  * at 92% height on phones. Same focus, Escape and scroll rules as Modal.
  */
 export function Drawer({
@@ -223,14 +282,15 @@ export function Drawer({
   return (
     <Portal>
       <div className="fixed inset-0 z-50 flex items-end sm:items-stretch sm:justify-end">
-        <div aria-hidden className="kit-fade absolute inset-0 bg-navy-950/40" onClick={onClose} />
+        {/* Lighter from sm, so the list behind stays readable beside the panel */}
+        <div aria-hidden className="kit-fade absolute inset-0 bg-navy-950/40 sm:bg-navy-950/20" onClick={onClose} />
         <div
           ref={ref}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className={`kit-slide relative flex h-[92svh] w-full flex-col rounded-t-2xl bg-mist-0 text-navy-900 shadow-2xl focus:outline-none sm:h-full sm:rounded-none ${width === "lg" ? "sm:max-w-3xl" : "sm:max-w-xl"}`}
+          className={`kit-slide relative flex h-[92svh] w-full flex-col rounded-t-2xl bg-mist-0 text-navy-900 shadow-2xl focus:outline-none sm:h-full sm:rounded-none ${width === "lg" ? "sm:max-w-3xl" : "sm:max-w-136"}`}
         >
           <div className="flex items-center justify-between gap-4 border-b border-mist-200 px-5 py-3 sm:px-6">
             <h2 id={titleId} className="min-w-0 truncate text-[18px] font-semibold text-navy-900">{title}</h2>

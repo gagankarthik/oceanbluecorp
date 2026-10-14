@@ -247,7 +247,7 @@ Admin-specific atoms that have **no** ui equivalent live in `src/components/port
 | `AdminCard` / `AdminCardHeader` | `admin-card.tsx` | The canonical surface. |
 | `SearchInput`, `FilterToggle`, `ViewSwitcher`, `BulkBar` | `toolbar.tsx` | The list-page toolbar kit. |
 | `FilterChips` | `filter-chips.tsx` | Active filters stay visible & dismissible. |
-| `DataTable<T>` | `portal/DataTable.tsx` | Sortable, selectable table: numbered pages, rows-per-page in the footer, density 44/56/68 saved per table, keyboard-openable rows, `numeric` columns right-aligned, secondary columns `hideBelow`. |
+| `DataTable<T>` | `portal/DataTable.tsx` | Sortable, selectable table: numbered pages, rows-per-page in the footer, density 44/56/68 saved per table, keyboard-openable rows, `numeric` columns right-aligned, status columns `align: "center"`, long-text columns `grow` (share of spare width, truncate with a title), secondary columns `hideBelow`. Header sticks under the top bar; a table too wide for its box scrolls sideways with the first and actions columns pinned. Search plus up to three filters inline (more → first two inline, rest behind "More filters"). Selection opens a floating navy batch bar. |
 | `AssigneePicker` | `forms/primitives.tsx` | Search + chip multi-select. |
 | `AdminDialog` | `admin-dialog.tsx` | Every console modal. Radix Dialog: focus trap, Escape, scrim click, focus return, labelled by its title. Sizes `sm/md/lg/xl`, a `footer` slot, `actions` in the header, `busy` blocks dismissal. A form in the body pairs with a footer submit via `form="id"`. Guard unsaved work by gating `onOpenChange(false)` behind a "Discard changes?" `ConfirmDialog`. |
 | `ConfirmDialog` | `confirm-dialog.tsx` | Confirmations on `AdminDialog` (`alertdialog`), Cancel focused first, `WorkspaceButton` `danger` for destructive. |
@@ -427,17 +427,14 @@ Audited 2026-08-07 against the admin app.
    fixed Hick's at the toolbar and moved the cost inside the menu. Acceptable while
    the fields stay labelled and scannable; if a screen needs more than ~8, group
    them or make the menu two-column. Watch it.
-2. **Checklist gaps, recorded rather than implied.** Not yet built: typed
-   confirmation for irreversible deletes (`ConfirmDialog` has no `requireText`);
-   an account-level audit log; a custom date range on the dashboard; date
+2. **Checklist gaps, recorded rather than implied.** Not yet built: an account-level audit log; a custom date range on the dashboard; date
    grouping on the notifications list; list filters surviving a round trip to
    a record; the pinned first column (`pinFirstColumn`) switched on for the
    wide grids; exports that name how many rows they hold; the Notifications
    tab in settings, which is disabled until it has a backend.
-3. **Tables scroll the page, not themselves.** `DataTable` already has everything
-   needed to scroll internally, an `overflow-auto` container, a `maxHeight` prop,
-   and a sticky `thead` (`.adm-grid thead th`, in `globals.css` rather than the
-   component, which is easy to miss). What is missing is at the page level: list
-   pages do not bound its height, so the whole page scrolls and the header sticks
-   to nothing. Converting a page means making it `h-full min-h-0 flex flex-col`
-   so the table becomes the scrolling element. Not yet done on any page.
+3. **Tables scroll the page, not themselves (decided).** The portal `DataTable`
+   never scrolls vertically: the page is the one scroller and the header sticks
+   under the 64px top bar. Only a table wider than its box scrolls sideways, and
+   then the header sits at the top of that box rather than sticking to the page.
+   The main list pages are tuned (`grow` columns, `hideBelow: "2xl"`) so they do
+   not reach that fallback from 1024px up with the sidebar open.

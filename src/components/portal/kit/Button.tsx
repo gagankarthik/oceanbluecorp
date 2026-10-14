@@ -15,10 +15,10 @@ export function Spinner({ className = "size-4", label }: { className?: string; /
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 const buttonStyles: Record<ButtonVariant, string> = {
-  primary: "bg-ocean-600 text-white hover:bg-ocean-700",
-  secondary: "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50",
-  ghost: "text-navy-900 hover:bg-mist-100",
-  danger: "bg-mist-0 text-[#b42318] ring-1 ring-inset ring-[#f3c4bf] hover:bg-[#fef3f2]",
+  primary: "bg-ocean-600 text-white not-disabled:hover:bg-ocean-700",
+  secondary: "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 not-disabled:hover:bg-mist-50",
+  ghost: "text-navy-900 not-disabled:hover:bg-mist-100",
+  danger: "bg-mist-0 text-[#b42318] ring-1 ring-inset ring-[#f3c4bf] not-disabled:hover:bg-[#fef3f2]",
 };
 
 /**
@@ -59,8 +59,8 @@ export function Button({
   autoFocus?: boolean;
 }) {
   // A busy button stays at full strength; only a truly disabled one fades.
-  const cls = `relative inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors active:scale-[0.98] disabled:pointer-events-none ${
-    loading ? "cursor-progress" : "disabled:opacity-50"
+  const cls = `relative inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors not-disabled:active:scale-[0.98] disabled:cursor-not-allowed ${
+    loading ? "cursor-progress" : "disabled:opacity-[var(--opacity-disabled)]"
   } ${
     children ? (size === "sm" ? "min-h-8 px-3 text-[13px]" : "min-h-10 px-4 text-[14px]") : size === "sm" ? "size-8" : "size-10"
   } ${buttonStyles[variant]} ${className}`;

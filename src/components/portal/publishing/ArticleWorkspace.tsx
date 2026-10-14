@@ -210,12 +210,12 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
         </div>
       ),
     },
-    { key: "status", header: "Status", sortable: true, value: (a) => articleStatusLabel(a.status), cell: (a) => <ArticleStatusBadge article={a} /> },
+    { key: "status", header: "Status", sortable: true, align: "center", value: (a) => articleStatusLabel(a.status), cell: (a) => <ArticleStatusBadge article={a} /> },
     ...(kind === "blog"
       ? ([
           { key: "category", header: "Category", sortable: true, hideBelow: "lg", value: (a) => a.category || "", cell: (a) => (a.category ? <Badge tone="blue">{a.category}</Badge> : dash) },
           { key: "author", header: "Author", sortable: true, hideBelow: "lg", value: (a) => a.authorName || "", cell: (a) => <span className="whitespace-nowrap">{a.authorName || dash}</span> },
-          { key: "reading", header: "Read", sortable: true, hideBelow: "xl", value: (a) => a.readingMinutes || 0, cell: (a) => <span className="tabular-nums">{a.readingMinutes ? `${a.readingMinutes} min` : "—"}</span> },
+          { key: "reading", header: "Read", sortable: true, numeric: true, hideBelow: "xl", value: (a) => a.readingMinutes || 0, cell: (a) => <span className="tabular-nums">{a.readingMinutes ? `${a.readingMinutes} min` : "—"}</span> },
         ] satisfies Column<Article>[])
       : []),
     ...(kind === "news"
@@ -232,6 +232,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
             key: "approval",
             header: "Client approval",
             sortable: true,
+            align: "center",
             hideBelow: "lg",
             value: (a) => (a.approvalOnFile ? "On file" : "Not signed"),
             cell: (a) => <Badge tone={a.approvalOnFile ? "green" : "amber"}>{a.approvalOnFile ? "On file" : "Not signed"}</Badge>,

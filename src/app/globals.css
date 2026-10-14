@@ -1454,14 +1454,33 @@ body {
 
 /* Layered, so a component's own focus style (e.g. the contact form's underline) can override it */
 @layer base {
+  /* Not --color-accent: the shadcn alias above remaps it to a near-white tint (1.09:1) */
   ::selection {
-    background: var(--color-accent);
+    background: var(--color-ocean-200);
     color: var(--color-navy-950);
   }
 
+  /* The faces ship 400/500/600 only; preflight's `bolder` would fake a 700 */
+  b,
+  strong {
+    font-weight: 600;
+  }
+
+  /* Disabled reads as disabled to the pointer everywhere, not only in .adm-scope */
+  :is(button, input, select, textarea):disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /* Brand blue: 5.02:1 on white, 4.71 on mist-50 */
   :focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 3px;
+    outline: 2px solid var(--color-ocean-600);
+    outline-offset: 2px;
+  }
+  /* Dark bands (navy, ocean): white, 14.06 / 5.02 */
+  .on-dark :focus-visible,
+  .on-dark:focus-visible {
+    outline-color: var(--color-mist-0);
   }
 }
 
@@ -1509,7 +1528,7 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   .js .lines [data-line] {
     transform: translateY(105%);
-    animation: line-up 900ms var(--ease-out-strong) forwards;
+    animation: line-up 400ms var(--ease-out-strong) forwards;
     animation-delay: calc(var(--i) * 110ms + 150ms);
   }
   .js [data-after-lines] {
@@ -1520,7 +1539,7 @@ body {
   .js [data-reveal] {
     opacity: 0;
     transform: translateY(24px);
-    transition: opacity 700ms var(--ease-out-strong), transform 900ms var(--ease-out-strong);
+    transition: opacity 400ms var(--ease-out-strong), transform 400ms var(--ease-out-strong);
     transition-delay: calc(var(--d, 0) * 80ms);
   }
   .js [data-reveal].is-in {
@@ -1544,8 +1563,8 @@ body {
 /* Image shutter: the one hero picture opens from its top edge */
 .shutter { overflow: hidden; }
 @media (prefers-reduced-motion: no-preference) {
-  .js .shutter { clip-path: inset(0 0 100% 0); animation: shutter 1100ms cubic-bezier(0.65, 0, 0.35, 1) 200ms forwards; }
-  .js .shutter img { transform: scale(1.12); animation: settle 1500ms cubic-bezier(0.22, 1, 0.36, 1) 200ms forwards; }
+  .js .shutter { clip-path: inset(0 0 100% 0); animation: shutter 400ms cubic-bezier(0.65, 0, 0.35, 1) 150ms forwards; }
+  .js .shutter img { transform: scale(1.12); animation: settle 600ms cubic-bezier(0.22, 1, 0.36, 1) 150ms forwards; }
 }
 @keyframes shutter { to { clip-path: inset(0); } }
 @keyframes settle { to { transform: none; } }
@@ -1553,11 +1572,11 @@ body {
 /* Greyscale treatment shared by every atmosphere photograph */
 .treated { filter: grayscale(1) contrast(1.05); }
 
-/* Closing band: wave lines drift sideways, seamless at half width */
+/* Closing band: wave lines settle into place once (no perpetual loop) */
 @media (prefers-reduced-motion: no-preference) {
-  .wave-drift { animation: wave-drift linear infinite; }
+  .wave-drift { animation: wave-drift var(--ease-out-strong) 1 both; }
 }
-@keyframes wave-drift { to { transform: translateX(-50%); } }
+@keyframes wave-drift { from { transform: translateX(-6%); } to { transform: translateX(0); } }
 
 /* Thin, quiet scrollbars for panels such as the portal sidebar */
 /* Tab bars, chip rows, chevrons: scroll sideways when narrow, never vertically,
@@ -1570,6 +1589,34 @@ body {
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 .scroll-thin::-webkit-scrollbar-thumb { background: var(--color-mist-300); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
 .scroll-thin::-webkit-scrollbar-thumb:hover { background-color: var(--color-mist-400); }
+
+/* Portal DataTable: the pinned identifier / actions columns grow a 1px seam and
+   a soft shadow only once content has scrolled under them (data-left / data-right
+   are set from the scroll position). */
+.dt-scroll[data-left] .dt-pin-l { box-shadow: inset -1px 0 0 var(--color-mist-200), 6px 0 8px -6px rgb(11 46 70 / 0.12); }
+.dt-scroll[data-right] .dt-pin-r { box-shadow: inset 1px 0 0 var(--color-mist-200), -6px 0 8px -6px rgb(11 46 70 / 0.12); }
+
+/* Batch bar: pages pass light portal Buttons (and Selects); on the navy bar they
+   turn into glass controls so every page reads right without its own variant. */
+.dt-batch-actions > button,
+.dt-batch-actions > a,
+.dt-batch-actions > div > button[aria-haspopup="listbox"] {
+  background: rgb(255 255 255 / 0.08);
+  color: #fff;
+  --tw-ring-color: rgb(255 255 255 / 0.28);
+}
+.dt-batch-actions > button:hover,
+.dt-batch-actions > a:hover,
+.dt-batch-actions > div > button[aria-haspopup="listbox"]:hover { background: rgb(255 255 255 / 0.16); }
+.dt-batch-actions > div > button[aria-haspopup="listbox"] span,
+.dt-batch-actions > div > button[aria-haspopup="listbox"] svg { color: inherit; }
+/* Danger keeps its meaning on navy: light red on glass (#fecdca on navy-900 > 10:1) */
+.dt-batch-actions > button[class*="b42318"] { color: #fecdca; --tw-ring-color: rgb(254 205 202 / 0.4); }
+.dt-batch-actions > button[class*="b42318"]:hover { background: rgb(254 205 202 / 0.14); }
+.dt-batch > button:focus-visible,
+.dt-batch-actions > button:focus-visible,
+.dt-batch-actions > a:focus-visible,
+.dt-batch-actions > div > button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* Portal: grid columns may shrink below their content, so wide tables and
    boards scroll inside their own panel instead of widening the page */

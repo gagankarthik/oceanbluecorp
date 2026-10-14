@@ -19,13 +19,18 @@ export default function TeamPerformance({ applications, titles, onOpen }: { appl
 
   return (
     <div className="grid gap-5">
-      <div className="flex items-center gap-4 rounded-lg bg-mist-50 p-4">
-        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-ocean-50 text-ocean-700">
-          <Icon name="target" className="size-5" />
-        </span>
-        <p className="text-[14px] text-navy-900">
-          <span className="font-semibold tabular-nums">{placed}</span> placement{placed === 1 ? "" : "s"} and <span className="font-semibold tabular-nums">{submitted}</span> submission{submitted === 1 ? "" : "s"} in the last 30 days
-        </p>
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-2 border-b border-mist-200 pb-4">
+        <dl className="flex gap-x-8">
+          <div>
+            <dt className="text-[13px] text-mist-600">Placements</dt>
+            <dd className="text-[20px] font-semibold tabular-nums text-navy-900">{placed}</dd>
+          </div>
+          <div>
+            <dt className="text-[13px] text-mist-600">Submissions</dt>
+            <dd className="text-[20px] font-semibold tabular-nums text-navy-900">{submitted}</dd>
+          </div>
+        </dl>
+        <p className="pb-1 text-[13px] text-mist-600">Last 30 days</p>
       </div>
 
       {top.length === 0 ? (

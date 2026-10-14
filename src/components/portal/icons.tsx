@@ -160,6 +160,14 @@ const paths = {
       <circle cx="18.5" cy="12" r="1.2" fill="currentColor" />
     </>
   ),
+  // Row actions in tables
+  dotsVertical: (
+    <>
+      <circle cx="12" cy="5.5" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="18.5" r="1.2" fill="currentColor" />
+    </>
+  ),
   upload: (
     <>
       <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" />

@@ -143,7 +143,7 @@ export default function ContentView() {
   const columns: Column<Block>[] = [
     { key: "id", header: "Block", sortable: true, value: (b) => b.id, cell: (b) => <span className="font-medium text-navy-900">{b.id}</span> },
     { key: "use", header: "Used by the site for", sortable: true, value: (b) => useOf(b.id).label, cell: (b) => <Badge tone={useOf(b.id).tone}>{useOf(b.id).label}</Badge> },
-    { key: "fields", header: "Fields", sortable: true, hideBelow: "md", value: (b) => Object.keys(b.fields || {}).length, cell: (b) => <span className="tabular-nums">{Object.keys(b.fields || {}).length}</span> },
+    { key: "fields", header: "Fields", sortable: true, numeric: true, hideBelow: "md", value: (b) => Object.keys(b.fields || {}).length, cell: (b) => <span className="tabular-nums">{Object.keys(b.fields || {}).length}</span> },
     {
       key: "updated",
       header: "Last edited",

@@ -51,47 +51,81 @@ export function Segmented<T extends string>({
 /* Data display                                                        */
 /* ------------------------------------------------------------------ */
 
+/** Period-over-period change: arrow, sign and percent on a semantic pill. */
+export type StatDelta = {
+  /** Percent change; null when there is nothing to compare against */
+  value: number | null;
+  /** e.g. "vs previous 30 days" */
+  label?: string;
+  /** Which direction is good news; defaults to up */
+  goodWhen?: "up" | "down";
+};
+
+function DeltaPill({ value, goodWhen = "up" }: StatDelta) {
+  if (value === null) return <span className="shrink-0 rounded-md bg-mist-100 px-1.5 py-0.5 text-[12px] font-medium text-mist-700">No data</span>;
+  const dir = value > 0 ? "up" : value < 0 ? "down" : "flat";
+  const tone = dir === "flat" ? "bg-mist-100 text-mist-700" : dir === goodWhen ? "bg-[#ecfdf3] text-[#067647]" : "bg-[#fef3f2] text-[#b42318]";
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[12px] font-medium tabular-nums ${tone}`}>
+      <svg aria-hidden viewBox="0 0 12 12" className={`size-3 ${dir === "down" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        {dir === "flat" ? <path d="M2.5 6h7" /> : <path d="M6 9.5v-7M2.75 5.75 6 2.5l3.25 3.25" />}
+      </svg>
+      {value > 0 ? "+" : ""}
+      {value}%
+    </span>
+  );
+}
+
 export function StatCard({
   label,
   value,
   change,
   trend = "up",
-  icon,
   hint,
   spark,
+  delta,
   section = "recruiting",
 }: {
   label: string;
   value: React.ReactNode;
   change?: string;
   trend?: "up" | "down" | "flat";
-  icon: IconName;
+  /** Accepted for older call sites; KPI cards carry no icon chip (DESIGN_SYSTEM §2.6) */
+  icon?: IconName;
   hint?: string;
   /** Optional trend values drawn as a sparkline */
   spark?: number[];
+  /** Change on a pill; `change` and `hint` then take their own muted line */
+  delta?: StatDelta;
   section?: Section;
 }) {
   const trendCls = trend === "up" ? "text-[#067647]" : trend === "down" ? "text-[#b42318]" : "text-navy-900";
   const footer = [change, hint].filter(Boolean).join(" · ");
-  // Fixed rows (label, value, one-line footer) so every card in a row is the same height
+  // Fixed rows (label, value, footer) so every card in a row is the same height
   return (
     <div className="flex h-full min-w-0 flex-col rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200">
-      <div className="flex items-center justify-between gap-3">
-        <p className="truncate text-[13px] font-medium text-mist-600">{label}</p>
-        <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${sectionTone[section].chip}`}>
-          <Icon name={icon} className="size-4" />
-        </span>
-      </div>
+      <p className="truncate text-[13px] font-medium text-mist-600">{label}</p>
       <div className="mt-2 flex h-8 items-end justify-between gap-3">
         <p className="text-[28px] font-semibold leading-none tracking-tight text-navy-900 tabular-nums">{value}</p>
         {spark && <Sparkline values={spark} color={sectionTone[section].spark} width={80} height={28} label={`${label} trend`} />}
       </div>
-      <p className="mt-auto truncate pt-3 text-[13px] text-mist-600" title={footer || undefined}>
+      {delta && (
+        <div className="mt-auto grid gap-1 pt-3 text-[13px] text-mist-600">
+          <p className="flex min-w-0 items-center gap-1.5">
+            <DeltaPill {...delta} />
+            {delta.label && <span className="truncate">{delta.label}</span>}
+          </p>
+          <p className="truncate" title={footer || undefined}>
+            {footer || " "}
+          </p>
+        </div>
+      )}
+      {!delta && <p className="mt-auto truncate pt-3 text-[13px] text-mist-600" title={footer || undefined}>
         {change && <span className={`font-medium ${trendCls}`}>{change}</span>}
         {change && hint && <span aria-hidden> · </span>}
         {hint}
         {!footer && " "}
-      </p>
+      </p>}
     </div>
   );
 }
