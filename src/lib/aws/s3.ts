@@ -116,6 +116,7 @@ export async function uploadResume(
       Key: key,
       Body: file,
       ContentType: contentType,
+      ServerSideEncryption: "AES256",
       Metadata: {
         uploadedAt: new Date().toISOString(),
       },
@@ -327,6 +328,7 @@ export async function uploadAvatar(
         Key: key,
         Body: file,
         ContentType: contentType,
+        ServerSideEncryption: "AES256",
       })
     );
     return { success: true, key };

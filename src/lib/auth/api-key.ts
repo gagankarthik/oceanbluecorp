@@ -7,7 +7,7 @@
 // slightly different idea of what a valid key is.
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getApiKeyByValue, updateApiKey, type ApiKey } from "@/lib/aws/dynamodb";
+import { getApiKeyByValue, migrateApiKeyHash, updateApiKey, type ApiKey } from "@/lib/aws/dynamodb";
 import { hasScope, type ApiScope } from "@/lib/api-scopes";
 
 export type ApiKeyGuard =
@@ -50,6 +50,8 @@ export async function requireApiKey(request: NextRequest, scope: ApiScope): Prom
   // Fire-and-forget: a slow write on the usage stamp must not delay the feed,
   // and a failed one must not fail an otherwise valid request.
   updateApiKey(result.data.id, { lastUsedAt: new Date().toISOString() }).catch(() => {});
+  // Legacy plaintext key: replace it with its hash now that we hold the value
+  if (result.data.key) migrateApiKeyHash(result.data.id, presented).catch(() => {});
 
   return { ok: true, key: result.data };
 }

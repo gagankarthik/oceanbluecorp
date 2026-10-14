@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllApiKeys, createApiKey, ApiKey } from "@/lib/aws/dynamodb";
 import crypto from "crypto";
+import { apiKeyPreview, hashApiKey } from "@/lib/api-key-hash";
 import { requireAdmin } from "@/lib/auth/verify";
 import { scopesForLevel, scopesOf, accessLevelOf, DEFAULT_ACCESS_LEVEL } from "@/lib/api-scopes";
 import { serverError } from "@/lib/api-errors";
@@ -24,9 +25,9 @@ export async function GET(request: NextRequest) {
     // Never expose the raw key value in list responses. `scopes` is resolved
     // rather than passed through so a pre-scopes key reports read-only instead
     // of an empty list the screen would have to interpret for itself.
-    const sanitized = keys.map(({ key: _key, ...rest }) => ({
+    const sanitized = keys.map(({ key: _key, keyHash: _hash, ...rest }) => ({
       ...rest,
-      keyPreview: _key.slice(0, 12) + "...",
+      keyPreview: rest.keyPreview ?? (_key ? apiKeyPreview(_key) : ""),
       scopes: scopesOf(rest),
       accessLevel: accessLevelOf(rest),
     }));
@@ -47,9 +48,11 @@ export async function POST(request: NextRequest) {
     }
 
     const rawKey = generateApiKey();
+    // Only the hash is stored; the raw key goes back once in this response
     const apiKey: ApiKey = {
       id: crypto.randomUUID(),
-      key: rawKey,
+      keyHash: hashApiKey(rawKey),
+      keyPreview: apiKeyPreview(rawKey),
       name: body.name,
       description: body.description || "",
       // An unrecognised or missing level resolves to read-only. Issuing a key
@@ -68,8 +71,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Return the full key only on creation, never shown again
+    const { keyHash: _hash, ...shown } = apiKey;
     return NextResponse.json(
-      { apiKey: { ...apiKey, accessLevel: accessLevelOf(apiKey) } },
+      { apiKey: { ...shown, key: rawKey, accessLevel: accessLevelOf(apiKey) } },
       { status: 201 },
     );
   } catch (error) {

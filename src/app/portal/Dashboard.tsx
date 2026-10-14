@@ -244,14 +244,12 @@ export default function Dashboard() {
   const apps = useMemo(() => (start === null ? all : all.filter((a) => new Date(a.appliedAt).getTime() >= start)), [all, start]);
 
   const first = user.name.split(" ")[0];
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const date = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
   const header = (
     <PageHeader
       icon="dashboard"
-      title={`${greeting}, ${first}`}
+      title={first ? `Welcome back, ${first}` : "Welcome back"}
       description={
         <>
           {date}

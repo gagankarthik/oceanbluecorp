@@ -10,6 +10,7 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import type { ApiScope } from "@/lib/api-scopes";
+import { apiKeyPreview, hashApiKey } from "@/lib/api-key-hash";
 import type { Workplace } from "@/lib/workplace";
 import { PUBLIC_JOB_STATUSES, isPubliclyOpen, type JobCategory } from "@/lib/job-status";
 import { emailKeyOf, nameKeyOf } from "@/lib/application-input";
@@ -3386,7 +3387,11 @@ export async function deleteArticle(id: string): Promise<{ success: boolean; err
 
 export interface ApiKey {
   id: string;         // PK (UUID)
-  key: string;        // The actual API key string (obk_live_...)
+  /** SHA-256 of the key (lib/api-key-hash); the key itself is never stored */
+  keyHash?: string;
+  keyPreview?: string;
+  /** Legacy plaintext, removed by migrateApiKeyHash on first use */
+  key?: string;
   name: string;       // Platform / partner name
   description?: string;
   // What the key may do, from lib/api-scopes. Absent on keys issued before
@@ -3420,16 +3425,30 @@ export async function getApiKeyByValue(key: string): Promise<{ success: boolean;
     // is read, so an unpaginated scan can return an empty page while the
     // matching key sits on the next one, which would reject a valid API key
     // intermittently, and more often as the table grows.
+    // Matches the hash, or the plaintext on keys issued before hashing.
     const items = await scanAll<ApiKey>(db.client, {
       TableName: getTables().apiKeys,
-      FilterExpression: "#k = :key",
-      ExpressionAttributeNames: { "#k": "key" },
-      ExpressionAttributeValues: { ":key": key },
+      FilterExpression: "#h = :hash OR #k = :key",
+      ExpressionAttributeNames: { "#h": "keyHash", "#k": "key" },
+      ExpressionAttributeValues: { ":hash": hashApiKey(key), ":key": key },
     });
     return { success: true, data: items[0] };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to validate API key" };
   }
+}
+
+/** Swap a legacy plaintext key for its hash, deleting the plaintext. */
+export async function migrateApiKeyHash(id: string, raw: string): Promise<void> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return;
+  await db.client.send(new UpdateCommand({
+    TableName: getTables().apiKeys,
+    Key: { id },
+    UpdateExpression: "SET #h = :hash, #p = :preview REMOVE #k",
+    ExpressionAttributeNames: { "#h": "keyHash", "#p": "keyPreview", "#k": "key" },
+    ExpressionAttributeValues: { ":hash": hashApiKey(raw), ":preview": apiKeyPreview(raw) },
+  }));
 }
 
 export async function getAllApiKeys(): Promise<{ success: boolean; data?: ApiKey[]; error?: string }> {
