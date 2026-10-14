@@ -336,6 +336,19 @@ const paths = {
       <path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3" />
     </>
   ),
+  table: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" />
+    </>
+  ),
+  board: (
+    <>
+      <rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5" />
+      <rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5" />
+      <rect x="16" y="4.5" width="4.5" height="12.5" rx="1.5" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof paths;

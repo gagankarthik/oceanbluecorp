@@ -93,7 +93,7 @@ export const statusMeta: Record<AppStatus, { label: string; tone: Tone; icon: Th
   // Job lifecycle: draft (pre-live) and closed (ended) are both neutral, told apart by label and icon.
   draft:     { label: "Draft",     tone: "slate",   icon: FileText     },
   closed:    { label: "Closed",    tone: "slate",   icon: Archive      },
-  open:      { label: "Open",      tone: "emerald", icon: CheckCircle2 },
+  open:      { label: "Open",      tone: "blue",    icon: CheckCircle2 }, // in-flight, as kit JOB_STATUS_TONE
   "on-hold": { label: "On hold",   tone: "amber",   icon: Clock        },
 };
 

@@ -3,7 +3,7 @@
 import { Children, useState } from "react";
 import BackLink from "@/components/site/BackLink";
 import Icon, { type IconName } from "../icons";
-import { sectionTone, type Section } from "./tone";
+import type { Section } from "./tone";
 import { useInSheet } from "./insights";
 
 /**
@@ -41,18 +41,17 @@ export function Page({
 export function PageHeader({
   title,
   description,
-  icon,
   actions,
-  section = "recruiting",
   back,
   tabs,
   meta,
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
+  /** Accepted for existing call sites; the header no longer draws an icon */
   icon?: IconName;
   actions?: React.ReactNode;
-  /** Colour-codes the icon chip by nav section */
+  /** Accepted for existing call sites */
   section?: Section;
   /** Where "back" goes, e.g. { href: "/portal/clients", label: "Clients" } */
   back?: { href: string; label: string };
@@ -65,12 +64,7 @@ export function PageHeader({
     <header className="grid gap-4">
       {back && <BackLink href={back.href} label={back.label} tone="ink" className="-my-2 text-[14px]" />}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex min-w-0 items-center gap-3.5">
-          {icon && (
-            <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${sectionTone[section].chip}`}>
-              <Icon name={icon} className="size-[22px]" />
-            </span>
-          )}
+        <div className="flex min-w-0 items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h1 className="min-w-0 break-words text-[22px] font-semibold leading-tight tracking-tight text-navy-900 sm:text-[24px]">{title}</h1>

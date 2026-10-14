@@ -33,7 +33,13 @@ export type Column<T> = {
    * truncates instead of widening the table. Its cell content must be able to truncate.
    */
   grow?: number;
+  /** Floor in px for a grow column once the table overflows; defaults from `grow` */
+  minWidth?: number;
 };
+
+// max-w-0 makes grow columns truncate while the table fits; once it overflows, auto
+// layout would squeeze them to their padding, so min-width (which beats max-width) holds them
+const growMin = (c: { grow?: number; minWidth?: number }) => c.minWidth ?? ((c.grow ?? 0) >= 30 ? 224 : (c.grow ?? 0) >= 20 ? 176 : 128);
 
 const ALIGN = { left: "", center: "w-px whitespace-nowrap text-center", right: "text-right" } as const;
 const alignOf = <T,>(c: Column<T>) => ALIGN[c.numeric ? "right" : (c.align ?? "left")];
@@ -126,6 +132,7 @@ export default function DataTable<T extends { id: string }>({
   exportName = "export",
   onExport,
   renderGrid,
+  gridAll = false,
   initialQuery = "",
   initialSort = null,
   searchMatch,
@@ -162,6 +169,8 @@ export default function DataTable<T extends { id: string }>({
   onExport?: (rows: T[]) => void;
   /** Replaces the rows with a custom layout (e.g. cards); search, filters, export and paging still apply */
   renderGrid?: (rows: T[], open: (row: T) => void) => React.ReactNode;
+  /** renderGrid gets every filtered row and the pager hides, for layouts that page themselves (boards) */
+  gridAll?: boolean;
   /** Starting search text, e.g. from a ?search= deep link */
   initialQuery?: string;
   initialSort?: { key: string; dir: 1 | -1 } | null;
@@ -255,6 +264,7 @@ export default function DataTable<T extends { id: string }>({
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const current = Math.min(page, pages - 1);
   const visible = filtered.slice(current * perPage, current * perPage + perPage);
+  const unpaged = !!renderGrid && gridAll;
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id));
   const someVisibleSelected = !allVisibleSelected && visible.some((r) => selected.has(r.id));
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -529,7 +539,7 @@ export default function DataTable<T extends { id: string }>({
         </div>
       )}
 
-      {visible.length === 0 ? (
+      {(unpaged ? filtered : visible).length === 0 ? (
         <EmptyState
           variant="no-results"
           title={emptyTitle}
@@ -546,7 +556,7 @@ export default function DataTable<T extends { id: string }>({
           }
         />
       ) : renderGrid ? (
-        renderGrid(visible, (r) => setOpen(r))
+        renderGrid(unpaged ? filtered : visible, (r) => setOpen(r))
       ) : (
         <>
           {/* Phones: rows as cards */}
@@ -608,7 +618,7 @@ export default function DataTable<T extends { id: string }>({
                         aria-sort={sorted ? (sort.dir === 1 ? "ascending" : "descending") : undefined}
                         className={`${head} font-medium ${i === 0 ? `dt-pin-l z-30 ${selectable ? "left-12" : "left-0"}` : "z-20"} ${c.grow ? "max-w-0" : ""} ${alignOf(c)} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
                         // max-width 0 + a share of the width: the column absorbs what is spare and its cells truncate
-                        style={c.grow ? { width: `${c.grow}%` } : undefined}
+                        style={c.grow ? { width: `${c.grow}%`, minWidth: growMin(c) } : undefined}
                       >
                         {c.sortable ? (
                           <button
@@ -660,7 +670,8 @@ export default function DataTable<T extends { id: string }>({
                     {shown.map((c, i) => (
                       <td
                         key={c.key}
-                        className={`${cellPad} align-middle text-navy-900 ${i === 0 ? `dt-pin-l ${PIN} ${selectable ? "left-12" : "left-0"}` : ""} ${c.grow ? "max-w-0 overflow-hidden" : ""} ${alignOf(c)} ${c.numeric ? "tabular-nums" : ""} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
+                        className={`${cellPad} align-middle text-navy-900 ${i === 0 ? `dt-pin-l ${PIN} ${selectable ? "left-12" : "left-0"}` : ""} ${c.grow ? "max-w-0 overflow-hidden" : c.cell ? "" : "whitespace-nowrap"} ${alignOf(c)} ${c.numeric ? "tabular-nums" : ""} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
+                        style={c.grow ? { minWidth: growMin(c) } : undefined}
                       >
                         {c.cell ? (
                           c.cell(r)
@@ -669,7 +680,10 @@ export default function DataTable<T extends { id: string }>({
                             {String(getValue(c, r) ?? "")}
                           </span>
                         ) : (
-                          String(getValue(c, r) ?? "")
+                          // Plain text stays on one line but never past 20rem (e.g. a long skills list)
+                          <span className="block max-w-80 truncate" title={String(getValue(c, r) ?? "")}>
+                            {String(getValue(c, r) ?? "")}
+                          </span>
                         )}
                       </td>
                     ))}
@@ -687,68 +701,70 @@ export default function DataTable<T extends { id: string }>({
       )}
 
       {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-[13px] text-mist-600">
-        <div className="flex items-center gap-4">
-          <span className="tabular-nums">{filtered.length === 0 ? "0 results" : `${current * perPage + 1}–${Math.min(filtered.length, (current + 1) * perPage)} of ${filtered.length}`}</span>
-          <label className="hidden items-center gap-2 sm:flex">
-            Rows
-            <select
-              value={perPage}
-              onChange={(e) => {
-                setPerPage(Number(e.target.value));
-                setPage(0);
-              }}
-              className="h-8 rounded-md bg-mist-0 px-2 text-[13px] tabular-nums text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-2 focus:outline-ocean-600"
-            >
-              {PER_PAGE.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
+      {!unpaged && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-[13px] text-mist-600">
+          <div className="flex items-center gap-4">
+            <span className="tabular-nums">{filtered.length === 0 ? "0 results" : `${current * perPage + 1}–${Math.min(filtered.length, (current + 1) * perPage)} of ${filtered.length}`}</span>
+            <label className="hidden items-center gap-2 sm:flex">
+              Rows
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setPage(0);
+                }}
+                className="h-8 rounded-md bg-mist-0 px-2 text-[13px] tabular-nums text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-2 focus:outline-ocean-600"
+              >
+                {PER_PAGE.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {pages > 1 && (
+            <nav aria-label="Pagination" className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={current === 0}
+                aria-label="Previous page"
+                className="grid size-8 place-items-center rounded-md text-navy-900 hover:bg-mist-100 disabled:opacity-40"
+              >
+                <Icon name="chevronLeft" className="size-4" />
+              </button>
+              {pageList(current, pages).map((p, i) =>
+                p === null ? (
+                  <span key={`gap${i}`} aria-hidden className="w-6 text-center">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage(p)}
+                    aria-label={`Page ${p + 1}`}
+                    aria-current={p === current ? "page" : undefined}
+                    className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-navy-900 text-white" : "text-navy-900 hover:bg-mist-100"}`}
+                  >
+                    {p + 1}
+                  </button>
+                ),
+              )}
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
+                disabled={current >= pages - 1}
+                aria-label="Next page"
+                className="grid size-8 place-items-center rounded-md text-navy-900 hover:bg-mist-100 disabled:opacity-40"
+              >
+                <Icon name="chevronRight" className="size-4" />
+              </button>
+            </nav>
+          )}
         </div>
-        {pages > 1 && (
-          <nav aria-label="Pagination" className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={current === 0}
-              aria-label="Previous page"
-              className="grid size-8 place-items-center rounded-md text-navy-900 hover:bg-mist-100 disabled:opacity-40"
-            >
-              <Icon name="chevronLeft" className="size-4" />
-            </button>
-            {pageList(current, pages).map((p, i) =>
-              p === null ? (
-                <span key={`gap${i}`} aria-hidden className="w-6 text-center">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  aria-label={`Page ${p + 1}`}
-                  aria-current={p === current ? "page" : undefined}
-                  className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-navy-900 text-white" : "text-navy-900 hover:bg-mist-100"}`}
-                >
-                  {p + 1}
-                </button>
-              ),
-            )}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
-              disabled={current >= pages - 1}
-              aria-label="Next page"
-              className="grid size-8 place-items-center rounded-md text-navy-900 hover:bg-mist-100 disabled:opacity-40"
-            >
-              <Icon name="chevronRight" className="size-4" />
-            </button>
-          </nav>
-        )}
-      </div>
+      )}
 
       {/* Batch bar: floats bottom-centre over the page (z-40), under drawers and modals (z-50) */}
       {selectable &&

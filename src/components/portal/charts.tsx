@@ -2,25 +2,35 @@
 
 /**
  * Portal chart kit. Built to the dataviz method:
- * - Categorical hues in a FIXED order (validated: worst adjacent CVD ΔE 9.1,
- *   normal-vision ΔE 19.6 on the light surface). Slot 1 is the Oceanblue logo blue.
- *   Slots 3–5 are below 3:1 on white, so every multi-series chart has a legend,
- *   a hover tooltip, and the page keeps a table view (the "relief rule").
- * - Status colours are reserved and never used for series.
+ * - Categories take SERIES in a FIXED order, never cycled: the ocean ramp
+ *   alternated with navy and the mist neutral, so neighbours split on lightness
+ *   (one brand hue). Slots 1–5 clear 3:1 on white; the sixth and any overflow
+ *   are the neutral, carried by the legend and tooltip (the "relief rule").
+ * - Green and red are never categories. They appear only on a series that IS
+ *   the outcome (Hired, Rejected): see seriesColors.
  * - Thin marks: 2px lines, rounded data-ends on the baseline, 2px gaps, recessive grid.
  * - One y-axis only. Hover tooltips by default. Text never wears the series colour.
  */
 import { useMemo, useRef, useState } from "react";
 
-export const SERIES = ["#0a72c0", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"] as const;
-export const STATUS = { good: "#0ca30c", warning: "#fab219", serious: "#ec835a", critical: "#d03b3b" } as const;
+// ocean-600, navy-900, ocean-400, mist-500, ocean-800, mist-400 (literal: SVG attributes take no var()).
+export const SERIES = ["#0a72c0", "#0b2e46", "#3794d4", "#6e8291", "#0a4b7d", "#98a9b4"] as const;
+const OVERFLOW = "#98a9b4";
+/** Outcome series keep their meaning: kelp-700 for hires, coral-700 for rejections. */
+const OUTCOME: Record<string, string> = { hired: "#067647", hires: "#067647", placements: "#067647", placed: "#067647", rejected: "#b42318", rejections: "#b42318" };
+
+/** One colour per series name: outcomes by meaning, the rest SERIES in order, overflow neutral. */
+export function seriesColors(names: string[]): string[] {
+  let next = 0;
+  return names.map((n) => OUTCOME[n.trim().toLowerCase()] ?? SERIES[next++] ?? OVERFLOW);
+}
 /** Single-hue ordinal ramp (ocean), nearest-surface step still clears 2:1 */
 export const RAMP = ["#6fb2e3", "#3794d4", "#1580c8", "#0a72c0", "#085c9c", "#0a4b7d", "#0c3e66"] as const;
 /** Sequential ramp for heatmaps: light means near zero */
 export const SEQ = ["#eaf4fb", "#d2e8f7", "#a6d0ef", "#6fb2e3", "#3794d4", "#0a72c0", "#085c9c"] as const;
 
 const GRID = "#e3e9ed";
-const AXIS_TEXT = "#6e8291";
+const AXIS_TEXT = "#4b6273"; // mist-600: axis labels are text, 4.5:1
 
 const fmtDefault = (n: number) => n.toLocaleString("en-US");
 
@@ -121,13 +131,14 @@ export function TrendChart({
 
   const cw = ref.current?.clientWidth ?? W;
   const scale = cw / W;
+  const colors = seriesColors(series.map((s) => s.name));
 
   return (
     <figure>
       <figcaption className="sr-only">{title}</figcaption>
       {series.length >= 2 && (
         <div className="mb-3">
-          <Legend items={series.map((s, i) => ({ label: s.name, color: SERIES[i % SERIES.length] }))} />
+          <Legend items={series.map((s, i) => ({ label: s.name, color: colors[i] }))} />
         </div>
       )}
       <div ref={ref} className="relative">
@@ -148,7 +159,7 @@ export function TrendChart({
             ) : null,
           )}
           {series.map((s, si) => {
-            const color = SERIES[si % SERIES.length];
+            const color = colors[si];
             const d = s.values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
             return (
               <g key={s.name}>
@@ -161,7 +172,7 @@ export function TrendChart({
             <g>
               <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} stroke="#98a9b4" strokeWidth="1" strokeDasharray="3 3" />
               {series.map((s, si) => (
-                <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={SERIES[si % SERIES.length]} stroke="#fff" strokeWidth="2" />
+                <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={colors[si]} stroke="#fff" strokeWidth="2" />
               ))}
             </g>
           )}
@@ -173,7 +184,7 @@ export function TrendChart({
             {series.map((s, si) => (
               <p key={s.name} className="mt-1 flex items-center justify-between gap-4">
                 <span className="flex items-center gap-1.5 text-mist-300">
-                  <span className="size-2 rounded-[2px]" style={{ background: SERIES[si % SERIES.length] }} />
+                  <span className="size-2 rounded-[2px]" style={{ background: colors[si] }} />
                   {s.name}
                 </span>
                 <span className="font-semibold tabular-nums">{format(s.values[hover])}</span>
@@ -221,13 +232,14 @@ export function BarChart({
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * max);
   const cw = ref.current?.clientWidth ?? W;
   const scale = cw / W;
+  const colors = seriesColors(series.map((s) => s.name));
 
   return (
     <figure>
       <figcaption className="sr-only">{title}</figcaption>
       {series.length >= 2 && (
         <div className="mb-3">
-          <Legend items={series.map((s, i) => ({ label: s.name, color: SERIES[i % SERIES.length] }))} />
+          <Legend items={series.map((s, i) => ({ label: s.name, color: colors[i] }))} />
         </div>
       )}
       <div ref={ref} className="relative">
@@ -260,7 +272,7 @@ export function BarChart({
                     <path
                       key={s.name}
                       d={`M${cx - barW / 2} ${bottom - (si > 0 ? 2 : 0)} V${top + r} Q${cx - barW / 2} ${top} ${cx - barW / 2 + r} ${top} H${cx + barW / 2 - r} Q${cx + barW / 2} ${top} ${cx + barW / 2} ${top + r} V${bottom - (si > 0 ? 2 : 0)} Z`}
-                      fill={SERIES[si % SERIES.length]}
+                      fill={colors[si]}
                     />
                   );
                 })}
@@ -279,7 +291,7 @@ export function BarChart({
             {(stacked ? series : series.slice(0, 1)).map((s, si) => (
               <p key={s.name} className="mt-1 flex items-center justify-between gap-4">
                 <span className="flex items-center gap-1.5 text-mist-300">
-                  <span className="size-2 rounded-[2px]" style={{ background: SERIES[si % SERIES.length] }} />
+                  <span className="size-2 rounded-[2px]" style={{ background: colors[si] }} />
                   {s.name}
                 </span>
                 <span className="font-semibold tabular-nums">{format(s.values[hover] ?? 0)}</span>
@@ -324,6 +336,7 @@ export function DonutChart({
     return [...head, { label: "Other", value: rest }];
   }, [data]);
   const total = rows.reduce((a, d) => a + d.value, 0) || 1;
+  const colors = seriesColors(rows.map((d) => d.label));
   const R = 70;
   const r = 50;
   const C = 90;
@@ -337,7 +350,7 @@ export function DonutChart({
     angle += sweep;
     const large = a1 - a0 > Math.PI ? 1 : 0;
     const p = (rad: number, a: number) => `${C + rad * Math.cos(a)} ${C + rad * Math.sin(a)}`;
-    return { d: `M${p(R, a0)} A${R} ${R} 0 ${large} 1 ${p(R, a1)} L${p(r, a1)} A${r} ${r} 0 ${large} 0 ${p(r, a0)} Z`, color: SERIES[i % SERIES.length], ...d };
+    return { d: `M${p(R, a0)} A${R} ${R} 0 ${large} 1 ${p(R, a1)} L${p(r, a1)} A${r} ${r} 0 ${large} 0 ${p(r, a0)} Z`, color: colors[i], ...d };
   });
 
   const active = hover !== null ? rows[hover] : null;
@@ -409,13 +422,13 @@ export function Funnel({ stages, title, format = fmtDefault }: { stages: { label
               </span>
               <span className="w-20 text-right tabular-nums">
                 <span className="font-semibold text-navy-900">{format(s.value)}</span>
-                {conv !== null && <span className="ml-1 text-[12px] text-mist-500">{conv}%</span>}
+                {conv !== null && <span className="ml-1 text-[12px] text-mist-600">{conv}%</span>}
               </span>
             </li>
           );
         })}
       </ol>
-      <p className="mt-3 text-[12px] text-mist-500">Percentages show conversion from the previous stage.</p>
+      <p className="mt-3 text-[12px] text-mist-600">Percentages show conversion from the previous stage.</p>
     </figure>
   );
 }
@@ -427,6 +440,7 @@ export function Funnel({ stages, title, format = fmtDefault }: { stages: { label
 export function StackedBar({ data, title, format = fmtDefault }: { data: { label: string; value: number }[]; title: string; format?: (n: number) => string }) {
   const [hover, setHover] = useState<number | null>(null);
   const total = data.reduce((a, d) => a + d.value, 0) || 1;
+  const colors = seriesColors(data.map((d) => d.label));
   return (
     <figure>
       <figcaption className="sr-only">{title}</figcaption>
@@ -436,7 +450,7 @@ export function StackedBar({ data, title, format = fmtDefault }: { data: { label
             key={d.label}
             onPointerEnter={() => setHover(i)}
             className="h-full transition-opacity first:rounded-l-full last:rounded-r-full"
-            style={{ width: `${(d.value / total) * 100}%`, background: SERIES[i % SERIES.length], opacity: hover !== null && hover !== i ? 0.4 : 1 }}
+            style={{ width: `${(d.value / total) * 100}%`, background: colors[i], opacity: hover !== null && hover !== i ? 0.4 : 1 }}
             title={`${d.label}: ${format(d.value)}`}
           />
         ))}
@@ -444,7 +458,7 @@ export function StackedBar({ data, title, format = fmtDefault }: { data: { label
       <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-mist-600">
         {data.map((d, i) => (
           <li key={d.label} className="flex items-center gap-1.5">
-            <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: SERIES[i % SERIES.length] }} />
+            <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: colors[i] }} />
             {d.label}
             <span className="font-semibold tabular-nums text-navy-900">{format(d.value)}</span>
           </li>
@@ -484,7 +498,7 @@ export function Heatmap({
             <tr>
               <th />
               {cols.map((c) => (
-                <th key={c} scope="col" className="px-0.5 pb-1 text-center font-medium text-mist-500">
+                <th key={c} scope="col" className="px-0.5 pb-1 text-center font-medium text-mist-600">
                   {c}
                 </th>
               ))}
@@ -516,7 +530,7 @@ export function Heatmap({
           </tbody>
         </table>
       </div>
-      <div className="mt-3 flex items-center gap-2 text-[11px] text-mist-500">
+      <div className="mt-3 flex items-center gap-2 text-[11px] text-mist-600">
         <span>Fewer</span>
         {SEQ.map((c) => (
           <span key={c} className="size-3 rounded-[3px]" style={{ background: c }} />

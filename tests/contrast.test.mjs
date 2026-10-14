@@ -298,3 +298,37 @@ describe("the accent ramp", () => {
     }
   });
 });
+
+describe("pipeline stage tokens (colors.css)", () => {
+  const KEYS = ["new", "screening", "submitted", "interview", "offered", "hired", "rejected"];
+  test("text on the solid fill and on the badge reads at AA", () => {
+    const failures = [];
+    for (const k of KEYS) {
+      const onFill = ratioOn(token(`color-stage-${k}-on-fill`), token(`color-stage-${k}-fill`));
+      const badge = ratioOn(token(`color-stage-${k}-badge-ink`), token(`color-stage-${k}-badge-bg`));
+      if (onFill < NEED.text) failures.push(`${k} on-fill ${onFill.toFixed(2)}:1`);
+      if (badge < NEED.text) failures.push(`${k} badge ${badge.toFixed(2)}:1`);
+    }
+    assert.deepEqual(failures, [], `stage text below ${NEED.text}:1`);
+  });
+  test("every stage mark is discernible on white (New by its edge, the rest by fill)", () => {
+    const failures = [];
+    for (const k of KEYS) {
+      const mark = k === "new" ? token(`color-stage-${k}-edge`) : token(`color-stage-${k}-fill`);
+      const edge = token(`color-stage-${k}-edge`);
+      const r = Math.max(ratioOn(mark, SURFACE), ratioOn(edge, SURFACE));
+      if (r < NEED.nonText) failures.push(`${k} ${r.toFixed(2)}:1`);
+    }
+    assert.deepEqual(failures, [], `stage marks below ${NEED.nonText}:1`);
+  });
+  test("the control border token reaches 3:1 on white and mist-50", () => {
+    for (const surf of [SURFACE, token("color-mist-50")]) {
+      const r = ratioOn(token("color-border-control"), surf);
+      assert.ok(r >= NEED.nonText, `--color-border-control is ${r.toFixed(2)}:1 on ${surf}`);
+    }
+  });
+  test("the placeholder token reads at AA on white", () => {
+    const r = ratioOn(token("color-text-placeholder"), SURFACE);
+    assert.ok(r >= NEED.text, `--color-text-placeholder is ${r.toFixed(2)}:1`);
+  });
+});

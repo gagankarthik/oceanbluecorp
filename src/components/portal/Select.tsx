@@ -139,7 +139,7 @@ export default function Select({
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         className={`inline-flex h-10 w-full items-center gap-2 rounded-lg pl-3 pr-2.5 text-left text-[14px] ring-1 ring-inset transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 disabled:cursor-not-allowed disabled:opacity-60 ${
-          isDefault ? "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50" : "bg-ocean-50 text-ocean-800 ring-ocean-300 hover:bg-ocean-100"
+          isDefault ? "bg-mist-0 text-navy-900 ring-[var(--color-border-control)] hover:bg-mist-50" : "bg-ocean-50 text-ocean-800 ring-ocean-600 hover:bg-ocean-100"
         }`}
       >
         {current?.icon && <Icon name={current.icon} className="size-4 shrink-0 opacity-80" />}
@@ -169,12 +169,12 @@ export default function Select({
                     setActive(0);
                   }}
                   placeholder={`Search ${label.toLowerCase()}`}
-                  className="h-9 w-full rounded-md bg-mist-50 pl-8 pr-2 text-[14px] ring-1 ring-inset ring-mist-200 placeholder:text-mist-500 focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                  className="h-9 w-full rounded-md bg-mist-50 pl-8 pr-2 text-[14px] ring-1 ring-inset ring-[var(--color-border-control)] placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
                 />
               </label>
             </div>
           )}
-          <p className="px-3 pb-1 pt-2.5 text-[12px] font-semibold text-mist-500">{label}</p>
+          <p className="px-3 pb-1 pt-2.5 text-[12px] font-semibold text-mist-600">{label}</p>
           <ul
             ref={list}
             id={`${id}-list`}
@@ -184,7 +184,7 @@ export default function Select({
             aria-activedescendant={shown[active] ? `${id}-opt-${active}` : undefined}
             className="scroll-thin max-h-72 overflow-y-auto p-1.5 pt-0"
           >
-            {shown.length === 0 && <li className="px-3 py-6 text-center text-[13px] text-mist-500">No matches</li>}
+            {shown.length === 0 && <li className="px-3 py-6 text-center text-[13px] text-mist-600">No matches</li>}
             {shown.map((o, i) => {
               const selected = o.value === value;
               return (

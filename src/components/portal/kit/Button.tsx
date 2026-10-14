@@ -16,9 +16,9 @@ export function Spinner({ className = "size-4", label }: { className?: string; /
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 const buttonStyles: Record<ButtonVariant, string> = {
   primary: "bg-ocean-600 text-white not-disabled:hover:bg-ocean-700",
-  secondary: "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 not-disabled:hover:bg-mist-50",
+  secondary: "bg-mist-0 text-navy-900 ring-1 ring-inset ring-[var(--color-border-control)] not-disabled:hover:bg-mist-50",
   ghost: "text-navy-900 not-disabled:hover:bg-mist-100",
-  danger: "bg-mist-0 text-[#b42318] ring-1 ring-inset ring-[#f3c4bf] not-disabled:hover:bg-[#fef3f2]",
+  danger: "bg-mist-0 text-coral-700 ring-1 ring-inset ring-coral-600 not-disabled:hover:bg-coral-50",
 };
 
 /**

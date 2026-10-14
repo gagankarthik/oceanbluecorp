@@ -1,30 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { STAGE_DOT, type Stage } from "@/components/portal/recruiting/model";
+import { stageColors, stageDotStyle } from "@/components/portal/recruiting/model";
 import Icon from "@/components/portal/icons";
 
-const NAVY = "#0b2e46";
 const NOTCH = 10;
 const chevron = (first: boolean) =>
   `polygon(0 0, calc(100% - ${NOTCH}px) 0, 100% 50%, calc(100% - ${NOTCH}px) 100%, 0 100%${first ? "" : `, ${NOTCH}px 50%`})`;
-
-function luminance(hex: string) {
-  const [r, g, b] = [1, 3, 5].map((i) => {
-    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/** White or navy, whichever reads better on the fill. */
-export function inkOn(hex: string) {
-  const l = luminance(hex);
-  const navy = luminance(NAVY);
-  return (1.05 / (l + 0.05) >= (l + 0.05) / (navy + 0.05) ? "#fff" : NAVY);
-}
-
-export const stageColor = (s: string) => STAGE_DOT[s as Stage] ?? "#99a2af";
+// A clipped shape takes no border; four 1px shadows on its parent trace one (the hollow New stage).
+const outline = (c: string) => `drop-shadow(1px 0 0 ${c}) drop-shadow(-1px 0 0 ${c}) drop-shadow(0 1px 0 ${c}) drop-shadow(0 -1px 0 ${c})`;
 
 /**
  * A pipeline as an overlapping chevron chain, the large form of the roles
@@ -61,9 +45,9 @@ export function StageChevrons({
         {stages.map((s, i) => {
           const on = i === idx;
           const past = idx > i;
-          const c = stageColor(s.key);
-          const bg = on ? c : past ? `color-mix(in srgb, ${c} 18%, #fff)` : undefined;
-          const ink = on ? inkOn(c) : past ? NAVY : undefined;
+          const c = stageColors(s.key);
+          const bg = on ? c.fill : past ? `color-mix(in srgb, ${c.edge} 16%, var(--color-mist-0))` : undefined;
+          const ink = on ? c.onFill : past ? "var(--color-navy-900)" : undefined;
           const status = on ? "current stage" : past ? "done" : "not reached";
           return (
             <li key={s.key} className={`shrink-0 ${i ? "-ml-[3px]" : ""}`}>
@@ -74,6 +58,7 @@ export function StageChevrons({
                 aria-current={on ? "step" : undefined}
                 aria-label={`${s.label}, ${status}${on || !onSelect ? "" : `. Move to ${s.label}`}`}
                 title={on ? s.label : `Move to ${s.label}`}
+                style={on && s.key === "pending" ? { filter: outline(c.edge) } : undefined}
                 className={`group relative block h-9 w-full rounded-sm focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 disabled:cursor-default ${
                   on ? "z-[1] cursor-default" : ""
                 }`}
@@ -91,7 +76,7 @@ export function StageChevrons({
                   {past ? (
                     <Icon name="check" className="size-3.5 shrink-0" />
                   ) : (
-                    !on && <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: c }} />
+                    !on && <span aria-hidden className="size-2 shrink-0 rounded-full" style={stageDotStyle(s.key)} />
                   )}
                   {s.label}
                 </span>

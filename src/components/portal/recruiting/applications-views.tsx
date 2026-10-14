@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Application } from "@/lib/aws/dynamodb";
-import type { Filter } from "@/components/portal/DataTable";
-import Icon from "@/components/portal/icons";
-import Select from "@/components/portal/Select";
-import { Avatar } from "@/components/portal/ui";
+import Icon, { type IconName } from "@/components/portal/icons";
+import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { fmtDate } from "@/lib/format";
 import { daysInStage, STALE_DAYS, TERMINAL } from "@/lib/pipeline";
-import { StarInput, stageDot } from "./bits";
+import { stageDot } from "./bits";
 import { BOARD, PIPELINE, STAGE_LABEL, type Stage } from "./model";
 
 type Row = Application & { searchText?: string };
@@ -24,9 +22,9 @@ export function SkillChips({ skills, max }: { skills?: string[]; max: number }) 
   const all = skills ?? [];
   if (!all.length) return null;
   return (
-    <span className="flex flex-wrap gap-1">
+    <span className="flex min-w-0 flex-wrap gap-1 py-1">
       {all.slice(0, max).map((s) => (
-        <span key={s} className="rounded-md bg-mist-100 px-1.5 py-0.5 text-[11px] font-medium text-mist-700">{s}</span>
+        <span key={s} className="max-w-full truncate rounded-md bg-mist-100 px-1.5 py-0.5 text-[11px] font-medium text-mist-700">{s}</span>
       ))}
       {all.length > max && <span className="px-1 py-0.5 text-[11px] font-medium tabular-nums text-mist-500">+{all.length - max}</span>}
     </span>
@@ -42,82 +40,102 @@ function ShowMore({ hidden, onClick }: { hidden: number; onClick: () => void }) 
   );
 }
 
-/** Search plus the table's filters, for the board and list layouts. */
-export function FilterBar<T>({
-  query,
-  onQuery,
-  filters,
-  active,
-  onActive,
-  rows,
+/** Icon-only segmented switch for DataTable's `viewSwitch` slot; arrow keys move between options. */
+export function ViewSwitch<V extends string>({
+  label,
+  value,
+  onChange,
+  options,
 }: {
-  query: string;
-  onQuery: (q: string) => void;
-  filters: Filter<T>[];
-  active: Record<string, string>;
-  onActive: (f: Record<string, string>) => void;
-  rows: T[];
+  label: string;
+  value: V;
+  onChange: (v: V) => void;
+  options: { value: V; label: string; icon: IconName }[];
 }) {
-  const any = !!query || Object.values(active).some((v) => v && v !== "All");
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKey = (e: React.KeyboardEvent, i: number) => {
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const n = (i + step + options.length) % options.length;
+    onChange(options[n].value);
+    refs.current[n]?.focus();
+  };
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <label className="relative block w-full sm:w-auto sm:min-w-[15rem] sm:flex-1 xl:max-w-xs">
-        <span className="sr-only">Search applicants, emails or skills</span>
-        <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-[18px] -translate-y-1/2 text-mist-500" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => onQuery(e.target.value)}
-          placeholder="Search applicants, emails or skills"
-          className="h-10 w-full rounded-lg bg-mist-0 pl-10 pr-3 text-[14px] ring-1 ring-inset ring-mist-300 placeholder:text-mist-500 focus:outline-none focus:ring-2 focus:ring-ocean-600"
-        />
-      </label>
-      {filters.map((f) => (
-        <Select
-          key={f.key}
-          label={f.label}
-          value={active[f.key] ?? "All"}
-          onChange={(v) => onActive({ ...active, [f.key]: v })}
-          options={[
-            { value: "All", label: `All ${f.label.toLowerCase()}`, count: rows.length },
-            ...f.options.map((o) => ({ value: o, label: o, count: rows.filter((r) => (f.match ? f.match(r, o) : f.value(r) === o)).length })),
-          ]}
-          className="min-w-[10rem]"
-        />
-      ))}
-      {any && (
-        <button
-          type="button"
-          onClick={() => {
-            onQuery("");
-            onActive({});
-          }}
-          className="px-1 text-[13px] font-medium text-ocean-700 hover:underline"
-        >
-          Clear all
-        </button>
-      )}
+    <div role="radiogroup" aria-label={label} className="inline-flex h-10 rounded-lg ring-1 ring-inset ring-mist-300">
+      {options.map((o, i) => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            aria-label={o.label}
+            title={o.label}
+            tabIndex={on ? 0 : -1}
+            onClick={() => onChange(o.value)}
+            onKeyDown={(e) => onKey(e, i)}
+            className={`grid size-10 place-items-center transition-colors first:rounded-l-lg last:rounded-r-lg focus-visible:relative focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 ${
+              on ? "bg-mist-100 text-navy-900" : "text-mist-600 hover:bg-mist-50 hover:text-navy-900"
+            }`}
+          >
+            <Icon name={o.icon} className="size-[18px]" />
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-/** Kanban: drag a card to another column, or step it forward. */
+/** Edge fades on a sideways scroller, only on the side that has more. */
+function useScrollEdges() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const left = el.scrollLeft > 0;
+      const right = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+      setEdges((e) => (e.left === left && e.right === right ? e : { left, right }));
+    };
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", measure);
+      ro.disconnect();
+    };
+  }, []);
+  const mask = `linear-gradient(to right, ${edges.left ? "transparent" : "#000"}, #000 2rem, #000 calc(100% - 2rem), ${edges.right ? "transparent" : "#000"})`;
+  return { ref, style: edges.left || edges.right ? { maskImage: mask, WebkitMaskImage: mask } : undefined };
+}
+
+/** Kanban for DataTable's `renderGrid`: drag a card to another lane, or step it forward. */
 export function BoardView({
   rows,
   focus,
   onOpen,
   onMove,
-  onRate,
+  menu,
 }: {
   rows: Row[];
   focus: Stage | null;
-  onOpen: (id: string) => void;
+  onOpen: (a: Row) => void;
   onMove: (a: Row, to: Stage) => void;
-  onRate: (a: Row, n: number) => void;
+  /** The table's row menu, so a card offers the same actions */
+  menu?: (a: Row) => MenuEntry[];
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<Stage | null>(null);
   const [shown, setShown] = useState<Partial<Record<Stage, number>>>({});
+  const scroller = useScrollEdges();
 
   const drop = (stage: Stage) => {
     const a = rows.find((r) => r.id === dragId);
@@ -127,9 +145,9 @@ export function BoardView({
   };
 
   return (
-    // Scrolls inside its own box; on phones one column fills the screen and snaps.
-    <div className="scroll-thin min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden pb-2 md:snap-none">
-      <div className="flex w-max gap-4">
+    // Scrolls sideways inside the panel only; on phones one lane fills the width and snaps.
+    <div ref={scroller.ref} style={scroller.style} className="scroll-thin min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden md:snap-none">
+      <div className="flex w-max min-w-full gap-3 p-4">
         {BOARD.filter((st) => !focus || st === focus).map((stage) => {
           const items = rows.filter((a) => a.status === stage);
           const limit = shown[stage] ?? PAGE;
@@ -146,24 +164,25 @@ export function BoardView({
                 if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(null);
               }}
               onDrop={() => drop(stage)}
-              className={`flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col rounded-xl p-3 transition-colors ${isOver ? "bg-ocean-50 ring-2 ring-ocean-600" : "bg-mist-100"}`}
+              className={`flex w-[min(15rem,calc(100vw-4rem))] min-w-0 shrink-0 grow snap-start flex-col rounded-lg transition-colors ${isOver ? "bg-ocean-50 ring-2 ring-ocean-600" : "bg-mist-50 ring-1 ring-inset ring-mist-200"}`}
             >
-              <header className="flex items-center justify-between px-1 pb-3">
-                <span className="flex items-center gap-2 text-[14px] font-semibold text-navy-900">
-                  <span className="size-2.5 rounded-full" style={{ background: stageDot(stage) }} />
-                  {STAGE_LABEL[stage]}
+              <header className="flex items-center justify-between gap-2 px-3 py-2.5">
+                <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-navy-900">
+                  <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: stageDot(stage) }} />
+                  <span className="truncate">{STAGE_LABEL[stage]}</span>
                 </span>
-                <span className="rounded-md bg-mist-0 px-2 py-0.5 text-[12px] font-semibold tabular-nums text-mist-700">{items.length}</span>
+                <span className="text-[12px] font-medium tabular-nums text-mist-600">{items.length}</span>
               </header>
-              <ul className="grid gap-2">
+              <ul className="scroll-thin grid max-h-[70dvh] content-start gap-2 overflow-y-auto px-2 pb-2">
                 {items.length === 0 && (
-                  <li className={`rounded-lg border border-dashed p-4 text-center text-[13px] ${isOver ? "border-ocean-600 font-medium text-ocean-700" : "border-mist-300 text-mist-500"}`}>
-                    {isOver ? "Drop here" : "No candidates"}
-                  </li>
+                  <li className={`px-1 py-3 text-center text-[12px] ${isOver ? "font-medium text-ocean-700" : "text-mist-500"}`}>{isOver ? "Drop here" : "No candidates"}</li>
                 )}
                 {items.slice(0, limit).map((a) => {
                   const nxt = nextStage(a.status);
-                  const stale = !TERMINAL.has(a.status) && daysInStage(a) >= STALE_DAYS;
+                  const done = TERMINAL.has(a.status);
+                  const days = daysInStage(a);
+                  const owner = a.ownershipName || (a.ownership ? "" : "Unassigned");
+                  const name = a.name || a.email;
                   return (
                     <li
                       key={a.id}
@@ -173,38 +192,69 @@ export function BoardView({
                         setDragId(null);
                         setOver(null);
                       }}
-                      className={`cursor-grab rounded-lg bg-mist-0 p-3 ring-1 ring-mist-200 active:cursor-grabbing ${dragId === a.id ? "opacity-40" : ""}`}
+                      className={`group relative cursor-grab rounded-md bg-mist-0 p-2.5 ring-1 ring-mist-200 transition-colors hover:ring-mist-300 active:cursor-grabbing ${dragId === a.id ? "opacity-40" : ""}`}
                     >
-                      <button type="button" onClick={() => onOpen(a.id)} className="flex w-full items-start gap-3 text-left">
-                        <Avatar name={a.name || a.email} size="sm" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-semibold hover:text-ocean-700">{a.name || a.email}</span>
-                          <span className="block truncate text-[12px] text-mist-600">{a.jobTitle || "No position"}</span>
-                          <span className={`block text-[12px] ${stale ? "font-medium text-[#b54708]" : "text-mist-500"}`}>
-                            {TERMINAL.has(a.status) ? fmtDate(a.appliedAt) : `${daysInStage(a)}d in stage`}
-                            {!TERMINAL.has(a.status) && !a.ownership && !a.ownershipName && <span className="font-medium text-[#b42318]"> · Unassigned</span>}
+                      <div className="flex items-start gap-1">
+                        {/* Stretched over the card, so a click anywhere opens the drawer */}
+                        <button
+                          type="button"
+                          onClick={() => onOpen(a)}
+                          className="min-w-0 flex-1 text-left after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ocean-600"
+                        >
+                          <span className="block truncate text-[13px] font-semibold text-navy-900 group-hover:text-ocean-700" title={name}>{name}</span>
+                          <span className="block truncate text-[12px] text-mist-600" title={a.jobTitle || undefined}>{a.jobTitle || "No position"}</span>
+                        </button>
+                        {menu && (
+                          <span className="relative z-10 -mr-1 -mt-1">
+                            <ActionMenu
+                              label={`Actions for ${name}`}
+                              width="w-48"
+                              items={menu(a)}
+                              trigger={
+                                <button
+                                  type="button"
+                                  aria-label={`Actions for ${name}`}
+                                  title="Actions"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="grid size-8 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900 data-[state=open]:bg-mist-100 data-[state=open]:text-navy-900"
+                                >
+                                  <Icon name="dotsVertical" className="size-4" />
+                                </button>
+                              }
+                            />
                           </span>
-                        </span>
-                      </button>
-                      {!!a.skills?.length && (
-                        <div className="mt-2">
-                          <SkillChips skills={a.skills} max={3} />
-                        </div>
-                      )}
-                      <div className="mt-2 flex items-center justify-between gap-2 border-t border-mist-100 pt-2">
-                        <StarInput value={a.rating || 0} onChange={(n) => onRate(a, n)} label={`Rating for ${a.name || a.email}`} />
-                        {nxt && (
-                          <button
-                            type="button"
-                            onClick={() => onMove(a, nxt)}
-                            className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-ocean-700 hover:bg-ocean-50"
-                            aria-label={`Move ${a.name || a.email} to ${STAGE_LABEL[nxt]}`}
-                          >
-                            {STAGE_LABEL[nxt]}
-                            <Icon name="chevronRight" className="size-3.5" />
-                          </button>
                         )}
                       </div>
+                      <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[12px] text-mist-500">
+                        {done ? (
+                          <span className="tabular-nums">{fmtDate(a.appliedAt)}</span>
+                        ) : (
+                          <span className={`shrink-0 tabular-nums ${days >= STALE_DAYS ? "font-medium text-[#b54708]" : ""}`}>{days}d in stage</span>
+                        )}
+                        {!done && owner && (
+                          <>
+                            <span aria-hidden>·</span>
+                            <span className={`truncate ${a.ownershipName ? "" : "font-medium text-[#b42318]"}`} title={owner}>{owner}</span>
+                          </>
+                        )}
+                      </div>
+                      {(!!a.skills?.length || nxt) && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2">
+                          <SkillChips skills={a.skills} max={3} />
+                          {nxt && (
+                            <button
+                              type="button"
+                              onClick={() => onMove(a, nxt)}
+                              title={`Move to ${STAGE_LABEL[nxt]}`}
+                              aria-label={`Move ${name} to ${STAGE_LABEL[nxt]}`}
+                              className="relative z-10 -mr-1 ml-auto inline-flex min-h-8 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-[12px] font-medium text-mist-600 hover:bg-mist-100 hover:text-ocean-700"
+                            >
+                              {STAGE_LABEL[nxt]}
+                              <Icon name="chevronRight" className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </li>
                   );
                 })}

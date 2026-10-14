@@ -6,12 +6,12 @@ import { useToast } from "@/components/portal/toast";
 import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
 import Select from "@/components/portal/Select";
 import { DonutChart, TrendChart } from "@/components/portal/charts";
-import { InlineSelect, KpiButton, StageBadge, StageFunnel, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
+import { InlineSelect, KpiButton, RatingValue, StageBadge, StageFunnel, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
 import { BOARD, FLOW, STAGE_LABEL, buckets, countIn, locationOf, reachedAt, stageLabel, tally, type Stage } from "@/components/portal/recruiting/model";
-import { BoardView, FilterBar, SavedViewsMenu, nextStage, type SavedSearch } from "@/components/portal/recruiting/applications-views";
+import { BoardView, SavedViewsMenu, ViewSwitch, nextStage, type SavedSearch } from "@/components/portal/recruiting/applications-views";
 import {
-  Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
-  Segmented, StatCard, usePortalRouter,
+  Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
+  StatCard, usePortalRouter,
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
@@ -97,7 +97,6 @@ export default function ApplicationsView() {
   // KPIs, the funnel, deep links and saved views all write the table's filters: one bar, every constraint a chip.
   const [table, setTable] = useState<TableState>({ query: "", filters: {} });
   const [tableKey, setTableKey] = useState(0);
-  const [openId, setOpenId] = useState<string | null>(null);
   const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [bulkStage, setBulkStage] = useState("");
@@ -207,7 +206,6 @@ export default function ApplicationsView() {
       notify(`${gone.length} application${gone.length > 1 ? "s" : ""} deleted`);
     }
     if (gone.length < deleteIds.length) notify(`Couldn't delete ${deleteIds.length - gone.length}. Try again.`, { tone: "error" });
-    if (openId && gone.includes(openId)) setOpenId(null);
     if (gone.length) closeDetail.current?.();
     closeDetail.current = null;
     setDeleting(false);
@@ -294,13 +292,13 @@ export default function ApplicationsView() {
       },
     },
     { key: "location", header: "Location", sortable: true, card: false, hideBelow: "2xl", value: (a) => locationOf(a) },
-    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="text-[13px]">{a.ownershipName}</span> : <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>) },
+    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="block max-w-40 truncate whitespace-nowrap text-[13px]" title={a.ownershipName}>{a.ownershipName}</span> : <span className="whitespace-nowrap text-[13px] font-medium text-[#b42318]">Unassigned</span>) },
     { key: "source", header: "Source", sortable: true, card: false, defaultHidden: true, value: (a) => a.source ?? "" },
     { key: "hireType", header: "Hire type", sortable: true, card: false, defaultHidden: true, value: (a) => hireTypeLabel(a.hireType) },
     { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
     { key: "skills", header: "Skills", card: false, defaultHidden: true, value: (a) => a.skills?.join(", ") ?? "" },
     { key: "appliedAt", header: "Applied", sortable: true, card: false, hideBelow: "2xl", value: (a) => a.appliedAt, cell: (a) => <span className="text-[13px] tabular-nums text-mist-600">{fmtDate(a.appliedAt)}</span> },
-    { key: "rating", header: "Rating", sortable: true, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <StarInput value={a.rating || 0} onChange={(n) => void rate(a, n)} label={`Rating for ${a.name}`} /> },
+    { key: "rating", header: "Rating", sortable: true, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <RatingValue value={a.rating} /> },
   ];
 
   const filters: Filter<Row>[] = [
@@ -348,8 +346,6 @@ export default function ApplicationsView() {
       match: (a, o) => (a.rating || 0) >= Number(o[0]),
     },
   ];
-
-  const open = rows.find((r) => r.id === openId) ?? null;
 
   const detail = (a: Row, close?: () => void) => {
     const nxt = nextStage(a.status);
@@ -454,7 +450,6 @@ export default function ApplicationsView() {
     const nxt = nextStage(a.status);
     const items: MenuEntry[] = [
       { label: "Open", icon: "eye", onSelect: openDetail },
-      { label: "Open full record", icon: "external", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
       { label: "Edit", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/applications`) },
       { label: "Email", icon: "mail", disabled: !a.email, onSelect: () => (window.location.href = `mailto:${a.email}`) },
     ];
@@ -466,17 +461,8 @@ export default function ApplicationsView() {
     return items;
   };
 
-  const q = table.query.trim().toLowerCase();
-  const boardRows = inSaved.filter((a) => {
-    for (const f of filters) {
-      const v = table.filters[f.key];
-      if (v && v !== "All" && !(f.match ? f.match(a, v) : f.value(a) === v)) return false;
-    }
-    return !q || matchesQuery(a, q);
-  });
   // A single real stage narrows the board to its column.
   const boardFocus = (BOARD.find((s) => STAGE_LABEL[s] === table.filters.stage) ?? null) as Stage | null;
-  const awaiting = rows.filter((a) => a.status === "pending" || a.status === "reviewing").length;
   const scope = saved !== "all" ? SAVED.find((s) => s.key === saved)!.label : null;
 
   const listState: ListState = {
@@ -566,73 +552,60 @@ export default function ApplicationsView() {
           </KpiButton>
         </KpiRow>
 
-        {view === "board" ? (
-          <section aria-label="Pipeline board" className="grid min-w-0 gap-4">
-            <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-              <div className="border-b border-mist-200 px-2 sm:px-4">{savedTabs}</div>
-              <div className="flex flex-col gap-3 p-4 xl:flex-row xl:items-start xl:justify-between">
-                <FilterBar
-                  query={table.query}
-                  onQuery={(query) => setTable((t) => ({ ...t, query }))}
-                  filters={filters}
-                  active={table.filters}
-                  onActive={(f) => setTable((t) => ({ ...t, filters: f }))}
-                  rows={inSaved}
-                />
-                <Button variant="secondary" icon="download" className="self-start" onClick={() => exportRows(boardRows)}>Export</Button>
-              </div>
-            </div>
-            {boardRows.length === 0 ? (
-              <EmptyState
-                framed
-                variant="no-results"
-                title={scope ? `Nothing in ${scope}` : "No matching applicants"}
-                body="Try a different search or clear the filters."
-                onClearFilters={q || Object.values(table.filters).some((v) => v && v !== "All") ? () => setTable({ query: "", filters: {} }) : undefined}
+        <DataTable
+          key={tableKey}
+          rows={inSaved}
+          tabs={savedTabs}
+          initialQuery={table.query}
+          initialFilters={table.filters}
+          onStateChange={setTable}
+          searchMatch={matchesQuery}
+          onExport={exportRows}
+          storageKey="applications"
+          columns={columns}
+          filters={filters}
+          exportName="applications"
+          searchPlaceholder="Search applicants, emails or skills"
+          emptyTitle={scope ? `Nothing in ${scope}` : "No matching applicants"}
+          selectable
+          bulkActions={(ids) => (
+            <>
+              <Select
+                label="Move to stage"
+                showLabel={false}
+                value={bulkStage}
+                onChange={(v) => {
+                  setBulkStage("");
+                  if (v) void moveMany(ids, v as Stage);
+                }}
+                options={[{ value: "", label: "Move to stage" }, ...stageOptions]}
+                className="min-w-[10rem]"
               />
-            ) : (
-              <BoardView rows={boardRows} focus={boardFocus} onOpen={setOpenId} onMove={(a, to) => void move(a, to)} onRate={(a, n) => void rate(a, n)} />
-            )}
-          </section>
-        ) : (
-          <DataTable
-            key={tableKey}
-            rows={inSaved}
-            tabs={savedTabs}
-            initialQuery={table.query}
-            initialFilters={table.filters}
-            onStateChange={setTable}
-            searchMatch={matchesQuery}
-            onExport={exportRows}
-            storageKey="applications"
-            columns={columns}
-            filters={filters}
-            exportName="applications"
-            searchPlaceholder="Search applicants, emails or skills"
-            emptyTitle={scope ? `Nothing in ${scope}` : "No matching applicants"}
-            selectable
-            bulkActions={(ids) => (
-              <>
-                <Select
-                  label="Move to stage"
-                  showLabel={false}
-                  value={bulkStage}
-                  onChange={(v) => {
-                    setBulkStage("");
-                    if (v) void moveMany(ids, v as Stage);
-                  }}
-                  options={[{ value: "", label: "Move to stage" }, ...stageOptions]}
-                  className="min-w-[10rem]"
-                />
-                <Button size="sm" variant="danger" icon="trash" onClick={() => setDeleteIds(ids)}>Delete</Button>
-              </>
-            )}
-            detailTitle={(a) => a.name || a.email}
-            renderDetail={(a, close) => detail(rows.find((r) => r.id === a.id) ?? a, close)}
-            detailActions={headerActions}
-            rowMenu={rowMenu}
-          />
-        )}
+              <Button size="sm" variant="danger" icon="trash" onClick={() => setDeleteIds(ids)}>Delete</Button>
+            </>
+          )}
+          detailTitle={(a) => a.name || a.email}
+          renderDetail={(a, close) => detail(rows.find((r) => r.id === a.id) ?? a, close)}
+          detailActions={headerActions}
+          rowMenu={rowMenu}
+          viewSwitch={
+            <ViewSwitch
+              label="Layout"
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "table", label: "Table view", icon: "table" },
+                { value: "board", label: "Board view", icon: "board" },
+              ]}
+            />
+          }
+          gridAll={view === "board"}
+          renderGrid={
+            view === "board"
+              ? (list, openRow) => <BoardView rows={list} focus={boardFocus} onOpen={openRow} onMove={(a, to) => void move(a, to)} menu={(a) => rowMenu(a, () => openRow(a))} />
+              : undefined
+          }
+        />
       </>
     );
 
@@ -642,24 +615,8 @@ export default function ApplicationsView() {
         section="recruiting"
         icon="inbox"
         title="Applications"
-        description={
-          ready
-            ? `${rows.length} applicant${rows.length === 1 ? "" : "s"} across ${positions.length} position${positions.length === 1 ? "" : "s"}${awaiting ? `, ${awaiting} awaiting review` : ""}.`
-            : "Every applicant across every role, by stage."
-        }
         actions={
           <>
-            {ready && (
-              <Segmented
-                label="Layout"
-                value={view}
-                onChange={setView}
-                options={[
-                  { value: "table", label: "Table", icon: "menu" },
-                  { value: "board", label: "Board", icon: "dashboard" },
-                ]}
-              />
-            )}
             {ready && <SavedViewsMenu items={savedSearches} activeId={activeSavedId} onApply={applySaved} onSave={saveCurrent} onDelete={deleteSaved} />}
             {ready && (
               <InsightsSheet title="Applications insights" description="Volume over time, how far candidates get and where they come from. Click a stage to filter.">
@@ -691,11 +648,6 @@ export default function ApplicationsView() {
       />
       {body}
 
-      {view === "board" && open && (
-        <Drawer title={open.name || open.email} onClose={() => setOpenId(null)} actions={headerActions(open)}>
-          {detail(open)}
-        </Drawer>
-      )}
       {deleteIds && (
         <ConfirmDialog
           title={deleteIds.length > 1 ? `Delete ${deleteIds.length} applications?` : "Delete this application?"}

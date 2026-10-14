@@ -15,6 +15,8 @@
  *   ocean  logo blue (600 is the logo value): the brand block and the action
  *   navy   deep water: dark fields and running ink
  *   buoy   status only (flags, warnings inside product UI)
+ *   kelp   success only (hired, done)
+ *   coral  danger only (rejected, destructive, invalid)
  */
 
 @theme {
@@ -25,7 +27,8 @@
   --color-mist-200: #dbe5ea;
   --color-mist-300: #c3d0d8;
   --color-mist-400: #98a9b4;
-  --color-mist-500: #6e8291;
+  --color-mist-500: #6e8291; /* 3.99:1 on white: edges and marks, not text */
+  --color-mist-550: #5f7383; /* 4.92:1 on white: the lightest text step (placeholders) */
   --color-mist-600: #4b6273;
   --color-mist-700: #3a4e5d;
 
@@ -65,10 +68,26 @@
   --color-navy-900: #0b2e46;
   --color-navy-950: #061a28;
 
-  /* Buoy: status only */
+  /* Buoy: status only (50/200/700 are the warning wash, rim and ink) */
+  --color-buoy-50: #fffaeb;
+  --color-buoy-200: #fedf89;
   --color-buoy-300: #f8c55a;
   --color-buoy-400: #f5b83d;
   --color-buoy-500: #e99a16;
+  --color-buoy-700: #b54708;
+
+  /* Kelp: success only. Inks spread by lightness from coral and buoy so the
+     three stay apart under deuteranopia/protanopia. */
+  --color-kelp-50: #ecfdf3;
+  --color-kelp-200: #abefc6;
+  --color-kelp-700: #067647;
+  --color-kelp-800: #05603a;
+
+  /* Coral: danger only */
+  --color-coral-50: #fef3f2;
+  --color-coral-200: #fecdca;
+  --color-coral-600: #d92d20;
+  --color-coral-700: #b42318;
 
   /* Chapter fields: one per section, floor to ceiling */
   --color-field-paper: var(--color-mist-50);
@@ -92,4 +111,64 @@
   --color-on-deep: var(--color-mist-50);
   --color-on-deep-soft: var(--color-tide-300);
   --color-flag: var(--color-buoy-400);
+  --color-placeholder: var(--color-mist-550);
+}
+
+/*
+ * Pipeline stages: in-flight stages step down the ocean ramp, only the two
+ * outcomes leave it. Each stage also carries an icon, so hue is never alone.
+ *   fill / on-fill    solid marks (current chevron, pipeline cell) and their text
+ *   edge              ring on a light dot (New is hollow, Screening is pale)
+ *   badge-bg/ink/rim  the stage badge
+ * Contrast pinned in tests/contrast.test.mjs. Static: inline styles read these.
+ */
+@theme static {
+  --color-stage-new-fill: var(--color-mist-0);
+  --color-stage-new-on-fill: var(--color-navy-900);
+  --color-stage-new-edge: var(--color-mist-500);
+  --color-stage-new-badge-bg: var(--color-mist-0);
+  --color-stage-new-badge-ink: var(--color-navy-900);
+  --color-stage-new-badge-rim: var(--color-mist-500);
+
+  --color-stage-screening-fill: var(--color-ocean-300);
+  --color-stage-screening-on-fill: var(--color-navy-900);
+  --color-stage-screening-edge: var(--color-ocean-600);
+  --color-stage-screening-badge-bg: var(--color-ocean-50);
+  --color-stage-screening-badge-ink: var(--color-ocean-700);
+  --color-stage-screening-badge-rim: var(--color-ocean-200);
+
+  --color-stage-submitted-fill: var(--color-ocean-600);
+  --color-stage-submitted-on-fill: var(--color-mist-0);
+  --color-stage-submitted-edge: var(--color-ocean-600);
+  --color-stage-submitted-badge-bg: var(--color-ocean-100);
+  --color-stage-submitted-badge-ink: var(--color-ocean-800);
+  --color-stage-submitted-badge-rim: var(--color-ocean-200);
+
+  --color-stage-interview-fill: var(--color-ocean-800);
+  --color-stage-interview-on-fill: var(--color-mist-0);
+  --color-stage-interview-edge: var(--color-ocean-800);
+  --color-stage-interview-badge-bg: var(--color-ocean-700);
+  --color-stage-interview-badge-ink: var(--color-mist-0);
+  --color-stage-interview-badge-rim: var(--color-ocean-700);
+
+  --color-stage-offered-fill: var(--color-navy-900);
+  --color-stage-offered-on-fill: var(--color-mist-0);
+  --color-stage-offered-edge: var(--color-navy-900);
+  --color-stage-offered-badge-bg: var(--color-navy-900);
+  --color-stage-offered-badge-ink: var(--color-mist-0);
+  --color-stage-offered-badge-rim: var(--color-navy-900);
+
+  --color-stage-hired-fill: var(--color-kelp-700);
+  --color-stage-hired-on-fill: var(--color-mist-0);
+  --color-stage-hired-edge: var(--color-kelp-700);
+  --color-stage-hired-badge-bg: var(--color-kelp-50);
+  --color-stage-hired-badge-ink: var(--color-kelp-800);
+  --color-stage-hired-badge-rim: var(--color-kelp-200);
+
+  --color-stage-rejected-fill: var(--color-coral-700);
+  --color-stage-rejected-on-fill: var(--color-mist-0);
+  --color-stage-rejected-edge: var(--color-coral-700);
+  --color-stage-rejected-badge-bg: var(--color-coral-50);
+  --color-stage-rejected-badge-ink: var(--color-coral-700);
+  --color-stage-rejected-badge-rim: var(--color-coral-200);
 }

@@ -315,6 +315,19 @@ export function StarInput({ value, onChange, label }: { value: number; onChange:
   );
 }
 
+/** Read-only rating for dense rows: one star and the number, or a muted dash when unrated. */
+export function RatingValue({ value }: { value?: number }) {
+  if (!value) return <span className="text-mist-400" aria-label="Not rated">&mdash;</span>;
+  return (
+    <span className="inline-flex items-center gap-1 tabular-nums text-navy-900" aria-label={`${value} of 5 stars`}>
+      <svg viewBox="0 0 24 24" className="size-3.5 text-[#f79009]" aria-hidden>
+        <path fill="currentColor" d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8L3.5 9.7l5.9-.8z" />
+      </svg>
+      {value}
+    </span>
+  );
+}
+
 /** Overlapping initials, three at most then "+N"; red "Unassigned" when empty. */
 export function AvatarStack({ names, max = 3 }: { names: string[]; max?: number }) {
   if (!names.length) return <span className="text-[13px] font-medium text-[#b42318]">Unassigned</span>;

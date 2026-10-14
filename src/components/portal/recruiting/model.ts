@@ -29,30 +29,58 @@ export const STAGE_LABEL: Record<Stage, string> = {
   inactive: "Inactive",
 };
 
+/** Token key per stage; bench-only stages borrow the nearest pipeline look. */
+export const STAGE_KEY: Record<Stage, StageKey> = {
+  pending: "new",
+  reviewing: "screening",
+  submitted: "submitted",
+  interview: "interview",
+  offered: "offered",
+  hired: "hired",
+  rejected: "rejected",
+  active: "hired",
+  inactive: "new",
+};
+export type StageKey = "new" | "screening" | "submitted" | "interview" | "offered" | "hired" | "rejected";
+
 export const STAGE_TONE: Record<Stage, Tone> = {
-  pending: "grey",
-  reviewing: "cyan",
-  submitted: "blue",
-  interview: "violet",
-  offered: "amber",
-  hired: "green",
-  rejected: "red",
+  pending: "stage-new",
+  reviewing: "stage-screening",
+  submitted: "stage-submitted",
+  interview: "stage-interview",
+  offered: "stage-offered",
+  hired: "stage-hired",
+  rejected: "stage-rejected",
   active: "green",
   inactive: "grey",
 };
 
-/** Dot colours for board columns and selects. */
+const fill = (k: StageKey) => `var(--color-stage-${k}-fill)`;
+
+/** Solid dot colour for selects and lists. New is hollow, so its dot is the edge grey. */
 export const STAGE_DOT: Record<Stage, string> = {
-  pending: "#99a2af",
-  reviewing: "#06aed4",
-  submitted: "#0a72c0",
-  interview: "#7a5af8",
-  offered: "#eda100",
-  hired: "#1baf7a",
-  rejected: "#d03b3b",
-  active: "#1baf7a",
-  inactive: "#99a2af",
+  pending: "var(--color-stage-new-edge)",
+  reviewing: fill("screening"),
+  submitted: fill("submitted"),
+  interview: fill("interview"),
+  offered: fill("offered"),
+  hired: fill("hired"),
+  rejected: fill("rejected"),
+  active: fill("hired"),
+  inactive: "var(--color-mist-400)",
 };
+
+/** Fill, text-on-fill and edge for a stage, as CSS values. */
+export function stageColors(s: string) {
+  const k = STAGE_KEY[s as Stage] ?? "new";
+  return { fill: fill(k), onFill: `var(--color-stage-${k}-on-fill)`, edge: `var(--color-stage-${k}-edge)` };
+}
+
+/** A stage dot as drawn: New hollow on a grey ring, Screening ringed in ocean-600, the rest solid. */
+export function stageDotStyle(s: string): React.CSSProperties {
+  const c = stageColors(s);
+  return { background: c.fill, boxShadow: `inset 0 0 0 1px ${c.edge}` };
+}
 
 export const stageLabel = (s: string) => STAGE_LABEL[s as Stage] ?? s;
 
@@ -71,8 +99,16 @@ export const jobStatusLabel = (s: string) => JOB_STATUSES.find((x) => x.value ==
 const JOB_STATUS_SHORT: Record<string, string> = { draft: "Draft", open: "Open", active: "Active", "on-hold": "On hold", closed: "Closed", paused: "Paused" };
 export const jobStatusShort = (s: string) => JOB_STATUS_SHORT[s] ?? s;
 
-export const JOB_STATUS_TONE: Record<string, Tone> = { draft: "grey", open: "blue", active: "green", "on-hold": "amber", paused: "amber", closed: "red" };
-export const JOB_STATUS_DOT: Record<string, string> = { draft: "#99a2af", open: "#3794d4", active: "#1baf7a", "on-hold": "#eda100", paused: "#eda100", closed: "#d03b3b" };
+/** Open (internal) is in-flight work, blue; Active is live on the site, green; closed is ended, not failed, so neutral. */
+export const JOB_STATUS_TONE: Record<string, Tone> = { draft: "grey", open: "blue", active: "green", "on-hold": "amber", paused: "amber", closed: "grey" };
+export const JOB_STATUS_DOT: Record<string, string> = {
+  draft: "var(--color-mist-400)",
+  open: "var(--color-ocean-600)",
+  active: "var(--color-kelp-700)",
+  "on-hold": "var(--color-buoy-500)",
+  paused: "var(--color-buoy-500)",
+  closed: "var(--color-mist-500)",
+};
 
 /** The public posting a candidate opens; only Active roles resolve. */
 export const publicJobPath = (id: string) => `/jobs/${id}`;

@@ -22,8 +22,8 @@ import { jobLocationLabel, workplaceOf, WORKPLACE_LABEL } from "@/lib/workplace"
 import { AvatarStack, JobStatusSelect, KpiButton, StageBadge, jobMenuItems } from "./bits";
 import { ActionMenu } from "@/components/portal/records/Menu";
 import {
-  JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, PIPELINE, STAGE_DOT, STAGE_LABEL, assigneesOf, buckets, countIn, daysUntil, duplicateJobHref,
-  jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, tally,
+  JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, PIPELINE, STAGE_LABEL, assigneesOf, buckets, countIn, daysUntil, duplicateJobHref,
+  jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, stageColors, tally,
 } from "./model";
 
 const COPY: Record<JobCategory, { title: string; noun: string; icon: "capitol" | "briefcase"; description: string; post: string; query: string }> = {
@@ -67,8 +67,6 @@ function DueCell({ job }: { job: Job }) {
 }
 
 /** Where a role's candidates sit, one count per pipeline stage */
-// Light stage colours take navy text; the rest white
-const LIGHT_STAGE = new Set(["pending", "reviewing", "offered"]);
 const CHEVRON = "polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%, 7px 50%)";
 
 /** Stages as a chain of chevrons: notched back, arrowhead front, count inside */
@@ -78,13 +76,18 @@ function PipelineCells({ job }: { job: Job }) {
     <span className="flex items-center" role="img" aria-label={PIPELINE.map((s) => `${STAGE_LABEL[s]} ${p[s] ?? 0}`).join(", ")}>
       {PIPELINE.map((s, i) => {
         const n = p[s] ?? 0;
+        const c = stageColors(s);
         return (
           <span
             key={s}
             title={`${STAGE_LABEL[s]}: ${n}`}
-            style={{ clipPath: CHEVRON, background: n ? STAGE_DOT[s] : undefined }}
+            style={{
+              clipPath: CHEVRON,
+              background: n ? (s === "pending" ? "var(--color-mist-200)" : c.fill) : undefined,
+              color: n ? c.onFill : undefined,
+            }}
             className={`inline-flex h-6 w-9 items-center justify-center pl-1.5 text-[12px] font-semibold tabular-nums ${i ? "-ml-[3px]" : ""} ${
-              n ? (LIGHT_STAGE.has(s) ? "text-navy-900" : "text-white") : "bg-mist-100 font-medium text-mist-400"
+              n ? "" : "bg-mist-50 font-medium text-mist-600"
             }`}
           >
             {n}

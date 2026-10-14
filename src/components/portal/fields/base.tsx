@@ -7,11 +7,11 @@ import Icon, { type IconName } from "../icons";
    forms: 13px labels, 40px controls on a mist ring, 12px help and error lines. */
 
 export const inputCls =
-  "block h-10 w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-mist-300 transition-shadow placeholder:text-mist-400 hover:ring-mist-400 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:cursor-not-allowed disabled:bg-mist-50 disabled:text-mist-500 aria-[invalid=true]:ring-[#f04438]";
+  "block h-10 w-full rounded-lg bg-mist-0 px-3 text-[14px] text-navy-900 ring-1 ring-inset ring-[var(--color-border-control)] transition-shadow placeholder:text-placeholder hover:ring-mist-600 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:cursor-not-allowed disabled:bg-mist-50 disabled:text-mist-600 aria-[invalid=true]:ring-coral-600";
 
 export const textareaCls = inputCls.replace("h-10", "min-h-24 py-2.5 leading-relaxed resize-y");
 
-const RED = "text-[#b42318]";
+const RED = "text-coral-700";
 const AMBER = "text-[#b54708]";
 
 /** Error line under a control; `id` pairs with the control's aria-describedby. */
@@ -80,7 +80,7 @@ export function Field({
           )}
           {required && <span className="sr-only"> (required)</span>}
         </label>
-        {(hint || optional) && <span className="shrink-0 text-[12px] text-mist-500">{hint ?? "Optional"}</span>}
+        {(hint || optional) && <span className="shrink-0 text-[12px] text-mist-600">{hint ?? "Optional"}</span>}
       </div>
       {children}
       {error ? (

@@ -27,7 +27,6 @@
   --p-slate-200:   #e2e8f1;
   --p-slate-300:   #cbd5e3;
   --p-slate-400:   #9aa6ba;
-  --p-slate-450:   #828b9c;
   --p-slate-600:   #56637b;
   --p-slate-700:   #3a4a66;
   --p-slate-900:   #0b1a33;
@@ -115,11 +114,12 @@
   --color-text-interactive:     var(--p-blue-700);
   --color-text-interactive-inverse: var(--p-blue-300);
   --color-text-brand:           var(--p-brand-blue);
+  --color-text-placeholder:     var(--color-mist-550);   /* 4.92:1 on white */
 
   --color-border-default:       var(--p-slate-200);
   --color-border-strong:        var(--p-slate-300);
-  /* Control edges (inputs, outline buttons, toggles): 3.4:1 on white (1.4.11). */
-  --color-border-control:       var(--p-slate-450);
+  /* Control edges (inputs, outline buttons, toggles, checkboxes): 3.99:1 on white, 3.7:1 on mist-50 (1.4.11). */
+  --color-border-control:       var(--color-mist-500);
   --color-border-interactive:   var(--p-blue-700);
   --color-border-focus:         var(--p-blue-700);
   --color-border-focus-inverse: var(--p-neutral-0);
@@ -250,7 +250,7 @@
   --color-paper-deep: var(--color-background-tertiary);
   --color-line: var(--color-border-default);
   --color-line-strong: var(--color-border-strong);
-  --color-line-input: var(--color-border-control); /* control edge, 3.4:1; hairlines keep line / line-strong */
+  --color-line-input: var(--color-border-control); /* control edge, 3.99:1; hairlines keep line / line-strong */
   --color-cobalt: var(--color-action-primary);
   --color-cobalt-deep: var(--color-action-primary-hover);
   --color-cobalt-tint: var(--color-background-selected);
@@ -586,7 +586,7 @@
   --p-green-fill:  #079455;
   --p-green-wash:  #ecfdf3;
   --p-green-rim:   #abefc6;
-  --p-green-ink:   #067647;
+  --p-green-ink:   #05603a;   /* inks spread by lightness: green .43, red .50, amber .54 */
   --p-amber-fill:  #dc6803;
   --p-amber-wash:  #fffaeb;
   --p-amber-rim:   #fedf89;
@@ -594,7 +594,7 @@
   --p-red-fill:    #b42318;
   --p-red-wash:    #fef3f2;
   --p-red-rim:     #fecdca;
-  --p-red-ink:     #912018;
+  --p-red-ink:     #b42318;
 
   /* ── Semantic ── */
 

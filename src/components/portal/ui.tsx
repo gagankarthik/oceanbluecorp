@@ -64,7 +64,7 @@ export type StatDelta = {
 function DeltaPill({ value, goodWhen = "up" }: StatDelta) {
   if (value === null) return <span className="shrink-0 rounded-md bg-mist-100 px-1.5 py-0.5 text-[12px] font-medium text-mist-700">No data</span>;
   const dir = value > 0 ? "up" : value < 0 ? "down" : "flat";
-  const tone = dir === "flat" ? "bg-mist-100 text-mist-700" : dir === goodWhen ? "bg-[#ecfdf3] text-[#067647]" : "bg-[#fef3f2] text-[#b42318]";
+  const tone = dir === "flat" ? "bg-mist-100 text-mist-700" : dir === goodWhen ? "bg-kelp-50 text-kelp-800" : "bg-coral-50 text-coral-700";
   return (
     <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[12px] font-medium tabular-nums ${tone}`}>
       <svg aria-hidden viewBox="0 0 12 12" className={`size-3 ${dir === "down" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -99,7 +99,7 @@ export function StatCard({
   delta?: StatDelta;
   section?: Section;
 }) {
-  const trendCls = trend === "up" ? "text-[#067647]" : trend === "down" ? "text-[#b42318]" : "text-navy-900";
+  const trendCls = trend === "up" ? "text-kelp-800" : trend === "down" ? "text-coral-700" : "text-navy-900";
   const footer = [change, hint].filter(Boolean).join(" · ");
   // Fixed rows (label, value, footer) so every card in a row is the same height
   return (
@@ -130,23 +130,45 @@ export function StatCard({
   );
 }
 
-export type Tone = "blue" | "green" | "amber" | "red" | "grey" | "navy" | "cyan" | "violet";
+type StageTone = "stage-new" | "stage-screening" | "stage-submitted" | "stage-interview" | "stage-offered" | "stage-hired" | "stage-rejected";
+/** `violet` is kept for older call sites; it draws as a deep ocean step, not an off-brand hue. */
+export type Tone = "blue" | "green" | "amber" | "red" | "grey" | "navy" | "cyan" | "violet" | StageTone;
 
+// Spelled out: Tailwind only sees whole class names.
 const toneStyles: Record<Tone, string> = {
   blue: "bg-ocean-50 text-ocean-700 ring-ocean-200",
-  green: "bg-[#ecfdf3] text-[#067647] ring-[#abefc6]",
-  amber: "bg-[#fffaeb] text-[#b54708] ring-[#fedf89]",
-  red: "bg-[#fef3f2] text-[#b42318] ring-[#fecdca]",
+  green: "bg-kelp-50 text-kelp-800 ring-kelp-200",
+  amber: "bg-buoy-50 text-buoy-700 ring-buoy-200",
+  red: "bg-coral-50 text-coral-700 ring-coral-200",
   grey: "bg-mist-100 text-mist-700 ring-mist-300",
   navy: "bg-navy-900 text-white ring-navy-900",
   cyan: "bg-cyan-100 text-navy-900 ring-cyan-200",
-  violet: "bg-[#f4f3ff] text-[#5925dc] ring-[#d9d6fe]",
+  violet: "bg-ocean-100 text-ocean-800 ring-ocean-200",
+  "stage-new": "bg-stage-new-badge-bg text-stage-new-badge-ink ring-stage-new-badge-rim",
+  "stage-screening": "bg-stage-screening-badge-bg text-stage-screening-badge-ink ring-stage-screening-badge-rim",
+  "stage-submitted": "bg-stage-submitted-badge-bg text-stage-submitted-badge-ink ring-stage-submitted-badge-rim",
+  "stage-interview": "bg-stage-interview-badge-bg text-stage-interview-badge-ink ring-stage-interview-badge-rim",
+  "stage-offered": "bg-stage-offered-badge-bg text-stage-offered-badge-ink ring-stage-offered-badge-rim",
+  "stage-hired": "bg-stage-hired-badge-bg text-stage-hired-badge-ink ring-stage-hired-badge-rim",
+  "stage-rejected": "bg-stage-rejected-badge-bg text-stage-rejected-badge-ink ring-stage-rejected-badge-rim",
 };
 
-export function Badge({ children, tone = "grey", dot = false }: { children: React.ReactNode; tone?: Tone; dot?: boolean }) {
+/** Stage badges always carry their icon: the stage is never told by hue alone. */
+const STAGE_ICON: Record<StageTone, IconName> = {
+  "stage-new": "clock",
+  "stage-screening": "eye",
+  "stage-submitted": "send",
+  "stage-interview": "calendar",
+  "stage-offered": "mail",
+  "stage-hired": "check",
+  "stage-rejected": "x",
+};
+
+export function Badge({ children, tone = "grey", dot = false, icon: iconProp }: { children: React.ReactNode; tone?: Tone; dot?: boolean; icon?: IconName }) {
+  const icon = iconProp ?? STAGE_ICON[tone as StageTone];
   return (
     <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-[12px] font-medium ring-1 ring-inset ${toneStyles[tone]}`}>
-      {dot && <span className="size-1.5 rounded-full bg-current" />}
+      {icon ? <Icon name={icon} className="size-3.5 shrink-0" /> : dot && <span className="size-1.5 rounded-full bg-current" />}
       {children}
     </span>
   );
@@ -157,23 +179,29 @@ export function statusTone(status: string): Tone {
   const s = status.toLowerCase();
   // Deliberate pauses and unstarted work are neutral, never green or red.
   if (/(inactive|disabled|archived|draft|on hold|paused)/.test(s)) return "grey";
+  // Ended is not failed: closed and expired sit with the neutrals.
+  if (/(closed|expired|withdrawn)/.test(s)) return "grey";
   if (/(filled|hired|placed|published|active|won|approved|live|signed|healthy|completed|success|responded)/.test(s)) return "green";
-  if (/scheduled/.test(s)) return "blue";
-  if (/(interview|submitted|review|in progress|pending|proposal|invited|negotiat|due soon)/.test(s)) return "amber";
-  if (/(rejected|lost|closed|suspended|expired|withdrawn|failed|declined|revoked|overdue)/.test(s)) return "red";
-  if (/(new|open|sourcing|screening|available|lead|prospect)/.test(s)) return "blue";
+  // Amber means time pressure only; work in progress is blue.
+  if (/(due soon|negotiat)/.test(s)) return "amber";
+  if (/(rejected|lost|suspended|failed|declined|revoked|overdue)/.test(s)) return "red";
+  if (/(scheduled|interview|submitted|review|in progress|pending|proposal|invited|new|open|sourcing|screening|available|lead|prospect)/.test(s)) return "blue";
   return "grey";
 }
 
+const TONE_ICON: Partial<Record<Tone, IconName>> = { green: "check", red: "x", amber: "timer" };
+
+/** Status word on its tone; semantic tones carry an icon so the state is not hue alone. */
 export function StatusBadge({ status }: { status: string }) {
+  const tone = statusTone(status);
   return (
-    <Badge tone={statusTone(status)} dot>
+    <Badge tone={tone} dot icon={TONE_ICON[tone]}>
       {status}
     </Badge>
   );
 }
 
-const avatarTones = ["bg-ocean-100 text-ocean-800", "bg-cyan-100 text-cyan-700", "bg-tide-200 text-tide-800", "bg-[#fdead7] text-[#b54708]", "bg-[#e9e4fb] text-[#5b3cc4]", "bg-[#dcfae6] text-[#067647]"];
+const avatarTones = ["bg-ocean-100 text-ocean-800", "bg-tide-200 text-tide-800", "bg-mist-200 text-mist-700", "bg-ocean-50 text-ocean-700", "bg-mist-100 text-navy-900", "bg-cyan-100 text-cyan-700"];
 
 export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initials = name
@@ -191,8 +219,9 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
   );
 }
 
+/** Fills clear 3:1 against the track; amber only when the bar is a warning. */
 export function ProgressBar({ value, tone = "blue" }: { value: number; tone?: "blue" | "green" | "amber" }) {
-  const fill = tone === "green" ? "bg-[#17b26a]" : tone === "amber" ? "bg-[#f79009]" : "bg-ocean-600";
+  const fill = tone === "green" ? "bg-kelp-700" : tone === "amber" ? "bg-buoy-700" : "bg-ocean-600";
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-mist-200" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}>
       <div className={`h-full rounded-full ${fill}`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
@@ -205,7 +234,7 @@ export function KeyValue({ items }: { items: { k: string; v: React.ReactNode }[]
     <dl className="grid gap-3 sm:grid-cols-2">
       {items.map((i) => (
         <div key={i.k}>
-          <dt className="text-[12px] font-medium text-mist-500">{i.k}</dt>
+          <dt className="text-[12px] font-medium text-mist-600">{i.k}</dt>
           <dd className="mt-0.5 text-[14px] text-navy-900">{i.v}</dd>
         </div>
       ))}
