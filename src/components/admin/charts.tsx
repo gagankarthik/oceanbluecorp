@@ -33,7 +33,7 @@ export function PeriodSwitcher<P extends string>({
       role="group"
       aria-label={label}
       className={cn(
-        "inline-flex h-9 flex-none items-center gap-0.5 rounded-[9px] border border-[var(--adm-line)] bg-[var(--adm-seg-track)] p-0.5",
+        "inline-flex h-10 flex-none items-center gap-0.5 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-seg-track)] p-0.5",
         className,
       )}
     >
@@ -202,8 +202,8 @@ export interface FunnelStage {
  * bands. Feed cohort counts, not occupancy. The hovered band zooms forward and
  * its siblings recede, so the eye lands on one stage at a time.
  */
-// Light to deep cobalt (--p-cobalt-600 … oklch 0.26); white labels clear 5.5:1 on every stop.
-const FUNNEL_RAMP = ["#295ee3", "#1d4ed8", "#1740ad", "#12348c", "#112c6f", "#0c204f"];
+// Ocean-600 down to navy-900 (styles/colors.css); white labels clear 5:1 on every stop.
+const FUNNEL_RAMP = ["#0a72c0", "#085c9c", "#0a4b7d", "#0c3e66", "#153a52", "#0b2e46"];
 const FUNNEL_FLOOR = 32; // keeps a near-zero stage wide enough to read its label
 
 export function FunnelChart({ stages, className }: { stages: FunnelStage[]; className?: string }) {

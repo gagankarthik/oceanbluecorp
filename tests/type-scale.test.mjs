@@ -14,7 +14,7 @@ function files(dir) {
 
 test("admin code sizes text only from the type scale", () => {
   const offenders = [];
-  for (const f of [...files("src/app/admin"), ...files("src/components/admin")]) {
+  for (const f of [...files("src/app/portal/(console)"), ...files("src/components/admin")]) {
     const hits = readFileSync(f, "utf8").match(/text-\[\d+(?:\.\d+)?px\]/g);
     if (hits) offenders.push(`${f}: ${[...new Set(hits)].join(", ")}`);
   }

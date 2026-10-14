@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({
   children,
   requiredRoles,
-  fallbackUrl = "/auth/signin",
+  fallbackUrl = "/auth/sign-in",
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasAnyRole, user } = useAuth();
   const router = useRouter();

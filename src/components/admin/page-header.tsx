@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { InfoTip } from "./info-tip";
-import { BrandBand, WorkspaceButton } from "./workspace";
+import { WorkspaceButton } from "./workspace";
 
 interface PageHeaderProps {
   title: string;
@@ -20,41 +20,20 @@ interface PageHeaderProps {
   className?: string;
 }
 
-/**
- * Header for an admin screen.
- *
- * Stripped back to plain content on the canvas. The previous version was a
- * full-bleed white band with a bottom rule and a 40px tinted icon tile beside
- * the title, and it was rejected across the board: "I don't like this part of
- * design on all pages they look very bad."
- *
- * What went and why:
- *  - the white fill, the border and the negative margins, a band that framed
- *    a heading the sidebar and breadcrumb had already stated twice
- *  - the tinted icon tile, decoration; the sidebar's active row carries the
- *    same icon 200px to the left
- *  - 20px bold title → 18px semibold; it is a label, not a banner
- *
- * List screens should not use this at all, they lead with `ViewTabs` from
- * workspace.tsx. It stays for detail, form and settings screens, where the
- * title is the record's own name and so is genuinely worth stating.
- */
+/** Header for a detail, form or settings screen, matching the portal's page headers. */
 export function PageHeader({ title, subtitle, info, actions, meta, className }: PageHeaderProps) {
-  const line = subtitle ?? info;
   return (
-    <BrandBand
-      size="sm"
-      className={cn("mb-5", className)}
-      title={title}
-      // Chips are tinted for a white surface, so they sit on a white tab inside the band.
-      meta={line || meta ? (
-        <>
-          {line}
-          {meta && <div className={line ? "mt-2" : undefined}><span className="inline-flex rounded-[8px] bg-white p-0.5">{meta}</span></div>}
-        </>
-      ) : undefined}
-      actions={actions}
-    />
+    <div className={cn("mb-6 flex flex-none flex-col gap-4 md:flex-row md:items-center md:justify-between", className)}>
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-adm-xl font-semibold tracking-tight text-[var(--adm-ink)]">{title}</h1>
+          {subtitle && info && <InfoTip label={title}>{info}</InfoTip>}
+        </div>
+        {(subtitle ?? info) && <div className="mt-0.5 max-w-[60ch] text-adm-base text-[var(--adm-ink-subtle)]">{subtitle ?? info}</div>}
+        {meta && <div className="mt-2">{meta}</div>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-end">{actions}</div>}
+    </div>
   );
 }
 

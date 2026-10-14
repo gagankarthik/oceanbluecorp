@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       // Main crawler rules, allow all public pages, block private areas
       {
         userAgent: "*",
-        // Everything is crawlable except the API. /admin, /auth and
+        // Everything is crawlable except the API. /portal, /auth and
         // /maintenance are NOT blocked on purpose: they send noindex (header
         // or meta), and a robots.txt block hides that from Google, which then
         // reports the linked sign-in page as "Blocked by robots.txt" instead

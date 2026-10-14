@@ -93,26 +93,22 @@ export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
 
 /**
  * Breadcrumb trails for static public pages, below Home. Rendered as JSON-LD by
- * RouteBreadcrumbs. Pages that emit their own (solution detail, job, article)
- * are not listed.
+ * RouteBreadcrumbs in the site shell. Pages that emit their own (services,
+ * industries, service, job, resource section and article) are not listed.
  */
 export const BREADCRUMB_TRAILS: Record<string, { name: string; path: string }[]> = {
   "/about": [{ name: "About", path: "/about" }],
-  "/team": [{ name: "About", path: "/about" }, { name: "Leadership team", path: "/team" }],
-  "/solutions": [{ name: "Solutions", path: "/solutions" }],
-  "/solutions/engineering": [{ name: "Solutions", path: "/solutions" }, { name: "Engineering Talent & Services", path: "/solutions/engineering" }],
+  "/how-we-work": [{ name: "How we work", path: "/how-we-work" }],
+  "/certifications": [{ name: "Certifications", path: "/certifications" }],
   "/products": [{ name: "Products", path: "/products" }],
   "/developers": [{ name: "Developers", path: "/developers" }],
-  "/brand-kit": [{ name: "Media kit", path: "/brand-kit" }],
   "/careers": [{ name: "Careers", path: "/careers" }],
-  "/careers/search": [{ name: "Careers", path: "/careers" }, { name: "Open jobs", path: "/careers/search" }],
+  "/jobs": [{ name: "Find a job", path: "/jobs" }],
   "/contact": [{ name: "Contact", path: "/contact" }],
-  "/blog": [{ name: "Blog", path: "/blog" }],
-  "/news": [{ name: "News", path: "/news" }],
-  "/case-studies": [{ name: "Case Studies", path: "/case-studies" }],
-  "/customer-stories": [{ name: "Customer Stories", path: "/customer-stories" }],
+  "/resources": [{ name: "Resources", path: "/resources" }],
+  "/resources/media-kit": [{ name: "Resources", path: "/resources" }, { name: "Media kit", path: "/resources/media-kit" }],
+  "/brand": [{ name: "Brand guidelines", path: "/brand" }],
   "/status": [{ name: "System Status", path: "/status" }],
-  "/faq": [{ name: "FAQ", path: "/faq" }],
   "/sitemap": [{ name: "Site map", path: "/sitemap" }],
   "/security": [{ name: "Security", path: "/security" }],
   "/legal": [{ name: "Legal", path: "/legal" }],
@@ -120,5 +116,13 @@ export const BREADCRUMB_TRAILS: Record<string, { name: string; path: string }[]>
   "/terms": [{ name: "Legal", path: "/legal" }, { name: "Terms of Service", path: "/terms" }],
   "/cookies": [{ name: "Legal", path: "/legal" }, { name: "Cookie Policy", path: "/cookies" }],
   "/accessibility": [{ name: "Legal", path: "/legal" }, { name: "Accessibility", path: "/accessibility" }],
+  "/equal-opportunity": [{ name: "Legal", path: "/legal" }, { name: "Equal Opportunity", path: "/equal-opportunity" }],
   "/data-deletion": [{ name: "Legal", path: "/legal" }, { name: "Data deletion", path: "/data-deletion" }],
 };
+
+/** Trim a description to `max` characters on a word boundary, for meta tags. */
+export function clampDescription(text: string, max = 160): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1).replace(/\s+\S*$/, "")}…`;
+}

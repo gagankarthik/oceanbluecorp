@@ -58,8 +58,9 @@ export async function POST(request: NextRequest) {
       scopes: scopesForLevel(body.accessLevel ?? DEFAULT_ACCESS_LEVEL),
       isActive: true,
       createdAt: new Date().toISOString(),
-      createdBy: body.createdBy || "system",
-      createdByName: body.createdByName,
+      // From the verified token; any body-supplied createdBy is ignored.
+      createdBy: auth.claims.sub,
+      createdByName: auth.claims.name || auth.claims.email || auth.claims.sub,
     };
 
     const result = await createApiKey(apiKey);

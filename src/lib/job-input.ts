@@ -36,6 +36,9 @@ const TEXT_LIMITS: Record<string, number> = {
   responsibilities: 50_000,
 };
 
+/** Same limits for the form, so client and server agree. */
+export const JOB_TEXT_LIMITS: Readonly<Record<string, number>> = TEXT_LIMITS;
+
 type Salary = { min: number; max: number; currency: string; period?: (typeof SALARY_PERIODS)[number] };
 
 /** A salary as stored, or an error. `null` clears it. */

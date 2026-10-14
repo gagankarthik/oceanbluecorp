@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
       return serverError("Error saving help directory", result.error, "Couldn't save the help directory. Please try again.");
     }
 
-    try { revalidatePath("/admin/help"); } catch { /* best-effort */ }
+    try { revalidatePath("/portal/help"); } catch { /* best-effort */ }
     return NextResponse.json({ success: true });
   } catch (error) {
     return serverError("Error saving help directory", error, "Couldn't save the help directory. Please try again.");

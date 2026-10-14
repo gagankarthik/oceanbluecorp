@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           id: job.id,
           title: job.title,
           subtitle: [job.department, jobLocationLabel(job)].filter(Boolean).join(" - "),
-          link: `/admin/jobs/${job.id}`,
+          link: `/portal/jobs/${job.id}`,
           status: job.status,
         });
       });
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
           subtitle: [app.applicationId, app.email].filter(Boolean).join(" · "),
           // Straight to the candidate record, the applications list ignores
           // a ?search param, so linking there landed on an unfiltered page.
-          link: `/admin/candidates/${app.id}`,
+          link: `/portal/candidates/${app.id}`,
           status: app.status,
         });
       });
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
           id: contact.id,
           title: `${contact.firstName} ${contact.lastName}`,
           subtitle: `${contact.company} - ${contact.inquiryType}`,
-          link: `/admin/contacts/${encodeURIComponent(contact.id)}`,
+          link: `/portal/contacts/${encodeURIComponent(contact.id)}`,
           status: contact.status,
         });
       });

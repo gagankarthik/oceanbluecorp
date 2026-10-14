@@ -1,16 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CONTAINER, OPENER_Y, SECTION_Y } from "@/components/site/sections";
-import { cn } from "@/lib/utils";
-import { buttonClass } from "@/components/site/button";
-import {
-  IconServer, IconLayers, IconShieldLock, IconMail, IconCloudUp, IconClock, IconChevronDown, type IconProps,
-} from "@/components/site/icons";
-
-// ── Types ──────────────────────────────────────────────────────────────────────
+import Link from "next/link";
 
 type S = "operational" | "degraded" | "outage" | "investigating" | "unknown";
+
+type LogEntry = { summary: string; message: string; status: S; time: number };
 
 interface ServiceItem {
   id: string;
@@ -19,7 +14,7 @@ interface ServiceItem {
   status: S;
   statusCode: number;
   message: string | null;
-  recentLogs: { summary: string; message: string; status: S; time: number }[];
+  recentLogs: LogEntry[];
 }
 
 interface Incident {
@@ -30,7 +25,7 @@ interface Incident {
   status: S;
   statusCode: number;
   startedAt: number;
-  log: { summary: string; message: string; status: S; time: number }[];
+  log: LogEntry[];
 }
 
 interface StatusData {
@@ -46,64 +41,31 @@ interface StatusData {
   error?: string;
 }
 
-// ── Glyphs: same 24px grid and 1.5 stroke as site/icons ─────────────────────────
-
-function Svg({ size = 16, children, ...rest }: IconProps & { children: React.ReactNode }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...rest}>
-      {children}
-    </svg>
-  );
-}
-const IconOk = (p: IconProps) => (<Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12.2 2.4 2.4 4.6-4.9" /></Svg>);
-const IconInfo = (p: IconProps) => (<Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 8h.01" /></Svg>);
-const IconWarn = (p: IconProps) => (<Svg {...p}><path d="M12 4 2.8 19.5h18.4Z" /><path d="M12 10v4M12 17h.01" /></Svg>);
-const IconStop = (p: IconProps) => (<Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="m9 9 6 6M15 9l-6 6" /></Svg>);
-const IconRefresh = (p: IconProps) => (<Svg {...p}><path d="M19.5 11A7.5 7.5 0 0 0 6.2 6.8M4.5 13a7.5 7.5 0 0 0 13.3 4.2M5.5 3.5V7H9M18.5 20.5V17H15" /></Svg>);
-const IconGlobe = (p: IconProps) => (<Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.3 2.4 3.5 5.2 3.5 8.5s-1.2 6.1-3.5 8.5c-2.3-2.4-3.5-5.2-3.5-8.5s1.2-6.1 3.5-8.5Z" /></Svg>);
-
-// ── Config ─────────────────────────────────────────────────────────────────────
-
-const ICONS: Record<string, (p: IconProps) => React.ReactElement> = {
-  dynamodb: IconServer,
-  s3:       IconLayers,
-  cognito:  IconShieldLock,
-  ses:      IconMail,
-  amplify:  IconCloudUp,
-};
-
-/* Each state's text sits at the 700 step on its own tint, so labels clear AA. */
-const ST: Record<S, {
-  label: string; dot: string; ring: string; bg: string; text: string; bar: string; icon: (p: IconProps) => React.ReactElement;
-}> = {
-  operational:  { label: "Operational",   dot: "bg-success", ring: "ring-success/25", bg: "bg-success-container", text: "text-success", bar: "bg-success", icon: IconOk },
-  investigating:{ label: "Investigating", dot: "bg-cobalt",      ring: "ring-cobalt/25",    bg: "bg-cobalt-tint",  text: "text-cobalt",       bar: "bg-cobalt",      icon: IconInfo },
-  degraded:     { label: "Degraded",      dot: "bg-warning",   ring: "ring-warning/25",   bg: "bg-warning-container",   text: "text-warning",   bar: "bg-warning",   icon: IconWarn },
-  outage:       { label: "Outage",        dot: "bg-danger",    ring: "ring-danger/25",    bg: "bg-danger-container",    text: "text-danger",    bar: "bg-danger",    icon: IconStop },
-  unknown:      { label: "Unknown",       dot: "bg-line-strong", ring: "ring-line",        bg: "bg-paper",      text: "text-ink-muted",   bar: "bg-line-strong", icon: IconInfo },
+// Text sits on its own container tint, so every label clears AA.
+const ST: Record<S, { label: string; dot: string; chip: string }> = {
+  operational: { label: "Operational", dot: "bg-success", chip: "bg-success-container text-success" },
+  investigating: { label: "Investigating", dot: "bg-ocean-600", chip: "bg-ocean-50 text-ocean-700" },
+  degraded: { label: "Degraded", dot: "bg-buoy-500", chip: "bg-warning-container text-warning" },
+  outage: { label: "Outage", dot: "bg-danger", chip: "bg-danger-container text-danger" },
+  unknown: { label: "Unknown", dot: "bg-mist-400", chip: "bg-mist-100 text-mist-700" },
 };
 
 const BANNER: Record<S, { heading: string; sub: string }> = {
-  operational:  { heading: "All Systems Operational",  sub: "All platform services are running normally." },
-  investigating:{ heading: "Investigating an Issue",   sub: "We are monitoring a potential issue with our platform." },
-  degraded:     { heading: "Partial Service Degradation", sub: "Some platform services are experiencing degraded performance." },
-  outage:       { heading: "Service Disruption",       sub: "One or more platform services have a significant outage." },
-  unknown:      { heading: "Status Unknown",           sub: "Unable to retrieve live status data right now." },
+  operational: { heading: "All systems operational", sub: "All platform services are running normally." },
+  investigating: { heading: "Investigating an issue", sub: "We are monitoring a potential issue with our platform." },
+  degraded: { heading: "Partial service degradation", sub: "Some platform services are experiencing degraded performance." },
+  outage: { heading: "Service disruption", sub: "One or more platform services have a significant outage." },
+  unknown: { heading: "Status unknown", sub: "Unable to retrieve live status data right now." },
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+const REFRESH = 60;
 
 function ts(ms: number) {
-  return new Date(ms).toLocaleString("en-US", {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
-    timeZoneName: "short",
-  });
+  return new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
 }
 
 function relTime(ms: number) {
-  const diff = Date.now() - ms;
-  const m = Math.floor(diff / 60_000);
+  const m = Math.floor((Date.now() - ms) / 60_000);
   if (m < 1) return "just now";
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
@@ -111,163 +73,110 @@ function relTime(ms: number) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: S }) {
-  const cfg = ST[status];
-  const Icon = cfg.icon;
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 type-caption font-semibold whitespace-nowrap", cfg.bg, cfg.text)}>
-      <Icon size={13} />
-      {cfg.label}
-    </span>
-  );
+function Chip({ status }: { status: S }) {
+  return <span className={`inline-flex items-center px-2.5 py-1 text-[14px] font-medium whitespace-nowrap ${ST[status].chip}`}>{ST[status].label}</span>;
 }
 
 function Dot({ status, pulse }: { status: S; pulse?: boolean }) {
-  const cfg = ST[status];
+  const live = pulse && (status === "degraded" || status === "outage" || status === "investigating");
   return (
     <span className="relative flex size-2.5 shrink-0">
-      {pulse && (status === "degraded" || status === "outage" || status === "investigating") && (
-        <span className={cn("absolute inline-flex size-full animate-ping rounded-full opacity-50 motion-reduce:animate-none", cfg.dot)} />
-      )}
-      <span className={cn("relative inline-flex size-2.5 rounded-full", cfg.dot)} />
+      {live && <span className={`absolute inline-flex size-full animate-ping rounded-full opacity-50 motion-reduce:animate-none ${ST[status].dot}`} />}
+      <span className={`relative inline-flex size-2.5 rounded-full ${ST[status].dot}`} />
     </span>
   );
 }
 
-// ── Service card ───────────────────────────────────────────────────────────────
-
-function ServiceCard({ svc }: { svc: ServiceItem }) {
-  const [open, setOpen] = useState(false);
-  const cfg = ST[svc.status];
-  const Icon = ICONS[svc.id] ?? IconServer;
-  const hasDetail = svc.message || svc.recentLogs.length > 0;
-
+function Chevron({ open }: { open: boolean }) {
   return (
-    <div className="relative flex h-full flex-col bg-white p-5 sm:p-6">
-      <div className="flex items-start gap-3">
-        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg border border-line", cfg.text)}>
-          <Icon size={18} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate type-body font-semibold text-ink">{svc.label}</p>
-          <p className="mt-1 type-caption text-ink-subtle">{svc.category} · US East (Ohio)</p>
-        </div>
-        <Dot status={svc.status} pulse />
-      </div>
-
-      <div className="mt-4">
-        <StatusBadge status={svc.status} />
-      </div>
-
-      {svc.message && <p className="mt-3 line-clamp-2 type-body-sm text-ink-muted">{svc.message}</p>}
-
-      {hasDetail && (
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          className="mt-3 inline-flex min-h-11 items-center gap-1 self-start type-label font-semibold text-cobalt"
-        >
-          <IconChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
-          {open ? "Hide log" : "View log"}
-        </button>
-      )}
-
-      {open && svc.recentLogs.length > 0 && (
-        <div className="mt-2 space-y-2">
-          {svc.recentLogs.map((l, i) => (
-            <div key={i} className="rounded-lg bg-paper px-3 py-3 type-caption">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <StatusBadge status={l.status} />
-                <span className="text-ink-subtle">{relTime(l.time)}</span>
-              </div>
-              <p className="leading-relaxed text-ink-muted">{l.message || l.summary}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <svg aria-hidden viewBox="0 0 12 12" className={`size-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="m3 4.5 3 3 3-3" />
+    </svg>
   );
 }
 
-// ── Incident timeline ──────────────────────────────────────────────────────────
-
-function IncidentCard({ inc }: { inc: Incident }) {
-  const [open, setOpen] = useState(false);
-  const cfg = ST[inc.status];
-
+function Log({ entries }: { entries: LogEntry[] }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white">
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-start gap-3 px-5 py-4 text-left">
-        <span className={cn("mt-1 flex size-9 shrink-0 items-center justify-center rounded-lg border border-line", cfg.text)}>
-          <IconWarn size={17} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <StatusBadge status={inc.status} />
-            <span className="type-caption text-ink-subtle">{inc.regionName} · {inc.serviceName}</span>
+    <ol className="mt-4 grid gap-2">
+      {entries.map((l, i) => (
+        <li key={i} className="bg-mist-100 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-[15px] font-medium">
+              <Dot status={l.status} />
+              {l.summary}
+            </span>
+            <span className="text-[14px] text-mist-600">{relTime(l.time)}</span>
           </div>
-          <p className="type-body font-semibold text-ink">{inc.summary}</p>
-          <p className="mt-1 flex items-center gap-1 type-caption text-ink-subtle">
-            <IconClock size={13} /> Started {relTime(inc.startedAt)} · {ts(inc.startedAt)}
-          </p>
-        </div>
-        <IconChevronDown size={16} className={cn("mt-1 shrink-0 text-ink-subtle transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && inc.log.length > 0 && (
-        <div className="border-t border-line px-5 pt-3 pb-4">
-          {inc.log.map((entry, i) => (
-            <div key={i} className="relative flex gap-4 pb-4 last:pb-0">
-              {i < inc.log.length - 1 && <div className="absolute top-6 bottom-0 left-3 w-px -translate-x-1/2 bg-line" />}
-              <div className={cn("relative z-10 mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-white ring-2", ST[entry.status].ring, ST[entry.status].bg)}>
-                <Dot status={entry.status} />
-              </div>
-              <div className="flex-1 pt-1">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="type-label font-semibold text-ink">{entry.summary}</span>
-                  <span className="type-caption whitespace-nowrap text-ink-subtle">{relTime(entry.time)}</span>
-                </div>
-                <p className="type-body-sm text-ink-muted">{entry.message}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Summary counts ─────────────────────────────────────────────────────────────
-
-function SummaryBar({ services }: { services: ServiceItem[] }) {
-  const counts = services.reduce<Record<S, number>>(
-    (acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; },
-    {} as Record<S, number>
-  );
-
-  return (
-    // The dot carries the state; the cells stay paper, so a healthy system
-    // does not show three coloured boxes reading zero.
-    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-      {(["operational", "investigating", "degraded", "outage"] as S[]).map((s) => (
-        <div key={s} className="flex items-center gap-3 bg-white px-4 py-4">
-          <Dot status={s} />
-          <div>
-            <dd className="type-title-lg font-semibold tabular-nums text-ink">{counts[s] || 0}</dd>
-            <dt className="mt-1 type-caption text-ink-subtle">{ST[s].label}</dt>
-          </div>
-        </div>
+          {l.message && <p className="mt-1.5 text-[15px] leading-relaxed text-mist-600">{l.message}</p>}
+        </li>
       ))}
-    </dl>
+    </ol>
   );
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────────
+function ServiceRow({ svc }: { svc: ServiceItem }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="bg-mist-0 p-5 md:p-6">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Dot status={svc.status} pulse />
+        <div className="min-w-0 flex-1">
+          <p className="text-[19px] font-medium">{svc.label}</p>
+          <p className="text-[14px] text-mist-600">{svc.category} · US East (Ohio)</p>
+        </div>
+        <Chip status={svc.status} />
+      </div>
+      {svc.message && <p className="mt-3 text-[15px] text-mist-600">{svc.message}</p>}
+      {svc.recentLogs.length > 0 && (
+        <>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="mt-3 inline-flex min-h-11 items-center gap-1.5 font-medium text-ocean-700 underline underline-offset-4"
+          >
+            {open ? "Hide log" : "View log"}
+            <Chevron open={open} />
+          </button>
+          {open && <Log entries={svc.recentLogs} />}
+        </>
+      )}
+    </li>
+  );
+}
 
-const REFRESH = 60;
+function IncidentRow({ inc }: { inc: Incident }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="bg-mist-0">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-start gap-4 p-5 text-left md:p-6">
+        <span className="mt-2">
+          <Dot status={inc.status} pulse />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <Chip status={inc.status} />
+            <span className="text-[14px] text-mist-600">
+              {inc.regionName} · {inc.serviceName}
+            </span>
+          </span>
+          <span className="mt-2 block text-[19px] font-medium">{inc.summary}</span>
+          <span className="mt-1 block text-[14px] text-mist-600">
+            Started {relTime(inc.startedAt)} · {ts(inc.startedAt)}
+          </span>
+        </span>
+        <span className="mt-2 text-mist-600">
+          <Chevron open={open} />
+        </span>
+      </button>
+      {open && inc.log.length > 0 && (
+        <div className="px-5 pb-5 md:px-6 md:pb-6">
+          <Log entries={inc.log} />
+        </div>
+      )}
+    </li>
+  );
+}
 
 export default function StatusContent() {
   const [data, setData] = useState<StatusData | null>(null);
@@ -280,138 +189,169 @@ export default function StatusContent() {
     try {
       const res = await fetch("/api/status", { cache: "no-store" });
       setData(await res.json());
-    } catch { setData(null); }
-    finally { setLoading(false); setRefreshing(false); setCountdown(REFRESH); }
+    } catch {
+      setData(null);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      setCountdown(REFRESH);
+    }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   useEffect(() => {
     const t = setInterval(() => {
-      setCountdown((c) => { if (c <= 1) { void load(); return REFRESH; } return c - 1; });
+      setCountdown((c) => {
+        if (c <= 1) {
+          void load();
+          return REFRESH;
+        }
+        return c - 1;
+      });
     }, 1000);
     return () => clearInterval(t);
   }, [load]);
 
-  const overall: S = data?.overall ?? "unknown";
-  const banner = BANNER[overall];
+  const overall: S = loading ? "unknown" : (data?.overall ?? "unknown");
+  const banner = loading ? { heading: "Checking status", sub: "Fetching the latest status of our platform services." } : BANNER[overall];
+
+  const counts = (data?.services ?? []).reduce<Partial<Record<S, number>>>((acc, s) => {
+    acc[s.status] = (acc[s.status] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
-    <>
-      {/* The status colour is real signal, so it appears as a dot and a label
-          beside the heading, not as the ground of the whole header. */}
-      <header data-opener className="border-b border-line bg-paper">
-        <div className={`${CONTAINER} ${OPENER_Y}`}>
-          <p className="type-label font-semibold text-cobalt">System status</p>
-          <h1 className="mt-3 max-w-[20ch] type-headline-lg font-semibold text-ink" aria-live="polite">
+    <div className="bg-field-paper">
+      {/* Live state first: no photo band, the verdict is the headline. */}
+      <header id="top" className="gutter grid gap-8 pb-12 pt-14 md:pb-16 md:pt-20 lg:grid-cols-12">
+        <div className="side">
+          <p className="font-medium text-mist-600">System status</p>
+          <p className="mt-3 inline-flex items-center gap-2 text-[15px] font-medium">
+            <Dot status={overall} pulse />
+            {loading ? "Checking" : ST[overall].label}
+          </p>
+          <p className="mt-1 text-[15px] text-mist-600">US East (Ohio)</p>
+        </div>
+        <div className="axis">
+          <h1 className="display text-[clamp(2.5rem,5vw,4.5rem)]" aria-live="polite">
             {banner.heading}
           </h1>
-          <p className="mt-5 max-w-[56ch] type-body-lg text-ink-muted">{banner.sub}</p>
-          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line pt-6 type-body-sm">
-            <span className="inline-flex items-center gap-2 font-semibold text-ink">
-              <Dot status={overall} pulse />
-              {ST[overall].label}
-            </span>
-            <span className="inline-flex items-center gap-2 text-ink-muted">
-              <IconGlobe size={15} />
-              US East (Ohio)
-            </span>
-            {data && (
-              <span className="inline-flex items-center gap-2 text-ink-muted">
-                <IconInfo size={15} />
-                {data.ohioEvents ?? 0} active event{(data.ohioEvents ?? 0) !== 1 ? "s" : ""} in region
-              </span>
-            )}
-          </div>
+          <p className="mt-5 max-w-[52ch] text-lead leading-snug">{banner.sub}</p>
         </div>
       </header>
 
-      <section data-tone="white" className={`bg-white ${SECTION_Y}`}>
-        <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12`}>
-          {/* Summary rail: first on phones, beside the services from lg. */}
-          <aside className="space-y-4 lg:order-2 lg:sticky lg:top-28 lg:self-start">
-            {!loading && data?.services && <SummaryBar services={data.services} />}
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-paper px-4 py-3 type-body-sm text-ink-muted">
-              <span className="inline-flex items-center gap-1.5">
-                <IconClock size={14} /> Next check in <span className="tabular-nums">{countdown}s</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => void load(true)}
-                disabled={refreshing}
-                className={buttonClass("outline", "sm", "pointer-coarse:h-11")}
-              >
-                <IconRefresh size={14} className={refreshing ? "animate-spin motion-reduce:animate-none" : undefined} />
-                Refresh
-              </button>
-            </div>
-            {data && (
-              <p className="px-1 type-caption text-ink-subtle">
-                Last checked: {new Date(data.checkedAt).toLocaleString()}. Status refreshes automatically every {REFRESH}s.
-              </p>
+      <section aria-labelledby="services-title" className="gutter grid gap-12 pb-24 md:pb-32 lg:grid-cols-12">
+        <aside className="side">
+          <div className="grid gap-px bg-mist-200 lg:sticky lg:top-24">
+            {!loading && data?.ok && (
+              <dl className="grid grid-cols-2 gap-px">
+                {(["operational", "investigating", "degraded", "outage"] as S[]).map((s) => (
+                  <div key={s} className="flex flex-col-reverse bg-mist-0 p-4">
+                    <dt className="mt-1 flex items-center gap-2 text-[14px] text-mist-600">
+                      <Dot status={s} />
+                      {ST[s].label}
+                    </dt>
+                    <dd className="display text-[28px] tabular-nums">{counts[s] ?? 0}</dd>
+                  </div>
+                ))}
+              </dl>
             )}
-          </aside>
-
-          <div className="min-w-0 space-y-10 lg:order-1">
-            <div>
-              <h2 className="type-title-lg font-semibold text-ink">Platform Services</h2>
-              <p className="mt-1 type-body-sm text-ink-subtle">Tracked platform services</p>
-
-              <div className="mt-5">
-                {loading ? (
-                  <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="h-[140px] animate-pulse bg-white motion-reduce:animate-none" />
-                    ))}
-                  </div>
-                ) : !data?.ok ? (
-                  <div className="rounded-2xl border border-line bg-paper p-8 text-center">
-                    <IconStop size={30} className="mx-auto text-danger" />
-                    <p className="mt-3 type-body font-semibold text-ink">Could not load status data</p>
-                    <p className="mt-1 type-body-sm text-ink-muted">The status feed may be temporarily unavailable.</p>
-                    <button type="button" onClick={() => void load(true)} className="mt-4 min-h-11 type-label font-semibold text-cobalt underline underline-offset-4">
-                      Try again
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
-                    {data.services.map((svc) => <ServiceCard key={svc.id} svc={svc} />)}
-                    {/* Keeps the hairline grid square when the count is odd. */}
-                    {data.services.length % 2 === 1 && <div aria-hidden className="hidden bg-white sm:block" />}
-                  </div>
-                )}
+            <div className="bg-mist-100 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[15px] text-mist-600">
+                  Next check in <span className="tabular-nums text-navy-900">{countdown}s</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void load(true)}
+                  disabled={refreshing}
+                  aria-busy={refreshing}
+                  className="inline-flex min-h-11 items-center px-4 text-[15px] font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white disabled:opacity-50"
+                >
+                  {refreshing ? "Checking…" : "Refresh"}
+                </button>
               </div>
+              {data?.checkedAt && (
+                <p className="mt-3 text-[14px] text-mist-600">
+                  Last checked {new Date(data.checkedAt).toLocaleString()}. Refreshes every {REFRESH}s.
+                </p>
+              )}
+              {data?.ok && (
+                <p className="mt-1 text-[14px] text-mist-600">
+                  {data.ohioEvents ?? 0} active event{(data.ohioEvents ?? 0) !== 1 ? "s" : ""} in region.
+                </p>
+              )}
             </div>
+          </div>
+        </aside>
 
-            {data?.activeIncidents && data.activeIncidents.length > 0 && (
-              <div>
-                <h2 className="flex items-center gap-2 type-title-lg font-semibold text-ink">
-                  <IconWarn size={20} className="text-warning" />
-                  Active Incidents
-                  <span className="type-body-sm font-normal text-ink-subtle">({data.activeIncidents.length})</span>
-                </h2>
-                <div className="mt-5 space-y-3">
-                  {data.activeIncidents.map((inc) => (
-                    <IncidentCard key={inc.arn} inc={inc} />
-                  ))}
-                </div>
+        <div className="axis grid content-start gap-14">
+          <div>
+            <h2 id="services-title" className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+              Platform services
+            </h2>
+            {loading ? (
+              <ul className="mt-6 grid gap-2" aria-label="Loading services">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <li key={i} className="h-[92px] animate-pulse bg-mist-0 motion-reduce:animate-none" />
+                ))}
+              </ul>
+            ) : !data?.ok ? (
+              <div role="alert" className="mt-6 bg-mist-100 p-8">
+                <p className="text-[20px] font-medium">Could not load status data</p>
+                <p className="mt-2 text-mist-600">The status feed may be temporarily unavailable.</p>
+                <button
+                  type="button"
+                  onClick={() => void load(true)}
+                  className="mt-6 inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+                >
+                  Try again
+                </button>
               </div>
-            )}
-
-            {data?.ok && data.activeIncidents.length === 0 && (
-              <div className="flex items-center gap-4 rounded-2xl border border-line bg-white px-6 py-5">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success-container text-success">
-                  <IconOk size={20} />
-                </span>
-                <div>
-                  <p className="type-body font-semibold text-ink">No active incidents</p>
-                  <p className="mt-1 type-body-sm text-ink-muted">No active events reported for the US East (Ohio) region.</p>
-                </div>
-              </div>
+            ) : (
+              <ul className="mt-6 grid gap-2">
+                {data.services.map((svc) => (
+                  <ServiceRow key={svc.id} svc={svc} />
+                ))}
+              </ul>
             )}
           </div>
+
+          {data?.ok && (
+            <div>
+              <h2 className="display text-[clamp(1.75rem,2.6vw,2.5rem)]">
+                Active incidents{data.activeIncidents.length > 0 && <span className="text-mist-600"> ({data.activeIncidents.length})</span>}
+              </h2>
+              {data.activeIncidents.length > 0 ? (
+                <ul className="mt-6 grid gap-2">
+                  {data.activeIncidents.map((inc) => (
+                    <IncidentRow key={inc.arn} inc={inc} />
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-6 flex items-center gap-4 bg-mist-0 p-5 md:p-6">
+                  <Dot status="operational" />
+                  <div>
+                    <p className="text-[19px] font-medium">No active incidents</p>
+                    <p className="mt-1 text-[15px] text-mist-600">No active events reported for the US East (Ohio) region.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-mist-600">
+            Something not working that this page does not show?{" "}
+            <Link href="/contact" className="text-ocean-700 underline underline-offset-4">
+              Tell us
+            </Link>
+            .
+          </p>
         </div>
       </section>
-    </>
+    </div>
   );
 }

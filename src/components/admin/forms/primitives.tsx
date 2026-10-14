@@ -35,7 +35,7 @@ export function FormSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]",
+        "overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]",
         className,
       )}
     >
@@ -138,7 +138,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         autoComplete="off"
         aria-invalid={invalid || undefined}
         {...props}
-        className={cn(controlBase, "h-9 px-3", className)}
+        className={cn(controlBase, "h-10 px-3", className)}
       />
     );
   },
@@ -177,7 +177,7 @@ export function FormSelect({
       <select
         autoComplete="off"
         {...props}
-        className={cn(controlBase, "h-9 cursor-pointer appearance-none px-3 pr-9", className)}
+        className={cn(controlBase, "h-10 cursor-pointer appearance-none px-3 pr-9", className)}
       >
         {children}
       </select>
@@ -243,7 +243,7 @@ export function SegmentedChoice<V extends string>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        "flex h-9 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-control)] bg-[var(--adm-surface-sunken)] p-0.5",
+        "flex h-10 w-full rounded-[var(--adm-radius-input)] border border-[var(--adm-line-control)] bg-[var(--adm-surface-sunken)] p-0.5",
         className,
       )}
     >
@@ -340,7 +340,7 @@ function PeopleSearch({
           }
         }}
         placeholder={placeholder}
-        className={cn(controlBase, "h-9 pl-9 pr-3")}
+        className={cn(controlBase, "h-10 pl-9 pr-3")}
       />
       {open && (
         <div className="absolute left-0 right-0 top-full z-20 mt-1.5 max-h-60 overflow-y-auto rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] py-1 shadow-[var(--adm-shadow-pop)]">

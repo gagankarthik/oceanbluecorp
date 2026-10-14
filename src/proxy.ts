@@ -14,7 +14,7 @@ const FLAG_TIMEOUT_MS = 1_500;
 // Stays reachable while the switch is on: the console that turns it off,
 // sign-in, the API, the preview of the screen itself, and the status page the
 // screen links to.
-const EXEMPT = ["/admin", "/auth", "/api", "/maintenance", "/status", "/manifest.webmanifest"];
+const EXEMPT = ["/portal", "/auth", "/api", "/maintenance", "/status", "/manifest.webmanifest"];
 
 let flag = { on: false, at: 0 };
 

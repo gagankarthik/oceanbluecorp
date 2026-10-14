@@ -80,7 +80,7 @@ export function RowMenu({ label, items, busy = false }: { label: string; items: 
         align="end"
         sideOffset={4}
         onClick={(e) => e.stopPropagation()}
-        className="w-52 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
+        className="w-52 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]"
       >
         {items.map((item) => {
           const Icon = item.icon;

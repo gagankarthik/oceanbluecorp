@@ -15,6 +15,11 @@ const TEXT_LIMITS: Record<string, number> = {
   resumeId: 128, resumeFileName: 255, resumeFileKey: 1024,
 };
 
+/** Same limits for the form, so client and server agree. */
+export const APPLICATION_TEXT_LIMITS: Readonly<Record<string, number>> = TEXT_LIMITS;
+export const APPLICATION_SKILLS_MAX = 200;
+export const APPLICATION_SKILL_CHARS = 100;
+
 /** First problem with a staff application body, or null. */
 export function applicationInputError(body: Record<string, unknown>): string | null {
   if (body.status !== undefined && !(APPLICATION_STATUSES as readonly unknown[]).includes(body.status)) {
@@ -27,7 +32,7 @@ export function applicationInputError(body: Record<string, unknown>): string | n
     if (v.length > max) return `${field} must be ${max.toLocaleString("en-US")} characters or fewer`;
   }
   if (body.skills !== undefined) {
-    if (!Array.isArray(body.skills) || body.skills.length > 200 || body.skills.some((s) => typeof s !== "string" || s.length > 100)) {
+    if (!Array.isArray(body.skills) || body.skills.length > APPLICATION_SKILLS_MAX || body.skills.some((s) => typeof s !== "string" || s.length > APPLICATION_SKILL_CHARS)) {
       return "skills must be a list of up to 200 short strings";
     }
   }

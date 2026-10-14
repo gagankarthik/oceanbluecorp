@@ -36,6 +36,7 @@ export default function PrivacyPage() {
       meta={[{ label: "Effective", value: EFFECTIVE }, { label: "Last updated", value: updated }, { label: "Controller", value: "Oceanblue Solutions, Inc., Powell, OH" }]}
       toc={SECTIONS}
       history={history}
+      current="/privacy"
     >
 
             <DocSection id="introduction" number="01" title="Introduction">
@@ -154,10 +155,10 @@ export default function PrivacyPage() {
                 providing services to Oceanblue.
               </P>
               <P>
-                A few items on this site load directly from other servers: the office map (OpenStreetMap)
-                and some client and partner logos, which come from those companies&apos; own websites. When
-                your browser requests them, those servers receive your IP address, as with any web request.
-                We send them nothing else.
+                Two items on this site load directly from other servers: the office map on the contact
+                page (OpenStreetMap) and the site&apos;s typeface (Fontshare). When your browser requests
+                them, those servers receive your IP address, as with any web request. We send them
+                nothing else.
               </P>
             </DocSection>
 

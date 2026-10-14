@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/colors.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -277,7 +278,7 @@
   --ease-emphasized-out: cubic-bezier(0.3, 0, 0.8, 0.15);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -486,7 +487,7 @@
 
 /* Landing base. Geist Sans everywhere (no Inter body on the landing) */
 .horizon {
-  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-family: "General Sans", system-ui, sans-serif;
   color: var(--hz-text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -494,7 +495,7 @@
 
 /* Display. Geist Sans, tight modern grotesque */
 .hz-display {
-  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-family: "General Sans", system-ui, sans-serif;
   letter-spacing: -0.035em;
   line-height: 1.03;
   font-weight: 600;
@@ -575,159 +576,146 @@
 /* ============================================================
    ADMIN, console tokens. The only definition of --adm-*; light only.
    Declared on :root, not .adm-scope, so portalled dialogs, sheets
-   and menus resolve them. Primitives first (OKLCH ramps), then the
-   semantic roles components read. Contrast: tests/contrast.test.mjs.
+   and menus resolve them. Values come from the portal palette in
+   styles/colors.css (mist, ocean, navy); status hues match the
+   portal kit (components/portal/ui.tsx). Contrast: tests/contrast.test.mjs.
    ============================================================ */
 :root {
-  /* ── Primitives ── */
+  /* ── Console primitives the palette has no step for ── */
 
-  /* Neutral: one family, tinted toward the navy brand hue (255). */
-  --p-navy-50:  oklch(0.984 0.003 255);  /* #f8fafc */
-  --p-navy-100: oklch(0.967 0.006 255);  /* #f1f4f8 */
-  --p-navy-200: oklch(0.929 0.011 255);  /* #e3e8ef */
-  --p-navy-300: oklch(0.872 0.016 255);  /* #ced6e0 */
-  --p-navy-400: oklch(0.71 0.022 255);   /* #99a2af */
-  --p-navy-500: oklch(0.6 0.026 255);    /* #768190, 3.9:1 white */
-  --p-navy-600: oklch(0.51 0.03 255);    /* #5b6777, 5.7:1 white */
-  --p-navy-700: oklch(0.42 0.032 255);   /* #414e5f, 8.5:1 white */
-  --p-navy-800: oklch(0.33 0.03 255);    /* #2b3645 */
-  --p-navy-900: oklch(0.235 0.03 255);   /* #141f2c, 16.7:1 white */
-  --p-navy-950: oklch(0.17 0.025 255);   /* #08101a */
+  /* Ocean-50 lifted toward white, so ocean-600 text on it keeps AA. */
+  --p-ocean-25: #eff6fc;
+  --p-ocean-10: #f5fafd;
 
-  /* Cobalt tints for washes, categorical marks and chart ramps; 700+ are --p-blue-*. */
-  --p-cobalt-50:  oklch(0.97 0.016 264);  /* #f0f5ff */
-  --p-cobalt-100: oklch(0.935 0.034 264); /* #deeaff */
-  --p-cobalt-200: oklch(0.88 0.065 264);  /* #c2d8ff */
-  --p-cobalt-300: oklch(0.8 0.105 264);   /* #9bbdff */
-  --p-cobalt-400: oklch(0.69 0.15 264);   /* #6b98f8 */
-  --p-cobalt-500: oklch(0.59 0.19 264);   /* #4174ec */
-
-  /* Status tints and edges (fills and inks are --p-green/amber/red/rose-*). */
-  --p-green-tint:  oklch(0.97 0.025 163);
-  --p-green-edge:  oklch(0.87 0.08 163);
-  --p-amber-tint:  oklch(0.975 0.03 85);
-  --p-amber-edge:  oklch(0.88 0.1 80);
-  --p-rose-tint:   oklch(0.965 0.018 12);
-  --p-rose-edge:   oklch(0.86 0.07 12);
-  --p-rose-600:    #d91a43;
+  /* Status, as the portal kit draws them. */
+  --p-green-fill:  #079455;
+  --p-green-wash:  #ecfdf3;
+  --p-green-rim:   #abefc6;
+  --p-green-ink:   #067647;
+  --p-amber-fill:  #dc6803;
+  --p-amber-wash:  #fffaeb;
+  --p-amber-rim:   #fedf89;
+  --p-amber-ink:   #b54708;
+  --p-red-fill:    #b42318;
+  --p-red-wash:    #fef3f2;
+  --p-red-rim:     #fecdca;
+  --p-red-ink:     #912018;
 
   /* ── Semantic ── */
 
-  /* Action: cobalt, the single accent. */
-  --adm-accent:        var(--p-blue-700);        /* action-primary, 6.7:1 under white */
-  --adm-accent-strong: var(--p-blue-800);        /* action-primary-hover */
-  --adm-accent-press:  var(--p-blue-900);        /* action-primary-active */
-  --adm-accent-soft:   var(--p-cobalt-100);      /* selected pill, active nav, chips */
-  --adm-accent-tint:   var(--p-cobalt-50);       /* selected-row wash */
-  --adm-focus:         var(--p-blue-700);        /* border-focus: 2px ring, 2px offset */
-  --adm-focus-ring:    rgb(29 78 216 / 0.28);    /* input glow beside the focus edge */
-  --adm-opacity-disabled: 0.45;
+  /* Action: ocean, the portal's primary. */
+  --adm-accent:        var(--color-ocean-600);   /* 5.0:1 under white */
+  --adm-accent-strong: var(--color-ocean-700);
+  --adm-accent-press:  var(--color-ocean-800);
+  --adm-accent-soft:   var(--p-ocean-25);        /* selected pill, chips */
+  --adm-accent-tint:   var(--p-ocean-10);        /* selected-row wash */
+  --adm-focus:         var(--color-ocean-600);
+  --adm-focus-ring:    rgb(10 114 192 / 0.22);
+  --adm-opacity-disabled: 0.5;
 
-  /* Data marks: the accent, so a chart and its button share one blue. */
-  --adm-data:          var(--p-blue-700);
-  --adm-data-soft:     var(--p-cobalt-100);
+  --adm-data:          var(--color-ocean-600);
+  --adm-data-soft:     var(--color-ocean-100);
 
-  /* Sequential accent ramp, light to deep: pipeline stages, categorical marks,
-     avatars. Meaning never rides on the step alone; a label or icon goes with it. */
-  --adm-seq-1: var(--p-cobalt-300);
-  --adm-seq-2: var(--p-cobalt-500);
-  --adm-seq-3: var(--p-blue-700);
-  --adm-seq-4: var(--p-blue-800);
-  --adm-seq-5: var(--p-blue-900);
-  --adm-mark-neutral: var(--p-navy-400);       /* resting dot, unstarted state */
+  /* Sequential ramp, light to deep. Meaning never rides on the step alone. */
+  --adm-seq-1: var(--color-ocean-300);
+  --adm-seq-2: var(--color-ocean-500);
+  --adm-seq-3: var(--color-ocean-600);
+  --adm-seq-4: var(--color-ocean-700);
+  --adm-seq-5: var(--color-ocean-900);
+  --adm-mark-neutral: var(--color-mist-400);
 
   /* Surfaces */
-  --adm-canvas:         var(--p-navy-50);        /* surface-canvas */
-  --adm-surface:        var(--p-neutral-0);      /* surface-container */
-  --adm-surface-sunken: var(--p-navy-50);        /* toolbars, footers */
-  --adm-surface-2:      var(--p-navy-100);       /* wells, chips, segmented tracks */
-  --adm-seg-track:      var(--p-navy-100);
-  --adm-seg-active:     var(--p-neutral-0);
-  --adm-head:           var(--p-navy-50);        /* grid header band */
-  --adm-row-hover:      var(--p-navy-100);
-  --adm-row-press:      var(--p-navy-200);
-  --adm-scrim:          rgb(8 16 26 / 0.45);     /* every overlay */
+  --adm-canvas:         var(--color-mist-50);
+  --adm-surface:        var(--color-mist-0);
+  --adm-surface-sunken: var(--color-mist-50);
+  --adm-surface-2:      var(--color-mist-100);
+  --adm-seg-track:      var(--color-mist-100);
+  --adm-seg-active:     var(--color-mist-0);
+  --adm-head:           var(--color-mist-50);
+  --adm-row-hover:      var(--color-mist-50);
+  --adm-row-press:      var(--color-mist-100);
+  --adm-scrim:          rgb(6 26 40 / 0.5);
 
   /* Lines */
-  --adm-line:          var(--p-navy-200);        /* border-subtle: panels, decorative */
-  --adm-line-soft:     var(--p-navy-100);        /* row dividers */
-  --adm-line-rule:     var(--p-navy-100);        /* column rules */
-  --adm-line-strong:   var(--p-navy-300);        /* pinned seam, emphasis */
-  --adm-line-input:    var(--p-navy-500);        /* form control edge, 3:1+ */
-  --adm-line-control:  var(--p-navy-500);        /* button, pill, toggle, checkbox edge */
+  --adm-line:          var(--color-mist-200);
+  --adm-line-soft:     var(--color-mist-100);
+  --adm-line-rule:     var(--color-mist-100);
+  --adm-line-strong:   var(--color-mist-300);
+  --adm-line-input:    var(--color-mist-500);    /* 3.5:1+ on every console ground */
+  --adm-line-control:  var(--color-mist-500);
 
   /* Text */
-  --adm-ink:        var(--p-navy-900);           /* text-primary */
-  --adm-ink-mute:   var(--p-navy-700);           /* text-secondary */
-  --adm-ink-subtle: var(--p-navy-600);           /* hints, timestamps; 5.2:1 on surface-2 */
-  --adm-head-ink:   var(--p-navy-700);
+  --adm-ink:        var(--color-navy-900);
+  --adm-ink-mute:   var(--color-mist-700);
+  --adm-ink-subtle: var(--color-mist-600);       /* 5.6:1 on mist-100 */
+  --adm-head-ink:   var(--color-mist-600);
 
   /* Navigation */
-  --adm-nav-bg:          var(--p-neutral-0);
-  --adm-nav-line:        var(--p-navy-200);
-  --adm-nav-ink:         var(--p-navy-900);
-  --adm-nav-mute:        var(--p-navy-700);
-  --adm-nav-subtle:      var(--p-navy-600);
-  --adm-nav-hover:       var(--p-navy-100);
-  --adm-nav-active:      var(--p-cobalt-100);
-  --adm-nav-active-ink:  var(--p-blue-800);
-  --adm-nav-active-icon: var(--p-blue-700);
+  --adm-nav-bg:          var(--color-mist-0);
+  --adm-nav-line:        var(--color-mist-200);
+  --adm-nav-ink:         var(--color-navy-900);
+  --adm-nav-mute:        var(--color-mist-700);
+  --adm-nav-subtle:      var(--color-mist-600);
+  --adm-nav-hover:       var(--color-mist-100);
+  --adm-nav-active:      var(--color-ocean-50);
+  --adm-nav-active-ink:  var(--color-ocean-700);
+  --adm-nav-active-icon: var(--color-ocean-600);
 
-  /* Feedback quartet: fill (dots, tracks), soft (surface), line (border), ink (text, AA on soft). */
-  --adm-info:         var(--p-blue-700);
-  --adm-info-soft:    var(--p-cobalt-50);
-  --adm-info-line:    var(--p-cobalt-200);
-  --adm-info-ink:     var(--p-blue-800);
-  --adm-success:      var(--p-green-600);
-  --adm-success-soft: var(--p-green-tint);
-  --adm-success-line: var(--p-green-edge);
-  --adm-success-ink:  var(--p-green-700);
-  --adm-warning:      var(--p-amber-600);
-  --adm-warning-soft: var(--p-amber-tint);
-  --adm-warning-line: var(--p-amber-edge);
-  --adm-warning-ink:  var(--p-amber-800);
-  --adm-danger:       var(--p-rose-600);         /* also the destructive button fill, 5.0:1 under white */
-  --adm-danger-soft:  var(--p-rose-tint);
-  --adm-danger-line:  var(--p-rose-edge);
-  --adm-danger-ink:   var(--p-rose-700);
+  /* Feedback quartet: fill, soft surface, line, ink (AA on soft). */
+  --adm-info:         var(--color-ocean-600);
+  --adm-info-soft:    var(--color-ocean-50);
+  --adm-info-line:    var(--color-ocean-200);
+  --adm-info-ink:     var(--color-ocean-700);
+  --adm-success:      var(--p-green-fill);
+  --adm-success-soft: var(--p-green-wash);
+  --adm-success-line: var(--p-green-rim);
+  --adm-success-ink:  var(--p-green-ink);
+  --adm-warning:      var(--p-amber-fill);
+  --adm-warning-soft: var(--p-amber-wash);
+  --adm-warning-line: var(--p-amber-rim);
+  --adm-warning-ink:  var(--p-amber-ink);
+  --adm-danger:       var(--p-red-fill);         /* also the destructive fill, 6.6:1 under white */
+  --adm-danger-soft:  var(--p-red-wash);
+  --adm-danger-line:  var(--p-red-rim);
+  --adm-danger-ink:   var(--p-red-ink);
 
-  /* Elevation: resting panels are flat; lift only for overlays. */
-  --adm-shadow-sm: 0 1px 2px rgb(8 16 26 / 0.05);
+  /* Elevation: resting cards are ring-only, as in the portal; overlays lift. */
+  --adm-shadow-sm: 0 1px 2px rgb(11 46 70 / 0.06);   /* knobs, segmented thumbs; cards stay flat */
   --adm-shadow-md:
-    0 12px 24px -8px rgb(8 16 26 / 0.12),
-    0 2px 6px -2px rgb(8 16 26 / 0.06);
+    0 12px 24px -8px rgb(11 46 70 / 0.12),
+    0 2px 6px -2px rgb(11 46 70 / 0.06);
   --adm-shadow-lg:
-    0 20px 48px -12px rgb(8 16 26 / 0.24),
-    0 4px 12px -4px rgb(8 16 26 / 0.1);
+    0 20px 25px -5px rgb(11 46 70 / 0.12),
+    0 8px 10px -6px rgb(11 46 70 / 0.08);
   --adm-shadow-pop:
-    0 12px 32px -8px rgb(8 16 26 / 0.16),
-    0 2px 8px -3px rgb(8 16 26 / 0.08);
-  --adm-shadow-accent: 0 1px 2px rgb(29 78 216 / 0.24);
+    0 20px 25px -5px rgb(11 46 70 / 0.1),
+    0 8px 10px -6px rgb(11 46 70 / 0.08);
+  --adm-shadow-accent: 0 0 #0000;
 
   /* Motion: ease-out to enter, ease-in to leave, 150–300ms. */
   --adm-ease:          cubic-bezier(0.16, 1, 0.3, 1);
   --adm-ease-in:       cubic-bezier(0.4, 0, 1, 1);
-  --adm-duration-fast: 150ms;   /* hovers, toggles */
-  --adm-duration-base: 200ms;   /* reveals, panels */
-  --adm-duration-slow: 300ms;   /* progress bars, chart draws */
+  --adm-duration-fast: 150ms;
+  --adm-duration-base: 200ms;
+  --adm-duration-slow: 300ms;
 
-  /* Radius: 4 hairline, 6 controls and chips, 8 inputs and cards, 12 dialogs. */
+  /* Radius, as the portal kit: 8 controls and inputs, 12 cards, 16 dialogs. */
   --adm-radius-xs:      4px;
-  --adm-radius-control: 6px;
+  --adm-radius-control: 8px;
   --adm-radius-chip:    6px;
   --adm-radius-input:   8px;
-  --adm-radius-card:    8px;
-  --adm-radius-dialog:  12px;
+  --adm-radius-card:    12px;
+  --adm-radius-dialog:  16px;
 
-  /* Grid row density; 56 is the settled default (three tighter passes were rejected). */
+  /* Grid row density. */
   --adm-row-h-compact:  44px;
-  --adm-row-h-default:  56px;
-  --adm-row-h-relaxed:  68px;
+  --adm-row-h-default:  52px;
+  --adm-row-h-relaxed:  64px;
   --adm-row-h:          var(--adm-row-h-default);
 
   /* Legacy shadcn roles, read by components/ui primitives; they follow the console. */
   --primary:            var(--adm-accent);
-  --primary-foreground: var(--p-neutral-0);
+  --primary-foreground: var(--color-mist-0);
   --accent:             var(--adm-accent-soft);
   --accent-foreground:  var(--adm-ink);
   --ring:               var(--adm-focus);
@@ -747,28 +735,27 @@
   background: var(--adm-canvas);
   color: var(--adm-ink);
   color-scheme: light;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: "General Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  letter-spacing: -0.003em;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Quiet scrollbars inside the console: thin thumb, no track, no arrows. */
 .adm-scope * {
   scrollbar-width: thin;
-  scrollbar-color: var(--p-navy-300) transparent;
+  scrollbar-color: var(--color-mist-300) transparent;
 }
 .adm-scope *::-webkit-scrollbar { width: 8px; height: 8px; }
 .adm-scope *::-webkit-scrollbar-button { display: none; }
 .adm-scope *::-webkit-scrollbar-track { background: transparent; }
 .adm-scope *::-webkit-scrollbar-thumb {
-  background: var(--p-navy-300);
+  background: var(--color-mist-300);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-.adm-scope *::-webkit-scrollbar-thumb:hover { background-color: var(--p-navy-400); }
+.adm-scope *::-webkit-scrollbar-thumb:hover { background-color: var(--color-mist-400); }
 .adm-scroll-hidden { scrollbar-width: none; }
 
 @keyframes adm-rise {
@@ -805,9 +792,7 @@
   font-feature-settings: "tnum" 1;
 }
 
-/* Sticky header band, stays put while a long ledger scrolls. Enterprise spec
-   (Oct 2026): 12/16 semibold, uppercase, 0.05em tracking, slate-700 on the
-   slate tint (10.4:1). */
+/* Sticky header band, as the portal grid: 12/16 medium, sentence case, mist-600 on mist-50. */
 .adm-grid thead th {
   position: sticky;
   top: 0;
@@ -816,9 +801,7 @@
   color: var(--adm-head-ink);
   font-size: 12px;
   line-height: 16px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 500;
   white-space: nowrap;
   border-bottom: 1px solid var(--adm-line);
 }
@@ -876,11 +859,11 @@
 .adm-grid--actions thead th:last-child { z-index: 3; background: var(--adm-head); }
 .adm-grid--actions.has-overflow-right thead th:last-child,
 .adm-grid--actions.has-overflow-right tbody td:last-child {
-  box-shadow: inset 1px 0 0 var(--adm-line), -6px 0 8px -6px rgb(8 16 26 / 0.1);
+  box-shadow: inset 1px 0 0 var(--adm-line), -6px 0 8px -6px rgb(11 46 70 / 0.1);
 }
 .adm-grid--pinned.is-scrolled thead th:first-child,
 .adm-grid--pinned.is-scrolled tbody td:first-child {
-  box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgb(8 16 26 / 0.1);
+  box-shadow: inset -1px 0 0 var(--adm-line), 6px 0 8px -6px rgb(11 46 70 / 0.1);
 }
 
 /* ── Hit targets (Fitts's Law).
@@ -946,19 +929,13 @@
    the console is open the body carries .adm-portals so they keep the console's
    font, ink, control edge and focus ring instead of the public site's. */
 .adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"], [role="dialog"]) {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: "General Sans", ui-sans-serif, system-ui, sans-serif;
   color: var(--adm-ink);
 }
 .adm-portals :is([data-radix-popper-content-wrapper], [data-slot="sheet-content"]) :is(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--adm-focus);
   outline-offset: 2px;
 }
-/* Cobalt on cobalt is invisible; white inside the brand band. */
-.adm-scope .adm-on-band :is(a, button, [role="button"], [tabindex]):focus-visible {
-  outline-color: #fff;
-}
-/* Stat cells sit flush in an overflow-hidden grid, so their ring goes inside. */
-.adm-scope .adm-on-band .adm-band-cell:focus-visible { outline-offset: -3px; }
 
 /* AdminDialog entrance; reduced motion is handled below. */
 @keyframes adm-fade-in { from { opacity: 0; } }
@@ -1071,7 +1048,7 @@ html.lenis body {
 }
 
 .site {
-  font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: "General Sans", ui-sans-serif, system-ui, sans-serif;
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
 }
@@ -1458,4 +1435,197 @@ html [data-sonner-toaster][data-sonner-theme="light"] {
   --info-text: #0369a1;
   --warning-text: #a84d08;
   --error-text: #be123c;
+}
+
+/* ── Website redesign v2: site language (from styles/colors.css) ── */
+
+@theme {
+  --font-display: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --ease-out-strong: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Five type steps, nothing in between */
+  --text-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --text-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --text-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --text-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+  --text-poster: clamp(3rem, 8vw, 8.5rem);
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mist-400) transparent;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Layered, so a component's own focus style (e.g. the contact form's underline) can override it */
+@layer base {
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-navy-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+/* Display face: light weight, large and tight */
+/* Headings: General Sans semibold, tracked tight */
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* Poster type: set the size with text-poster or an explicit size */
+@utility poster {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+/* The page axis: headings and body columns start 5/12 across (about 42%) */
+@utility axis {
+  @media (width >= 64rem) { grid-column: 6 / span 7; }
+}
+@utility side {
+  @media (width >= 64rem) { grid-column: 1 / span 4; }
+}
+
+@utility gutter {
+  padding-inline: 1rem;
+  @media (width >= 48rem) { padding-inline: 1.75rem; }
+  @media (width >= 80rem) { padding-inline: 2.5rem; }
+}
+
+/* Masked headline: each line rises from behind its own baseline */
+.lines .line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+.lines [data-line] { display: block; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .lines [data-line] {
+    transform: translateY(105%);
+    animation: line-up 900ms var(--ease-out-strong) forwards;
+    animation-delay: calc(var(--i) * 110ms + 150ms);
+  }
+  .js [data-after-lines] {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fade-up 700ms var(--ease-out-strong) 520ms forwards;
+  }
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 700ms var(--ease-out-strong), transform 900ms var(--ease-out-strong);
+    transition-delay: calc(var(--d, 0) * 80ms);
+  }
+  .js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes line-up { to { transform: none; } }
+
+/* Printed pages never animate in */
+@media print {
+  [data-reveal], .lines [data-line], [data-after-lines] { opacity: 1 !important; transform: none !important; animation: none !important; }
+}
+@keyframes fade-up { to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* Image shutter: the one hero picture opens from its top edge */
+.shutter { overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .js .shutter { clip-path: inset(0 0 100% 0); animation: shutter 1100ms cubic-bezier(0.65, 0, 0.35, 1) 200ms forwards; }
+  .js .shutter img { transform: scale(1.12); animation: settle 1500ms cubic-bezier(0.22, 1, 0.36, 1) 200ms forwards; }
+}
+@keyframes shutter { to { clip-path: inset(0); } }
+@keyframes settle { to { transform: none; } }
+
+/* Greyscale treatment shared by every atmosphere photograph */
+.treated { filter: grayscale(1) contrast(1.05); }
+
+/* Closing band: wave lines drift sideways, seamless at half width */
+@media (prefers-reduced-motion: no-preference) {
+  .wave-drift { animation: wave-drift linear infinite; }
+}
+@keyframes wave-drift { to { transform: translateX(-50%); } }
+
+/* Thin, quiet scrollbars for panels such as the portal sidebar */
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-mist-300) transparent; }
+.scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-thin::-webkit-scrollbar-track { background: transparent; }
+.scroll-thin::-webkit-scrollbar-thumb { background: var(--color-mist-300); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+.scroll-thin::-webkit-scrollbar-thumb:hover { background-color: var(--color-mist-400); }
+
+/* Portal: grid columns may shrink below their content, so wide tables and
+   boards scroll inside their own panel instead of widening the page */
+main[data-portal] .grid > * { min-width: 0; }
+
+/* Scroll areas contain their absolutely positioned children (such as
+   screen-reader-only labels), so nothing escapes and widens the page */
+main[data-portal] .overflow-x-auto,
+main[data-portal] .overflow-auto { position: relative; }
+
+/* ── Portal kit (components/portal/kit) ──────────────────────────────
+   Skeleton: mist block with one soft highlight. background-attachment:
+   fixed lines every block up on one sweep, so a page shimmers as a whole
+   instead of each bar at its own speed. The console's .skel joins in.
+   Radius sits in a layer so rounded-* utilities still win. */
+@layer components {
+  .kit-skel { border-radius: 6px; }
+}
+.kit-skel,
+.adm-scope .skel,
+.adm-portals .skel {
+  background-color: var(--color-mist-100);
+  background-image: linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.65) 50%, transparent 60%);
+  background-size: 200vw 100%;
+  background-attachment: fixed;
+  background-repeat: repeat-x;
+  animation: kit-shimmer 2.4s linear infinite;
+}
+@keyframes kit-shimmer { from { background-position-x: -100vw; } to { background-position-x: 100vw; } }
+
+/* Overlays: backdrop fades, dialogs rise, drawers slide (up on phones). */
+.kit-fade { animation: kit-fade 160ms var(--ease-standard, ease-out) backwards; }
+.kit-rise { animation: kit-rise 200ms var(--ease-standard, ease-out) backwards; }
+.kit-slide { animation: kit-slide-up 240ms var(--ease-standard, ease-out) backwards; }
+.kit-drawer-left { animation: kit-slide-left 220ms var(--ease-standard, ease-out) backwards; }
+@media (min-width: 40rem) { .kit-slide { animation-name: kit-slide-in; } }
+@keyframes kit-fade { from { opacity: 0; } }
+@keyframes kit-rise { from { opacity: 0; transform: translateY(8px) scale(0.99); } }
+@keyframes kit-slide-up { from { transform: translateY(24px); opacity: 0; } }
+@keyframes kit-slide-in { from { transform: translateX(32px); opacity: 0; } }
+@keyframes kit-slide-left { from { transform: translateX(-100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .kit-skel, .adm-scope .skel, .adm-portals .skel { animation: none; background-image: none; }
+  .kit-fade, .kit-rise, .kit-slide, .kit-drawer-left { animation: none; }
+  /* The nav bar shows and hides at full width instead of growing. */
+  .kit-progress { transform: none !important; }
 }

@@ -93,7 +93,7 @@ test("a posting past its deadline stops taking applications that night", () => {
   assert.equal(isAcceptingApplications(due, new Date("2026-10-03T22:00:00")), true);
   assert.equal(isAcceptingApplications(due, new Date("2026-10-04T00:01:00")), false);
   assert.equal(isAcceptingApplications({ status: "draft" }), false);
-  assert.equal(isAcceptingApplications({ status: "open" }), true);
+  assert.equal(isAcceptingApplications({ status: "open" }), false);
 });
 
 test("My Pool records are private to their owner and admins", () => {

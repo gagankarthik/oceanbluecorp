@@ -24,6 +24,11 @@ const {
   staffRolesOf,
   highestStaffRole,
   routeAccess,
+  CLIENT_VENDOR_READ_ROLES,
+  CLIENT_VENDOR_CREATE_ROLES,
+  CLIENT_VENDOR_MANAGE_ROLES,
+  hasAnyRole,
+  isSameAccount,
 } = load("src/lib/auth/config.ts");
 
 /** Cognito writes namespaced groups; tests use the real shape. */
@@ -146,27 +151,27 @@ describe("routeAccess for media", () => {
 
   test("media reaches exactly the publishing sections plus job postings", () => {
     for (const path of [
-      "/admin/blog", "/admin/case-studies", "/admin/customer-stories",
-      "/admin/news", "/admin/jobs", "/admin/state-roles", "/admin/open-roles",
+      "/portal/blog", "/portal/case-studies", "/portal/customer-stories",
+      "/portal/news", "/portal/jobs", "/portal/state-roles", "/portal/open-roles",
     ]) {
       assert.equal(allows(path, UserRole.MEDIA), true, `media should reach ${path}`);
     }
   });
 
   test("media reaches its own settings, help and notifications", () => {
-    for (const path of ["/admin/settings", "/admin/help", "/admin/notifications"]) {
+    for (const path of ["/portal/settings", "/portal/help", "/portal/notifications"]) {
       assert.equal(allows(path, UserRole.MEDIA), true, `media should reach ${path}`);
     }
   });
 
   test("media reaches NOTHING that carries recruiting or commercial data", () => {
     for (const path of [
-      "/admin",                 // the dashboard is a recruiting report
-      "/admin/applications", "/admin/candidates", "/admin/bench",
-      "/admin/resumes", "/admin/lead-sourcing",
-      "/admin/contacts", "/admin/clients", "/admin/vendors",
-      "/admin/users", "/admin/roles", "/admin/api-keys", "/admin/content",
-      "/admin/docs", "/hr",
+      "/portal",                 // the dashboard is a recruiting report
+      "/portal/applications", "/portal/candidates", "/portal/talent-bench",
+      "/portal/resumes", "/portal/lead-sourcing",
+      "/portal/contacts", "/portal/clients", "/portal/vendors",
+      "/portal/users", "/portal/roles", "/portal/api-keys", "/portal/content",
+      "/portal/docs", "/hr",
     ]) {
       assert.equal(allows(path, UserRole.MEDIA), false, `media must NOT reach ${path}`);
     }
@@ -174,15 +179,15 @@ describe("routeAccess for media", () => {
 
   test("adding media did not widen anything for the other roles", () => {
     // The four recruiting roles must see exactly what they saw before.
-    assert.deepEqual(routeAccess["/admin"], RECRUITING_ROLES);
-    assert.equal(routeAccess["/admin/content"].length, 1);
-    assert.deepEqual(routeAccess["/admin/clients"], [UserRole.ADMIN, UserRole.HR]);
-    assert.equal(routeAccess["/admin/applications"].includes(UserRole.MEDIA), false);
+    assert.deepEqual(routeAccess["/portal"], RECRUITING_ROLES);
+    assert.equal(routeAccess["/portal/content"].length, 1);
+    assert.deepEqual(routeAccess["/portal/clients"], [UserRole.ADMIN, UserRole.HR]);
+    assert.equal(routeAccess["/portal/applications"].includes(UserRole.MEDIA), false);
   });
 
   test("the publishing routes and PUBLISHING_ROLES are the same set", () => {
     // The UI gate and the API gate (requirePublisher) must not drift.
-    for (const path of ["/admin/blog", "/admin/case-studies", "/admin/customer-stories", "/admin/news"]) {
+    for (const path of ["/portal/blog", "/portal/case-studies", "/portal/customer-stories", "/portal/news"]) {
       assert.deepEqual([...routeAccess[path]].sort(), [...PUBLISHING_ROLES].sort(), path);
     }
   });
@@ -190,14 +195,66 @@ describe("routeAccess for media", () => {
 
 describe("landingRouteFor", () => {
   test("media lands on its own workspace, not the denied dashboard", () => {
-    assert.equal(landingRouteFor(UserRole.MEDIA), "/admin/blog");
+    assert.equal(landingRouteFor(UserRole.MEDIA), "/portal/blog");
     assert.ok((routeAccess[landingRouteFor(UserRole.MEDIA)] || []).includes(UserRole.MEDIA));
   });
 
   test("every other role still lands on the dashboard", () => {
     for (const role of RECRUITING_ROLES) {
-      assert.equal(landingRouteFor(role), "/admin");
+      assert.equal(landingRouteFor(role), "/portal");
     }
-    assert.equal(landingRouteFor(null), "/admin");
+    assert.equal(landingRouteFor(null), "/portal");
+  });
+});
+
+describe("clients and vendors API", () => {
+  const can = (set, role) => hasAnyRole(g(role), set);
+
+  test("media is denied every method", () => {
+    for (const set of [CLIENT_VENDOR_READ_ROLES, CLIENT_VENDOR_CREATE_ROLES, CLIENT_VENDOR_MANAGE_ROLES]) {
+      assert.equal(can(set, "media"), false);
+    }
+  });
+
+  test("the recruiting roles read (job form pickers, pipeline submission form)", () => {
+    for (const role of ["admin", "hr", "recruiter", "sales"]) assert.equal(can(CLIENT_VENDOR_READ_ROLES, role), true, role);
+  });
+
+  test("create is the job editors who can price: admin, hr, sales", () => {
+    assert.deepEqual([...CLIENT_VENDOR_CREATE_ROLES].sort(), ["admin", "hr", "sales"]);
+    assert.equal(can(CLIENT_VENDOR_CREATE_ROLES, "recruiter"), false);
+  });
+
+  test("update and delete match the page: admin and hr only", () => {
+    assert.deepEqual([...CLIENT_VENDOR_MANAGE_ROLES].sort(), ["admin", "hr"]);
+    assert.deepEqual([...CLIENT_VENDOR_MANAGE_ROLES].sort(), [...routeAccess["/portal/clients"]].sort());
+    assert.deepEqual([...CLIENT_VENDOR_MANAGE_ROLES].sort(), [...routeAccess["/portal/vendors"]].sort());
+    for (const role of ["recruiter", "sales"]) assert.equal(can(CLIENT_VENDOR_MANAGE_ROLES, role), false, role);
+  });
+
+  test("another application's namespace grants nothing", () => {
+    assert.equal(hasAnyRole(["hr:admin"], CLIENT_VENDOR_READ_ROLES), false);
+  });
+});
+
+describe("isSameAccount", () => {
+  const me = { sub: "abc-123", email: "Me@Oceanbluecorp.com" };
+
+  test("matches the username when it is the sub", () => {
+    assert.equal(isSameAccount(me, { id: "abc-123" }), true);
+  });
+
+  test("matches the username or attribute when it is the email, case-insensitively", () => {
+    assert.equal(isSameAccount(me, { id: "me@oceanbluecorp.com" }), true);
+    assert.equal(isSameAccount(me, { id: "some-uuid", email: " ME@oceanbluecorp.com " }), true);
+  });
+
+  test("another account is not self", () => {
+    assert.equal(isSameAccount(me, { id: "xyz", email: "other@oceanbluecorp.com" }), false);
+  });
+
+  test("blank identifiers never match each other", () => {
+    assert.equal(isSameAccount({ sub: "", email: "" }, { id: "", email: "" }), false);
+    assert.equal(isSameAccount({ sub: "abc" }, { id: "xyz" }), false);
   });
 });

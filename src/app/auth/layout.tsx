@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   // Was "Sign in or sign up", which described a registration flow this product
   // does not have.
-  alternates: { canonical: "https://oceanbluecorp.com/auth/signin" },
+  alternates: { canonical: "https://oceanbluecorp.com/auth/sign-in" },
 };
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {

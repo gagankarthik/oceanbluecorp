@@ -8,7 +8,7 @@ import {
   STAFF_ROLES,
   type StaffRole,
 } from "@/lib/aws/cognito";
-import { requireStaff, requireUserAdmin, denyElevatedAction } from "@/lib/auth/verify";
+import { requireStaff, requireUserAdmin, denyElevatedAction, denySelfAction } from "@/lib/auth/verify";
 import { serverError } from "@/lib/api-errors";
 
 // GET /api/users/[id] - Get a single user
@@ -50,6 +50,8 @@ export async function PATCH(
     const { role, status } = body;
 
     const current = await getCognitoUser(id);
+    const self = denySelfAction(auth.claims, { id, email: current.user?.email });
+    if (self) return self;
     const guard = denyElevatedAction(auth.claims, {
       grantingRole: role,
       targetRole: current.user?.role ?? null,
@@ -110,6 +112,8 @@ export async function DELETE(
     const { id } = await params;
 
     const current = await getCognitoUser(id);
+    const self = denySelfAction(auth.claims, { id, email: current.user?.email });
+    if (self) return self;
     const guard = denyElevatedAction(auth.claims, { targetRole: current.user?.role ?? null });
     if (guard) return guard;
 

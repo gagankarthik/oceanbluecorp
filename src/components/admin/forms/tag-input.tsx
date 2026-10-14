@@ -65,7 +65,7 @@ export function TagInput({
     <div className={className}>
       <div
         className={cn(
-          "flex min-h-10 flex-wrap items-center gap-1.5 rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 py-1.5 transition-colors",
+          "flex min-h-10 flex-wrap items-center gap-1.5 rounded-[var(--adm-radius-control)] border border-[var(--adm-line)] bg-[var(--adm-surface)] px-2 py-1.5 transition-colors",
           "shadow-[inset_0_1px_2px_rgba(16,24,40,0.03)] focus-within:border-[var(--adm-accent)] focus-within:ring-2 focus-within:ring-[var(--adm-focus-ring)]",
         )}
       >

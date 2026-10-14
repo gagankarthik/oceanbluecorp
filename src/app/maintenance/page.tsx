@@ -2,17 +2,8 @@ import type { Metadata } from "next";
 import Maintenance from "@/components/layout/Maintenance";
 import { getMaintenance } from "@/lib/content";
 
-/**
- * Preview route for the maintenance screen.
- *
- * The real screen is served by LayoutWrapper in place of the whole public site
- * once the switch is on; this route exists so an admin can see exactly what
- * visitors will get BEFORE flipping it, which is the difference between a
- * planned window and finding a typo while the site is down.
- *
- * It renders with whatever message and estimate are currently saved, so the
- * preview matches the real thing rather than showing defaults.
- */
+/* Preview of the maintenance screen SiteShell serves while the switch is on,
+   rendered with the saved message and estimate so admins see the real thing. */
 
 export const revalidate = 60;
 

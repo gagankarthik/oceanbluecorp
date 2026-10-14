@@ -11,7 +11,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Fixed per mount, so a later re-render never replays the fade.
   const [animate] = useState(() => hydrated);
-  const appSurface = pathname?.startsWith("/admin") || pathname?.startsWith("/auth");
+  const appSurface = pathname?.startsWith("/portal") || pathname?.startsWith("/auth");
 
   useEffect(() => {
     hydrated = true;

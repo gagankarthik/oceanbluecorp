@@ -1,129 +1,86 @@
 import Link from "next/link";
-import Image from "next/image";
-import { SOCIAL_LINKS } from "@/components/layout/social";
-import { buttonClass } from "@/components/site/button";
-import {
-  IconClock,
-  IconMail,
-  IconOverview,
-  IconPhone,
-} from "@/components/site/icons";
-import { MaintenanceArt } from "@/components/site/maintenance-art";
-import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/company";
+import Logo from "@/components/site/Logo";
+import Photo from "@/components/site/Photo";
+import { company } from "@/lib/site-content";
 
 /**
- * The maintenance screen, shown in place of the public site while the switch
- * at /admin/settings is on.
- *
- * The picture carries the message; the words are a heading, one line and the
- * estimate. Scheduled work and an unexpected outage get different headings
- * (whoever flips the switch chooses by filling in the estimate), and the phone,
- * email and status page stay reachable, since this page stands in front of them.
+ * Stands in for the public site while the maintenance switch is on. Scheduled
+ * work (an estimate is set) and an unplanned outage get different headings;
+ * phone, email and the status page stay reachable.
  */
-
 export default function Maintenance({
   message,
   eta,
 }: {
-  /** Optional detail from the admin toggle. Falls back to a plain default. */
+  /** Optional detail from the admin toggle */
   message?: string;
-  /** e.g. "by 3:00 PM EST" or "within 2 hours". Empty means unplanned. */
+  /** e.g. "by 3:00 PM EST"; empty means unplanned */
   eta?: string;
 }) {
   const planned = Boolean(eta);
+  const lines = planned ? ["We're making", "updates."] : ["We'll be", "right back."];
 
   return (
-    <main className="site flex min-h-[100svh] w-full flex-col bg-white">
-      <div className="mx-auto w-full max-w-[var(--grid-max)] px-[var(--space-layout-gutter)] pt-6">
-        <Image
-          src="/brand/oceanblue-logo-small.svg"
-          alt="Oceanblue Solutions, Inc."
-          width={135}
-          height={40}
-          className="mx-auto h-10 w-auto lg:mx-0"
-          priority
-        />
-      </div>
+    <main className="flex min-h-[100svh] flex-col bg-field-paper lg:grid lg:grid-cols-12">
+      <div className="flex flex-1 flex-col lg:col-span-7">
+        <div className="gutter pt-6">
+          <Logo className="h-9 w-[7.6rem]" />
+        </div>
 
-      <div className="mx-auto grid w-full max-w-[var(--grid-max)] flex-1 items-center gap-8 px-[var(--space-layout-gutter)] py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12">
-        <MaintenanceArt className="mx-auto h-auto w-full max-w-[420px] lg:order-2 lg:max-w-none" />
-
-        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-          <p
-            className="rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1 type-caption font-semibold text-cobalt"
-            style={{ animationDelay: "200ms" }}
-          >
-            <span className="size-1.5 rounded-full bg-cobalt" aria-hidden />
-            {planned ? "Scheduled maintenance" : "Temporarily offline"}
-          </p>
-
-          <h1
-            className="rise mt-4 type-headline-lg font-semibold text-ink"
-            style={{ animationDelay: "280ms" }}
-          >
-            {planned ? "We’re making updates." : "We’ll be right back."}
+        <div className="gutter flex flex-1 flex-col justify-center py-14">
+          <p className="text-mist-600">{planned ? "Scheduled maintenance" : "Temporarily offline"}</p>
+          <h1 className="lines poster mt-4 text-[clamp(3rem,7vw,6.5rem)]">
+            {lines.map((l, i) => (
+              <span key={l} className="line">
+                <span data-line style={{ "--i": i } as React.CSSProperties}>
+                  {l}
+                </span>
+              </span>
+            ))}
           </h1>
-
-          <p
-            className="rise mt-4 max-w-[44ch] type-body-lg text-ink-muted"
-            style={{ animationDelay: "360ms" }}
-          >
+          <p data-after-lines className="mt-6 max-w-[44ch] text-lead leading-snug">
             {message || "Nothing you have sent us has been lost."}
           </p>
-
           {eta && (
-            <p
-              className="rise mt-5 inline-flex items-center gap-2 rounded-full bg-cobalt-tint px-4 py-2 type-label font-semibold text-ink"
-              style={{ animationDelay: "400ms" }}
-            >
-              <IconClock size={16} className="text-cobalt" />
+            <p data-after-lines className="mt-6 self-start bg-tide-200 px-4 py-2 font-medium">
               Expected back {eta}
             </p>
           )}
 
-          <div
-            className="rise mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
-            style={{ animationDelay: "440ms" }}
-          >
-            <a href={CONTACT_PHONE.href} className={buttonClass("outline")}>
-              <IconPhone size={16} />
-              {CONTACT_PHONE.label}
+          <div data-after-lines className="mt-10 flex flex-wrap gap-3">
+            <a
+              href={company.tel}
+              className="inline-flex min-h-12 items-center bg-ocean-600 px-6 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.98]"
+            >
+              Call {company.phoneShort}
             </a>
             <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className={buttonClass("outline")}
+              href={`mailto:${company.email}`}
+              className="inline-flex min-h-12 items-center px-6 font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white"
             >
-              <IconMail size={16} />
-              {CONTACT_EMAIL}
+              Email us
             </a>
-            {/* /status is served by the same app, so it only helps while this
-                page is the thing that is up, which is the common case. */}
-            <Link href="/status" className={buttonClass("ghost")}>
-              <IconOverview size={16} />
-              System status
+          </div>
+          {/* /status is served by the same app and stays up during maintenance */}
+          <p data-after-lines className="mt-6 text-mist-600">
+            Live service state is on the{" "}
+            <Link href="/status" className="text-ocean-700 underline underline-offset-4">
+              status page
             </Link>
-          </div>
-
-          <div className="mt-8 flex items-center gap-3">
-            {SOCIAL_LINKS.map((s) => (
-              <a
-                key={s.name}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.name}
-                className="flex size-10 pointer-coarse:size-11 items-center justify-center rounded-full border border-line-input text-ink-muted transition-colors duration-[var(--dur-short)] hover:border-ink hover:text-ink"
-              >
-                <s.icon className="size-4" strokeWidth={1.5} />
-              </a>
-            ))}
-          </div>
+            .
+          </p>
         </div>
+
+        <p className="gutter py-5 text-[length:var(--text-small)] text-mist-600">
+          &copy; {new Date().getFullYear()} {company.name}
+        </p>
       </div>
 
-      <p className="border-t border-line px-[var(--space-layout-gutter)] py-5 text-center type-caption text-ink-subtle">
-        © {new Date().getFullYear()} Oceanblue Solutions, Inc.
-      </p>
+      <div className="hidden p-2 lg:col-span-5 lg:block">
+        <div className="shutter h-full">
+          <Photo name="bridge" className="h-full" priority sizes="40vw" />
+        </div>
+      </div>
     </main>
   );
 }

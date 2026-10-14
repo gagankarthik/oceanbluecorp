@@ -29,7 +29,7 @@ export interface SharedProps extends RowActions {
 }
 
 const menuCls =
-  "w-48 rounded-[10px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
+  "w-48 rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-1 shadow-[var(--adm-shadow-pop)]";
 const menuItemCls = "cursor-pointer rounded-[6px] px-2 py-1.5 text-adm-base";
 
 /** View / edit / move / delete, shared by the grid, the board and the list. */
@@ -49,7 +49,7 @@ export function RowActionsMenu({ app, onView, onEdit, onDelete, onStatusChange, 
           title="Actions"
           aria-label={`Actions for ${app.name || app.email}`}
           className={cn(
-            "grid h-9 w-9 flex-none place-items-center rounded-[8px] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]",
+            "grid h-10 w-10 flex-none place-items-center rounded-[var(--adm-radius-control)] text-[var(--adm-ink-subtle)] transition-colors hover:bg-[var(--adm-surface-2)] hover:text-[var(--adm-ink)] data-[state=open]:bg-[var(--adm-surface-2)] data-[state=open]:text-[var(--adm-ink)]",
             className,
           )}
         >
@@ -234,7 +234,7 @@ const KanbanCard = React.memo(function KanbanCard({ app, onView, onEdit, onDelet
       onDragStart={() => onDragStart(app.id)}
       onDragEnd={onDragEnd}
       className={cn(
-        "group cursor-grab select-none rounded-[12px] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3 shadow-[var(--adm-shadow-sm)] transition-[border-color,box-shadow,opacity] duration-150 hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)] active:cursor-grabbing",
+        "group cursor-grab select-none rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)] p-3 transition-[border-color,box-shadow,opacity] duration-150 hover:border-[var(--adm-line-strong)] hover:shadow-[var(--adm-shadow-md)] active:cursor-grabbing",
         isDragging && "opacity-40",
       )}
     >

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export function ListPanel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn("min-w-0 overflow-hidden rounded-[8px] border border-[var(--adm-line)] bg-[var(--adm-surface)] shadow-[var(--adm-shadow-sm)]", className)}>
+    <div className={cn("min-w-0 overflow-hidden rounded-[var(--adm-radius-card)] border border-[var(--adm-line)] bg-[var(--adm-surface)]", className)}>
       {children}
     </div>
   );
@@ -58,7 +58,7 @@ export function ListToolbar({
                   type="button"
                   onClick={() => onSegmentChange?.(s.key)}
                   className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-adm-base font-medium transition-colors duration-150",
+                    "inline-flex h-8 items-center gap-1.5 rounded-[var(--adm-radius-control)] px-3 text-adm-base font-medium transition-colors duration-150",
                     active
                       ? "bg-[var(--adm-accent-soft)] font-semibold text-[var(--adm-accent)]"
                       : "text-[var(--adm-ink-mute)] hover:bg-[var(--adm-row-hover)] hover:text-[var(--adm-ink)]",

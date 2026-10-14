@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { buttonClass } from "@/components/site/button";
 import { getUserManager } from "@/lib/auth/AuthContext";
 import { UserRole, highestStaffRole, landingRouteFor } from "@/lib/auth/config";
-import Link from "next/link";
-import { IconArrowRight, IconCheck, IconX, IconRefresh } from "@/components/site/icons";
-import { AuthShell, IconShield, StatusMark } from "../auth-shell";
+import AuthShell from "../AuthShell";
+import { Glyph, Mark } from "../status-mark";
 
 type AuthStatus = "verifying" | "success" | "error" | "email_verified" | "no_access";
 
@@ -21,7 +19,7 @@ const ROLE_TITLES: Record<UserRole, string> = {
 };
 
 /** The HR portal, which is a separate sign-in with its own accounts. */
-const HR_PORTAL_URL = "https://hr.oceanbluecorp.com";
+const HR_PORTAL_URL = "https://hr.oceanbluecorp.com/?ref=sign-in";
 
 export default function CallbackPage() {
   const [status, setStatus] = useState<AuthStatus>("verifying");
@@ -46,7 +44,7 @@ export default function CallbackPage() {
           setError(null);
           // Redirect to sign in after showing success message
           setTimeout(() => {
-            router.push("/auth/signin");
+            router.push("/auth/sign-in");
           }, 3000);
           return;
         }
@@ -107,37 +105,31 @@ export default function CallbackPage() {
     { label: "Setting up session", completed: status === "success" },
   ];
 
-  const primaryCls = buttonClass("primary", "md", "w-full");
-  const quietCls = "inline-flex h-11 items-center justify-center type-label font-medium text-ink-muted transition-colors duration-150 hover:text-ink";
-
-  const panel =
-    status === "no_access"
-      ? { kicker: "Signed in, no staff role", title: "Wrong door.", body: "This account is valid, but it has no role on the staff site. The HR portal is a separate sign-in." }
-      : status === "error"
-        ? { kicker: "Sign-in", title: "That did not complete.", body: "Nothing is lost. Start the sign-in again; if it keeps failing, your administrator can check the account." }
-        : { kicker: "", title: "The staff console.", body: "Checking your sign-in and preparing your session. This takes a moment." };
+  const primaryCls =
+    "flex min-h-12 w-full items-center justify-center gap-2 bg-ocean-600 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.99]";
+  const title = "display text-[clamp(2rem,3vw,2.5rem)]";
 
   return (
-    <AuthShell kicker={panel.kicker} title={panel.title} body={panel.body}>
-      <div key={status} className="rise text-center" role="status" aria-live="polite">
+    <AuthShell>
+      <div key={status} role="status" aria-live="polite">
         {status === "verifying" && (
           <>
-            <StatusMark tone="neutral">
-              <IconShield size={28} />
-            </StatusMark>
-            <h1 className="mt-6 type-headline-sm text-ink">Verifying your sign-in</h1>
-            <p className="mt-2 type-body text-ink-muted">Please wait while we complete authentication.</p>
-            <ol className="mx-auto mt-8 max-w-[280px] space-y-3 text-left">
+            <Mark tone="neutral">
+              <Glyph name="shield" />
+            </Mark>
+            <h1 className={`mt-6 ${title}`}>Verifying your sign-in</h1>
+            <p className="mt-2 text-mist-600">Please wait while we complete authentication.</p>
+            <ol className="mt-8 grid gap-3">
               {steps.map((st) => (
                 <li key={st.label} className="flex items-center gap-3">
-                  <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${st.completed ? "bg-success text-white" : "border border-line-strong"}`}>
+                  <span className={`grid size-7 shrink-0 place-items-center ${st.completed ? "bg-ocean-600 text-white" : "bg-mist-0 ring-1 ring-inset ring-mist-300"}`}>
                     {st.completed ? (
-                      <IconCheck size={14} strokeWidth={2.5} />
+                      <Glyph name="check" className="size-3.5" />
                     ) : (
-                      <span className="size-3 animate-spin rounded-full border-2 border-cobalt-tint border-t-cobalt" />
+                      <span className="size-3 animate-spin rounded-full border-2 border-mist-200 border-t-ocean-600" />
                     )}
                   </span>
-                  <span className={`type-body-sm ${st.completed ? "text-ink" : "text-ink-subtle"}`}>{st.label}</span>
+                  <span className={`text-[15px] ${st.completed ? "text-navy-900" : "text-mist-600"}`}>{st.label}</span>
                 </li>
               ))}
             </ol>
@@ -146,75 +138,71 @@ export default function CallbackPage() {
 
         {status === "success" && (
           <>
-            <StatusMark tone="success">
-              <IconCheck size={30} strokeWidth={2} />
-            </StatusMark>
-            <h1 className="mt-6 type-headline-sm text-ink">Welcome back</h1>
-            <p className="mt-2 type-body text-ink-muted">
+            <Mark tone="success">
+              <Glyph name="check" />
+            </Mark>
+            <h1 className={`mt-6 ${title}`}>Welcome back</h1>
+            <p className="mt-2 text-mist-600">
               Signed in
               {userRole ? (
                 <>
                   {" "}
-                  as <span className="font-semibold text-ink">{userRole}</span>
+                  as <span className="font-medium text-navy-900">{userRole}</span>
                 </>
               ) : null}
               .
             </p>
-            <p className="mt-6 inline-flex items-center gap-2 type-label text-success">
-              Taking you to the console <IconArrowRight size={16} />
+            <p className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-ocean-700">
+              Taking you to the console <Glyph name="arrow" className="size-4" />
             </p>
           </>
         )}
 
         {status === "email_verified" && (
           <>
-            <StatusMark tone="success">
-              <IconCheck size={30} strokeWidth={2} />
-            </StatusMark>
-            <h1 className="mt-6 type-headline-sm text-ink">Email verified</h1>
-            <p className="mt-2 type-body text-ink-muted">Your email has been verified. Please sign in to continue.</p>
-            <p className="mt-6 inline-flex items-center gap-2 type-label text-success">
-              Taking you to sign in <IconArrowRight size={16} />
+            <Mark tone="success">
+              <Glyph name="check" />
+            </Mark>
+            <h1 className={`mt-6 ${title}`}>Email verified</h1>
+            <p className="mt-2 text-mist-600">Your email has been verified. Please sign in to continue.</p>
+            <p className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-ocean-700">
+              Taking you to sign in <Glyph name="arrow" className="size-4" />
             </p>
           </>
         )}
 
         {status === "no_access" && (
           <>
-            <StatusMark tone="neutral">
-              <IconShield size={28} />
-            </StatusMark>
-            <h1 className="mt-6 type-headline-sm text-ink">No access to the staff site</h1>
-            <p className="mt-2 type-body text-ink-muted">
+            <Mark tone="neutral">
+              <Glyph name="shield" />
+            </Mark>
+            <h1 className={`mt-6 ${title}`}>No access to the staff site</h1>
+            <p className="mt-2 text-mist-600">
               This account has no staff role here. If you were looking for your leave, attendance, documents or the handbook, those live in the HR portal, which is a
               separate sign-in with the credentials HR issued you.
             </p>
             <div className="mt-8 grid gap-2">
               <a href={HR_PORTAL_URL} className={primaryCls}>
-                Go to the HR portal <IconArrowRight size={16} />
+                Go to the HR portal <Glyph name="arrow" className="size-4" />
               </a>
-              <Link href="/" className={quietCls}>
-                Back to the website
-              </Link>
             </div>
           </>
         )}
 
         {status === "error" && (
           <>
-            <StatusMark tone="danger">
-              <IconX size={28} strokeWidth={2} />
-            </StatusMark>
-            <h1 className="mt-6 type-headline-sm text-ink">Sign-in didn&apos;t complete</h1>
-            <p className="mt-2 type-body text-ink-muted">We couldn&apos;t finish signing you in.</p>
-            {error && <p className="mt-5 rounded-xl border border-danger/20 bg-danger-container px-4 py-3 text-left type-body-sm text-danger">{error}</p>}
+            <Mark tone="danger">
+              <Glyph name="x" />
+            </Mark>
+            <h1 className={`mt-6 ${title}`}>Sign-in didn&apos;t complete</h1>
+            <p className="mt-2 text-mist-600">
+              We couldn&apos;t finish signing you in. Nothing is lost; if it keeps failing, your administrator can check the account.
+            </p>
+            {error && <p className="mt-5 bg-buoy-300/30 px-4 py-3 text-[15px] text-navy-900">{error}</p>}
             <div className="mt-8 grid gap-2">
-              <button type="button" onClick={() => router.push("/auth/signin")} className={primaryCls}>
-                <IconRefresh size={16} /> Try again
+              <button type="button" onClick={() => router.push("/auth/sign-in")} className={primaryCls}>
+                <Glyph name="refresh" className="size-4" /> Try again
               </button>
-              <Link href="/" className={quietCls}>
-                Back to the website
-              </Link>
             </div>
           </>
         )}

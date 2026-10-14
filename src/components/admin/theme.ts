@@ -242,32 +242,32 @@ export function hireTypeLabel(value?: string | null): string {
 }
 
 /**
- * Chart palette, consumed IN ORDER, never cycled. Cobalt and the navy neutral
+ * Chart palette, consumed IN ORDER, never cycled. Ocean and the mist neutral
  * alternating in lightness, so adjacent series separate without a second hue;
  * every chart also ships a legend and direct labels. All five are 3:1+ on white.
- * Recharts needs literal values for SVG fills; these mirror globals.css.
+ * Recharts needs literal values for SVG fills; these mirror styles/colors.css.
  */
 export const CHART_COLORS = [
-  "#1d4ed8", // --p-blue-700, primary series
-  "#414e5f", // --p-navy-700
-  "#4174ec", // --p-cobalt-500
-  "#12348c", // --p-blue-900
-  "#768190", // --p-navy-500
+  "#0a72c0", // ocean-600, primary series
+  "#3a4e5d", // mist-700
+  "#3794d4", // ocean-400
+  "#0c3e66", // ocean-900
+  "#6e8291", // mist-500
 ] as const;
 
 /** The "Other" bucket: quieter than any series, always labelled. */
-export const CHART_NEUTRAL = "#99a2af"; // --p-navy-400
+export const CHART_NEUTRAL = "#98a9b4"; // mist-400
 
 /**
  * Status series with fixed meanings, matching the --adm-* fills. Always paired
  * with an icon or label, never colour alone.
  */
 export const SERIES = {
-  primary: "#1d4ed8", // --adm-accent: volume / main metric
-  success: "#059669", // --adm-success: hired, completed
-  warning: "#d97706", // --adm-warning: at-risk
-  danger:  "#d91a43", // --adm-danger: rejected, failed
-  neutral: "#99a2af", // --adm-mark-neutral: unstarted / other
+  primary: "#0a72c0", // --adm-accent: volume / main metric
+  success: "#079455", // --adm-success: hired, completed
+  warning: "#dc6803", // --adm-warning: at-risk
+  danger:  "#b42318", // --adm-danger: rejected, failed
+  neutral: "#98a9b4", // --adm-mark-neutral: unstarted / other
 } as const;
 
 /**

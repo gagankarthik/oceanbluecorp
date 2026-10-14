@@ -3,13 +3,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { buttonClass } from "@/components/site/button";
-import { IconArrowLeft, IconCheck, IconX } from "@/components/site/icons";
+
+const BTN = "inline-flex min-h-11 items-center justify-center px-6 text-[15px] font-medium transition-colors active:scale-[0.98]";
+const PRIMARY = `${BTN} bg-ocean-600 text-white hover:bg-ocean-700`;
+const SECONDARY = `${BTN} text-navy-900 ring-2 ring-inset ring-navy-900 hover:bg-navy-900 hover:text-white`;
+const GHOST = `${BTN} text-ocean-700 underline-offset-4 hover:underline`;
+
+function Glyph({ d, className = "size-4" }: { d: string; className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d={d} />
+    </svg>
+  );
+}
 
 /**
- * Cookie consent. A modal over a dimmed, blurred page: a card at the bottom
- * centre on desktop, a bottom sheet on phones. The page stays locked until a choice is
- * made.
+ * Cookie consent: a non-modal banner fixed to the bottom of the page.
  *
  * Rejecting is as easy as accepting (same size, same row), and "Manage
  * choices" offers real per-category switches. Anything shown as optional can
@@ -23,7 +32,7 @@ import { IconArrowLeft, IconCheck, IconX } from "@/components/site/icons";
  * JSON, and `cookieConsentDate` when it was given. Read it via
  * `hasPreferenceConsent()`.
  *
- * The footer's "Cookie settings" link reopens this by dispatching
+ * The "Cookie settings" buttons (footer, /cookies) reopen this by dispatching
  * `open-cookie-settings` on window.
  */
 
@@ -60,12 +69,12 @@ function Switch({ on, onChange, label, disabled }: { on: boolean; onChange?: (v:
       <span
         aria-hidden
         className={cn(
-          "relative h-6 w-11 rounded-full transition-colors duration-[var(--dur-short)]",
-          on ? "bg-cobalt" : "bg-line-input",
-          disabled && "opacity-[var(--opacity-disabled)]",
+          "relative h-6 w-11 rounded-full transition-colors duration-150",
+          on ? "bg-ocean-600" : "bg-mist-400",
+          disabled && "opacity-50",
         )}
       >
-        <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-[var(--dur-short)] ease-out", on ? "translate-x-6" : "translate-x-1")} />
+        <span className={cn("absolute top-1 left-0 size-4 rounded-full bg-white shadow transition-transform duration-150 ease-out", on ? "translate-x-6" : "translate-x-1")} />
       </span>
     </button>
   );
@@ -117,8 +126,8 @@ export default function CookieConsent() {
 
   if (!visible) return null;
 
-  const secondary = buttonClass("outline", "sm", "h-11 px-6");
-  const primary = buttonClass("primary", "sm", "h-11 px-6");
+  const secondary = SECONDARY;
+  const primary = PRIMARY;
 
   return (
     <div
@@ -131,23 +140,23 @@ export default function CookieConsent() {
       aria-describedby="cookie-desc"
       tabIndex={-1}
       data-lenis-prevent
-      className="site rise fixed inset-x-0 bottom-0 z-[10000] max-h-[85dvh] overflow-y-auto overscroll-contain border-t border-line bg-white shadow-[0_-8px_32px_rgb(11_26_51/0.12)]"
+      className="fixed inset-x-0 bottom-0 z-[10000] max-h-[85dvh] overflow-y-auto overscroll-contain bg-mist-0 text-navy-900 shadow-[0_-12px_40px_-16px_rgba(6,26,40,0.35)] focus:outline-none"
     >
-      <div className="mx-auto max-w-[1240px] px-4 py-5 sm:px-6 lg:py-6">
+      <div className="gutter py-5 lg:py-6">
         {!manage ? (
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
             <div className="min-w-0 flex-1">
-              <h2 id="cookie-title" className="type-title text-ink">Your privacy</h2>
-              <p id="cookie-desc" className="mt-1 max-w-[80ch] type-body-sm text-ink-muted">
+              <h2 id="cookie-title" className="text-[19px] font-semibold">Your privacy</h2>
+              <p id="cookie-desc" className="mt-1 max-w-[80ch] text-[15px] leading-relaxed text-mist-600">
                 We use essential cookies to run this site, and no tracking or advertising. With your permission we also remember choices you make, such as a closed announcement. See our{" "}
-                <Link href="/cookies" className="font-semibold text-cobalt underline underline-offset-2">
+                <Link href="/cookies" className="text-ocean-700 underline underline-offset-4">
                   Cookie policy
                 </Link>
                 .
               </p>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center lg:shrink-0">
-              <button type="button" onClick={() => setManage(true)} className={buttonClass("ghost", "sm", "h-11 px-6")}>
+              <button type="button" onClick={() => setManage(true)} className={GHOST}>
                 Manage choices
               </button>
               <button type="button" onClick={() => save("essential", { preferences: false })} className={cn(secondary, "sm:flex-1 lg:flex-none")}>
@@ -166,22 +175,22 @@ export default function CookieConsent() {
                   type="button"
                   onClick={() => setManage(false)}
                   aria-label="Back"
-                  className="-ml-2 flex size-9 items-center justify-center rounded-full text-ink-muted hover:bg-paper hover:text-ink"
+                  className="-ml-2 grid size-10 place-items-center text-mist-600 hover:bg-mist-100 hover:text-navy-900"
                 >
-                  <IconArrowLeft size={16} />
+                  <Glyph d="M16 10H4M8 6l-4 4 4 4" />
                 </button>
-                <h2 id="cookie-title" className="type-title text-ink">Cookie choices</h2>
+                <h2 id="cookie-title" className="text-[19px] font-semibold">Cookie choices</h2>
               </div>
               <button
                 type="button"
                 onClick={() => save("essential", { preferences: false })}
                 aria-label="Close and keep essential cookies only"
-                className="-mr-2 flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-paper hover:text-ink"
+                className="-mr-2 grid size-10 shrink-0 place-items-center text-mist-600 hover:bg-mist-100 hover:text-navy-900"
               >
-                <IconX size={16} />
+                <Glyph d="M5 5l10 10M15 5 5 15" />
               </button>
             </div>
-            <p id="cookie-desc" className="mt-1 type-body-sm text-ink-muted">
+            <p id="cookie-desc" className="mt-1 text-[15px] text-mist-600">
               Choose what we may remember. You can change this any time from the footer.
             </p>
             <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
@@ -190,17 +199,17 @@ export default function CookieConsent() {
                   const locked = c.key === "essential";
                   const on = locked ? true : prefs[c.key as keyof Prefs];
                   return (
-                    <li key={c.key} className="flex items-start justify-between gap-4 rounded-xl border border-line px-4 py-4">
+                    <li key={c.key} className="flex items-start justify-between gap-4 bg-mist-100 p-4">
                       <span className="min-w-0">
-                        <span className="flex items-center gap-2 type-label text-ink">
+                        <span className="flex items-center gap-2 text-[15px] font-semibold">
                           {c.name}
                           {locked && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-success-container px-2 py-0.5 type-caption font-semibold text-success">
-                              <IconCheck size={11} strokeWidth={2.5} /> Always on
+                            <span className="inline-flex items-center gap-1 bg-tide-200 px-2 py-0.5 text-[13px] font-medium text-navy-900">
+                              <Glyph d="m4.5 10.5 3.5 3.5 7.5-8" className="size-3" /> Always on
                             </span>
                           )}
                         </span>
-                        <span className="mt-1 block type-caption text-ink-subtle">{c.desc}</span>
+                        <span className="mt-1 block text-[14px] text-mist-600">{c.desc}</span>
                       </span>
                       <Switch
                         on={on}

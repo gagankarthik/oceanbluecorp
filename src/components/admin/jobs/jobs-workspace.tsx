@@ -32,7 +32,7 @@ import {
   IconCopy, IconMoney, IconDownload, IconEye, IconBuilding, IconTruck,
   IconCalendar, IconUser,
 } from "@/components/admin/icons";
-import JobsLoading from "@/app/admin/jobs/loading";
+import JobsLoading from "@/app/portal/(console)/jobs/loading";
 import { jobCategory, type JobCategory } from "@/lib/job-status";
 import { cn } from "@/lib/utils";
 
@@ -92,8 +92,8 @@ function PostingId({ id }: { id: string }) {
 
 
 const CATEGORY_COPY: Record<JobCategory, { title: string; noun: string; post: string; newHref: string; query: string }> = {
-  state: { title: "State roles", noun: "state role", post: "Post a state role", newHref: "/admin/jobs/new", query: "" },
-  open:  { title: "Open roles",  noun: "open role",  post: "Post an open role", newHref: "/admin/jobs/new?category=open", query: "?category=open" },
+  state: { title: "State roles", noun: "state role", post: "Post a state role", newHref: "/portal/jobs/new", query: "" },
+  open:  { title: "Open roles",  noun: "open role",  post: "Post an open role", newHref: "/portal/jobs/new?category=open", query: "?category=open" },
 };
 
 /** One list per category; the careers board shows both together. */
@@ -331,9 +331,9 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
       busy={duplicating === job.id}
       items={[
         { label: "Preview", icon: IconEye, onSelect: () => setPreview(job) },
-        { label: "Open job page", icon: IconJob, href: `/admin/jobs/${job.id}${copy.query}` },
+        { label: "Open job page", icon: IconJob, href: `/portal/jobs/${job.id}${copy.query}` },
         ...(canEdit ? [
-          { label: "Edit", icon: IconEdit, href: `/admin/jobs/${job.id}/edit${copy.query}` },
+          { label: "Edit", icon: IconEdit, href: `/portal/jobs/${job.id}/edit${copy.query}` },
           { label: "Duplicate", icon: IconCopy, onSelect: () => handleDuplicate(job), disabled: duplicating === job.id },
         ] : []),
         ...(canPrice ? [{ label: "Delete", icon: IconTrash, onSelect: () => setShowDeleteConfirm(job.id), danger: true, separated: true }] : []),
@@ -633,7 +633,7 @@ export function JobsWorkspace({ category }: { category: JobCategory }) {
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <button
                           type="button"
-                          onClick={() => router.push(`/admin/jobs/${job.id}${copy.query}`)}
+                          onClick={() => router.push(`/portal/jobs/${job.id}${copy.query}`)}
                           className="min-w-0 max-w-full truncate text-left text-adm-base font-semibold text-[var(--adm-ink)] transition-colors hover:text-[var(--adm-accent)]"
                         >
                           {job.title}

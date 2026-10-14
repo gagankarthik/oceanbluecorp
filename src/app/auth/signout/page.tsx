@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { buttonClass } from "@/components/site/button";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { IconAlert, IconLogout } from "@/components/site/icons";
-import { AuthShell, StatusMark } from "../auth-shell";
+import AuthShell from "../AuthShell";
+import { Glyph, Mark } from "../status-mark";
 
 export default function SignOutPage() {
   const router = useRouter();
@@ -42,7 +41,7 @@ export default function SignOutPage() {
   // If user is not authenticated and not loading, redirect to signin
   useEffect(() => {
     if (!authLoading && !isAuthenticated && !isLoading) {
-      router.push("/auth/signin");
+      router.push("/auth/sign-in");
     }
   }, [authLoading, isAuthenticated, isLoading, router]);
 
@@ -53,30 +52,27 @@ export default function SignOutPage() {
   const busy = isLoading || authLoading;
 
   return (
-    <AuthShell
-      title={autoSignOut ? "Session ended." : "Leaving the console."}
-      body="Signing out ends this session on this device. You can sign back in at any time with the same account."
-    >
-      <div className="rise text-center" role="status" aria-live="polite">
-        <StatusMark tone="neutral">
-          <IconLogout size={28} />
-        </StatusMark>
-        <h1 className="mt-6 type-headline-sm text-ink">{autoSignOut ? "Your session has ended" : "Sign out?"}</h1>
-        <p className="mt-2 type-body text-ink-muted">
+    <AuthShell>
+      <div role="status" aria-live="polite">
+        <Mark tone="neutral">
+          <Glyph name="logout" />
+        </Mark>
+        <h1 className="display mt-6 text-[clamp(2rem,3vw,2.5rem)]">{autoSignOut ? "Your session has ended" : "Sign out?"}</h1>
+        <p className="mt-2 text-mist-600">
           {autoSignOut ? "Your session expired, so we are signing you out." : "You will need to sign in again to use the console."}
         </p>
 
         {error && (
-          <p className="mt-6 flex items-start gap-3 rounded-xl border border-danger/20 bg-danger-container px-4 py-3 text-left type-body-sm text-danger">
-            <IconAlert size={18} className="mt-1 shrink-0" />
+          <p className="mt-6 flex items-start gap-3 bg-buoy-300/30 px-4 py-3 text-[15px] text-navy-900">
+            <Glyph name="alert" className="mt-0.5 size-[18px] shrink-0" />
             {error}
           </p>
         )}
 
         {busy ? (
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <span className="size-8 animate-spin rounded-full border-[3px] border-cobalt-tint border-t-cobalt" />
-            <p className="type-body-sm text-ink-muted">{authLoading ? "Loading…" : "Signing you out…"}</p>
+          <div className="mt-8 flex items-center gap-3">
+            <span className="size-6 animate-spin rounded-full border-[3px] border-mist-200 border-t-ocean-600" />
+            <p className="text-[15px] text-mist-600">{authLoading ? "Loading…" : "Signing you out…"}</p>
           </div>
         ) : (
           !autoSignOut && (
@@ -84,15 +80,15 @@ export default function SignOutPage() {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className={buttonClass("primary", "md", "w-full")}
+                className="flex min-h-12 w-full items-center justify-center gap-2 bg-ocean-600 font-medium text-white transition-colors hover:bg-ocean-700 active:scale-[0.99]"
               >
-                <IconLogout size={18} />
+                <Glyph name="logout" className="size-[18px]" />
                 Sign out
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
-                className={buttonClass("outline", "md", "w-full")}
+                className="flex min-h-12 w-full items-center justify-center font-medium text-navy-900 ring-2 ring-inset ring-navy-900 transition-colors hover:bg-navy-900 hover:text-white"
               >
                 Stay signed in
               </button>

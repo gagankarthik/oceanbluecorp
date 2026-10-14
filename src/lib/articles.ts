@@ -56,8 +56,8 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
     label: "Blog",
     purpose:
       "What we know, written by the person who knows it. Useful to a reader who never buys from us.",
-    adminPath: "/admin/blog",
-    publicPath: "/blog",
+    adminPath: "/portal/blog",
+    publicPath: "/resources/blog",
     sections: [],
     categories: [
       "Hiring & Talent",
@@ -75,8 +75,8 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
     label: "Case Studies",
     purpose:
       "One engagement, told as challenge → approach → results, with figures a buyer can check.",
-    adminPath: "/admin/case-studies",
-    publicPath: "/case-studies",
+    adminPath: "/portal/case-studies",
+    publicPath: "/resources/case-studies",
     sections: ["engagement", "story", "metrics", "quote"],
     categories: [
       "Contract Staffing",
@@ -94,8 +94,8 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
     label: "News",
     purpose:
       "Dated company announcements in press-release form, written so a journalist can quote them unedited.",
-    adminPath: "/admin/news",
-    publicPath: "/news",
+    adminPath: "/portal/news",
+    publicPath: "/resources/news",
     sections: ["press"],
     categories: [],
   },
@@ -106,8 +106,8 @@ export const ARTICLE_KIND_CONFIG: Record<ArticleKind, ArticleKindConfig> = {
     label: "Customer Stories",
     purpose:
       "The client's account in their own words, led by a quote. Shorter and warmer than a case study.",
-    adminPath: "/admin/customer-stories",
-    publicPath: "/customer-stories",
+    adminPath: "/portal/customer-stories",
+    publicPath: "/resources/customer-stories",
     sections: ["engagement", "metrics", "quote"],
     categories: [],
   },
