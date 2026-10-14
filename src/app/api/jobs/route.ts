@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { getAllJobs, getPublicJobs, updateJob, createJob, createNotification, getNextPostingId, getApplicationCountsByJob, Job, toPublicJob, toCandidateJob } from "@/lib/aws/dynamodb";
 import { sendJobPostedNotification } from "@/lib/aws/ses";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireJobEditor, getClaims } from "@/lib/auth/verify";
 import {
   hasRecruitingAccess, hasJobEditAccess, hasJobCommercialAccess, highestStaffRole,

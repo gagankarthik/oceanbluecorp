@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllApiKeys, createApiKey, ApiKey } from "@/lib/aws/dynamodb";
-import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import { requireAdmin } from "@/lib/auth/verify";
 import { scopesForLevel, scopesOf, accessLevelOf, DEFAULT_ACCESS_LEVEL } from "@/lib/api-scopes";
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const rawKey = generateApiKey();
     const apiKey: ApiKey = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       key: rawKey,
       name: body.name,
       description: body.description || "",

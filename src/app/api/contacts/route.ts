@@ -2,7 +2,7 @@ import { isPhone } from "@/lib/form-validation";
 import { NextRequest, NextResponse, after } from "next/server";
 import { getAllContacts, createContact, createNotification, Contact } from "@/lib/aws/dynamodb";
 import { sendContactNotificationEmail } from "@/lib/aws/ses";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireUserAdmin } from "@/lib/auth/verify";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { serverError } from "@/lib/api-errors";

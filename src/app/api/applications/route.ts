@@ -16,7 +16,7 @@ import {
   sendApplicationConfirmation,
   sendNewApplicationNotification,
 } from "@/lib/aws/ses";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireStaff, getClaims, viewerOf } from "@/lib/auth/verify";
 import { hasRecruitingAccess } from "@/lib/auth/config";
 import { validate, validationMessage, type Schema } from "@/lib/validate";

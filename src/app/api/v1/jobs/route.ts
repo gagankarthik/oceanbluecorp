@@ -6,7 +6,7 @@ import {
 import { requireApiKey } from "@/lib/auth/api-key";
 import { sanitizeRichText } from "@/lib/sanitize-server";
 import { validate, validationMessage, type Schema } from "@/lib/validate";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isAcceptingApplications } from "@/lib/job-status";
 import { notifyJobIndexing } from "@/lib/google-indexing";

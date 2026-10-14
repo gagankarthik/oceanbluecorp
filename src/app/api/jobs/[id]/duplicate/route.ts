@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJob, createJob, getNextPostingId, toPublicJob, Job } from "@/lib/aws/dynamodb";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireJobEditor } from "@/lib/auth/verify";
 import { hasJobCommercialAccess } from "@/lib/auth/config";
 import { serverError } from "@/lib/api-errors";

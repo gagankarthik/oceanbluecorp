@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { createNotification, replaceApplicationTasks, type TaskEntry } from "@/lib/aws/dynamodb";
 import { requireStaff, type Claims } from "@/lib/auth/verify";
 import {

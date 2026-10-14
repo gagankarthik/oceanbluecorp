@@ -1,6 +1,6 @@
 // Server-side: an application as a given staff caller may see it.
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { getApplication, type ActivityEntry } from "./dynamodb";
 import { viewerOf, type Claims } from "@/lib/auth/verify";
 import { isVisibleApplication } from "@/lib/bench";

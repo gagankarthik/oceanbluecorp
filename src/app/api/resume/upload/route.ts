@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { getClaims } from "@/lib/auth/verify";
 import { hasRecruitingAccess } from "@/lib/auth/config";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllVendors, createVendor, getJobCountsByParty, Vendor } from "@/lib/aws/dynamodb";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireRoles } from "@/lib/auth/verify";
 import { CLIENT_VENDOR_READ_ROLES, CLIENT_VENDOR_CREATE_ROLES } from "@/lib/auth/config";
 import { serverError } from "@/lib/api-errors";

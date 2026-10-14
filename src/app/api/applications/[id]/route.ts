@@ -9,7 +9,7 @@ import {
   NoteEntry,
   createNotification,
 } from "@/lib/aws/dynamodb";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireStaff } from "@/lib/auth/verify";
 import {
   loadVisibleApplication as loadVisible, applicationNotFound as notFound, actorOf, activityEntry,

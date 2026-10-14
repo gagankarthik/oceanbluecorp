@@ -5,7 +5,7 @@ import {
   getNextApplicationId,
   CandidateApplication,
 } from "@/lib/aws/dynamodb";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID as uuidv4 } from "node:crypto";
 import { requireStaff } from "@/lib/auth/verify";
 import { visibleTo } from "@/lib/aws/application-access";
 import { serverError } from "@/lib/api-errors";
