@@ -20,6 +20,7 @@ import { renderRichText } from "@/lib/rich-text";
 import { formatSalary } from "@/lib/salary";
 import { jobLocationLabel, workplaceOf, WORKPLACE_LABEL } from "@/lib/workplace";
 import { AvatarStack, JobStatusSelect, KpiButton, StageBadge, jobMenuItems } from "./bits";
+import { ActionMenu } from "@/components/portal/records/Menu";
 import {
   JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, PIPELINE, STAGE_DOT, STAGE_LABEL, assigneesOf, buckets, countIn, daysUntil, duplicateJobHref,
   jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, tally,
@@ -388,9 +389,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
   );
   // Sheet header: the full record one click away, beside the close button.
   const openJobAction = (job: Job) => (
-    <Button size="sm" variant="secondary" icon="external" href={`/portal/jobs/${job.id}${copy.query}`}>
-      Open job
-    </Button>
+    <Button size="sm" variant="secondary" icon="expand" label="Open job" href={`/portal/jobs/${job.id}${copy.query}`} />
   );
   const rowMenu = (j: Job, open: () => void) =>
     jobMenuItems({
@@ -695,12 +694,25 @@ function JobDetail({
           <p className="mt-2 text-[14px] text-mist-600">No description yet.</p>
         )}
       </section>
-      <div className="flex flex-wrap gap-2 border-t border-mist-200 pt-5">
-        {canEdit && <Button variant="secondary" icon="edit" href={`/portal/jobs/${job.id}/edit${query}`}>Edit</Button>}
-        {canEdit && <Button variant="secondary" icon="copy" onClick={() => onDuplicate(job)}>Duplicate</Button>}
-        {canPrice && <Button variant="secondary" icon="plus" href={`/portal/applications/new?jobId=${job.id}`}>Add applicant</Button>}
-        {canPrice && <Button variant="danger" icon="trash" className="sm:ml-auto" onClick={() => onDelete(job)}>Delete</Button>}
-      </div>
+      {/* One primary, one secondary, the rest in the overflow */}
+      {(canEdit || canPrice) && (
+        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+          {canPrice ? (
+            <Button icon="plus" className="flex-1" href={`/portal/applications/new?jobId=${job.id}`}>Add applicant</Button>
+          ) : (
+            <Button icon="edit" className="flex-1" href={`/portal/jobs/${job.id}/edit${query}`}>Edit</Button>
+          )}
+          {canPrice && canEdit && <Button variant="secondary" icon="edit" href={`/portal/jobs/${job.id}/edit${query}`}>Edit</Button>}
+          <ActionMenu
+            label="More actions"
+            items={[
+              ...(canEdit ? [{ label: "Duplicate", icon: "copy" as const, onSelect: () => onDuplicate(job) }] : []),
+              ...(canEdit && canPrice ? [{ kind: "separator" as const }] : []),
+              ...(canPrice ? [{ label: "Delete", icon: "trash" as const, danger: true, onSelect: () => onDelete(job) }] : []),
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, Segmented, StatCard,
   usePortalRouter,
 } from "@/components/portal/kit";
-import type { MenuEntry } from "@/components/portal/records/Menu";
+import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
 import { refreshApplications, useApplicationSummaries, useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -309,14 +309,27 @@ export default function TalentBenchView() {
             <p className="mt-2 whitespace-pre-line rounded-lg bg-mist-50 p-3 text-[14px]">{a.notes}</p>
           </section>
         )}
-        <div className="border-t border-mist-200 pt-5">
-          <div className="flex flex-wrap items-center gap-1">
-            <Button variant="ghost" size="sm" icon="edit" href={`/portal/applications/${a.id}/edit?return=/portal/talent-bench`}>Edit profile</Button>
-            {a.resumeId && <Button variant="ghost" size="sm" icon="download" onClick={() => void downloadResume(a.resumeId!)}>Resume</Button>}
-            <Button variant="ghost" size="sm" icon="mail" href={`mailto:${a.email}`}>Email</Button>
-            {/* Undo toast, nothing deleted: not a danger action. */}
-            <Button variant="ghost" size="sm" icon="x" className="ml-auto" onClick={() => void removeFromBench(a)}>Remove from bench</Button>
-          </div>
+        {/* One primary, one secondary, the rest in the overflow */}
+        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+          {a.email && (
+            <Button icon="mail" className="flex-1" href={`mailto:${a.email}`}>
+              Email
+            </Button>
+          )}
+          {a.resumeId && (
+            <Button variant="secondary" icon="download" className={a.email ? "" : "flex-1"} onClick={() => void downloadResume(a.resumeId!)}>
+              Resume
+            </Button>
+          )}
+          <ActionMenu
+            label="More actions"
+            items={[
+              { label: "Edit profile", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/talent-bench`) },
+              { kind: "separator" },
+              // Undo toast, nothing deleted
+              { label: "Remove from bench", icon: "x", danger: true, onSelect: () => void removeFromBench(a) },
+            ]}
+          />
         </div>
       </div>
     );
@@ -430,7 +443,7 @@ export default function TalentBenchView() {
           emptyTitle="No candidates match your filters"
           detailTitle={(a) => a.name || a.email}
           renderDetail={(a) => detail(rows.find((r) => r.id === a.id) ?? a)}
-          detailActions={(a) => <Button size="sm" variant="secondary" icon="external" href={`/portal/candidates/${a.id}`}>Open full record</Button>}
+          detailActions={(a) => <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />}
           rowMenu={rowMenu}
           renderGrid={
             layout === "cards"

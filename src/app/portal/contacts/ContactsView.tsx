@@ -392,7 +392,7 @@ export default function ContactsView() {
                   </>
                 )}
                 detailTitle={(c) => contactName(c)}
-                detailActions={(c) => <Button size="sm" variant="secondary" icon="external" href={`/portal/contacts/${c.id}`}>Open full record</Button>}
+                detailActions={(c) => <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/contacts/${c.id}`} />}
                 rowMenu={rowMenu}
                 renderDetail={(r, close) => {
                   const live = contacts.find((x) => x.id === r.id);

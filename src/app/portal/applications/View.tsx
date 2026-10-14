@@ -13,7 +13,7 @@ import {
   Avatar, Badge, Button, ConfirmDialog, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
   Segmented, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
-import type { MenuEntry } from "@/components/portal/records/Menu";
+import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
 import { refreshApplications, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
@@ -408,40 +408,43 @@ export default function ApplicationsView() {
             </ol>
           </section>
         )}
-        {/* The next step leads (the full record sits in the sheet header); everyday actions sit quietly below */}
-        <div className="grid gap-3 border-t border-mist-200 pt-5">
+        {/* One primary (the next stage), one secondary, the rest in the overflow */}
+        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
           {nxt && (
-            <Button icon="chevronRight" onClick={() => void move(a, nxt)}>
+            <Button icon="chevronRight" className="flex-1" onClick={() => void move(a, nxt)}>
               Move to {STAGE_LABEL[nxt]}
             </Button>
           )}
-          <div className="flex flex-wrap items-center gap-1">
-            <Button variant="ghost" size="sm" icon="edit" href={`/portal/applications/${a.id}/edit?return=/portal/applications`}>Edit</Button>
-            <Button variant="ghost" size="sm" icon="mail" href={`mailto:${a.email}`}>Email</Button>
-            {/* Reversible from the undo toast, so not styled as danger. */}
-            {!TERMINAL.has(a.status) && (
-              <Button variant="ghost" size="sm" icon="x" onClick={() => void move(a, "rejected")}>Reject</Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              icon="trash"
-              className="ml-auto text-[#b42318]! hover:bg-[#fef3f2]!"
-              onClick={() => {
-                closeDetail.current = close ?? null;
-                setDeleteIds([a.id]);
-              }}
-            >
-              Delete
+          {a.email && (
+            <Button variant="secondary" icon="mail" className={nxt ? "" : "flex-1"} href={`mailto:${a.email}`}>
+              Email
             </Button>
-          </div>
+          )}
+          <ActionMenu
+            label="More actions"
+            items={[
+              { label: "Edit", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/applications`) },
+              // Reversible from the undo toast, so not styled as danger
+              ...(!TERMINAL.has(a.status) ? [{ label: "Reject", icon: "x" as const, onSelect: () => void move(a, "rejected") }] : []),
+              { kind: "separator" },
+              {
+                label: "Delete",
+                icon: "trash",
+                danger: true,
+                onSelect: () => {
+                  closeDetail.current = close ?? null;
+                  setDeleteIds([a.id]);
+                },
+              },
+            ]}
+          />
         </div>
       </div>
     );
   };
 
   const headerActions = (a: Row) => (
-    <Button size="sm" variant="secondary" icon="external" href={`/portal/candidates/${a.id}`}>Open full record</Button>
+    <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />
   );
 
   const rowMenu = (a: Row, openDetail: () => void): MenuEntry[] => {
