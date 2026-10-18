@@ -34,13 +34,51 @@ function Glyph({ d, className = "size-4" }: { d: string; className?: string }) {
  *
  * The "Cookie settings" buttons (footer, /cookies) reopen this by dispatching
  * `open-cookie-settings` on window.
+ *
+ * Plain Theory (headless mode): this is our own banner, and Plain Theory runs
+ * behind it. Every choice goes to `window.PlainConsent`, which records a
+ * hash-chained consent receipt, holds and releases tags, sets Google Consent
+ * Mode and fires webhooks. Plain Theory also decides when to ask: it knows
+ * whether this visitor's choice is still valid for the notice version that's
+ * live. localStorage stays as a fallback for when its script can't load.
+ * Our "Preferences" is Plain Theory's "functional" category.
  */
 
 type Prefs = { preferences: boolean };
 export const OPEN_COOKIE_SETTINGS = "open-cookie-settings";
 
+type PlainConsentState = { decided: boolean; categories: { essential: boolean; functional: boolean; analytics: boolean; marketing: boolean } };
+type PlainConsentApi = {
+  get(): PlainConsentState;
+  acceptAll(): void;
+  rejectAll(): void;
+  set(partial: Partial<PlainConsentState["categories"]>): void;
+  on(event: "ready" | "change", fn: (state: PlainConsentState) => void): () => void;
+};
+type PlainQueue = PlainConsentApi | Array<(api: PlainConsentApi) => void>;
+declare global {
+  interface Window {
+    PlainConsent?: PlainQueue;
+  }
+}
+
+/** Run `fn` with Plain Theory's API as soon as its script has loaded (queued until then). */
+function withPlainConsent(fn: (api: PlainConsentApi) => void) {
+  const pc = (window.PlainConsent ??= []);
+  if (Array.isArray(pc)) pc.push(fn);
+  else fn(pc);
+}
+
+/** Plain Theory's API when its script has loaded, else null. */
+function plainConsent(): PlainConsentApi | null {
+  const pc = typeof window === "undefined" ? undefined : window.PlainConsent;
+  return pc && !Array.isArray(pc) ? pc : null;
+}
+
 /** True once the visitor has allowed preference storage. */
 export function hasPreferenceConsent(): boolean {
+  const pc = plainConsent();
+  if (pc) return pc.get().categories.functional === true;
   try {
     if (localStorage.getItem("cookieConsent") === "all") return true;
     return JSON.parse(localStorage.getItem("cookieConsentPrefs") || "{}").preferences === true;
@@ -94,24 +132,46 @@ export default function CookieConsent() {
   }, [visible]);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem("cookieConsent")) setVisible(true);
-      const stored = localStorage.getItem("cookieConsentPrefs");
-      if (stored) setPrefs({ preferences: JSON.parse(stored).preferences === true });
-    } catch {
-      // Storage unavailable (private mode): show the banner each visit.
-      setVisible(true);
-    }
+    // Plain Theory decides whether to ask (a choice valid for the live notice version, or not).
+    let answered = false;
+    withPlainConsent((api) =>
+      api.on("ready", (state) => {
+        answered = true;
+        setPrefs({ preferences: state.categories.functional === true });
+        setVisible(!state.decided);
+      }),
+    );
+    // Fallback when its script is blocked or slow: our own record, as before.
+    const fallback = window.setTimeout(() => {
+      if (answered) return;
+      try {
+        if (!localStorage.getItem("cookieConsent")) setVisible(true);
+        const stored = localStorage.getItem("cookieConsentPrefs");
+        if (stored) setPrefs({ preferences: JSON.parse(stored).preferences === true });
+      } catch {
+        // Storage unavailable (private mode): show the banner each visit.
+        setVisible(true);
+      }
+    }, 2500);
     const reopen = () => {
       reopened.current = true;
       setManage(true);
       setVisible(true);
     };
     window.addEventListener(OPEN_COOKIE_SETTINGS, reopen);
-    return () => window.removeEventListener(OPEN_COOKIE_SETTINGS, reopen);
+    return () => {
+      window.clearTimeout(fallback);
+      window.removeEventListener(OPEN_COOKIE_SETTINGS, reopen);
+    };
   }, []);
 
   const save = useCallback((level: "all" | "essential" | "custom", chosen: Prefs) => {
+    // The record that counts: Plain Theory stores the choice, logs the receipt and applies it.
+    withPlainConsent((api) => {
+      if (level === "all") api.acceptAll();
+      else if (level === "essential") api.rejectAll();
+      else api.set({ functional: chosen.preferences, analytics: false, marketing: false });
+    });
     try {
       localStorage.setItem("cookieConsent", level);
       localStorage.setItem("cookieConsentPrefs", JSON.stringify(chosen));
