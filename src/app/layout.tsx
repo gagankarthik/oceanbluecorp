@@ -6,6 +6,7 @@ import SiteShell from "@/components/site/SiteShell";
 import CookieConsent from "@/components/layout/CookieConsent";
 import { getAnnouncement, getMaintenance } from "@/lib/content";
 import { jsonLdString } from "@/lib/seo";
+import Script from "next/script";
 
 // ISR: re-render the layout (which reads the CMS announcement) at most once a
 // minute; content saves call revalidatePath("/", "layout") to push edits live.
@@ -234,6 +235,15 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
+        />
+
+        <Script
+          src="https://cdn.theplaintheory.in/sdk/v1/plain-consent.js"
+          data-site="pk_hxDX-U_jYaMYoyrx"
+          data-api="https://www.theplaintheory.in/api/v1"
+          data-config-url="https://cdn.theplaintheory.in/c/pk_hxDX-U_jYaMYoyrx.json"
+          data-gcm="true"
+          strategy="beforeInteractive"
         />
       </head>
       <body
