@@ -40,9 +40,7 @@ export default function AboutPage() {
             <Photo name="glassOffice" className="aspect-[4/5]" />
           </div>
           <div className="axis" data-reveal style={{ "--d": 1 } as React.CSSProperties}>
-            <p className="max-w-measure-narrow text-head-sm leading-[1.3] [text-indent:3em]">
-              Enterprises run on two things: the people who do the work and the platforms the work runs on. We supply and stand behind both.
-            </p>
+            <p className="max-w-measure-narrow text-head-sm leading-[1.3] [text-indent:3em]">{company.mission}</p>
             <p className="mt-10 max-w-measure">
               Technology should make people&apos;s work simpler, not give them a second job managing it. We help organizations modernize the
               systems they already run and strengthen the teams around them.

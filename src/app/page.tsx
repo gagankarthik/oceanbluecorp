@@ -8,7 +8,7 @@ import ServicesOverview from "@/components/visuals/ServicesOverview";
 import WaveField from "@/components/visuals/WaveField";
 import { MarkTile, certMarks, clientMarks, partnerMarks } from "@/components/site/LogoWall";
 import Quotes from "@/components/site/Quotes";
-import { industries, services } from "@/lib/site-content";
+import { company, industries, services } from "@/lib/site-content";
 import { ORG_ID, SITE_URL, WEBSITE_ID, jsonLdString, pageMetadata } from "@/lib/seo";
 
 const HOME_TITLE = "Oceanblue Solutions, Inc. | IT Staffing & Enterprise Solutions";
@@ -100,25 +100,24 @@ export default function Home() {
 
       {/* Hero: a two-by-two board */}
       <section id="top" aria-label="Introduction" className="bg-field-paper px-4 py-2">
-        <div className="grid gap-2 md:h-[calc(100svh-88px-var(--ann-h,0px))] md:min-h-[32rem] md:grid-cols-2 md:grid-rows-[1.25fr_1fr]">
+        <div className="grid gap-2 md:min-h-[max(32rem,calc(100svh-88px-var(--ann-h,0px)))] md:grid-cols-2 md:grid-rows-[minmax(min-content,1fr)_auto]">
           <div className="@container relative flex flex-col justify-end overflow-hidden bg-mist-0 p-6 md:col-start-1 md:row-start-1 md:p-8 lg:p-10">
             <WaveField />
             <h1 className="lines display relative whitespace-nowrap text-hero">
               <span className="line">
                 <span data-line style={{ "--i": 0 } as React.CSSProperties}>
-                  The people and platforms
+                  The people behind
                 </span>
               </span>
               <span className="line">
                 <span data-line style={{ "--i": 1 } as React.CSSProperties}>
-                  enterprises rely on.
+                  the platform.
                 </span>
               </span>
             </h1>
             <div data-after-lines className="relative">
-              <p className="mt-5 max-w-measure-narrow text-body leading-snug text-mist-600">
-                IT and engineering talent, cloud, security, ERP, data, managed services and training from one accountable team.
-              </p>
+              <p className="mt-5 max-w-measure-narrow text-title font-medium leading-snug text-balance text-navy-900">{company.tagline}</p>
+              <p className="mt-3 max-w-measure text-body leading-normal text-pretty text-mist-600">{company.mission}</p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
                   href="/contact"
@@ -138,25 +137,25 @@ export default function Home() {
           <div className="shutter aspect-[4/3] md:col-start-2 md:row-span-2 md:row-start-1 md:aspect-auto">
             <Photo name="tower" preload className="h-full" position="28% 50%" />
           </div>
-          <div className="grid grid-cols-2 gap-2 md:col-start-1 md:row-start-2">
+          <div className="grid grid-cols-2 gap-2 md:col-start-1 md:row-start-2 md:min-h-[clamp(11rem,calc(100svh-38rem),22rem)]">
             <Link
               href="/services/it-staffing"
-              className="@container group flex min-h-56 flex-col justify-between gap-6 bg-navy-900 p-5 text-mist-50 transition-colors hover:bg-navy-800 md:min-h-0 md:p-7"
+              className="@container group flex min-h-56 flex-col justify-between gap-4 bg-navy-900 p-5 text-mist-50 transition-colors hover:bg-navy-800 md:min-h-0 md:p-6 lg:p-7"
             >
               <span className="text-small text-tide-300">For hiring managers</span>
               <span>
                 <span className="display block text-hero-tile">A shortlist in 48 hours</span>
-                <span className="mt-3 block text-small text-tide-300 group-hover:text-white">Vetted engineers, matched to the role</span>
+                <span className="mt-2 block text-balance text-small text-tide-300 group-hover:text-white">Vetted engineers, matched to the role</span>
               </span>
             </Link>
             <Link
               href="/services"
-              className="@container group flex min-h-56 flex-col justify-between gap-6 bg-ocean-600 p-5 text-white transition-colors hover:bg-ocean-700 md:min-h-0 md:p-7"
+              className="@container group flex min-h-56 flex-col justify-between gap-4 bg-ocean-600 p-5 text-white transition-colors hover:bg-ocean-700 md:min-h-0 md:p-6 lg:p-7"
             >
               <span className="text-small">For technology leaders</span>
               <span>
                 <span className="display block text-hero-tile">One team, one contract</span>
-                <span className="mt-3 block text-small">People, platforms and operations</span>
+                <span className="mt-2 block text-balance text-small">People, platforms and operations</span>
               </span>
             </Link>
           </div>

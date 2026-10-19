@@ -767,11 +767,6 @@ body {
 /* Greyscale treatment shared by every atmosphere photograph */
 .treated { filter: grayscale(1) contrast(1.05); }
 
-/* Closing band: wave lines settle into place once (no perpetual loop) */
-@media (prefers-reduced-motion: no-preference) {
-  .wave-drift { animation: wave-drift var(--ease-out-strong) 1 both; }
-}
-@keyframes wave-drift { from { transform: translateX(-6%); } to { transform: translateX(0); } }
 
 /* Thin, quiet scrollbars for panels such as the portal sidebar */
 /* Tab bars, chip rows, chevrons: scroll sideways when narrow, never vertically,

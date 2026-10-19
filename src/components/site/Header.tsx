@@ -165,7 +165,7 @@ function ItemLink({ item, onPick, compact = false, touch = false }: { item: Item
 
 export default function Header() {
   const pathname = usePathname();
-  // Signed-in staff get their account here in place of the visitor CTAs.
+  // Signed-in staff get their account in place of "Contact us"; "Find a job" stays.
   const { user: staff } = useStaffSession();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -254,29 +254,25 @@ export default function Header() {
         </ul>
 
         <div className="flex items-center gap-2">
-          {!staff && (
-            <>
-              <Link
-                href="/jobs"
-                className={`hidden min-h-11 items-center gap-2 px-4 text-small font-medium active:scale-[0.98] md:inline-flex ${
-                  pathname.startsWith("/jobs") ? "bg-navy-900 text-white" : "text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
-                }`}
-              >
-                <svg aria-hidden viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <rect x="2.5" y="6" width="15" height="10.5" rx="1.5" />
-                  <path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6M2.5 10.5h15" />
-                </svg>
-                Find a job
-              </Link>
-              {pathname !== "/contact" && (
-                <Link
-                  href="/contact"
-                  className="hidden min-h-11 items-center bg-ocean-600 px-5 text-small font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98] sm:inline-flex"
-                >
-                  Contact us
-                </Link>
-              )}
-            </>
+          <Link
+            href="/jobs"
+            className={`hidden min-h-11 items-center gap-2 px-4 text-small font-medium active:scale-[0.98] md:inline-flex ${
+              pathname.startsWith("/jobs") ? "bg-navy-900 text-white" : "text-navy-900 ring-2 ring-inset ring-navy-900 btn-fill btn-fill-outline"
+            }`}
+          >
+            <svg aria-hidden viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <rect x="2.5" y="6" width="15" height="10.5" rx="1.5" />
+              <path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6M2.5 10.5h15" />
+            </svg>
+            Find a job
+          </Link>
+          {!staff && pathname !== "/contact" && (
+            <Link
+              href="/contact"
+              className="hidden min-h-11 items-center bg-ocean-600 px-5 text-small font-medium text-white btn-fill btn-fill-ocean active:scale-[0.98] sm:inline-flex"
+            >
+              Contact us
+            </Link>
           )}
           <AccountMenu />
           <button
@@ -408,17 +404,13 @@ export default function Header() {
           </ul>
           <MobileAccount />
           <div className="gutter mt-6 grid gap-3">
-            {!staff && (
-              <>
-                <Link href="/jobs" className="flex min-h-12 items-center justify-center bg-navy-900 font-medium text-white btn-fill btn-fill-navy">
-                  Find a job
-                </Link>
-                {pathname !== "/contact" && (
-                  <Link href="/contact" className="flex min-h-12 items-center justify-center bg-ocean-600 font-medium text-white btn-fill btn-fill-ocean">
-                    Contact us
-                  </Link>
-                )}
-              </>
+            <Link href="/jobs" className="flex min-h-12 items-center justify-center bg-navy-900 font-medium text-white btn-fill btn-fill-navy">
+              Find a job
+            </Link>
+            {!staff && pathname !== "/contact" && (
+              <Link href="/contact" className="flex min-h-12 items-center justify-center bg-ocean-600 font-medium text-white btn-fill btn-fill-ocean">
+                Contact us
+              </Link>
             )}
             <a href={company.tel} className="flex min-h-12 items-center justify-center bg-mist-100 font-medium btn-fill btn-fill-mist">
               Call {company.phoneShort}

@@ -56,8 +56,8 @@ canvas), `field-mist` (mist-100), `field-shallow` (tide-200), `field-cyan`,
 - **30%**: `navy-900` type and the dark fields: the mega-menu feature panel
   (navy-900) and the footer (navy-950).
 - **10%**: `ocean-600`. Primary buttons, the active nav underline, focus rings,
-  links (`ocean-700`), and one brand block per page at most, the closing band.
-  On that band, actions switch to white and navy.
+  links (`ocean-700`). The closing band is no longer an ocean block: it is the
+  footer's opening row (see Footer below).
 
 Status hues (`buoy`, `kelp`, `coral`) never decorate.
 
@@ -150,7 +150,6 @@ Photographs are greyscale (`.treated`).
 | Reveal | `[data-reveal]`, revealed once by `RevealObserver` | 400ms, 24px rise, stagger `--d` × 80ms |
 | Headline line-up | `.lines [data-line]` (home hero, `PageHero`) | 400ms per line, `--i` × 110ms + 150ms; `[data-after-lines]` fades up after (700ms at 520ms) |
 | Hero shutter | `.shutter`, the first hero picture | clip 400ms, image settles from 1.12 over 600ms, both at 150ms |
-| Closing waves | `.wave-drift` in `Closing` | four lines settle once over 3, 3.5, 4 and 4.5s |
 | Route enter | `.page-enter` (`app/template.tsx`) | 220ms opacity, client navigations only |
 | Button hover | `.btn-fill` | see §5a |
 
@@ -187,7 +186,7 @@ answers the pointer; under reduced motion it draws one static frame.
   Inside `.on-dark` it turns white.
 - **Pairs**: every group is one primary and at most one secondary. Header: "Find a
   job" (outline) and "Contact us" (ocean). Hero: ocean primary, navy outline. Closing
-  band: white primary, navy secondary.
+  band: ocean primary, light outline secondary.
 - **Targets**: 44px minimum on header controls and menu rows, 48px on page actions.
 
 ## 6. Navigation
@@ -206,7 +205,9 @@ answers the pointer; under reduced motion it draws one static frame.
   group whose links all land on one page (a service's features) collapses to one
   link named after the group. The visitor actions and a call button follow as
   full-width 48px buttons.
-- **Footer**: `navy-950`.
+- **Footer**: `navy-950`. `Closing` sits flush above it on the same field as its
+  opening row (heading and sentence left, actions right from lg), split from the
+  link columns by a `white/10` hairline, so the CTA and footer read as one block.
 
 ## 7. Placement
 

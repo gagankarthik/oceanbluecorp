@@ -13,7 +13,10 @@ export const company = {
   address: ["9775 Fairway Drive, Suite C", "Powell, Ohio 43065"],
   founded: "August 8, 2013",
   hours: "Monday to Friday, 8 a.m. to 5 p.m. Eastern",
-  motto: "The people and platforms enterprises rely on.",
+  motto: "The people behind the platform.",
+  tagline: "The people, platforms, and partners you can rely on.",
+  mission:
+    "We help organizations build capable teams and dependable technology. From IT staffing and managed services to AI and infrastructure, we bring the right people and solutions to what’s next.",
   position:
     "The single accountable partner for the people, engineering, platforms and operations an enterprise runs on.",
   /** staff: sign-in for this site's portal. hr: the separate HR product, tagged with where the visit came from. */

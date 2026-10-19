@@ -2,6 +2,7 @@ import Link from "next/link";
 import BackLink from "@/components/site/BackLink";
 import Logo from "@/components/site/Logo";
 import Photo from "@/components/site/Photo";
+import { company } from "@/lib/site-content";
 
 /** Split layout shared by the sign-in and password reset pages; one back link, top-left */
 export default function AuthShell({
@@ -24,7 +25,7 @@ export default function AuthShell({
             <Logo variant="white" className="h-11 w-[9.4rem]" />
           </Link>
           <div>
-            <p className="display max-w-[16ch] text-head-md">The people and platforms enterprises rely on.</p>
+            <p className="display max-w-[16ch] text-head-md">{company.motto}</p>
             <p className="mt-4 max-w-measure-narrow text-tide-300">For Oceanblue employees and consultants on assignment.</p>
           </div>
           <p className="text-small text-tide-300">

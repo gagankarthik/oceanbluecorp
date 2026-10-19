@@ -81,7 +81,7 @@ const socials = [
 export default function Footer() {
   return (
     <footer className="on-dark bg-navy-950 text-mist-50">
-      <div className="gutter grid gap-14 pb-14 pt-20 lg:grid-cols-12">
+      <div className="gutter grid gap-14 pb-14 pt-16 lg:grid-cols-12">
         {/* Company and contact */}
         <div className="flex flex-col lg:col-span-4 lg:-mb-14">
           <Link href="/" aria-label="Oceanblue Solutions home" className="inline-block">
