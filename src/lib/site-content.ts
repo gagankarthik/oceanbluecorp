@@ -509,7 +509,7 @@ export const leadership: { name: string; role: string; linkedin?: string }[] = [
 export const clients = [
   "Ohio Department of Development",
   "Diebold Nixdorf",
-  "HGS",
+  "PivotPoint",
   "City Barbeque",
   "Satya Wholesalers",
   "Condado Tacos & Tequila",
@@ -520,7 +520,7 @@ export const testimonials: { quote: string; name: string; role: string; company:
   {
     quote:
       "Oceanblue's resources demonstrated high levels of skill and professionalism, delivering quality results that met our expectations and deadlines.",
-    name: "Damodar Buchi Reddy",
+    name: "Damodar B.",
     role: "Project Director, Diebold Nixdorf",
     company: "Diebold Nixdorf",
     logo: "/logos/clients/diebold-nixdorf.svg",

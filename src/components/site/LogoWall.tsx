@@ -6,7 +6,7 @@ type Mark = { name: string; src?: string; h: string; dark?: boolean; tint?: bool
 export const clientMarks: Mark[] = [
   { name: "Ohio Department of Development", src: "/logos/clients/ohio-development.png", h: "h-11" },
   { name: "Diebold Nixdorf", src: "/logos/clients/diebold-nixdorf.svg", h: "h-14" },
-  { name: "HGS", src: "/logos/clients/hgs.svg", h: "h-10" },
+  { name: "PivotPoint", src: "/logos/clients/pivotpoint.png", h: "h-8", dark: true },
   { name: "City Barbeque", src: "/logos/clients/citybarbeque.svg", h: "h-8" },
   { name: "Satya Wholesalers", src: "/logos/clients/satya-wholesalers.png", h: "h-11" },
   { name: "Condado Tacos & Tequila", src: "/logos/clients/tacos.webp", h: "h-9", dark: true },
