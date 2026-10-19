@@ -37,16 +37,15 @@ export async function POST(
       return serverError("Failed to generate application ID", err, "Couldn't duplicate the candidate application. Please try again.");
     }
 
-    const body = await request.json().catch(() => ({}));
-
     // Create duplicate
     const duplicateApp: CandidateApplication = {
       ...originalApp.data,
       id: uuidv4(),
       applicationId,
       createdAt: new Date().toISOString(),
-      createdBy: body.createdBy || originalApp.data.createdBy,
-      createdByName: body.createdByName || originalApp.data.createdByName,
+      // The copy belongs to whoever made it, taken from the session.
+      createdBy: auth.claims.email || auth.claims.sub,
+      createdByName: auth.claims.name || auth.claims.email || "Staff",
       updatedAt: undefined,
     };
 

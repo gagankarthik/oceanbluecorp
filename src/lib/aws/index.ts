@@ -10,6 +10,7 @@ export {
   deleteResume as deleteResumeFromS3,
   resumeExists,
   validateResumeFile,
+  sniffResumeType,
   generateResumeKey,
   generateResumeBankKey,
   parseResumeBankKey,

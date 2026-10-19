@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
   }
 
   const fileKeys = Array.isArray(body.fileKeys)
-    ? body.fileKeys.filter((k): k is string => typeof k === "string" && k.length > 0)
+    // Bank files only, as on [id] and delete: applicant resumes and avatars are not the bank's to index.
+    ? body.fileKeys.filter((k): k is string => typeof k === "string" && k.startsWith("resume-bank/") && !k.includes(".."))
     : [];
   if (fileKeys.length === 0) {
     return NextResponse.json({ error: "Provide fileKeys: string[]." }, { status: 400 });

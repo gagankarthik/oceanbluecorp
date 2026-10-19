@@ -61,6 +61,8 @@ export interface AttachedResume {
   fileKey?: string;
   analysis?: unknown;
   origin: "record" | "bench";
+  /** The application that holds it; /api/resume/[id] checks access through it. */
+  applicationId: string;
 }
 
 export { RESUME_MAX_BYTES, RESUME_ACCEPT } from "@/components/portal/fields/ResumeDrop";
@@ -185,7 +187,7 @@ export function useCandidateForm({ mode, initial }: UseCandidateFormOptions) {
     setBaseline(JSON.stringify(next));
     setRecord(app);
     setExistingResume(app?.resumeId
-      ? { id: app.resumeId, fileName: app.resumeFileName || "Resume on file", fileKey: app.resumeFileKey, origin: "record" }
+      ? { id: app.resumeId, fileName: app.resumeFileName || "Resume on file", fileKey: app.resumeFileKey, origin: "record", applicationId: app.id }
       : null);
     setResumeFile(null);
     setResumeError(null);

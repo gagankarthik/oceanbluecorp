@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, type Claims } from "@/lib/auth/verify";
 import {
   getPipelineRecord,
   updatePipelineRecord,
   deletePipelineRecord,
 } from "@/lib/aws/dynamodb";
+import { loadVisibleApplication } from "@/lib/aws/application-access";
+import { editSchema } from "@/lib/pipeline-schema";
+import { validate, validationMessage } from "@/lib/validate";
 import { serverError } from "@/lib/api-errors";
+
+const notFound = () => NextResponse.json({ error: "Record not found" }, { status: 404 });
+
+/** The record, or null when it is missing or its candidate is in a colleague's private pool. */
+async function loadVisibleRecord(id: string, claims: Claims) {
+  const result = await getPipelineRecord(id);
+  if (!result.success || !result.data) return result.success ? null : result;
+  const parent = await loadVisibleApplication(result.data.applicationId, claims);
+  return parent?.success ? result : null;
+}
 
 // GET /api/pipeline/[id]
 export async function GET(
@@ -16,17 +29,18 @@ export async function GET(
   if (!auth.ok) return auth.response;
 
   const { id } = await params;
-  const result = await getPipelineRecord(id);
+  const result = await loadVisibleRecord(id, auth.claims);
+  if (!result) return notFound();
   if (!result.success) return serverError("Fetching pipeline record", result.error, "Couldn't load the record. Please try again.");
-  if (!result.data) return NextResponse.json({ error: "Record not found" }, { status: 404 });
   return NextResponse.json({ success: true, record: result.data });
 }
 
 /**
  * PUT /api/pipeline/[id], edit a recorded event.
  *
- * The identity fields (id, kind, applicationId, createdAt) are not editable: an
- * interview cannot become a placement, and a record cannot be moved onto another
+ * Only the fields the kind declares are editable. Identity (id, kind,
+ * applicationId, createdAt) and attribution (createdBy) are not: an interview
+ * cannot become a placement, and a record cannot be moved onto another
  * candidate. Re-record it instead, so the history stays honest.
  */
 export async function PUT(
@@ -40,13 +54,14 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await getPipelineRecord(id);
-    if (!existing.success) return serverError("Fetching pipeline record for update", existing.error, "Couldn't save the record. Please try again.");
-    if (!existing.data) return NextResponse.json({ error: "Record not found" }, { status: 404 });
+    const existing = await loadVisibleRecord(id, auth.claims);
+    if (!existing) return notFound();
+    if (!existing.success || !existing.data) return serverError("Fetching pipeline record for update", existing.error, "Couldn't save the record. Please try again.");
 
-    const { id: _id, kind: _kind, applicationId: _appId, createdAt: _createdAt, ...updates } =
-      body as Record<string, unknown>;
-    void _id; void _kind; void _appId; void _createdAt;
+    // Only the fields this kind declares, as on create; identity and attribution are not editable.
+    const checked = validate<Record<string, unknown>>(body, editSchema(existing.data.kind));
+    if (!checked.ok) return NextResponse.json({ error: validationMessage(checked.errors) }, { status: 400 });
+    const updates = checked.value;
 
     // Keep occurredAt in step with whichever date field this kind owns, so the
     // indexes keep sorting by the date the record is actually about.
@@ -87,6 +102,9 @@ export async function DELETE(
   if (!auth.ok) return auth.response;
 
   const { id } = await params;
+  const existing = await loadVisibleRecord(id, auth.claims);
+  if (!existing) return notFound();
+  if (!existing.success) return serverError("Fetching pipeline record for delete", existing.error, "Couldn't delete the record. Please try again.");
   const result = await deletePipelineRecord(id);
   if (!result.success) return serverError("Deleting pipeline record", result.error, "Couldn't delete the record. Please try again.");
   return NextResponse.json({ success: true });

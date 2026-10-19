@@ -3,6 +3,7 @@ import {
   generateResumeBankKey,
   uploadResume,
   validateResumeFile,
+  sniffResumeType,
   listResumeBankObjects,
   parseResumeBankKey,
 } from "@/lib/aws";
@@ -67,20 +68,17 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
   try {
     const rawFileName = request.headers.get("x-file-name");
-    const rawUploadedBy = request.headers.get("x-uploaded-by");
     const rawCandidateName = request.headers.get("x-candidate-name");
-    const fileType = request.headers.get("x-file-type") || "application/octet-stream";
+    const claimedType = request.headers.get("x-file-type") || "application/octet-stream";
 
-    if (!rawFileName || !rawUploadedBy) {
-      return NextResponse.json(
-        { error: "Missing required fields: file and uploadedBy" },
-        { status: 400 },
-      );
+    if (!rawFileName) {
+      return NextResponse.json({ error: "Missing required field: file" }, { status: 400 });
     }
 
     // Header values are encodeURIComponent'd on the client to stay ASCII-safe.
     const fileName = decodeURIComponent(rawFileName);
-    const uploadedBy = decodeURIComponent(rawUploadedBy);
+    // The uploader is the session, not the x-uploaded-by header the client still sends.
+    const uploadedBy = auth.claims.email || auth.claims.sub;
     const candidateName = rawCandidateName ? decodeURIComponent(rawCandidateName) : undefined;
 
     const buffer = Buffer.from(await request.arrayBuffer());
@@ -88,9 +86,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Empty file body" }, { status: 400 });
     }
 
-    const validation = validateResumeFile({ type: fileType, size: buffer.length, name: fileName });
+    const validation = validateResumeFile({ type: claimedType, size: buffer.length, name: fileName });
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+    // Stored type comes from the bytes, as on /api/resume/upload; a claimed type is never trusted.
+    const fileType = sniffResumeType(buffer);
+    if (!fileType) {
+      return NextResponse.json({ error: "That file isn't a PDF or Word document." }, { status: 400 });
     }
 
     const fileKey = generateResumeBankKey(uploadedBy, fileName, candidateName);

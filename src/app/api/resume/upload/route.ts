@@ -8,32 +8,10 @@ import {
   uploadResume,
   createResume,
   validateResumeFile,
+  sniffResumeType,
   MAX_RESUME_SIZE,
 } from "@/lib/aws";
 import { serverError } from "@/lib/api-errors";
-
-const DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-
-/**
- * The stored Content-Type, decided from the bytes rather than the browser.
- *
- * validateResumeFile passes a file on its MIME *or* its extension (browsers
- * disagree about Word types), and the object was then stored with whatever
- * `file.type` the caller claimed. So `x.pdf` sent as text/html landed in S3 as
- * HTML, and the presigned download link rendered it inline on the bucket's
- * origin. Sniffing the signature closes that and still accepts every real
- * resume: PDF, OLE (.doc), ZIP (.docx), and RTF saved with a .doc name.
- */
-function sniffResumeType(buf: Buffer): string | null {
-  const head = buf.subarray(0, 1024).toString("latin1");
-  if (head.includes("%PDF-")) return "application/pdf";
-  if (buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04) return DOCX_TYPE;
-  if (buf.length >= 8 && buf.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]))) {
-    return "application/msword";
-  }
-  if (head.startsWith("{\\rtf")) return "application/msword";
-  return null;
-}
 
 // Accept multipart/form-data, uploads file directly from the server to S3.
 // This avoids S3 CORS restrictions that break browser-to-S3 presigned PUT requests.

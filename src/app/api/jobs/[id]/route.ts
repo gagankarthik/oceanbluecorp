@@ -44,7 +44,11 @@ export async function GET(
 
     const claims = await getClaims(request);
     if (hasRecruitingAccess(claims?.groups)) {
-      return NextResponse.json({ job: result.data });
+      // The saved ranking is unfiltered engine output and can name a colleague's
+      // My Pool candidates. It is served only by /match-candidates, through enrichMatches.
+      const { candidateMatches: _m, ...job } = result.data;
+      void _m;
+      return NextResponse.json({ job });
     }
 
     // Media: public fields only, but at any status. It authors postings, so

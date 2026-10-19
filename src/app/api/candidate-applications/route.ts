@@ -94,8 +94,9 @@ export async function POST(request: NextRequest) {
       ownership: body.ownership,
       ownershipName: body.ownershipName,
       workAuthorization: body.workAuthorization,
-      createdBy: body.createdBy || "system",
-      createdByName: body.createdByName,
+      // From the session, as in /api/applications: createdBy decides who owns a My Pool record.
+      createdBy: auth.claims.email || auth.claims.sub,
+      createdByName: auth.claims.name || auth.claims.email || "Staff",
       createdAt: now,
       appliedAt: now, // Same as createdAt for compatibility
       rating: body.rating,

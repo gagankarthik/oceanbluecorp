@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getApplication, getJob, updateApplication, type JobFitResult } from "@/lib/aws/dynamodb";
+import { getJob, updateApplication, type JobFitResult } from "@/lib/aws/dynamodb";
+import { loadVisibleApplication } from "@/lib/aws/application-access";
 import { scoreResume, jobToPayload, matchFailureMessage, type JobFit } from "@/lib/aws/match-candidates";
 import { requireStaff } from "@/lib/auth/verify";
 
@@ -24,8 +25,8 @@ export async function GET(
   const auth = await requireStaff(request);
   if (!auth.ok) return auth.response;
   const { id } = await params;
-  const result = await getApplication(id);
-  if (!result.success || !result.data) {
+  const result = await loadVisibleApplication(id, auth.claims);
+  if (!result?.success || !result.data) {
     return NextResponse.json({ error: "Application not found" }, { status: 404 });
   }
   /**
@@ -62,8 +63,8 @@ export async function POST(
   if (!auth.ok) return auth.response;
   const { id } = await params;
 
-  const appResult = await getApplication(id);
-  if (!appResult.success || !appResult.data) {
+  const appResult = await loadVisibleApplication(id, auth.claims);
+  if (!appResult?.success || !appResult.data) {
     return NextResponse.json({ error: "Application not found" }, { status: 404 });
   }
   const app = appResult.data;

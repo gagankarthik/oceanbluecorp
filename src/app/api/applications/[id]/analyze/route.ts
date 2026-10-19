@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireStaff } from "@/lib/auth/verify";
 import { analyzeApplicationResume } from "@/lib/aws/analyze-application";
 import { getApplication } from "@/lib/aws/dynamodb";
+import { applicationNotFound, loadVisibleApplication } from "@/lib/aws/application-access";
 
 // The extraction Lambda's multi-agent pipeline can take 30–90s. Give the route
 // room to wait (Amplify/Next maps this onto the underlying Lambda timeout).
@@ -17,6 +18,9 @@ export async function POST(
   if (!auth.ok) return auth.response;
 
   const { id } = await params;
+  // My Pool: a colleague's private record is a 404 here as on every other application route.
+  const visible = await loadVisibleApplication(id, auth.claims);
+  if (!visible?.success) return applicationNotFound();
 
   const result = await analyzeApplicationResume(id, auth.claims.sub);
   if (!result.success) {

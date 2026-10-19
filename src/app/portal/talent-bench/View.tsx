@@ -145,9 +145,9 @@ export default function TalentBenchView() {
     }
   };
 
-  const downloadResume = async (resumeId: string) => {
+  const downloadResume = async (a: Row) => {
     try {
-      const r = await fetch(`/api/resume/${resumeId}`);
+      const r = await fetch(`/api/resume/${a.resumeId}?applicationId=${encodeURIComponent(a.id)}`);
       if (!r.ok) throw new Error();
       const d = await r.json();
       if (!isUrl(d.downloadUrl)) throw new Error();
@@ -320,7 +320,7 @@ export default function TalentBenchView() {
             </Button>
           )}
           {a.resumeId && (
-            <Button variant="secondary" icon="download" className={a.email ? "" : "flex-1"} onClick={() => void downloadResume(a.resumeId!)}>
+            <Button variant="secondary" icon="download" className={a.email ? "" : "flex-1"} onClick={() => void downloadResume(a)}>
               Resume
             </Button>
           )}
@@ -342,7 +342,7 @@ export default function TalentBenchView() {
     { label: "Open", icon: "eye", onSelect: openDetail },
     { label: "Open full record", icon: "external", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
     { label: "Edit profile", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/talent-bench`) },
-    ...(a.resumeId ? [{ label: "Download resume", icon: "download" as const, onSelect: () => void downloadResume(a.resumeId!) }] : []),
+    ...(a.resumeId ? [{ label: "Download resume", icon: "download" as const, onSelect: () => void downloadResume(a) }] : []),
     { label: "Email", icon: "mail", disabled: !a.email, onSelect: () => (window.location.href = `mailto:${a.email}`) },
     { kind: "separator" },
     // Undo toast, nothing deleted.
@@ -456,7 +456,7 @@ export default function TalentBenchView() {
                     showAdder={canFilterByAdder}
                     onOpen={open}
                     onRate={rate}
-                    onResume={(id) => void downloadResume(id)}
+                    onResume={(a) => void downloadResume(a)}
                     onRemove={(a) => void removeFromBench(a)}
                   />
                 )
@@ -534,7 +534,7 @@ function BenchCards({
   showAdder: boolean;
   onOpen: (a: Row) => void;
   onRate: (a: Row, n: number) => void;
-  onResume: (resumeId: string) => void;
+  onResume: (a: Row) => void;
   onRemove: (a: Row) => void;
 }) {
   return (
@@ -569,7 +569,7 @@ function BenchCards({
                 <div className="flex min-w-0 gap-2">
                   <dt className="w-24 shrink-0 text-mist-600">Resume</dt>
                   <dd>
-                    <button type="button" onClick={() => onResume(a.resumeId!)} className="font-medium text-ocean-700 hover:underline">Resume on file</button>
+                    <button type="button" onClick={() => onResume(a)} className="font-medium text-ocean-700 hover:underline">Resume on file</button>
                   </dd>
                 </div>
               )}

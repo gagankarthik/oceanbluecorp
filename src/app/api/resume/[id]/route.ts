@@ -5,8 +5,23 @@ import {
   deleteResume,
   deleteResumeFromS3,
 } from "@/lib/aws";
-import { requireStaff } from "@/lib/auth/verify";
+import { requireStaff, type Claims } from "@/lib/auth/verify";
+import { loadVisibleApplication } from "@/lib/aws/application-access";
 import { serverError } from "@/lib/api-errors";
+
+/**
+ * A resume record has no owner of its own; its privacy is the application's.
+ * The caller names the application (?applicationId=), which must be visible to
+ * them under My Pool and must actually hold this resume.
+ */
+async function canReachResume(request: NextRequest, resumeId: string, claims: Claims) {
+  const applicationId = request.nextUrl.searchParams.get("applicationId");
+  if (!applicationId) return false;
+  const app = await loadVisibleApplication(applicationId, claims);
+  return !!app?.success && app.data?.resumeId === resumeId;
+}
+
+const resumeNotFound = () => NextResponse.json({ error: "Resume not found" }, { status: 404 });
 
 // GET - Get resume download URL
 export async function GET(
@@ -17,6 +32,7 @@ export async function GET(
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
+    if (!(await canReachResume(request, id, auth.claims))) return resumeNotFound();
 
     // Get resume record from DynamoDB
     const resumeResult = await getResume(id);
@@ -52,6 +68,7 @@ export async function DELETE(
   if (!auth.ok) return auth.response;
   try {
     const { id } = await params;
+    if (!(await canReachResume(request, id, auth.claims))) return resumeNotFound();
 
     // Get resume record from DynamoDB
     const resumeResult = await getResume(id);

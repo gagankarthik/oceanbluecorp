@@ -192,18 +192,20 @@ export async function listCognitoUsers(options?: {
 }
 
 // Get groups for a user
+/** Throws on failure. Anything that authorizes on the result must use this, not getUserGroups. */
+async function listUserGroups(username: string): Promise<string[]> {
+  const config = getConfig();
+  const client = createCognitoClient();
+  const response = await client.send(
+    new AdminListGroupsForUserCommand({ UserPoolId: config.userPoolId, Username: username }),
+  );
+  return (response.Groups || []).map((g) => g.GroupName || "").filter(Boolean);
+}
+
+/** For display only: a failed lookup reads as "no groups". */
 export async function getUserGroups(username: string): Promise<string[]> {
   try {
-    const config = getConfig();
-    const client = createCognitoClient();
-
-    const command = new AdminListGroupsForUserCommand({
-      UserPoolId: config.userPoolId,
-      Username: username,
-    });
-
-    const response = await client.send(command);
-    return (response.Groups || []).map((g) => g.GroupName || "").filter(Boolean);
+    return await listUserGroups(username);
   } catch (error) {
     console.error("Error getting user groups:", error);
     return [];
@@ -222,7 +224,8 @@ export async function getCognitoUser(username: string): Promise<{ success: boole
     });
 
     const response = await client.send(command);
-    const groups = await getUserGroups(username);
+    // Strict: the role decides whether HR may act on this account, so a failed lookup fails the call.
+    const groups = await listUserGroups(username);
 
     const attrs = response.UserAttributes || [];
     const email = attrs.find((a) => a.Name === "email")?.Value || "";
@@ -411,7 +414,8 @@ export async function removeUserFromGroup(username: string, groupName: string): 
 export async function updateUserRole(username: string, newRole: StaffRole): Promise<{ success: boolean; error?: string }> {
   try {
     const target = groupNameForRole(newRole);
-    const currentGroups = await getUserGroups(username);
+    // Strict: a failed lookup would leave the old role group in place.
+    const currentGroups = await listUserGroups(username);
 
     // Every other group that grants a role on this site has to go.
     const stale = currentGroups.filter((g) => g !== target && normalizeStaffRole(g) !== null);

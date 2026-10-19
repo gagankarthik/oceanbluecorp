@@ -96,7 +96,7 @@ function NewApplicationInner() {
       hireType: app.hireType || "",
     }));
     form.setExistingResume(app.resumeId
-      ? { id: app.resumeId, fileName: app.resumeFileName || "Resume", fileKey: app.resumeFileKey, analysis: app.resumeAnalysis, origin: "bench" }
+      ? { id: app.resumeId, fileName: app.resumeFileName || "Resume", fileKey: app.resumeFileKey, analysis: app.resumeAnalysis, origin: "bench", applicationId: app.id }
       : null);
     form.setIgnoreDuplicateId(app.id);
     setBenchFrom(app.name || app.email);

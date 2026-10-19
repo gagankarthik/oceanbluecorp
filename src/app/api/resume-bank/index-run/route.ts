@@ -33,7 +33,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const bank = Array.isArray(body.bank) ? body.bank.filter((k): k is string => typeof k === "string" && k.length > 0) : [];
+  const bank = Array.isArray(body.bank)
+    ? body.bank.filter((k): k is string => typeof k === "string" && k.startsWith("resume-bank/") && !k.includes(".."))
+    : [];
   const apps = Array.isArray(body.apps) ? body.apps.filter((k): k is string => typeof k === "string" && k.length > 0) : [];
   const depth = typeof body.depth === "number" && Number.isFinite(body.depth) ? Math.max(0, Math.floor(body.depth)) : 0;
 

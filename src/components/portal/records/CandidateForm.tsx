@@ -62,9 +62,9 @@ export function CandidateForm({
   const [moreChoice, setMoreChoice] = React.useState<boolean | null>(null);
   const moreOpen = moreErrors || (moreChoice ?? moreFilled > 0);
 
-  const downloadResume = async (resumeId: string) => {
+  const downloadResume = async (resumeId: string, applicationId: string) => {
     try {
-      const res = await fetch(`/api/resume/${resumeId}`);
+      const res = await fetch(`/api/resume/${resumeId}?applicationId=${encodeURIComponent(applicationId)}`);
       const data = await res.json();
       if (!res.ok) throw new Error();
       window.open(data.downloadUrl, "_blank");
@@ -217,7 +217,7 @@ export function CandidateForm({
               onResumeFileChange?.(null);
             }}
             onRemoveExisting={() => form.setExistingResume(null)}
-            onDownload={existing ? () => void downloadResume(existing.id) : undefined}
+            onDownload={existing ? () => void downloadResume(existing.id, existing.applicationId) : undefined}
           />
         </Field>
       </FormSection>

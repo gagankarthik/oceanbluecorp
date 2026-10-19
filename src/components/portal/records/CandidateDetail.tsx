@@ -301,7 +301,7 @@ export function CandidateDetail({ id }: { id: string }) {
   const handleViewResume = async () => {
     if (!candidate?.resumeId) return;
     try {
-      const res = await fetch(`/api/resume/${candidate.resumeId}`);
+      const res = await fetch(`/api/resume/${candidate.resumeId}?applicationId=${encodeURIComponent(candidate.id)}`);
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed");
       window.open(data.downloadUrl, "_blank");

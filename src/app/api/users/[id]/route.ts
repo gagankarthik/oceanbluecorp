@@ -49,12 +49,16 @@ export async function PATCH(
     const body = await request.json();
     const { role, status } = body;
 
+    // Without the target's real role the HR check below cannot be made, so refuse.
     const current = await getCognitoUser(id);
-    const self = denySelfAction(auth.claims, { id, email: current.user?.email });
+    if (!current.success || !current.user) {
+      return serverError("Reading target user", current.error, "Couldn't check that account. Please try again.", 503);
+    }
+    const self = denySelfAction(auth.claims, { id, email: current.user.email });
     if (self) return self;
     const guard = denyElevatedAction(auth.claims, {
       grantingRole: role,
-      targetRole: current.user?.role ?? null,
+      targetRole: current.user.role,
     });
     if (guard) return guard;
 
@@ -112,9 +116,12 @@ export async function DELETE(
     const { id } = await params;
 
     const current = await getCognitoUser(id);
-    const self = denySelfAction(auth.claims, { id, email: current.user?.email });
+    if (!current.success || !current.user) {
+      return serverError("Reading target user", current.error, "Couldn't check that account. Please try again.", 503);
+    }
+    const self = denySelfAction(auth.claims, { id, email: current.user.email });
     if (self) return self;
-    const guard = denyElevatedAction(auth.claims, { targetRole: current.user?.role ?? null });
+    const guard = denyElevatedAction(auth.claims, { targetRole: current.user.role });
     if (guard) return guard;
 
     const result = await deleteUser(id);
