@@ -144,7 +144,9 @@ export default function Home() {
             >
               <span className="text-small text-tide-300">For hiring managers</span>
               <span>
-                <span className="display block text-hero-tile">A shortlist in 48 hours</span>
+                <span className="display block text-hero-tile">
+                  A shortlist in <span className="text-cyan-300">48 hours</span>
+                </span>
                 <span className="mt-2 block text-balance text-small text-tide-300 group-hover:text-white">Vetted engineers, matched to the role</span>
               </span>
             </Link>
@@ -208,7 +210,7 @@ export default function Home() {
                     <span className="sr-only">Learn more about {p.service}</span>
                     <span
                       aria-hidden
-                      className="grid size-12 place-items-center rounded-full bg-mist-0 text-ocean-700 ring-1 ring-inset ring-ocean-200 transition-[background-color,color,transform] duration-300 group-hover:translate-x-1 group-hover:bg-ocean-600 group-hover:text-white"
+                      className="grid size-12 place-items-center rounded-full bg-ocean-600 text-white transition-[background-color,transform] duration-300 group-hover:translate-x-1 group-hover:bg-ocean-700"
                     >
                       <svg viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 10h12M11 5l5 5-5 5" />
@@ -247,7 +249,11 @@ export default function Home() {
           <ul className="mt-14 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {industries.map((ind, i) => (
               <li key={ind.slug} data-reveal style={{ "--d": i } as React.CSSProperties}>
-                <Link href={`/industries/${ind.slug}`} className="group flex h-full flex-col bg-mist-0 transition-colors hover:bg-tide-100">
+                {/* Public sector is the core market (state agencies, MBE/WBE), so it alone carries the accent */}
+                <Link
+                  href={`/industries/${ind.slug}`}
+                  className={`group flex h-full flex-col transition-colors ${ind.slug === "government" ? "on-dark bg-ocean-600 text-white hover:bg-ocean-700" : "bg-mist-0 hover:bg-tide-100"}`}
+                >
                   <Photo
                     name={ind.photo}
                     className="aspect-[4/3]"
@@ -256,9 +262,9 @@ export default function Home() {
                     zoom
                   />
                   <span className="flex flex-1 flex-col p-5">
-                    <span className="text-title font-semibold leading-snug text-navy-900 group-hover:text-ocean-700">{ind.name}</span>
-                    <span className="mt-2 flex-1 text-small leading-normal text-mist-600">{ind.body.split(".")[0]}.</span>
-                    <span className="relative mt-4 w-fit text-small font-medium text-ocean-700">
+                    <span className={`text-title font-semibold leading-snug ${ind.slug === "government" ? "text-white" : "text-navy-900 group-hover:text-ocean-700"}`}>{ind.name}</span>
+                    <span className={`mt-2 flex-1 text-small leading-normal ${ind.slug === "government" ? "text-mist-50" : "text-mist-600"}`}>{ind.body.split(".")[0]}.</span>
+                    <span className={`relative mt-4 w-fit text-small font-medium ${ind.slug === "government" ? "text-white" : "text-ocean-700"}`}>
                       See how we help
                       <span
                         aria-hidden

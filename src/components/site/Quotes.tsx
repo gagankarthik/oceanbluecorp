@@ -14,8 +14,16 @@ export default function Quotes({ title = "What our clients say", more }: { title
           {more && <MoreLink href={more.href} label={more.label} />}
         </div>
         <div className="mt-12 grid gap-2 md:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <figure key={t.name} className="flex flex-col bg-mist-100 p-7 transition-colors duration-300 hover:bg-tide-100" data-reveal style={{ "--d": i } as React.CSSProperties}>
+          {testimonials.map((t, i) => {
+            // The middle quote is featured: the page's accent, used once here
+            const featured = i === 1;
+            return (
+            <figure
+              key={t.name}
+              className={`flex flex-col p-7 transition-colors duration-300 ${featured ? "on-dark bg-ocean-600 text-white" : "bg-mist-100 hover:bg-tide-100"}`}
+              data-reveal
+              style={{ "--d": i } as React.CSSProperties}
+            >
               <div className={`flex h-16 w-fit items-center px-4 ${t.logoOnDark ? "bg-navy-900" : "bg-mist-0"}`}>
                 {t.logo ? (
                   <img src={t.logo} alt={t.company} className="h-8 w-auto max-w-[12rem] object-contain" loading="lazy" />
@@ -29,10 +37,11 @@ export default function Quotes({ title = "What our clients say", more }: { title
               </blockquote>
               <figcaption className="mt-10 text-small">
                 <span className="block font-medium">{t.name}</span>
-                <span className="block text-mist-600">{t.role}</span>
+                <span className={`block ${featured ? "text-mist-50" : "text-mist-600"}`}>{t.role}</span>
               </figcaption>
             </figure>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

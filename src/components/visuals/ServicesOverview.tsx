@@ -79,12 +79,25 @@ export default function ServicesOverview() {
                     ))}
                   </ul>
 
-                  <Link
-                    href={`/services#${id}`}
-                    className="mt-8 inline-flex min-h-12 w-fit items-center bg-cyan-500 px-5 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
-                  >
-                    {c.cta}
-                  </Link>
+                  {/* One highlighted action across the three columns; the rest are links, so the accent means something */}
+                  {i === 0 ? (
+                    <Link
+                      href={`/services#${id}`}
+                      className="mt-8 inline-flex min-h-12 w-fit items-center bg-cyan-500 px-5 font-medium text-navy-950 btn-fill btn-fill-cyan active:scale-[0.98]"
+                    >
+                      {c.cta}
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/services#${id}`}
+                      className="group/cta mt-8 inline-flex min-h-12 w-fit items-center gap-2 font-medium text-white underline decoration-white/40 underline-offset-4 hover:decoration-cyan-300"
+                    >
+                      {c.cta}
+                      <svg aria-hidden viewBox="0 0 16 16" className="size-4 text-cyan-300 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M3 8h10M9 4l4 4-4 4" />
+                      </svg>
+                    </Link>
+                  )}
                 </div>
               </article>
             );
