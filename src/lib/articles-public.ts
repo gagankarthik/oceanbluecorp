@@ -155,8 +155,10 @@ export function articleBreadcrumbJsonLd(article: Article) {
 export function articleJsonLd(article: Article) {
   const config = ARTICLE_KIND_CONFIG[article.kind as ArticleKind];
   const url = `${SITE}${config.publicPath}/${article.slug}`;
+  // @id ties the article to the site's Organization node instead of a second, unlinked one.
   const publisher = {
     "@type": "Organization",
+    "@id": `${SITE}/#organization`,
     name: "Oceanblue Solutions, Inc.",
     url: SITE,
     logo: { "@type": "ImageObject", url: `${SITE}/brand/oceanblue-mark-512.png`, width: 512, height: 512 },

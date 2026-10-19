@@ -50,8 +50,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Pages only. robots.txt and sitemap.xml are left out on purpose: a 503 on
+    // Pages only. robots.txt, sitemap.xml and the llms files are left out on purpose: a 503 on
     // robots.txt makes a crawler stop fetching the whole site.
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|woff2?|ttf|otf|css|js)).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|llms.txt|llms-full.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|woff2?|ttf|otf|css|js)).*)",
   ],
 };

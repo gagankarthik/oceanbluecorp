@@ -20,6 +20,26 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
 
+      // AI search and assistant crawlers, named so a future blanket rule cannot
+      // silently shut them out. Same policy as "*": everything but the API.
+      {
+        userAgent: [
+          "GPTBot",
+          "OAI-SearchBot",
+          "ChatGPT-User",
+          "ClaudeBot",
+          "Claude-SearchBot",
+          "Claude-User",
+          "PerplexityBot",
+          "Perplexity-User",
+          "Google-Extended",
+          "Applebot-Extended",
+          "Bingbot",
+        ],
+        allow: "/",
+        disallow: ["/api/"],
+      },
+
       // Block heavy scraper bots that offer no indexing value
       {
         userAgent: "AhrefsBot",
@@ -40,6 +60,5 @@ export default function robots(): MetadataRoute.Robots {
     ],
 
     sitemap: `${BASE}/sitemap.xml`,
-    host: BASE,
   };
 }

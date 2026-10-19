@@ -43,6 +43,7 @@ test("a legacy remote type splits into a type and a workplace", () => {
 test("job locations read the same everywhere", () => {
   assert.equal(jobPlace({ location: "Columbus", state: "OH" }), "Columbus, OH");
   assert.equal(jobPlace({ location: "", workplace: "remote" }), "Remote");
+  assert.equal(jobPlace({ location: "Remote", state: "remote" }), "Remote");
   assert.equal(jobLocationLabel({ location: "Columbus", state: "OH", workplace: "hybrid" }), "Columbus, OH (Hybrid)");
   assert.equal(jobLocationLabel({ location: "Columbus", workplace: "on-site" }), "Columbus");
   assert.equal(jobLocationLabel({ location: "", type: "remote" }), "Remote");

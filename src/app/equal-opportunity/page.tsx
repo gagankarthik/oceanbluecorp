@@ -8,7 +8,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/equal-opportunity",
   title: "Equal Opportunity Employer",
   description:
-    "Oceanblue Solutions, Inc. is an equal opportunity employer. Our non-discrimination statement, where it applies, and how to ask for an accommodation during hiring.",
+    "Oceanblue Solutions is an equal opportunity employer. Our non-discrimination statement, where it applies, and how to ask for a hiring accommodation.",
 });
 
 const sections: LegalSection[] = [

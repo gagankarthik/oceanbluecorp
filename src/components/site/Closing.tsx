@@ -17,7 +17,7 @@ export default function Closing({
         <div className="grid gap-10 border-b border-white/10 pb-16 pt-20 md:pt-24 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7" data-reveal>
             <h2 className="display text-head">
-              {lines[0]}
+              {lines[0]}{" "}
               <br />
               {lines[1]}
             </h2>

@@ -16,7 +16,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/careers",
   title: "IT Jobs & Careers",
   description:
-    "Find IT, engineering and consulting jobs with Oceanblue Solutions, Inc. Contract, contract-to-hire and direct-hire roles across the US, including remote positions.",
+    "IT, engineering and consulting jobs with Oceanblue Solutions. Contract, contract-to-hire and direct-hire roles across the US, including remote positions.",
 });
 
 /** Company facts, never open-role counts */

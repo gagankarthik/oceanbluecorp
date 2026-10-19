@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getJob, jobTypeLabel } from "@/lib/jobs";
 import { jobPlace } from "@/lib/workplace";
 import { richTextToPlain } from "@/lib/rich-text";
-import { breadcrumbJsonLd, jsonLdString } from "@/lib/seo";
+import { breadcrumbJsonLd, clampDescription, jsonLdString, pageMetadata } from "@/lib/seo";
 import { jobPostingJsonLd } from "@/lib/job-jsonld";
 import JobPostingView from "@/components/site/JobPostingView";
 import ApplyPanel from "./ApplyPanel";
@@ -24,12 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { job } = found;
   const where = jobPlace(job);
   const plain = richTextToPlain(job.description);
-  const description = `${jobTypeLabel(job.type)}${where ? `, ${where}` : ""}. ${plain}`.slice(0, 157).trimEnd();
-  return {
+  // pageMetadata, so a shared job link carries its own og:url and title, not the homepage's.
+  return pageMetadata({
+    path: `/jobs/${job.id}`,
     title: where ? `${job.title}, ${where}` : job.title,
-    description: description.length >= 157 ? `${description}…` : description,
-    alternates: { canonical: `${SITE}/jobs/${job.id}` },
-  };
+    description: clampDescription(`${jobTypeLabel(job.type)}${where ? `, ${where}` : ""}. ${plain}`),
+  });
 }
 
 export default async function JobPage({ params }: Props) {

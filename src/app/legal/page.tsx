@@ -76,7 +76,7 @@ export default function Legal() {
             </span>
             <span className="line">
               <span data-line style={{ "--i": 1 } as React.CSSProperties}>
-                in one place.
+                {" "}in one place.
               </span>
             </span>
           </h1>

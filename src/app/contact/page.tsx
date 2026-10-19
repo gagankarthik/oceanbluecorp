@@ -9,7 +9,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/contact",
   title: "Contact Us",
   description:
-    "Hiring staff or finding work: talk to Oceanblue Solutions, Inc. about IT staffing, enterprise solutions, managed services or your next role. Call +1 (614) 844-6925 or email hr@oceanbluecorp.com.",
+    "Hiring or job hunting? Talk to Oceanblue about IT staffing, enterprise solutions, managed services or your next role. Call +1 (614) 844-6925.",
 });
 
 // ?for=work opens the job-seeker path, read on the server so it renders without a flash.

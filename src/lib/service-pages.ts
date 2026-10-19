@@ -10,9 +10,9 @@ export type ServicePage = {
 export const servicePages: Record<string, ServicePage> = {
   "it-staffing": {
     meta: {
-      title: "IT Staffing Services",
+      title: "IT Staffing Agency in Columbus, Ohio",
       description:
-        "Pre-vetted cloud, data, security, ERP, Salesforce and AI specialists embedded in your team on contract, contract-to-hire or permanent terms. Shortlists in 48 hours.",
+        "Pre-vetted cloud, data, security, ERP, Salesforce and AI specialists for your team on contract, contract-to-hire or direct hire. Shortlists in 48 hours.",
       keywords: ["IT staffing", "technical recruiting", "contract IT staffing", "direct placement", "managed teams", "cloud engineer staffing"],
     },
   },
@@ -41,7 +41,7 @@ export const servicePages: Record<string, ServicePage> = {
     meta: {
       title: "IT Training & Upskilling",
       description:
-        "Instructor-led technology training in cloud, DevOps, data and AI, security, ERP and Salesforce, with custom curricula, hands-on labs and certification preparation.",
+        "Instructor-led training in cloud, DevOps, data and AI, security, ERP and Salesforce, with custom curricula, hands-on labs and certification prep.",
       keywords: ["IT training", "corporate technology training", "cloud training", "upskilling", "certification preparation", "Salesforce training"],
     },
     moreFacets: { label: "How it runs", items: ["Instructor-led", "On-site or virtual", "Custom curricula and workshops"] },
@@ -58,22 +58,22 @@ export const servicePages: Record<string, ServicePage> = {
     meta: {
       title: "Cybersecurity Services",
       description:
-        "Compliance-aligned cybersecurity: assessments, identity and access management, vulnerability management, cloud security posture, and HIPAA, SOC 2 and NIST readiness.",
+        "Compliance-aligned cybersecurity: assessments, identity and access, vulnerability management, cloud security posture, and HIPAA, SOC 2 and NIST readiness.",
       keywords: ["cybersecurity services", "IAM", "vulnerability management", "cloud security", "SOC 2", "HIPAA compliance", "NIST"],
     },
     moreFacets: { label: "Frameworks we align to", items: ["HIPAA", "SOC 2", "NIST"] },
   },
   erp: {
     meta: {
-      title: "ERP Implementation & Support",
+      title: "SAP, Oracle & Dynamics ERP Consulting",
       description:
-        "ERP implementations, upgrades, integrations and optimization across SAP, Oracle and Microsoft Dynamics, with clean data migration, reporting and ongoing support.",
+        "ERP implementations, upgrades and integrations across SAP, Oracle and Microsoft Dynamics, with clean data migration, reporting and ongoing support.",
       keywords: ["ERP solutions", "SAP implementation", "Oracle ERP", "Microsoft Dynamics", "ERP integration", "ERP support"],
     },
   },
   salesforce: {
     meta: {
-      title: "Salesforce Consulting Services",
+      title: "Salesforce Consulting & Managed Admin",
       description:
         "Salesforce implementation, Apex and LWC development, workflow automation, integrations and managed admin, for cleaner data and reporting you can act on.",
       keywords: ["Salesforce services", "Salesforce implementation", "Apex development", "Lightning Web Components", "Salesforce admin", "CRM automation"],
@@ -91,13 +91,13 @@ export const servicePages: Record<string, ServicePage> = {
     meta: {
       title: "Digital Transformation Consulting",
       description:
-        "Digital transformation with a clear roadmap: technology strategy, architecture, process optimization, modernization and change management, with KPIs agreed up front.",
+        "Digital transformation with a clear roadmap: technology strategy, architecture, process redesign, modernization and change management, with KPIs set up front.",
       keywords: ["digital transformation", "technology strategy", "IT roadmap", "application modernization", "process optimization", "change management"],
     },
   },
   "managed-services": {
     meta: {
-      title: "Managed IT Services",
+      title: "Managed IT Services & 24/7 Helpdesk",
       description:
         "24/7 managed services: monitoring, helpdesk and application support, cloud and infrastructure management, and security monitoring, on one accountable SLA.",
       keywords: ["managed services", "24/7 monitoring", "IT helpdesk", "infrastructure management", "application support", "managed SLA"],

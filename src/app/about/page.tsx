@@ -7,12 +7,12 @@ import OfficeClocks from "@/components/visuals/OfficeClocks";
 import StoryTimeline from "@/components/visuals/StoryTimeline";
 import { MarkTile, clientMarks } from "@/components/site/LogoWall";
 import { company, leadership, offices } from "@/lib/site-content";
-import { pageMetadata } from "@/lib/seo";
+import { ORG_ID, SITE_URL, jsonLdString, pageMetadata } from "@/lib/seo";
 import Quotes from "@/components/site/Quotes";
 
 export const metadata: Metadata = pageMetadata({
   path: "/about",
-  title: "About Oceanblue",
+  title: "About Us",
   description:
     "Since 2013, Oceanblue Solutions, Inc. has supplied IT talent, enterprise solutions and managed services to enterprises and state agencies from Powell, Ohio.",
 });
@@ -24,9 +24,23 @@ const initials = (name: string) =>
     .map((w) => w[0])
     .join("");
 
+// The leadership team as Person nodes tied to the root Organization.
+const leadershipJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": leadership.map((l) => ({
+    "@type": "Person",
+    "@id": `${SITE_URL}/about#${l.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    name: l.name,
+    jobTitle: l.role,
+    worksFor: { "@id": ORG_ID },
+    ...(l.linkedin ? { sameAs: [l.linkedin] } : {}),
+  })),
+};
+
 export default function AboutPage() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(leadershipJsonLd) }} />
       <PageHero
         cells={[{ photo: "facade" }, { tone: "bg-ocean-600" }, { photo: "bridge" }, { tone: "bg-tide-200" }, { photo: "tower", position: "50% 70%" }]}
         lines={["About", "Oceanblue"]}

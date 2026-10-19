@@ -33,6 +33,7 @@ export default function Maintenance({
             {lines.map((l, i) => (
               <span key={l} className="line">
                 <span data-line style={{ "--i": i } as React.CSSProperties}>
+                  {i > 0 && " "}
                   {l}
                 </span>
               </span>

@@ -11,7 +11,7 @@ import Quotes from "@/components/site/Quotes";
 import { company, industries, services } from "@/lib/site-content";
 import { ORG_ID, SITE_URL, WEBSITE_ID, jsonLdString, pageMetadata } from "@/lib/seo";
 
-const HOME_TITLE = "Oceanblue Solutions, Inc. | IT Staffing & Enterprise Solutions";
+const HOME_TITLE = "IT Staffing & Managed IT Services, Columbus, Ohio | Oceanblue";
 const HOME_DESCRIPTION =
   "IT and engineering staffing, enterprise solutions, managed services and training for enterprises and state agencies. Certified MBE/WBE in Powell, Ohio.";
 const homeBase = pageMetadata({ path: "/", title: "IT Staffing & Enterprise Solutions", description: HOME_DESCRIPTION });
@@ -111,7 +111,7 @@ export default function Home() {
               </span>
               <span className="line">
                 <span data-line style={{ "--i": 1 } as React.CSSProperties}>
-                  the platform.
+                  {" "}the platform.
                 </span>
               </span>
             </h1>

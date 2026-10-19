@@ -67,6 +67,7 @@ export function jobPostingJsonLd(job: JobPostingSource, publishedAt?: string) {
     employmentType: EMPLOYMENT_TYPE[job.type] ?? "OTHER",
     hiringOrganization: {
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: "Oceanblue Solutions, Inc.",
       sameAs: SITE_URL,
       logo: `${SITE_URL}/brand/oceanblue-mark-512.png`,

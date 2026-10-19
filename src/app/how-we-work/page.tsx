@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/how-we-work",
   title: "How We Work",
   description:
-    "Every engagement runs through discovery, strategy, implementation and optimization, on contract, contract-to-hire, direct hire, project team or managed services terms.",
+    "Every engagement runs through discovery, strategy, implementation and optimization, on contract, direct-hire, project team or managed services terms.",
 });
 
 const ledger = [

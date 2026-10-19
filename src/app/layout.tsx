@@ -6,6 +6,7 @@ import SiteShell from "@/components/site/SiteShell";
 import CookieConsent from "@/components/layout/CookieConsent";
 import { getAnnouncement, getMaintenance } from "@/lib/content";
 import { jsonLdString } from "@/lib/seo";
+import { certifications } from "@/lib/site-content";
 import Script from "next/script";
 
 // ISR: re-render the layout (which reads the CMS announcement) at most once a
@@ -24,10 +25,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://oceanbluecorp.com"),
   title: {
     default: "Oceanblue Solutions, Inc. | Enterprise IT Solutions",
-    template: "%s | Oceanblue Solutions, Inc.",
+    // Short brand suffix so the page part keeps most of a ~60-character title.
+    template: "%s | Oceanblue Solutions",
   },
   description:
-    "Oceanblue Solutions, Inc. delivers IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce for Fortune 500 enterprises and state government agencies across North America.",
+    "IT staffing, enterprise solutions and managed services across ERP, cloud, security, AI and Salesforce, for enterprises and state agencies. Powell, Ohio.",
   applicationName: "Oceanblue Solutions, Inc.",
   keywords: [
     "Oceanblue Solutions, Inc.",
@@ -99,22 +101,43 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "Organization",
+  // ProfessionalService (a LocalBusiness) carries the Powell HQ's phone and hours
+  // for local results; Organization keeps the entity for everything else.
+  "@type": ["Organization", "ProfessionalService"],
   // Stable node id so page-level graphs (see src/app/page.tsx) can reference
   // this Organization instead of redeclaring it.
   "@id": "https://oceanbluecorp.com/#organization",
   name: "Oceanblue Solutions, Inc.",
   legalName: "Oceanblue Solutions, Inc.",
   // Former and short names, so searches for the old name still resolve here.
-  alternateName: ["Oceanblue Solutions", "Oceanblue", "Ocean Blue Corporation", "OceanBlueCorp"],
+  alternateName: ["Oceanblue Solutions", "Ocean Blue Solutions", "Oceanblue", "Ocean Blue Corporation", "OceanBlueCorp"],
   url: "https://oceanbluecorp.com",
   logo: { "@type": "ImageObject", url: "https://oceanbluecorp.com/brand/oceanblue-mark-512.png", width: 512, height: 512 },
   image: "https://oceanbluecorp.com/brand/oceanblue-logo.png",
   description:
     "Provider of IT staffing, enterprise solutions, and managed services across ERP, cloud, cybersecurity, AI and data, and Salesforce, serving enterprises and state government agencies across North America.",
-  foundingDate: "2013",
+  foundingDate: "2013-08-08",
   email: "hr@oceanbluecorp.com",
-  areaServed: { "@type": "Country", name: "United States" },
+  telephone: "+1-614-844-6925",
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    opens: "08:00",
+    closes: "17:00",
+  },
+  areaServed: [
+    { "@type": "City", name: "Columbus, Ohio" },
+    { "@type": "State", name: "Ohio" },
+    { "@type": "Country", name: "United States" },
+  ],
+  hasCredential: certifications.flatMap((c) =>
+    c.certs.map((cert) => ({
+      "@type": "EducationalOccupationalCredential",
+      name: cert.name,
+      credentialCategory: "Supplier diversity certification",
+      recognizedBy: { "@type": "Organization", name: cert.issuer },
+    })),
+  ),
   knowsAbout: [
     "IT staffing",
     "Engineering staffing",
@@ -145,7 +168,7 @@ const jsonLd = {
     {
        "@type": "ContactPoint",
       telephone: "+1-614-844-6925",
-      contactType: "Human Resource",
+      contactType: "human resources",
       availableLanguage: ["English"],
     },
   ],

@@ -26,7 +26,7 @@ export const OG_IMAGES = [
 /**
  * Metadata for a static public page: title, description, canonical, and a
  * matching Open Graph and Twitter card. `title` is the page part only; the root
- * template appends " | Oceanblue Solutions, Inc.". Keep it under ~35 characters
+ * template appends " | Oceanblue Solutions". Keep it under ~40 characters
  * and the description between 120 and 160.
  */
 export function pageMetadata({

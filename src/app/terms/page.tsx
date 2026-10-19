@@ -6,7 +6,7 @@ import { DocPage, DocSection, P, UL, SubHead, Callout, ContactCard, RelatedLinks
 export const metadata: Metadata = pageMetadata({
   path: "/terms",
   title: "Terms of Service",
-  description: "The Terms of Service governing your use of the Oceanblue Solutions, Inc. website, job applications and services, including acceptable use and limits of liability.",
+  description: "The Terms of Service for the Oceanblue Solutions website, job applications and services, including acceptable use and limits of liability.",
 });
 
 const SECTIONS = [

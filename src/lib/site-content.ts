@@ -490,7 +490,7 @@ export const officeAddresses: {
   hq?: boolean;
 }[] = [
   { city: "Powell, Ohio", country: "United States", address: ["9775 Fairway Drive, Suite C", "Powell, Ohio 43065"], phone: "+1 (614) 844-6925", hq: true },
-  { city: "Hyderabad", country: "India", address: ["13th Floor, Building 9, Raheja Mindspace", "Madhapur, Hyderabad 560081"], phone: "+91 814 312 4665" },
+  { city: "Hyderabad", country: "India", address: ["13th Floor, Building 9, Raheja Mindspace", "Madhapur, Hyderabad 500081"], phone: "+91 814 312 4665" },
   { city: "Vizianagaram", country: "India", address: ["Plot No. 87, CMR Green Field Layout", "Vizianagaram, Andhra Pradesh 535004"], phone: "+91 814 294 9111" },
   { city: "London", country: "United Kingdom", address: ["910 London Road, Thornton Heath", "London CR7 7PE"] },
 ];
