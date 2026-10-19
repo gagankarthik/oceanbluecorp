@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
-import { services } from "@/lib/site-content";
+import { industries, services } from "@/lib/site-content";
 import { categories, type Category } from "@/lib/resources";
 
 /* Human sitemap, grouped by errand rather than URL depth. Keep in step with
@@ -23,7 +23,6 @@ const GROUPS: { group: string; note: string; links: { name: string; href: string
       { name: "Home", href: "/" },
       { name: "About us", href: "/about" },
       { name: "How we work", href: "/how-we-work" },
-      { name: "Industries", href: "/industries" },
       { name: "Certifications", href: "/certifications" },
       { name: "Contact us", href: "/contact" },
     ],
@@ -32,6 +31,11 @@ const GROUPS: { group: string; note: string; links: { name: string; href: string
     group: "Services",
     note: "What we are engaged to do.",
     links: [{ name: "All services", href: "/services" }, ...services.map((s) => ({ name: s.name, href: `/services/${s.slug}` }))],
+  },
+  {
+    group: "Industries",
+    note: "The sectors we work in.",
+    links: [{ name: "All industries", href: "/industries" }, ...industries.map((i) => ({ name: i.name, href: `/industries/${i.slug}` }))],
   },
   {
     group: "Careers",

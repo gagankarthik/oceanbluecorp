@@ -6,7 +6,8 @@ import Closing from "@/components/site/Closing";
 import Photo from "@/components/site/Photo";
 import BackLink from "@/components/site/BackLink";
 import { getService, industries, layers, services, servicesByLayer, steps, type LayerId } from "@/lib/site-content";
-import { servicePages } from "@/lib/service-pages";
+import { serviceFaqs, servicePages } from "@/lib/service-pages";
+import FaqList from "@/components/site/FaqList";
 import { breadcrumbJsonLd, jsonLdString, ORG_ID, pageMetadata, SITE_URL } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -161,6 +162,8 @@ export default async function ServicePage({ params }: Props) {
         </div>
       </section>
 
+      <FaqList items={serviceFaqs[slug] ?? []} here={`/services/${slug}`} />
+
       <section className="bg-field-mist">
         <div className="gutter grid gap-16 py-24 md:py-32 lg:grid-cols-12">
           <div className="side">
@@ -186,7 +189,7 @@ export default async function ServicePage({ params }: Props) {
               <ul className="mt-10 grid gap-6 sm:grid-cols-2">
                 {sectors.map((ind) => (
                   <li key={ind.slug} data-reveal>
-                    <Link href={`/industries#${ind.slug}`} className="group block">
+                    <Link href={`/industries/${ind.slug}`} className="group block">
                       <Photo name={ind.photo} className="aspect-[4/3]" sizes="25vw" position={ind.photo === "plant" ? "0% 50%" : "center"} />
                       <span className="mt-4 block text-title transition-colors group-hover:text-ocean-700">{ind.name}</span>
                     </Link>

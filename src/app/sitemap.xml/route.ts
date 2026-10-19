@@ -2,7 +2,7 @@ import { getPublicJobs } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "@/lib/articles";
 import { getLiveArticles } from "@/lib/articles-public";
-import { services } from "@/lib/site-content";
+import { industries, services } from "@/lib/site-content";
 
 const BASE = "https://oceanbluecorp.com";
 
@@ -16,6 +16,7 @@ const STATIC: Entry[] = [
   { url: `${BASE}/services`, changefreq: "monthly", priority: 0.9 },
   ...services.map((s) => ({ url: `${BASE}/services/${s.slug}`, changefreq: "monthly", priority: 0.85 })),
   { url: `${BASE}/industries`, changefreq: "monthly", priority: 0.75 },
+  ...industries.map((i) => ({ url: `${BASE}/industries/${i.slug}`, changefreq: "monthly", priority: 0.75 })),
   { url: `${BASE}/how-we-work`, changefreq: "monthly", priority: 0.7 },
   { url: `${BASE}/certifications`, changefreq: "yearly", priority: 0.6 },
   { url: `${BASE}/products`, changefreq: "monthly", priority: 0.75 },

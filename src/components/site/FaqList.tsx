@@ -12,7 +12,7 @@ export default function FaqList({
 }: {
   title?: string;
   intro?: string;
-  items: Faq[];
+  items: Pick<Faq, "q" | "a" | "href">[];
   tone?: "paper" | "mist";
   /** This page's path; answers don't link back to it. */
   here?: string;

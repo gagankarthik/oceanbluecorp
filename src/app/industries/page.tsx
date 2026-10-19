@@ -64,7 +64,9 @@ export default function IndustriesPage() {
               </div>
               <div className={flip ? "lg:col-span-7 lg:col-start-1 lg:row-start-1" : "lg:col-span-7 lg:col-start-6"}>
                 <h2 className="display text-head" data-reveal>
-                  {ind.name}
+                  <Link href={`/industries/${ind.slug}`} className={`transition-colors ${l.hover}`}>
+                    {ind.name}
+                  </Link>
                 </h2>
                 <p className={`mt-6 max-w-measure-narrow text-title leading-snug ${l.soft}`} data-reveal style={{ "--d": 1 } as React.CSSProperties}>
                   {ind.body}
@@ -87,6 +89,13 @@ export default function IndustriesPage() {
                     See all services
                   </Link>
                 </p>
+                <Link
+                  href={`/industries/${ind.slug}`}
+                  className={`mt-8 inline-block font-medium underline underline-offset-4 ${l.link}`}
+                  data-reveal
+                >
+                  More on {ind.short.toLowerCase()}
+                </Link>
               </div>
             </div>
           </section>

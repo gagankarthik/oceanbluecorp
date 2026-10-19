@@ -41,8 +41,8 @@ export const FAQS: Faq[] = [
   {
     topic: "Working with us",
     q: "What engagement models do you offer?",
-    a: "Four: by the project, try before you hire, permanent hire, and a managed project team under an outcome-based statement of work where we own scope, staffing and delivery.",
-    href: "/services/engineering-talent",
+    a: "Five: contract, contract-to-hire, direct hire, a project team under an outcome-based statement of work where we own scope, staffing and delivery, and managed services measured against one SLA.",
+    href: "/how-we-work",
   },
   {
     topic: "Working with us",

@@ -54,7 +54,7 @@ const menus: Menu[] = [
     groups: [
       {
         title: "Industries we serve",
-        items: industries.map((i) => ({ href: `/industries#${i.slug}`, label: i.name, desc: i.tagline })),
+        items: industries.map((i) => ({ href: `/industries/${i.slug}`, label: i.name, desc: i.tagline })),
       },
     ],
     feature: {

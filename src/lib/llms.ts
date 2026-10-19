@@ -2,6 +2,7 @@
 // assistants. Built from site-content so it cannot drift from the pages.
 import { company, services, industries, certifications, partners, officeAddresses, layers } from "./site-content";
 import { FAQS } from "./faqs";
+import { serviceFaqs } from "./service-pages";
 import { ARTICLE_KINDS, ARTICLE_KIND_CONFIG } from "./articles";
 import { getLiveArticles } from "./articles-public";
 import { SITE_URL } from "./seo";
@@ -49,12 +50,13 @@ export async function llmsTxt(full: boolean): Promise<string> {
     if (full) {
       out.push("", `  ${s.intro}`, "", `  ${s.facetsLabel}: ${s.facets.join("; ")}.`);
       for (const i of s.includes) out.push(`  - ${i.title}: ${i.body}`);
+      for (const f of serviceFaqs[s.slug] ?? []) out.push(`  - Q: ${f.q} A: ${f.a}`);
       out.push("");
     }
   }
 
   out.push("", "## Industries", "");
-  for (const i of industries) out.push(`- ${i.name}: ${i.body}`);
+  for (const i of industries) out.push(`- [${i.name}](${url(`/industries/${i.slug}`)}): ${i.body}`);
   out.push(`- Overview: ${url("/industries")}`);
 
   out.push(

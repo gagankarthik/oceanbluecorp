@@ -247,7 +247,7 @@ export default function Home() {
           <ul className="mt-14 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {industries.map((ind, i) => (
               <li key={ind.slug} data-reveal style={{ "--d": i } as React.CSSProperties}>
-                <Link href={`/industries#${ind.slug}`} className="group flex h-full flex-col bg-mist-0 transition-colors hover:bg-tide-100">
+                <Link href={`/industries/${ind.slug}`} className="group flex h-full flex-col bg-mist-0 transition-colors hover:bg-tide-100">
                   <Photo
                     name={ind.photo}
                     className="aspect-[4/3]"
