@@ -244,7 +244,7 @@ export function SegmentChips({
             aria-pressed={active}
             onClick={() => onChange(active && it.label !== "All" ? "All" : it.label)}
             className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-adm-base font-medium transition-colors ${
-              active ? "bg-navy-900 text-white" : "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-100"
+              active ? "bg-contrast text-on-contrast" : "bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-100"
             }`}
           >
             {color && <span aria-hidden className="size-2.5 rounded-full ring-1 ring-white/60" style={{ background: color }} />}

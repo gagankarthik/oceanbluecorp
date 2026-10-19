@@ -32,7 +32,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             role="status"
-            className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl bg-navy-900 px-4 py-3 text-adm-base text-white shadow-xl"
+            className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl bg-navy-950 px-4 py-3 text-adm-base text-white shadow-xl ring-1 ring-white/10"
           >
             <Icon
               name={t.tone === "error" ? "alert" : t.tone === "info" ? "bell" : "check"}

@@ -119,6 +119,9 @@
   --color-on-deep-soft: var(--color-tide-300);
   --color-flag: var(--color-buoy-400);
   --color-placeholder: var(--color-mist-550);
+  /* A solid ink chip and its text (tooltips, the current page); the portal's dark palette flips both */
+  --color-contrast: var(--color-navy-900);
+  --color-on-contrast: var(--color-mist-0);
 
   /* Status roles (portal): text, wash, rim, hover wash, strong text inside
      a wash box, solid mark (dots, stars, invalid edges), icon on navy. */

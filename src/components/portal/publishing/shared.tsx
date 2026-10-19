@@ -210,7 +210,7 @@ export function ChartFilter({
               aria-pressed={on}
               onClick={() => onChange(on ? null : d.label)}
               className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1 text-adm-xs font-medium transition-colors ${
-                on ? "bg-navy-900 text-white" : "bg-mist-50 text-navy-900 ring-1 ring-inset ring-mist-200 hover:bg-mist-100"
+                on ? "bg-contrast text-on-contrast" : "bg-mist-50 text-navy-900 ring-1 ring-inset ring-mist-200 hover:bg-mist-100"
               }`}
             >
               <span aria-hidden className="size-2 rounded-full" style={{ background: palette[i] ?? SERIES[SERIES.length - 1] }} />

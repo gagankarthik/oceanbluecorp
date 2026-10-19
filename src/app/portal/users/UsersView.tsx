@@ -6,11 +6,10 @@ import { check, collectErrors, email, LIMITS, maxLen, required } from "@/lib/for
 import { useAuth } from "@/lib/auth";
 import { useResource } from "@/hooks/use-resource";
 import { USERS_KEY } from "@/hooks/use-console-data";
-import DataTable, { type Column, type Filter } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import Icon, { type IconName } from "@/components/portal/icons";
 import Select, { type SelectOption } from "@/components/portal/Select";
 import { RoleGate, useSession } from "@/components/portal/session";
-import { BarChart, DonutChart } from "@/components/portal/charts";
 import {
   Avatar,
   Badge,
@@ -19,18 +18,15 @@ import {
   deleteConfirmText,
   EmptyState,
   ErrorState,
-  InsightsSheet,
-  KpiRow,
-  KpiRowSkeleton,
+  ListPage,
+  ListPageState,
   Modal,
-  Page,
-  PageHeader,
   Panel,
-  StatCard,
-  TableSkeleton,
+  PillButton,
   type Tone,
+  CrmListSkeleton,
 } from "@/components/portal/kit";
-import { Facts, Field, FormError, GoneNotice, InlineDelete, SegmentChips, ViewTabs, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
+import { Facts, Field, FormError, GoneNotice, InlineDelete, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
 import { canAccess, nav, roles, type Role } from "@/lib/portal/roles";
 import type { MenuEntry } from "@/components/portal/records/Menu";
 
@@ -51,7 +47,6 @@ type User = {
   enabled?: boolean;
 };
 type Tab = "users" | "roles";
-type Focus = "pending" | "inactive" | "norole" | null;
 
 const ROLE_ORDER: StaffRole[] = ["admin", "hr", "sales", "recruiter", "media"];
 const PORTAL: Record<StaffRole, Role> = { admin: "admin", hr: "hr", sales: "sales", recruiter: "recruiter", media: "marketing" };
@@ -67,12 +62,6 @@ const STATUS: Record<Status, { label: string; tone: Tone }> = {
   inactive: { label: "Inactive", tone: "grey" },
 };
 
-const FOCUS: Record<Exclude<Focus, null>, { label: string; match: (u: User) => boolean }> = {
-  pending: { label: "Invited, awaiting first sign-in", match: (u) => u.status === "pending" },
-  inactive: { label: "Sign-in turned off", match: (u) => u.status === "inactive" },
-  norole: { label: "Without a role", match: (u) => !u.role },
-};
-
 const roleOptions = (allowed: StaffRole[]): SelectOption[] =>
   allowed.map((r) => ({ value: r, label: roles[PORTAL[r]].label, description: roles[PORTAL[r]].description, icon: roleIcon[r] }));
 
@@ -86,21 +75,6 @@ function StatusChip({ status }: { status: Status }) {
     <Badge tone={m.tone} dot>
       {m.label}
     </Badge>
-  );
-}
-
-/** StatCard that filters the table; pressed state rings it. */
-function KpiToggle({ active, onClick, label, children }: { active: boolean; onClick: () => void; label: string; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      aria-label={label}
-      className={`block w-full rounded-xl text-left transition-shadow duration-150 hover:shadow-md ${active ? "ring-2 ring-ocean-600 ring-offset-2 ring-offset-mist-50" : ""}`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -433,8 +407,6 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
   const users = useMemo(() => data?.users ?? [], [data]);
   const [tabState, setTabState] = useState<Tab>(initialTab);
   const tab: Tab = isAdmin ? tabState : "users";
-  const [roleFilter, setRoleFilter] = useState("All");
-  const [focus, setFocus] = useState<Focus>(null);
   const [inviting, setInviting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -512,13 +484,15 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
     setConfirmDelete(null);
   };
 
-  const count = (s: Status) => users.filter((u) => u.status === s).length;
-  const noRole = users.filter((u) => !u.role).length;
-  const byRole = [...ROLE_ORDER.map((r) => ({ label: roleLabel(r), value: users.filter((u) => u.role === r).length })), ...(noRole ? [{ label: "No role", value: noRole }] : [])]
-    .filter((b) => b.value > 0)
-    .sort((a, b) => b.value - a.value);
-  const visible = users.filter((u) => (roleFilter === "All" || roleLabel(u.role) === roleFilter) && (!focus || FOCUS[focus].match(u)));
-  const toggleFocus = (f: Exclude<Focus, null>) => setFocus((cur) => (cur === f ? null : f));
+  const summary = (rows: User[]): Summary[] => {
+    const noRole = rows.filter((u) => !u.role).length;
+    return [
+      { label: "active", value: rows.filter((u) => u.status === "active").length },
+      { label: "invited", value: rows.filter((u) => u.status === "pending").length },
+      { label: "inactive", value: rows.filter((u) => u.status === "inactive").length },
+      { label: "without a role", value: noRole, warn: noRole > 0 },
+    ];
+  };
 
   const columns: Column<User>[] = [
     {
@@ -553,147 +527,86 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
     { key: "role", label: "Role", options: [...ROLE_ORDER.map(roleLabel), "No role"], value: (u) => roleLabel(u.role) },
   ];
 
-  const loaded = !isLoading && !(error && !data);
+  // Admins switch between the user list and the access matrix; same strip either way.
+  const viewTabs = isAdmin ? (
+    <TableTabs
+      label="Users views"
+      value={tab}
+      onChange={switchTab}
+      options={[
+        { value: "users" as const, label: "Users" },
+        { value: "roles" as const, label: "Roles & permissions" },
+      ]}
+    />
+  ) : undefined;
+  const invite = () => setInviting(true);
 
   return (
     <RoleGate href="/portal/users">
-      <Page>
-        <PageHeader
-          title="Users"
-          icon="shield"
-          section="workspace"
-
-          actions={
-            <>
-              {tab === "users" && loaded && users.length > 0 && (
-                <InsightsSheet title="Users insights" description="How accounts split across roles and sign-in status. Pick a role to filter the table.">
-                  {(close) => (
-                    <>
-                      <Panel title="Accounts by role and status">
-                        <BarChart
-                          title="Accounts per role, split by active, invited and inactive"
-                          labels={ROLE_ORDER.map(roleLabel)}
-                          series={(["active", "pending", "inactive"] as Status[]).map((s) => ({ name: STATUS[s].label, values: ROLE_ORDER.map((r) => users.filter((u) => u.role === r && u.status === s).length) }))}
-                          height={240}
-                        />
-                      </Panel>
-                      <Panel title="Users by role">
-                        <div className="grid gap-5">
-                          <DonutChart title="Users by role" data={byRole} centerLabel="Users" size={160} />
-                          <SegmentChips
-                            label="Filter the table by role"
-                            items={byRole.map((b) => ({ label: b.label, count: b.value }))}
-                            value={roleFilter}
-                            onChange={(v) => {
-                              setRoleFilter(v);
-                              close();
-                            }}
-                          />
-                        </div>
-                      </Panel>
-                    </>
-                  )}
-                </InsightsSheet>
-              )}
-              <Button icon="send" onClick={() => setInviting(true)}>
-                Invite user
-              </Button>
-            </>
-          }
-          tabs={
-            isAdmin ? (
-              <ViewTabs
-                label="Users views"
-                tabs={[
-                  { id: "users", label: "Users", count: loaded ? users.length : undefined },
-                  { id: "roles", label: "Roles & permissions" },
-                ]}
-                value={tab}
-                onChange={switchTab}
-              />
-            ) : undefined
-          }
-        />
-
+      <ListPage title="Users">
         {tab === "roles" ? (
-          <RolesPanel />
-        ) : isLoading ? (
-          <div role="status" aria-label="Loading users" className="grid gap-6">
-            <KpiRowSkeleton count={4} />
-            <TableSkeleton rows={8} />
-          </div>
-        ) : error && !data ? (
-          <ErrorState title="Couldn't load users" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
-        ) : users.length === 0 ? (
-          <EmptyState
-            framed
-            variant="first-use"
-            icon="send"
-            title="No teammates yet"
-            body="Invite a teammate to give them access to the portal."
-            primary={{ label: "Invite user", icon: "send", onClick: () => setInviting(true) }}
-          />
-        ) : (
           <>
-            <KpiRow>
-              <StatCard section="workspace" label="Active" value={count("active")} icon="userCheck" hint={`of ${users.length} accounts`} trend="flat" />
-              <KpiToggle label="Show invited accounts" active={focus === "pending"} onClick={() => toggleFocus("pending")}>
-                <StatCard section="workspace" label="Invited" value={count("pending")} icon="send" hint="awaiting first sign-in" trend="flat" />
-              </KpiToggle>
-              <KpiToggle label="Show inactive accounts" active={focus === "inactive"} onClick={() => toggleFocus("inactive")}>
-                <StatCard section="workspace" label="Inactive" value={count("inactive")} icon="x" hint="sign-in turned off" trend="flat" />
-              </KpiToggle>
-              <KpiToggle label="Show accounts without a role" active={focus === "norole"} onClick={() => toggleFocus("norole")}>
-                <StatCard section="workspace" label="Without a role" value={noRole} icon="alert" change={noRole ? "Needs a role" : undefined} hint="can't open any section" trend={noRole ? "down" : "flat"} />
-              </KpiToggle>
-            </KpiRow>
-
-            {(focus || roleFilter !== "All") && (
-              <div className="flex flex-wrap items-center gap-2 text-adm-base">
-                <span className="text-mist-600">Showing</span>
-                {[focus && { text: FOCUS[focus].label, clear: () => setFocus(null) }, roleFilter !== "All" && { text: roleFilter, clear: () => setRoleFilter("All") }]
-                  .filter((c): c is { text: string; clear: () => void } => !!c)
-                  .map((c) => (
-                    <span key={c.text} className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 py-1 pl-3 pr-1 font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200">
-                      {c.text}
-                      <button type="button" onClick={c.clear} aria-label={`Clear ${c.text}`} title={`Clear ${c.text}`} className="adm-hit grid size-6 place-items-center rounded-full hover:bg-ocean-100">
-                        <Icon name="x" className="size-3.5" />
-                      </button>
-                    </span>
-                  ))}
-              </div>
-            )}
-
-            <DataTable
-              rows={visible}
-              columns={columns}
-              filters={filters}
-              exportName="users"
-              storageKey="portal.users"
-              searchPlaceholder="Search name or email"
-              emptyTitle="No users match your filters"
-              detailTitle={(u) => u.name || u.email}
-              rowMenu={rowMenu}
-              renderDetail={(r) => {
-                const live = users.find((x) => x.id === r.id);
-                if (!live) return <GoneNotice noun="user" />;
-                return (
-                  <UserDetail
-                    key={`${live.id}${live.role}${live.status}`}
-                    u={live}
-                    isSelf={isSelf(live)}
-                    canManage={canManage(live)}
-                    allowedRoles={allowedRoles}
-                    onRole={(role) => changeRole(live, role)}
-                    onStatus={(s) => setStatus(live, s)}
-                    onDelete={() => remove(live)}
-                  />
-                );
-              }}
-            />
+            <div className="shrink-0 border-b border-mist-200 px-4">{viewTabs}</div>
+            <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-mist-50 p-4 sm:p-6">
+              <RolesPanel />
+            </div>
           </>
+        ) : isLoading ? (
+          <CrmListSkeleton label="Loading users" />
+        ) : error && !data ? (
+          <ListPageState>
+            <ErrorState title="Couldn't load users" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          </ListPageState>
+        ) : users.length === 0 ? (
+          <ListPageState>
+            <EmptyState
+              framed
+              variant="first-use"
+              icon="send"
+              title="No teammates yet"
+              body="Invite a teammate to give them access to the portal."
+              primary={{ label: "Invite user", icon: "send", onClick: invite }}
+            />
+          </ListPageState>
+        ) : (
+          <DataTable
+            rows={users}
+            columns={columns}
+            filters={filters}
+            tabs={viewTabs}
+            fill
+            noun="users"
+            summary={summary}
+            toolbar={
+              <PillButton variant="primary" icon="send" onClick={invite}>
+                Invite user
+              </PillButton>
+            }
+            exportName="users"
+            storageKey="portal.users"
+            searchPlaceholder="Search name or email"
+            emptyTitle="No users match your filters"
+            detailTitle={(u) => u.name || u.email}
+            rowMenu={rowMenu}
+            renderDetail={(r) => {
+              const live = users.find((x) => x.id === r.id);
+              if (!live) return <GoneNotice noun="user" />;
+              return (
+                <UserDetail
+                  key={`${live.id}${live.role}${live.status}`}
+                  u={live}
+                  isSelf={isSelf(live)}
+                  canManage={canManage(live)}
+                  allowedRoles={allowedRoles}
+                  onRole={(role) => changeRole(live, role)}
+                  onStatus={(s) => setStatus(live, s)}
+                  onDelete={() => remove(live)}
+                />
+              );
+            }}
+          />
         )}
-      </Page>
+      </ListPage>
 
       {confirmDelete && (
         <ConfirmDialog

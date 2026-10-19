@@ -9,6 +9,8 @@ export type PortalChrome = {
   openSearch: () => void;
   /** Sidebar href to highlight when the URL can't say (job pages serve both role lists). */
   setNavSection: (href: string | null) => void;
+  /** The section name the shell header shows; a page header with the same title hides its own. */
+  sectionTitle?: string;
 };
 
 const ChromeContext = createContext<PortalChrome | null>(null);

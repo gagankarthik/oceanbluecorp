@@ -10,7 +10,7 @@ import { Modal as KitModal } from "../kit/overlay";
 import { ErrorState as KitErrorState } from "../kit/states";
 import { ListPageSkeleton } from "../kit/skeletons";
 import {
-  JOB_STATUS_DOT, STAGE_DOT, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
+  JOB_STATUS_DOT, PIPELINE, STAGE_DOT, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
 } from "./model";
 
 /** Kit Modal; kept for existing imports. */
@@ -87,7 +87,7 @@ export function ChipFilter({
             aria-pressed={on}
             onClick={() => onChange(on ? null : o.value)}
             className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-adm-base font-medium ring-1 ring-inset transition-colors ${
-              on ? "bg-navy-900 text-white ring-navy-900" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
+              on ? "bg-contrast text-on-contrast ring-contrast" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
             }`}
           >
             {o.color && <span aria-hidden className="size-2 rounded-full" style={{ background: o.color }} />}
@@ -140,7 +140,7 @@ export function StageFunnel({
             <span className="truncate text-left text-adm-base text-navy-900">{s.label}</span>
             <span className="relative h-7 overflow-hidden rounded-md bg-mist-100">
               <span
-                className={`absolute inset-y-0 left-0 rounded-md transition-[width] duration-200 ${on ? "bg-navy-900" : "bg-ocean-600"}`}
+                className={`absolute inset-y-0 left-0 rounded-md transition-[width] duration-200 ${on ? "bg-contrast" : "bg-ocean-600"}`}
                 style={{ width: `${Math.max(4, (s.value / max) * 100)}%`, opacity: on || !active ? 1 : 0.45 }}
               />
             </span>
@@ -261,6 +261,30 @@ export function InlineSelect({
 }
 
 export const stageDot = (s: string) => STAGE_DOT[s as Stage] ?? "var(--color-mist-400)";
+
+/**
+ * How far through the pipeline a candidate got, as one segment per stage from
+ * New to Hired, filled in the current stage's colour. A rejected candidate
+ * keeps the steps they reached, in the rejected colour.
+ */
+export function StageProgress({ status, history }: { status: string; history?: { status: string }[] }) {
+  const at = (s: string) => PIPELINE.indexOf(s as Stage);
+  const reached =
+    status === "rejected"
+      ? Math.max(0, ...(history ?? []).map((h) => at(h.status)))
+      : Math.max(0, at(status));
+  const steps = PIPELINE.length;
+  // The dot colour, so New reads as grey rather than its hollow white fill.
+  const fill = stageDot(status);
+  const label = status === "rejected" ? `Rejected after ${STAGE_LABEL[PIPELINE[reached]]}` : `Step ${reached + 1} of ${steps}`;
+  return (
+    <span role="img" aria-label={label} title={label} className="flex h-3.5 w-20 items-center gap-0.5 rounded-sm bg-mist-100 px-0.5">
+      {PIPELINE.map((s, i) => (
+        <span key={s} className="h-2.5 flex-1 rounded-[1px]" style={{ background: i <= reached ? fill : "var(--color-mist-300)" }} />
+      ))}
+    </span>
+  );
+}
 
 /** First-load placeholder: the kit list skeleton, without a header unless asked. */
 export function LoadingState({ label = "Loading", header = false, kpis = 4 }: { label?: string; header?: boolean; kpis?: number }) {

@@ -8,15 +8,14 @@ import { safeHttpUrl } from "@/lib/portal/format";
 import { check, collectErrors, email, LIMITS, maxLen, phone, required, website, type FieldErrors } from "@/lib/form-validation";
 import { useResource } from "@/hooks/use-resource";
 import { useJobSummaries } from "@/hooks/use-console-data";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { Avatar, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
-import { BarChart, StackedBar } from "@/components/portal/charts";
+import { Avatar, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, ListPage, ListPageState, Modal, PillButton, CrmListSkeleton } from "@/components/portal/kit";
 import Select from "@/components/portal/Select";
 import Icon from "@/components/portal/icons";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, LinkedRoles, errorText, inputCls, send, useDiscardGuard, useToast } from "@/components/portal/relationships/shared";
-import { ActiveBadge, FieldShell, KpiFilter, RecordHead, RecordStats, RoleCount, StateField, stateName, stateOf, useTablePreset } from "@/components/portal/relationships/register";
+import { ActiveBadge, FieldShell, RecordHead, RecordStats, RoleCount, StateField, stateName, stateOf } from "@/components/portal/relationships/register";
 
 const KEY = "/api/clients";
 const FORM_ID = "client-form";
@@ -247,7 +246,6 @@ export default function ClientsView() {
   const jobsRes = useJobSummaries();
   const [status, setStatus] = useState("All");
   const [form, setForm] = useState<{ editing: Client | null } | null>(null);
-  const preset = useTablePreset();
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState<Client | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -278,19 +276,15 @@ export default function ClientsView() {
     }
   };
 
-  const active = clients.filter((c) => c.status === "active").length;
-  const openRoles = clients.reduce((a, c) => a + (c.openJobCount ?? 0), 0);
-  const noContact = clients.filter((c) => !hasContact(c)).length;
   const visible = clients.filter((c) => status === "All" || statusLabel(c.status) === status);
-  const top = [...clients].sort((a, b) => (b.jobCount ?? 0) - (a.jobCount ?? 0)).filter((c) => c.jobCount).slice(0, 8);
-  const byState = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const c of clients) {
-      const s = stateName(c.state);
-      if (s) m.set(s, (m.get(s) ?? 0) + 1);
-    }
-    return [...m].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
-  }, [clients]);
+  const summary = (rows: Client[]): Summary[] => {
+    const missing = rows.filter((c) => !hasContact(c)).length;
+    return [
+      { label: "active", value: rows.filter((c) => c.status === "active").length },
+      { label: "open roles", value: rows.reduce((n, c) => n + (c.openJobCount ?? 0), 0) },
+      { label: "missing contact", value: missing, warn: missing > 0 },
+    ];
+  };
 
   const columns: Column<Client>[] = [
     {
@@ -364,149 +358,82 @@ export default function ClientsView() {
       value={status}
       onChange={setStatus}
       options={[
-        { value: "All", label: "All", count: clients.length },
-        { value: "Active", label: "Active", count: active },
-        { value: "Inactive", label: "Inactive", count: clients.length - active },
+        { value: "All", label: "All" },
+        { value: "Active", label: "Active" },
+        { value: "Inactive", label: "Inactive" },
       ]}
     />
   );
 
   return (
     <RoleGate href="/portal/clients">
-      <Page>
-        <PageHeader
-          title="Clients"
-          icon="building"
-          section="relationships"
-
-          actions={
-            <>
-              {clients.length > 0 && (
-                <InsightsSheet title="Clients insights" description="Which clients hold the most roles, and how the accounts split by status and state.">
-                  <Panel title="Roles by client" description="The clients with the most roles">
-                    {top.length ? (
-                      <BarChart
-                        title="Open and filled or closed roles for the clients with the most roles"
-                        labels={top.map((c) => (c.name.length > 14 ? `${c.name.slice(0, 13)}…` : c.name))}
-                        series={[
-                          { name: "Open", values: top.map((c) => c.openJobCount ?? 0) },
-                          { name: "Other", values: top.map((c) => (c.jobCount ?? 0) - (c.openJobCount ?? 0)) },
-                        ]}
-                        height={268}
-                      />
-                    ) : (
-                      <EmptyState compact icon="briefcase" title="No roles linked to a client yet" body="Pick a client on a job posting and it shows up here." />
-                    )}
-                  </Panel>
-                  <Panel title="Accounts">
-                    <div className="grid gap-6">
-                      <StackedBar
-                        title="Clients by status"
-                        data={[
-                          { label: "Active", value: active },
-                          { label: "Inactive", value: clients.length - active },
-                        ]}
-                      />
-                      {byState.length > 0 && (
-                        <div className="grid gap-2.5 border-t border-mist-200 pt-4">
-                          <p className="text-adm-xs font-medium text-mist-600">Top states</p>
-                          <ul className="grid gap-2.5 text-adm-base">
-                            {byState.map((s) => (
-                              <li key={s.label} className="flex items-center justify-between gap-3">
-                                <span className="truncate text-navy-900">{s.label}</span>
-                                <span className="shrink-0 font-medium tabular-nums">
-                                  {s.value} {s.value === 1 ? "client" : "clients"}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </Panel>
-                </InsightsSheet>
-              )}
-              <Button icon="plus" onClick={openNew}>
-                Add client
-              </Button>
-            </>
-          }
-        />
-
+      <ListPage title="Clients">
         {isLoading ? (
-          <ListPageSkeleton header={false} label="Loading clients" kpis={3} insights={false} />
+          <CrmListSkeleton label="Loading clients" />
         ) : error && !data ? (
-          <ErrorState title="Couldn't load clients" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          <ListPageState>
+            <ErrorState title="Couldn't load clients" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          </ListPageState>
         ) : clients.length === 0 ? (
-          <EmptyState
-            framed
-            variant="first-use"
-            icon="building"
-            title="No clients yet"
-            body="Add your first client to start tracking accounts. Job postings can then link to it."
-            primary={{ label: "Add client", icon: "plus", onClick: openNew }}
-          />
+          <ListPageState>
+            <EmptyState
+              framed
+              variant="first-use"
+              icon="building"
+              title="No clients yet"
+              body="Add your first client to start tracking accounts. Job postings can then link to it."
+              primary={{ label: "Add client", icon: "plus", onClick: openNew }}
+            />
+          </ListPageState>
+        ) : visible.length === 0 ? (
+          <section aria-label="Client list" className="flex min-h-0 flex-1 flex-col">
+            <div className="border-b border-mist-200 px-2 sm:px-4">{statusTabs}</div>
+            <EmptyState variant="no-results" title="No clients match this status" onClearFilters={() => setStatus("All")} />
+          </section>
         ) : (
-          <>
-            <KpiRow>
-              <KpiFilter label="Show active clients" active={status === "Active"} onClick={() => setStatus((s) => (s === "Active" ? "All" : "Active"))}>
-                <StatCard section="relationships" label="Active clients" value={active} icon="building" hint={`of ${clients.length} on record`} trend="flat" />
-              </KpiFilter>
-              <KpiFilter label="Show clients with open roles" active={preset.isOn("roles", "Has open roles")} onClick={() => preset.toggle("roles", "Has open roles")}>
-                <StatCard section="relationships" label="Open roles" value={openRoles} icon="briefcase" hint={`across ${clients.filter((c) => c.openJobCount).length} clients`} trend="flat" />
-              </KpiFilter>
-              <KpiFilter label="Show clients missing contact details" active={preset.isOn("contact", "Missing")} onClick={() => preset.toggle("contact", "Missing")}>
-                <StatCard section="relationships" label="Missing contact details" value={noContact} icon="alert" hint={noContact ? "no email or phone · fix these" : "every client has one"} trend="flat" />
-              </KpiFilter>
-            </KpiRow>
-
-            <section aria-label="Client list" className="grid gap-4">
-              {visible.length === 0 ? (
-                <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-                  <div className="border-b border-mist-200 px-2 sm:px-4">{statusTabs}</div>
-                  <EmptyState variant="no-results" title="No clients match this status" onClearFilters={() => setStatus("All")} />
-                </div>
-              ) : (
-                <DataTable
-                  key={preset.key}
-                  {...preset.table}
-                  rows={visible}
-                  tabs={statusTabs}
-                  columns={columns}
-                  filters={filters}
-                  exportName="clients"
-                  onExport={exportCsv}
-                  storageKey="clients"
-                  initialSort={{ key: "createdAt", dir: -1 }}
-                  searchPlaceholder="Search name, website, email or city"
-                  emptyTitle="No clients match your filters"
-                  detailTitle={(c) => c.name}
-                  detailActions={(c) => (
-                    <Button size="sm" variant="secondary" icon="edit" onClick={() => setForm({ editing: clients.find((x) => x.id === c.id) ?? c })}>
-                      Edit
-                    </Button>
-                  )}
-                  rowMenu={rowMenu}
-                  renderDetail={(r, close) => {
-                    const live = clients.find((x) => x.id === r.id);
-                    return live ? (
-                      <ClientDetail
-                        c={live}
-                        jobs={(jobsRes.jobs ?? []).filter((j) => j.clientId === live.id)}
-                        jobsLoading={jobsRes.isLoading}
-                        jobsError={!!jobsRes.error && !jobsRes.jobs}
-                        onDelete={() => remove(live, close)}
-                      />
-                    ) : (
-                      <GoneNotice noun="client" />
-                    );
-                  }}
+          <DataTable
+            fill
+            noun="clients"
+            summary={summary}
+            rows={visible}
+            tabs={statusTabs}
+            toolbar={
+              <PillButton variant="primary" icon="plus" onClick={openNew}>
+                Add client
+              </PillButton>
+            }
+            columns={columns}
+            filters={filters}
+            exportName="clients"
+            onExport={exportCsv}
+            storageKey="clients"
+            initialSort={{ key: "createdAt", dir: -1 }}
+            searchPlaceholder="Search name, website, email or city"
+            emptyTitle="No clients match your filters"
+            detailTitle={(c) => c.name}
+            detailActions={(c) => (
+              <Button size="sm" variant="secondary" icon="edit" onClick={() => setForm({ editing: clients.find((x) => x.id === c.id) ?? c })}>
+                Edit
+              </Button>
+            )}
+            rowMenu={rowMenu}
+            renderDetail={(r, close) => {
+              const live = clients.find((x) => x.id === r.id);
+              return live ? (
+                <ClientDetail
+                  c={live}
+                  jobs={(jobsRes.jobs ?? []).filter((j) => j.clientId === live.id)}
+                  jobsLoading={jobsRes.isLoading}
+                  jobsError={!!jobsRes.error && !jobsRes.jobs}
+                  onDelete={() => remove(live, close)}
                 />
-              )}
-            </section>
-          </>
+              ) : (
+                <GoneNotice noun="client" />
+              );
+            }}
+          />
         )}
-      </Page>
+      </ListPage>
 
       {confirmDelete && (
         <ConfirmDialog

@@ -1,10 +1,12 @@
 "use client";
 
 import { Children, useState } from "react";
+import Link from "next/link";
 import BackLink from "@/components/site/BackLink";
 import Icon, { type IconName } from "../icons";
 import type { Section } from "./tone";
 import { useInSheet } from "./insights";
+import { usePortalChrome } from "../chrome";
 
 /**
  * Page container: the one vertical rhythm (24px between blocks) and the
@@ -60,6 +62,8 @@ export function PageHeader({
   /** Beside the title: a status badge, a count */
   meta?: React.ReactNode;
 }) {
+  // The shell header already names the section (as the CRM does); say it once.
+  const sameAsShell = !back && typeof title === "string" && title === usePortalChrome()?.sectionTitle;
   return (
     <header className="grid gap-4">
       {back && <BackLink href={back.href} label={back.label} tone="ink" className="-my-2 text-adm-base" />}
@@ -67,7 +71,7 @@ export function PageHeader({
         <div className="flex min-w-0 items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="min-w-0 break-words text-adm-xl font-semibold leading-tight tracking-tight text-navy-900">{title}</h1>
+              <h1 className={sameAsShell ? "sr-only" : "min-w-0 break-words text-adm-xl font-semibold leading-tight tracking-tight text-navy-900"}>{title}</h1>
               {meta}
             </div>
             {description && <p className="mt-0.5 max-w-[65ch] text-adm-base text-mist-600">{description}</p>}
@@ -98,17 +102,17 @@ export function Panel({
   padded?: boolean;
 }) {
   return (
-    <section className={`flex min-w-0 flex-col rounded-xl bg-mist-0 ring-1 ring-mist-200 ${className}`}>
+    <section className={`flex min-w-0 flex-col rounded-lg bg-mist-0 ring-1 ring-mist-200 ${className}`}>
       {(title || action) && (
-        <header className="flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-mist-200 px-5 py-2">
+        <header className="flex min-h-12 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-mist-200 px-4 py-2">
           <div className="min-w-0">
-            {title && <h2 className="truncate text-adm-md font-semibold text-navy-900">{title}</h2>}
-            {description && <p className="text-adm-base text-mist-600">{description}</p>}
+            {title && <h2 className="truncate text-adm-base font-medium text-navy-900">{title}</h2>}
+            {description && <p className="text-adm-xs text-mist-600">{description}</p>}
           </div>
           {action && <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>}
         </header>
       )}
-      <div className={`flex-1 ${padded ? "p-5" : ""}`}>{children}</div>
+      <div className={`flex-1 ${padded ? "p-4" : ""}`}>{children}</div>
     </section>
   );
 }
@@ -124,7 +128,7 @@ export function KpiRow({ children, cols, className = "" }: { children: React.Rea
   // Three across from sm leaves an orphan; the third card spans until lg.
   const orphan = n === 3 ? "sm:max-lg:[&>*:nth-child(3)]:col-span-2" : "";
   // Gap wider than the cards' 16px padding, so each card reads as its own unit
-  return <div className={`grid grid-cols-1 gap-5 [&>*]:h-full ${kpiCols[n]} ${orphan} ${className}`}>{children}</div>;
+  return <div className={`grid grid-cols-1 gap-4 [&>*]:h-full ${kpiCols[n]} ${orphan} ${className}`}>{children}</div>;
 }
 
 /**
@@ -174,5 +178,67 @@ export function InsightsRow({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * A list page, laid out as the CRM's: edge to edge under the shell header and filling the
+ * height, so a `fill` DataTable inside scrolls its rows and pins its footer. The shell header
+ * shows the section name; `title` is the page's heading for screen readers.
+ */
+export function ListPage({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="-m-5 flex h-[calc(100svh-4rem)] min-h-[32rem] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
+      <h1 className="sr-only">{title}</h1>
+      {children}
+    </div>
+  );
+}
+
+/** Loading, error and empty states inside a ListPage keep a gutter. */
+export function ListPageState({ children }: { children: React.ReactNode }) {
+  return <div className="p-4 sm:p-6">{children}</div>;
+}
+
+const PILL_BASE = "inline-flex h-[30px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-[9px] text-adm-xs font-medium transition-colors duration-150 disabled:opacity-50";
+const PILL_TONE = {
+  primary: "bg-ocean-600 text-white shadow-[0_1px_2px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-ocean-700",
+  secondary: "bg-mist-0 text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200 hover:bg-mist-50",
+};
+
+/** The CRM's 30px pill button, for table toolbars: Export, Add, Insights. */
+export function PillButton({
+  children,
+  icon,
+  href,
+  onClick,
+  variant = "secondary",
+  disabled,
+  label,
+}: {
+  children?: React.ReactNode;
+  icon?: IconName;
+  href?: string;
+  onClick?: () => void;
+  variant?: "primary" | "secondary";
+  disabled?: boolean;
+  /** Accessible name when the pill is icon-only */
+  label?: string;
+}) {
+  const cls = `${PILL_BASE} ${PILL_TONE[variant]} ${children ? "" : "w-[30px] justify-center px-0"}`;
+  const body = (
+    <>
+      {icon && <Icon name={icon} className="size-3" />}
+      {children}
+    </>
+  );
+  return href ? (
+    <Link href={href} aria-label={label} title={label} className={cls}>
+      {body}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={label} title={label} className={cls}>
+      {body}
+    </button>
   );
 }

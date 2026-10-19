@@ -3,19 +3,17 @@
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { downloadCsv } from "@/lib/csv";
-import DataTable, { TableTabs, type Column } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Summary } from "@/components/portal/DataTable";
 import Icon, { type IconName } from "@/components/portal/icons";
-import Link from "next/link";
-import { Badge, BarList, KeyValue } from "@/components/portal/ui";
-import { Button, EmptyState, ErrorState, InsightsSheet, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
+import { Badge, KeyValue } from "@/components/portal/ui";
+import { Button, EmptyState, ErrorState, ListPage, ListPageState, PillButton, usePortalRouter } from "@/components/portal/kit";
+import { CrmListSkeleton } from "@/components/portal/kit/skeletons";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { BarChart, DonutChart, StackedBar } from "@/components/portal/charts";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import type { Article, ArticleKind, ArticleStatus } from "@/lib/aws/dynamodb";
 import {
   ARTICLE_KIND_CONFIG,
-  ARTICLE_STATUSES,
   NEWS_TYPES,
   articleStatusLabel,
   byNewest,
@@ -28,9 +26,7 @@ import {
 import {
   ARTICLE_ICONS,
   ArticleStatusBadge,
-  ChartFilter,
   CopyLinkButton,
-  MiniStat,
   Modal,
   ReadOnlyNote,
   canEdit,
@@ -38,7 +34,6 @@ import {
   fmtDate,
   fmtRelative,
 } from "./shared";
-import { ArticleListSkeleton } from "./skeleton";
 
 export { ArticleStatusBadge };
 
@@ -62,21 +57,6 @@ function facetOf(kind: ArticleKind): { label: string; plural: string; value: (a:
 
 const time = (iso?: string) => (iso ? new Date(iso).getTime() || 0 : 0);
 
-/** Pieces that went live in each of the last `n` months, by publish date. */
-function wentLivePerMonth(articles: Article[], n = 12) {
-  const now = new Date();
-  const months = Array.from({ length: n }, (_, i) => new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1));
-  const counts = months.map(() => 0);
-  for (const a of articles) {
-    if (!a.publishedAt || a.status === "draft" || a.status === "in-review") continue;
-    const d = new Date(a.publishedAt);
-    if (Number.isNaN(d.getTime()) || d > now) continue;
-    const i = months.findIndex((m) => m.getFullYear() === d.getFullYear() && m.getMonth() === d.getMonth());
-    if (i >= 0) counts[i]++;
-  }
-  return { labels: months.map((m) => m.toLocaleString("en-US", { month: "short" })), counts };
-}
-
 type Patch = Partial<Pick<Article, "status" | "featured">>;
 
 export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
@@ -90,7 +70,6 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [focus, setFocus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Article | null>(null);
   const [tab, setTab] = useState<Tab>("all");
@@ -169,15 +148,22 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
 
   // ── derived ───────────────────────────────────────────────────────────────
 
-  const live = articles.filter((a) => isLive(a));
-  const pending = articles.filter((a) => isPending(a)).sort((a, b) => time(a.publishedAt) - time(b.publishedAt));
-  const countOf = (s: ArticleStatus) => articles.filter((a) => a.status === s).length;
-  const signOffCount = namesAClient(kind) ? articles.filter(awaitingSignOff).length : 0;
-  const monthly = useMemo(() => wentLivePerMonth(articles), [articles]);
   const byFacet = useMemo(() => countBy(articles, facet.value), [articles, facet]);
-  const byStatus = ARTICLE_STATUSES.map((s) => ({ label: s.label, value: countOf(s.key) })).filter((d) => d.value > 0);
-  const byAuthor = countBy(articles.filter((a) => a.authorName), (a) => a.authorName!).sort((a, b) => b.value - a.value).slice(0, 6);
-  const shown = articles.filter((a) => inTab(tab, a) && (!focus || facet.value(a) === focus));
+  const shown = articles.filter((a) => inTab(tab, a));
+
+  // Footer figures, from what the filters leave
+  const summary = (rows: Article[]): Summary[] => {
+    const pending = rows.filter((a) => isPending(a)).sort((a, b) => time(a.publishedAt) - time(b.publishedAt));
+    const signOff = rows.filter(awaitingSignOff).length;
+    return [
+      { label: "live", value: rows.filter((a) => isLive(a)).length },
+      namesAClient(kind)
+        ? { label: "awaiting sign-off", value: signOff, warn: signOff > 0 }
+        : { label: "in review", value: rows.filter((a) => a.status === "in-review").length },
+      { label: pending[0] ? `scheduled, next ${fmtDate(pending[0].publishedAt)}` : "scheduled", value: pending.length },
+      { label: "drafts", value: rows.filter((a) => a.status === "draft").length },
+    ];
+  };
 
   const publicUrl = (a: Article) => `${config.publicPath}/${a.slug}`;
   const editUrl = (a: Article) => `${config.adminPath}/${a.id}`;
@@ -416,225 +402,124 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
   // ── render ────────────────────────────────────────────────────────────────
 
   const newHref = `${config.adminPath}/new`;
-  const header = (
-    <PageHeader
-      title={config.label}
-      icon={ICONS[kind]}
-      section="publishing"
-      description={config.purpose}
-      actions={
-        <>
-          <Button variant="secondary" icon="globe" href={config.publicPath}>
-            View on site
-          </Button>
-          {!loading && !error && articles.length > 0 && (
-            <InsightsSheet title={`${config.label} insights`} description={`What is scheduled next, how the ${config.plural} break down and how often they go live.`}>
-              {(close) => (
-                <>
-                  <Panel title="Coming up" description="The next pieces to go live" padded={false}>
-                    {pending.length === 0 ? (
-                      <p className="p-5 text-adm-base text-mist-600">Nothing scheduled.</p>
-                    ) : (
-                      <ul className="divide-y divide-mist-100">
-                        {pending.slice(0, 6).map((a) => (
-                          <li key={a.id}>
-                            <Link href={editable ? editUrl(a) : publicUrl(a)} className="flex min-h-12 items-center justify-between gap-3 px-5 py-3 text-adm-base hover:bg-mist-50">
-                              <span className="min-w-0 truncate font-medium text-navy-900">{a.title}</span>
-                              <span className="shrink-0 tabular-nums text-ocean-700">{fmtDate(a.publishedAt)}</span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Panel>
-                  <Panel title={`By ${facet.label.toLowerCase()}`} description="Select one to filter the queue">
-                    <ChartFilter
-                      label="Filter the queue"
-                      data={byFacet}
-                      value={focus}
-                      onChange={(v) => {
-                        setFocus(v);
-                        close();
-                      }}
-                      bare
-                    />
-                  </Panel>
-                  <Panel title="Went live, last 12 months">
-                    {monthly.counts.some((n) => n) ? (
-                      <BarChart
-                        title={`${config.label} that went live each month`}
-                        labels={monthly.labels}
-                        series={[{ name: config.label, values: monthly.counts }]}
-                        highlight={monthly.counts.length - 1}
-                        height={260}
-                      />
-                    ) : (
-                      <EmptyState compact icon="calendar" title="Nothing went live in the last year" />
-                    )}
-                  </Panel>
-                  <Panel title={`Share by ${facet.label.toLowerCase()}`}>
-                    <DonutChart
-                      title={`${config.label} by ${facet.label.toLowerCase()}`}
-                      data={byFacet}
-                      centerLabel={config.plural[0].toUpperCase() + config.plural.slice(1)}
-                      size={140}
-                    />
-                  </Panel>
-                  <Panel title="By status">
-                    <StackedBar title={`${config.label} by status`} data={byStatus} />
-                  </Panel>
-                  {kind === "blog" && byAuthor.length > 0 && (
-                    <Panel title="Posts by author">
-                      <BarList items={byAuthor} />
-                    </Panel>
-                  )}
-                </>
-              )}
-            </InsightsSheet>
-          )}
-          {editable && (
-            <Button icon="plus" href={newHref}>
-              New {config.noun}
-            </Button>
-          )}
-        </>
-      }
-    />
+  const toolbar = (
+    <>
+      <PillButton icon="globe" href={config.publicPath}>
+        View on site
+      </PillButton>
+      {editable && (
+        <PillButton variant="primary" icon="plus" href={newHref}>
+          New {config.noun}
+        </PillButton>
+      )}
+    </>
   );
 
   if (loading) {
     return (
-      <Page>
-        {header}
-        <ArticleListSkeleton header={false} label={`Loading ${config.plural}`} />
-      </Page>
+      <ListPage title={config.label}>
+        <CrmListSkeleton label={`Loading ${config.plural}`} tabs={3} filters={2} />
+      </ListPage>
     );
   }
 
   if (error) {
     return (
-      <Page>
-        {header}
-        <ErrorState title={`Couldn't load ${config.plural}`} message={error} onRetry={load} />
-      </Page>
+      <ListPage title={config.label}>
+        <ListPageState>
+          <ErrorState title={`Couldn't load ${config.plural}`} message={error} onRetry={load} />
+        </ListPageState>
+      </ListPage>
     );
   }
 
   if (articles.length === 0) {
     return (
-      <Page>
-        {header}
-        <EmptyState
-          framed
-          variant="first-use"
-          icon={ICONS[kind]}
-          title={`No ${config.plural} yet`}
-          body={config.purpose}
-          primary={editable ? { label: "Write the first one", icon: "pen", href: newHref } : undefined}
-        />
-      </Page>
+      <ListPage title={config.label}>
+        <ListPageState>
+          <EmptyState
+            framed
+            variant="first-use"
+            icon={ICONS[kind]}
+            title={`No ${config.plural} yet`}
+            body={config.purpose}
+            primary={editable ? { label: "Write the first one", icon: "pen", href: newHref } : undefined}
+          />
+        </ListPageState>
+      </ListPage>
     );
   }
 
-  const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: "all", label: "All", count: articles.length },
-    { id: "draft", label: "Drafts", count: countOf("draft") },
-    { id: "in-review", label: "In review", count: countOf("in-review") },
-    ...(namesAClient(kind) ? [{ id: "signoff" as Tab, label: "Awaiting sign-off", count: signOffCount }] : []),
-    { id: "pending", label: "Scheduled", count: pending.length },
-    { id: "live", label: "Live", count: live.length },
-    { id: "archived", label: "Archived", count: countOf("archived") },
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "draft", label: "Drafts" },
+    { id: "in-review", label: "In review" },
+    ...(namesAClient(kind) ? [{ id: "signoff" as Tab, label: "Awaiting sign-off" }] : []),
+    { id: "pending", label: "Scheduled" },
+    { id: "live", label: "Live" },
+    { id: "archived", label: "Archived" },
   ];
   const tabLabel = tabs.find((t) => t.id === tab)?.label ?? "";
-  const statusTabs = <TableTabs label={`${config.label} by status`} value={tab} onChange={setTab} options={tabs.map((t) => ({ value: t.id, label: t.label, count: t.count }))} />;
-  // Stat tiles are shortcuts into the tabs; a second click returns to All.
-  const pick = (t: Tab) => setTab((cur) => (cur === t ? "all" : t));
+  const statusTabs = <TableTabs label={`${config.label} by status`} value={tab} onChange={setTab} options={tabs.map((t) => ({ value: t.id, label: t.label }))} />;
 
   return (
-    <Page>
-      {header}
-      {!editable && <ReadOnlyNote />}
+    <ListPage title={config.label}>
+      {!editable && (
+        <div className="shrink-0 px-4 pt-4">
+          <ReadOnlyNote />
+        </div>
+      )}
 
-      <section aria-label="At a glance" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MiniStat label="Live" value={live.length} icon="globe" hint="on the site now" onClick={() => pick("live")} active={tab === "live"} />
-        {namesAClient(kind) ? (
-          <MiniStat
-            label="Awaiting sign-off"
-            value={signOffCount}
-            icon="userCheck"
-            tone={signOffCount ? "warn" : "default"}
-            hint="client approval not on file"
-            onClick={() => pick("signoff")}
-            active={tab === "signoff"}
-          />
-        ) : (
-          <MiniStat label="In review" value={countOf("in-review")} icon="eye" hint="waiting on a second reader" onClick={() => pick("in-review")} active={tab === "in-review"} />
-        )}
-        <MiniStat
-          label="Scheduled"
-          value={pending.length}
-          icon="timer"
-          hint={pending[0] ? `next ${fmtDate(pending[0].publishedAt)}` : "nothing queued"}
-          onClick={() => pick("pending")}
-          active={tab === "pending"}
-        />
-        <MiniStat label="Drafts" value={countOf("draft")} icon="edit" hint="being written" onClick={() => pick("draft")} active={tab === "draft"} />
-      </section>
-
-      <section aria-label={`${config.label} queue`} className="grid min-w-0 gap-4">
-        {shown.length === 0 ? (
-          <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-            <div className="border-b border-mist-200 px-2 sm:px-4">{statusTabs}</div>
-            <EmptyState
-              variant="no-results"
-              title={tab === "all" ? `No ${config.plural} for ${focus}` : `Nothing in ${tabLabel}${focus ? ` for ${focus}` : ""}`}
-              body="Switch tabs or clear the filters to see the rest."
-              onClearFilters={() => {
-                setTab("all");
-                setFocus(null);
-              }}
-            />
+      {shown.length === 0 ? (
+        <section aria-label={`${config.label} queue`} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex shrink-0 items-center gap-2 border-b border-mist-200 px-4">
+            <div className="min-w-0 flex-1">{statusTabs}</div>
+            {toolbar}
           </div>
-        ) : (
-          <DataTable
-            rows={shown}
-            tabs={statusTabs}
-            extraChips={focus ? [{ key: "focus", label: `${facet.label}: ${focus}`, clear: () => setFocus(null) }] : []}
-            columns={columns}
-            exportName={kind}
-            onExport={exportCsv}
-            searchMatch={matchesArticleSearch}
-            selectable={editable}
-            bulkActions={(ids) => (
-              <>
-                <Button size="sm" variant="secondary" icon="eye" disabled={busy} onClick={() => apply(ids, { status: "in-review" }, "sent for review")}>
-                  Send for review
-                </Button>
-                <Button size="sm" variant="secondary" icon="send" disabled={busy} onClick={() => apply(ids, { status: "published" }, "published")}>
-                  Publish
-                </Button>
-                <Button size="sm" variant="secondary" icon="clock" disabled={busy} onClick={() => apply(ids, { status: "archived" }, "archived")}>
-                  Archive
-                </Button>
-              </>
-            )}
-            searchPlaceholder={`Search ${config.plural}`}
-            filters={[{ key: "facet", label: facet.label, options: byFacet.map((d) => d.label).sort(), value: facet.value }]}
-            detailTitle={(a) => a.title}
-            renderDetail={detail}
-            detailActions={
-              editable
-                ? (a) => (
-                    <Button size="sm" variant="secondary" icon="edit" href={editUrl(a)}>
-                      Edit
-                    </Button>
-                  )
-                : undefined
-            }
-            rowMenu={rowMenu}
-          />
-        )}
-      </section>
+          <EmptyState variant="no-results" title={`Nothing in ${tabLabel}`} body="Switch tabs to see the rest." onClearFilters={() => setTab("all")} />
+        </section>
+      ) : (
+        <DataTable
+          fill
+          noun={config.plural}
+          summary={summary}
+          rows={shown}
+          tabs={statusTabs}
+          toolbar={toolbar}
+          columns={columns}
+          exportName={kind}
+          onExport={exportCsv}
+          searchMatch={matchesArticleSearch}
+          selectable={editable}
+          bulkActions={(ids) => (
+            <>
+              <Button size="sm" variant="secondary" icon="eye" disabled={busy} onClick={() => apply(ids, { status: "in-review" }, "sent for review")}>
+                Send for review
+              </Button>
+              <Button size="sm" variant="secondary" icon="send" disabled={busy} onClick={() => apply(ids, { status: "published" }, "published")}>
+                Publish
+              </Button>
+              <Button size="sm" variant="secondary" icon="clock" disabled={busy} onClick={() => apply(ids, { status: "archived" }, "archived")}>
+                Archive
+              </Button>
+            </>
+          )}
+          searchPlaceholder={`Search ${config.plural}`}
+          filters={[{ key: "facet", label: facet.label, options: byFacet.map((d) => d.label).sort(), value: facet.value }]}
+          detailTitle={(a) => a.title}
+          renderDetail={detail}
+          detailActions={
+            editable
+              ? (a) => (
+                  <Button size="sm" variant="secondary" icon="edit" href={editUrl(a)}>
+                    Edit
+                  </Button>
+                )
+              : undefined
+          }
+          rowMenu={rowMenu}
+        />
+      )}
 
       {pendingDelete && (
         <Modal
@@ -675,6 +560,6 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
           </p>
         </Modal>
       )}
-    </Page>
+    </ListPage>
   );
 }

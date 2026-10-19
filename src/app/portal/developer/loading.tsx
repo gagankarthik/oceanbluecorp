@@ -1,5 +1,5 @@
-import { ListPageSkeleton } from "@/components/portal/kit/skeletons";
+import { CrmListSkeleton } from "@/components/portal/kit/skeletons";
 
 export default function Loading() {
-  return <ListPageSkeleton label="Loading API keys" kpis={3} insights={false} />;
+  return <CrmListSkeleton page label="Loading API keys" tabs={3} filters={1} />;
 }

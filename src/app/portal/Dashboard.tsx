@@ -13,8 +13,10 @@ import Icon from "@/components/portal/icons";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  Avatar, BarList, Button, EmptyState, ErrorState, KpiRow, Page, PageHeader, Panel, ProgressBar, Segmented, Skeleton, StatCard, usePortalRouter,
+  Avatar, BarList, Button, EmptyState, ErrorState, KpiRow, Panel, PillButton, ProgressBar, Segmented, Skeleton, StatCard, usePortalRouter,
 } from "@/components/portal/kit";
+import { TableTabs } from "@/components/portal/DataTable";
+import Select from "@/components/portal/Select";
 import { MY_TASKS_KEY, refreshApplications, refreshTasks, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { useResource, type Resource } from "@/hooks/use-resource";
 import { fmtRelative } from "@/lib/format";
@@ -250,55 +252,66 @@ export default function Dashboard() {
 
   const first = user.name.split(" ")[0];
 
-  const header = (
-    <PageHeader
-      icon="dashboard"
-      title={first ? `Welcome back, ${first}` : "Welcome back"}
-      description={loadedAt ? `Updated ${loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : undefined}
-      actions={
-        <>
-          <Button
-            variant="ghost"
+  const refreshing = appsRes.isValidating || jobsRes.isValidating;
+  const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+  // The CRM's page frame: tabs under the shell header, a pill toolbar, then the content on the canvas.
+  const frame = (content: React.ReactNode) => (
+    <div className="-m-5 flex min-h-[calc(100svh-4rem)] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
+      <h1 className="sr-only">{first ? `Welcome back, ${first}` : "Dashboard"}</h1>
+      <div className="shrink-0 border-b border-mist-200 px-4">
+        <TableTabs
+          label="Dashboard view"
+          value={view}
+          onChange={(v) => setParams({ view: v === "team" ? "team" : null })}
+          options={[
+            { value: "overview", label: "Overview" },
+            { value: "team", label: "Team performance" },
+          ]}
+        />
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-mist-200 p-4">
+        {view === "team" ? (
+          <Select
+            size="sm"
+            label="Period"
+            value={teamPeriod}
+            onChange={(v) => setParams({ period: v === "month" ? null : v })}
+            // The default first: the pill stays plain until someone changes it
+            options={[...PERIODS.filter((x) => x.id === "month"), ...PERIODS.filter((x) => x.id !== "month")].map((x) => ({ value: x.id, label: x.label }))}
+            defaultLabel={PERIODS.find((x) => x.id === "month")?.label}
+            className="w-auto shrink-0"
+          />
+        ) : (
+          <Select
+            size="sm"
+            label="Date range"
+            value={range}
+            onChange={(v) => setParams({ range: v === DEFAULT_RANGE ? null : v })}
+            options={[...RANGES.filter((x) => x.value === DEFAULT_RANGE), ...RANGES.filter((x) => x.value !== DEFAULT_RANGE)].map((x) => ({ value: x.value, label: cap(x.long) }))}
+            defaultLabel={cap(RANGES.find((x) => x.value === DEFAULT_RANGE)!.long)}
+            className="w-auto shrink-0"
+          />
+        )}
+        {loadedAt && <span className="px-1 text-adm-xs text-mist-600">Updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>}
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <PillButton
             icon="refresh"
-            label="Refresh"
-            loading={appsRes.isValidating || jobsRes.isValidating}
+            label={refreshing ? "Refreshing" : "Refresh"}
+            disabled={refreshing}
             onClick={() => void Promise.all([appsRes.reload(), jobsRes.reload(), statsRes.reload()])}
           />
-          <Button href="/portal/applications" variant="secondary" icon="inbox">Applications</Button>
-          {role === "sales" && <ActionMenu items={[{ label: "State roles", icon: "capitol", onSelect: () => router.push("/portal/state-roles") }]} />}
-          {role === "hr" && <ActionMenu items={[{ label: "Resumes", icon: "resume", onSelect: () => router.push("/portal/resumes") }]} />}
-          {canEditJobs && <Button href="/portal/jobs/new" icon="plus">New role</Button>}
-        </>
-      }
-      tabs={
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Segmented
-            label="Dashboard view"
-            value={view}
-            onChange={(v) => setParams({ view: v === "team" ? "team" : null })}
-            options={[
-              { value: "overview", label: "Overview", icon: "dashboard" },
-              { value: "team", label: "Team performance", icon: "target" },
-            ]}
-          />
-          {view === "team" ? (
-            <Segmented label="Period" value={teamPeriod} onChange={(v) => setParams({ period: v === "month" ? null : v })} options={PERIODS.map((x) => ({ value: x.id, label: x.label }))} />
-          ) : (
-            <Segmented label="Date range" value={range} onChange={(v) => setParams({ range: v === DEFAULT_RANGE ? null : v })} options={RANGES.map((x) => ({ value: x.value, label: x.label }))} />
-          )}
+          <PillButton icon="inbox" href="/portal/applications">Applications</PillButton>
+          {role === "sales" && <PillButton icon="capitol" href="/portal/state-roles">State roles</PillButton>}
+          {role === "hr" && <PillButton icon="resume" href="/portal/resumes">Resumes</PillButton>}
+          {canEditJobs && <PillButton variant="primary" icon="plus" href="/portal/jobs/new">New role</PillButton>}
         </div>
-      }
-    />
+      </div>
+      <div className="grid flex-1 content-start gap-4 bg-mist-50 p-4 sm:p-6">{content}</div>
+    </div>
   );
 
-  if (view === "team") {
-    return (
-      <Page>
-        {header}
-        <TeamPerformance period={teamPeriod} />
-      </Page>
-    );
-  }
+  if (view === "team") return frame(<TeamPerformance period={teamPeriod} />);
 
   let body: React.ReactNode;
   if (appsRes.isLoading || jobsRes.isLoading) body = <DashboardBodySkeleton />;
@@ -329,12 +342,7 @@ export default function Dashboard() {
     );
   else body = <Overview all={all} apps={apps} jobs={jobs} titles={titles} range={r} start={start} stats={statsRes} recentTab={recentTab} setRecentTab={setRecentTab} onTeam={() => setParams({ view: "team" })} onStage={(s) => router.push(`/portal/applications?status=${s}`)} />;
 
-  return (
-    <Page>
-      {header}
-      {body}
-    </Page>
-  );
+  return frame(body);
 }
 
 function Overview({

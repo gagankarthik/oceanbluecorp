@@ -202,7 +202,7 @@ function DocTable({ headers, rows }: { headers: string[]; rows: (string | React.
 function CodeBlock({ label = "Code", children }: { label?: string; children: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="min-w-0 overflow-hidden rounded-xl bg-navy-900">
+    <div className="min-w-0 overflow-hidden rounded-xl bg-navy-950">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-1">
         <span className="truncate font-mono text-adm-xs text-tide-200">{label}</span>
         <button

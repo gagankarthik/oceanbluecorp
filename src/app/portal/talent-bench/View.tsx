@@ -2,16 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Application, BenchType } from "@/lib/aws/dynamodb";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
-import { BarChart, DonutChart } from "@/components/portal/charts";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
-import { InlineSelect, KpiButton, StageBadge, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
-import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, tally, type Stage } from "@/components/portal/recruiting/model";
+import { InlineSelect, StageBadge, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
+import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, type Stage } from "@/components/portal/recruiting/model";
 import { STATE_NAME, hireTypeLabel, stateOf } from "@/components/portal/console/theme";
 import {
-  Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, Segmented, StatCard,
-  usePortalRouter,
+  Avatar, Badge, Button, EmptyState, ErrorState, KeyValue, ListPage, ListPageState, PillButton, Segmented, usePortalRouter,
+  CrmListSkeleton,
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
@@ -65,11 +64,9 @@ export default function TalentBenchView() {
   const { setData } = benchRes;
 
   const [pool, setPool] = useState<Pool>("all");
-  const [insightsOpen, setInsightsOpen] = useState(false);
   // Cards suit browsing a bench by skills and availability; the choice is remembered.
   const [layout, setLayout] = useLocalStorage<"table" | "cards">("portal.bench.layout", "cards");
   const [table, setTable] = useState<TableState>({ query: "", filters: {} });
-  const [tableKey, setTableKey] = useState(0);
 
   // Lead Sourcing links back with the pool it was opened from.
   useEffect(() => {
@@ -159,26 +156,19 @@ export default function TalentBenchView() {
 
   const inPool = useMemo(() => (pool === "all" ? rows : rows.filter((a) => poolOf(a) === pool)), [rows, pool]);
 
-  // KPIs and skill chips write the table's filters, so every constraint shows as a chip.
-  const setFilter = (key: string, value: string | null) => {
-    setTable((t) => {
-      const next = { ...t.filters };
-      if (!value || next[key] === value) delete next[key];
-      else next[key] = value;
-      return { ...t, filters: next };
-    });
-    setTableKey((k) => k + 1);
-  };
-  const isOn = (key: string, value: string) => table.filters[key] === value;
-
   const loading = benchRes.isLoading || jobsRes.isLoading;
   const failed = (!benchRes.applications && benchRes.error) || (!jobsRes.jobs && jobsRes.error);
-  const ready = !loading && !failed;
 
   const canFilterByAdder = isAdmin || pool === "internal";
-  const idle = inPool.filter(isIdle).length;
-  const skills = tally(inPool.flatMap((a) => a.skills ?? []), 8).filter((s) => !s.label.startsWith("Other ("));
-  const stageMix = BENCH_STAGES.map((s) => ({ label: STAGE_LABEL[s], value: inPool.filter((a) => a.status === s).length })).filter((s) => s.value > 0);
+  const summary = (list: Row[]): Summary[] => {
+    const idle = list.filter(isIdle).length;
+    return [
+      { label: "active", value: list.filter((a) => a.status === "active").length },
+      { label: "submitted", value: list.filter((a) => a.status === "submitted").length },
+      { label: "idle 30+ days", value: idle, warn: idle > 0 },
+      { label: "with a resume", value: list.filter((a) => a.resumeId).length },
+    ];
+  };
   const allSkills = [...new Set(inPool.flatMap((a) => a.skills ?? []))].sort();
   const opts = (vals: (string | undefined)[]) => [...new Set(vals.filter((v): v is string => !!v))].sort();
 
@@ -352,8 +342,6 @@ export default function TalentBenchView() {
   const counts: Record<Pool, number> = { all: rows.length, internal: 0, external: 0 };
   for (const a of rows) counts[poolOf(a)] += 1;
 
-  const poolHint =
-    pool === "all" ? `${POOL_META.internal.label}: ${POOL_META.internal.hint.toLowerCase()}. ${POOL_META.external.label}: ${POOL_META.external.hint.toLowerCase()}.` : `${POOL_META[pool].hint}.`;
   const poolTabs = (
     <TableTabs
       label="Pool"
@@ -370,7 +358,7 @@ export default function TalentBenchView() {
   );
 
   let body: React.ReactNode;
-  if (loading) body = <ListPageSkeleton header={false} label="Loading the talent bench" kpis={4} insights={false} />;
+  if (loading) body = <CrmListSkeleton label="Loading the talent bench" />;
   else if (failed)
     body = (
       <ErrorState
@@ -405,31 +393,21 @@ export default function TalentBenchView() {
   }
   else
     body = (
-      <>
-        <KpiRow>
-          <KpiButton label="Show active consultants" active={isOn("stage", STAGE_LABEL.active)} onClick={() => setFilter("stage", STAGE_LABEL.active)}>
-            <StatCard section="recruiting" label="Active" value={inPool.filter((a) => a.status === "active").length} icon="userCheck" change={`${inPool.length} on bench`} trend="flat" />
-          </KpiButton>
-          <KpiButton label="Show submitted consultants" active={isOn("stage", STAGE_LABEL.submitted)} onClick={() => setFilter("stage", STAGE_LABEL.submitted)}>
-            <StatCard section="recruiting" label="Submitted" value={inPool.filter((a) => a.status === "submitted").length} icon="send" change={`${inPool.filter((a) => a.status === "interview").length} interviewing`} trend="flat" />
-          </KpiButton>
-          <KpiButton label="Show idle profiles" active={isOn("idle", IDLE)} onClick={() => setFilter("idle", IDLE)}>
-            <StatCard section="recruiting" label="Idle 30+ days" value={idle} icon="timer" change={idle ? "Re-engage" : "All fresh"} trend={idle ? "down" : "up"} />
-          </KpiButton>
-          <StatCard section="recruiting" label="With a resume" value={inPool.filter((a) => a.resumeId).length} icon="resume" change={`of ${inPool.length}`} trend="flat" />
-        </KpiRow>
-
-        <DataTable
-          key={`${pool}-${tableKey}`}
-          rows={inPool}
-          tabs={poolTabs}
-          columns={columns}
-          filters={filters}
-          initialQuery={table.query}
-          initialFilters={table.filters}
-          onStateChange={setTable}
-          storageKey="bench"
-          toolbar={
+      <DataTable
+        key={pool}
+        fill
+        noun="profiles"
+        summary={summary}
+        rows={inPool}
+        tabs={poolTabs}
+        columns={columns}
+        filters={filters}
+        initialQuery={table.query}
+        initialFilters={table.filters}
+        onStateChange={setTable}
+        storageKey="bench"
+        toolbar={
+          <>
             <Segmented
               label="Layout"
               value={layout}
@@ -439,86 +417,39 @@ export default function TalentBenchView() {
                 { value: "table", label: "Table", icon: "menu" },
               ]}
             />
-          }
-          exportName="bench"
-          onExport={exportCsv}
-          searchPlaceholder="Search name, email or skill"
-          emptyTitle="No candidates match your filters"
-          detailTitle={(a) => a.name || a.email}
-          renderDetail={(a) => detail(rows.find((r) => r.id === a.id) ?? a)}
-          detailActions={(a) => <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />}
-          rowMenu={rowMenu}
-          renderGrid={
-            layout === "cards"
-              ? (page, open) => (
-                  <BenchCards
-                    rows={page}
-                    showAdder={canFilterByAdder}
-                    onOpen={open}
-                    onRate={rate}
-                    onResume={(a) => void downloadResume(a)}
-                    onRemove={(a) => void removeFromBench(a)}
-                  />
-                )
-              : undefined
-          }
-        />
-      </>
+            <PillButton icon="sparkle" href={`/portal/lead-sourcing?from=${pool}`}>Lead sourcing</PillButton>
+            <PillButton variant="primary" icon="plus" href="/portal/applications/new?bench=1">Add profile</PillButton>
+          </>
+        }
+        exportName="bench"
+        onExport={exportCsv}
+        searchPlaceholder="Search name, email or skill"
+        emptyTitle="No candidates match your filters"
+        detailTitle={(a) => a.name || a.email}
+        renderDetail={(a) => detail(rows.find((r) => r.id === a.id) ?? a)}
+        detailActions={(a) => <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />}
+        rowMenu={rowMenu}
+        renderGrid={
+          layout === "cards"
+            ? (page, open) => (
+                <BenchCards
+                  rows={page}
+                  showAdder={canFilterByAdder}
+                  onOpen={open}
+                  onRate={rate}
+                  onResume={(a) => void downloadResume(a)}
+                  onRemove={(a) => void removeFromBench(a)}
+                />
+              )
+            : undefined
+        }
+      />
     );
 
   return (
-    <Page>
-      <PageHeader
-        section="recruiting"
-        icon="bench"
-        title="Talent bench"
-
-        actions={
-          <>
-            <Button variant="secondary" icon="sparkle" href={`/portal/lead-sourcing?from=${pool}`}>Lead sourcing</Button>
-            {ready && inPool.length > 0 && <ActionMenu items={[{ label: "Insights", icon: "chart", onSelect: () => setInsightsOpen(true) }]} />}
-            {ready && inPool.length > 0 && (
-              <InsightsSheet open={insightsOpen} onOpenChange={setInsightsOpen} title="Talent bench insights" description="The skills on the bench and where each profile sits. Pick a skill to filter.">
-                {(close) => (
-                  <>
-                    <Panel title="Top skills on the bench" description="Pick a skill to filter">
-                      {skills.length ? (
-                        <>
-                          <BarChart title="Bench profiles by skill" labels={skills.map((s) => s.label)} series={[{ name: "Profiles", values: skills.map((s) => s.value) }]} height={220} />
-                          <div className="mt-4 flex flex-wrap gap-1.5">
-                            {skills.map((s) => (
-                              <Button
-                                key={s.label}
-                                size="sm"
-                                variant={isOn("skill", s.label) ? "primary" : "secondary"}
-                                onClick={() => {
-                                  setFilter("skill", s.label);
-                                  close();
-                                }}
-                              >
-                                {s.label} <span className="tabular-nums opacity-70">{s.value}</span>
-                              </Button>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <EmptyState compact icon="tag" title="No skills recorded" body="Skills show here once the profiles on the bench list some." />
-                      )}
-                    </Panel>
-                    <Panel title="By stage">
-                      <DonutChart title="Bench profiles by stage" data={stageMix} centerLabel="Profiles" size={160} />
-                    </Panel>
-                  </>
-                )}
-              </InsightsSheet>
-            )}
-            <Button icon="plus" href="/portal/applications/new?bench=1">Add profile</Button>
-          </>
-        }
-        tabs={ready && rows.length > 0 && <p className="text-adm-base text-mist-600">{poolHint}</p>}
-      />
-      {body}
-    </Page>
+    <ListPage title="Talent bench">
+      {!loading && !failed && inPool.length > 0 ? body : <ListPageState>{body}</ListPageState>}
+    </ListPage>
   );
 }
 
@@ -538,7 +469,7 @@ function BenchCards({
   onRemove: (a: Row) => void;
 }) {
   return (
-    <ul className="grid gap-4 bg-mist-50 p-4 md:grid-cols-2 2xl:grid-cols-3">
+    <ul className="grid min-h-full content-start gap-4 bg-mist-50 p-4 md:grid-cols-2 2xl:grid-cols-3">
       {rows.map((a) => {
         const age = daysOnBench(a);
         return (

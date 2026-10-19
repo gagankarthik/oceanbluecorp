@@ -390,7 +390,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
                   setActiveTab("applicants");
                 }}
                 className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-adm-base font-medium ring-1 ring-inset transition-colors ${
-                  on ? "bg-navy-900 text-white ring-navy-900" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
+                  on ? "bg-contrast text-on-contrast ring-contrast" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
                 }`}
               >
                 {s.key !== "all" && <span aria-hidden className="size-2 rounded-full" style={{ background: STAGE_DOT[s.key] }} />}

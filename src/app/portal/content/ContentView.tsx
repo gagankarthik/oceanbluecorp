@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useState } from "react";
 import DataTable, { type Column } from "@/components/portal/DataTable";
 import Icon from "@/components/portal/icons";
 import { Badge, KeyValue, type Tone } from "@/components/portal/ui";
-import { Button, EmptyState, ErrorState, Page, PageHeader, Panel } from "@/components/portal/kit";
+import { Button, EmptyState, ErrorState, ListPage, ListPageState, Panel, PillButton } from "@/components/portal/kit";
 import { useToast } from "@/components/portal/toast";
 import { fmtRelative } from "@/components/portal/publishing/shared";
 import { Counter, Field, TextArea, TextInput } from "@/components/portal/publishing/fields";
@@ -45,7 +45,7 @@ function AnnouncementPreview({ draft }: { draft: Draft }) {
   const href = draft.announcementHref.trim();
   return (
     <div aria-label="Announcement bar preview" className="overflow-hidden rounded-lg ring-1 ring-mist-200">
-      <div className="relative flex min-h-11 items-center justify-center gap-3 bg-navy-900 py-2 pl-4 pr-12 text-center text-adm-base leading-snug text-mist-50">
+      <div className="relative flex min-h-11 items-center justify-center gap-3 bg-navy-950 py-2 pl-4 pr-12 text-center text-adm-base leading-snug text-white">
         {tag && <span className="inline-flex shrink-0 items-center bg-cyan-500 px-2 py-0.5 text-adm-base font-semibold text-navy-950">{tag}</span>}
         <p className="min-w-0 break-words">
           <span className="text-tide-300">{text}</span>{" "}
@@ -159,196 +159,193 @@ export default function ContentView() {
     },
   ];
 
-  const header = (
-    <PageHeader
-      title="Content"
-      icon="layers"
-      section="workspace"
-      description="The site-wide announcement bar, and what the public site still reads from stored content."
-      actions={
-        <Button variant="secondary" icon="globe" href="/">
-          Open website
-        </Button>
-      }
-    />
-  );
-
   if (loading) {
     return (
-      <Page>
-        {header}
-        <ContentSkeleton header={false} />
-      </Page>
+      <ListPage title="Content">
+        <ListPageState>
+          <ContentSkeleton header={false} />
+        </ListPageState>
+      </ListPage>
     );
   }
 
   if (error) {
     return (
-      <Page>
-        {header}
-        <ErrorState title="Couldn't load the site content" message={`${error} Nothing can be saved until it loads, so live copy is never overwritten.`} onRetry={load} />
-      </Page>
+      <ListPage title="Content">
+        <ListPageState>
+          <ErrorState title="Couldn't load the site content" message={`${error} Nothing can be saved until it loads, so live copy is never overwritten.`} onRetry={load} />
+        </ListPageState>
+      </ListPage>
     );
   }
 
   const isLive = !!saved.announcement;
 
   return (
-    <Page>
-      {header}
-
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Panel
-          title="Announcement bar"
-          description={isLive ? "Showing on every page of the site." : "Hidden. Write a message to show it."}
-          action={homepage?.updatedAt && <span className="text-adm-xs text-mist-600">Saved {fmtRelative(homepage.updatedAt).toLowerCase()}</span>}
-        >
-          <div className="grid gap-5">
-            <Field
-              id="announcement"
-              label="Message"
-              counter={<Counter value={draft.announcement.length} hard={LIMIT.announcement} />}
-              helper="Leave blank to hide the bar."
-            >
-              <TextArea id="announcement" rows={2} value={draft.announcement} onChange={set("announcement")} placeholder="We're hiring SAP consultants in Columbus" />
-            </Field>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field id="announcementTag" label="Tag" counter={<Counter value={draft.announcementTag.length} hard={LIMIT.announcementTag} />} helper="Optional pill before the message.">
-                <TextInput id="announcementTag" value={draft.announcementTag} onChange={set("announcementTag")} placeholder="Now hiring" />
-              </Field>
+    <ListPage title="Content">
+      {/* An editor, not a list: the page scrolls as one, with the stored blocks table at the end */}
+      <div className="scroll-thin grid min-h-0 flex-1 content-start gap-6 overflow-auto p-4 sm:p-6">
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <Panel
+            title="Announcement bar"
+            description={isLive ? "Showing on every page of the site." : "Hidden. Write a message to show it."}
+            action={homepage?.updatedAt && <span className="text-adm-xs text-mist-600">Saved {fmtRelative(homepage.updatedAt).toLowerCase()}</span>}
+          >
+            <div className="grid gap-5">
               <Field
-                id="announcementLinkLabel"
-                label="Link label"
-                counter={<Counter value={draft.announcementLinkLabel.length} hard={LIMIT.announcementLinkLabel} />}
-                helper="Shown only when there is a link."
+                id="announcement"
+                label="Message"
+                counter={<Counter value={draft.announcement.length} hard={LIMIT.announcement} />}
+                helper="Leave blank to hide the bar."
               >
-                <TextInput id="announcementLinkLabel" value={draft.announcementLinkLabel} onChange={set("announcementLinkLabel")} placeholder="Learn more" />
+                <TextArea id="announcement" rows={2} value={draft.announcement} onChange={set("announcement")} placeholder="We're hiring SAP consultants in Columbus" />
               </Field>
-            </div>
-            <Field
-              id="announcementHref"
-              label="Link"
-              error={badHref ? "Start with / for a page on this site, or https:// for another site." : undefined}
-              helper={badHref ? undefined : "Optional. A path like /careers, or a full https:// address."}
-            >
-              <TextInput
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field id="announcementTag" label="Tag" counter={<Counter value={draft.announcementTag.length} hard={LIMIT.announcementTag} />} helper="Optional pill before the message.">
+                  <TextInput id="announcementTag" value={draft.announcementTag} onChange={set("announcementTag")} placeholder="Now hiring" />
+                </Field>
+                <Field
+                  id="announcementLinkLabel"
+                  label="Link label"
+                  counter={<Counter value={draft.announcementLinkLabel.length} hard={LIMIT.announcementLinkLabel} />}
+                  helper="Shown only when there is a link."
+                >
+                  <TextInput id="announcementLinkLabel" value={draft.announcementLinkLabel} onChange={set("announcementLinkLabel")} placeholder="Learn more" />
+                </Field>
+              </div>
+              <Field
                 id="announcementHref"
-                value={draft.announcementHref}
-                onChange={set("announcementHref")}
-                placeholder="/careers"
-                aria-invalid={badHref || undefined}
-                aria-describedby={badHref ? "announcementHref-error" : undefined}
-              />
-            </Field>
-            <div className="flex flex-wrap items-center gap-2 border-t border-mist-200 pt-4">
-              <Button icon="check" loading={saving} disabled={!dirty || tooLong || badHref} onClick={() => save(draft)}>
-                {draft.announcement.trim() ? "Save and publish" : "Save, bar hidden"}
-              </Button>
-              <Button variant="ghost" disabled={!dirty || saving} onClick={() => setDraft(saved)}>
-                Discard
-              </Button>
-              {isLive && (
-                <Button variant="danger" icon="eye" className="sm:ml-auto" disabled={saving} onClick={() => save({ ...draft, announcement: "" }, saved)}>
-                  Hide the bar
+                label="Link"
+                error={badHref ? "Start with / for a page on this site, or https:// for another site." : undefined}
+                helper={badHref ? undefined : "Optional. A path like /careers, or a full https:// address."}
+              >
+                <TextInput
+                  id="announcementHref"
+                  value={draft.announcementHref}
+                  onChange={set("announcementHref")}
+                  placeholder="/careers"
+                  aria-invalid={badHref || undefined}
+                  aria-describedby={badHref ? "announcementHref-error" : undefined}
+                />
+              </Field>
+              <div className="flex flex-wrap items-center gap-2 border-t border-mist-200 pt-4">
+                <Button icon="check" loading={saving} disabled={!dirty || tooLong || badHref} onClick={() => save(draft)}>
+                  {draft.announcement.trim() ? "Save and publish" : "Save, bar hidden"}
                 </Button>
-              )}
+                <Button variant="ghost" disabled={!dirty || saving} onClick={() => setDraft(saved)}>
+                  Discard
+                </Button>
+                {isLive && (
+                  <Button variant="danger" icon="eye" className="sm:ml-auto" disabled={saving} onClick={() => save({ ...draft, announcement: "" }, saved)}>
+                    Hide the bar
+                  </Button>
+                )}
+              </div>
             </div>
+          </Panel>
+
+          <div className="lg:sticky lg:top-6">
+            <Panel
+              title="Preview"
+              description={dirty ? "Unsaved. This is what visitors will see after you save." : "What visitors see now."}
+              action={
+                <PillButton icon="globe" href="/">
+                  Open website
+                </PillButton>
+              }
+            >
+              <AnnouncementPreview draft={draft} />
+              <p className="mt-4 text-adm-base text-mist-600">Saving updates the live site straight away. Visitors who dismissed an earlier message will see a new one.</p>
+            </Panel>
+          </div>
+        </div>
+
+        <Panel
+          title="Maintenance mode"
+          action={
+            <Button size="sm" variant="secondary" icon="settings" href="/portal/settings">
+              Change in Settings
+            </Button>
+          }
+        >
+          <div className="flex flex-wrap items-center gap-3 text-adm-base text-navy-900">
+            <Badge tone={maintenanceOn ? "red" : "green"} dot>
+              {maintenanceOn ? "Site offline" : "Site online"}
+            </Badge>
+            <span className="min-w-0 text-mist-600">{maintenanceOn ? site.maintenanceMessage || "Showing the default maintenance message." : "Visitors see the public site as normal."}</span>
           </div>
         </Panel>
 
-        <div className="lg:sticky lg:top-6">
-          <Panel title="Preview" description={dirty ? "Unsaved. This is what visitors will see after you save." : "What visitors see now."}>
-            <AnnouncementPreview draft={draft} />
-            <p className="mt-4 text-adm-base text-mist-600">Saving updates the live site straight away. Visitors who dismissed an earlier message will see a new one.</p>
-          </Panel>
-        </div>
+        <section aria-label="Stored content blocks" className="grid gap-4">
+          <button
+            type="button"
+            aria-expanded={showBlocks}
+            aria-controls={blocksId}
+            onClick={() => setShowBlocks((v) => !v)}
+            className="flex min-h-10 w-full items-start gap-3 rounded-lg text-left"
+          >
+            <Icon name="chevronDown" className={`mt-1 size-4 shrink-0 text-mist-500 transition-transform duration-200 motion-reduce:transition-none ${showBlocks ? "" : "-rotate-90"}`} />
+            <span className="min-w-0">
+              <span className="flex flex-wrap items-center gap-2 text-adm-md font-semibold text-navy-900">
+                Advanced: stored blocks
+                <Badge>{blocks.length}</Badge>
+              </span>
+              <span className="mt-0.5 block max-w-[75ch] text-adm-base text-mist-600">
+                The redesigned site takes its page copy from code. Of the stored blocks it reads only the announcement, maintenance mode and the help directory; the rest is kept for reference.
+              </span>
+            </span>
+          </button>
+          {showBlocks && (
+            <div id={blocksId} className="min-w-0">
+              {blocks.length === 0 ? (
+                <EmptyState framed variant="first-use" icon="layers" title="No content saved yet" body="Saving the announcement creates the first block." />
+              ) : (
+                <DataTable
+                  rows={blocks}
+                  columns={columns}
+                  exportName="content-blocks"
+                  searchPlaceholder="Search blocks"
+                  detailTitle={(b) => b.id}
+                  renderDetail={(b) => {
+                    const entries = Object.entries(b.fields || {}).sort(([a], [z]) => a.localeCompare(z));
+                    return (
+                      <div className="grid gap-5">
+                        <KeyValue
+                          items={[
+                            { k: "Used by the site for", v: useOf(b.id).label },
+                            { k: "Last edited", v: `${fmtRelative(b.updatedAt)}${b.updatedByName ? `, ${b.updatedByName}` : ""}` },
+                          ]}
+                        />
+                        {entries.length === 0 ? (
+                          <EmptyState compact icon="layers" title="No fields stored" />
+                        ) : (
+                          <ul className="grid gap-2">
+                            {entries.map(([k, v]) => (
+                              <li key={k} className="rounded-lg bg-mist-50 p-3 ring-1 ring-inset ring-mist-200">
+                                <p className="flex items-center justify-between gap-2 text-adm-xs font-medium text-mist-600">
+                                  <span className="min-w-0 break-all">{k}</span>
+                                  {isLiveField(b.id, k) ? <Badge tone="green">Read by the site</Badge> : <Badge>Not used</Badge>}
+                                </p>
+                                <p className="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-adm-base text-navy-900">{v || <span className="text-mist-600">Empty</span>}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {b.id === "help-directory" && (
+                          <a href="/portal/help" className="inline-flex min-h-10 items-center gap-1.5 text-adm-base font-medium text-ocean-700 hover:underline">
+                            Edit on the Help page
+                            <Icon name="chevronRight" className="size-4" />
+                          </a>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
+              )}
+            </div>
+          )}
+        </section>
       </div>
-
-      <Panel
-        title="Maintenance mode"
-        action={
-          <Button size="sm" variant="secondary" icon="settings" href="/portal/settings">
-            Change in Settings
-          </Button>
-        }
-      >
-        <div className="flex flex-wrap items-center gap-3 text-adm-base text-navy-900">
-          <Badge tone={maintenanceOn ? "red" : "green"} dot>
-            {maintenanceOn ? "Site offline" : "Site online"}
-          </Badge>
-          <span className="min-w-0 text-mist-600">{maintenanceOn ? site.maintenanceMessage || "Showing the default maintenance message." : "Visitors see the public site as normal."}</span>
-        </div>
-      </Panel>
-
-      <section aria-label="Stored content blocks" className="grid gap-4">
-        <button
-          type="button"
-          aria-expanded={showBlocks}
-          aria-controls={blocksId}
-          onClick={() => setShowBlocks((v) => !v)}
-          className="flex min-h-10 w-full items-start gap-3 rounded-lg text-left"
-        >
-          <Icon name="chevronDown" className={`mt-1 size-4 shrink-0 text-mist-500 transition-transform duration-200 motion-reduce:transition-none ${showBlocks ? "" : "-rotate-90"}`} />
-          <span className="min-w-0">
-            <span className="flex flex-wrap items-center gap-2 text-adm-md font-semibold text-navy-900">
-              Advanced: stored blocks
-              <Badge>{blocks.length}</Badge>
-            </span>
-            <span className="mt-0.5 block max-w-[75ch] text-adm-base text-mist-600">
-              The redesigned site takes its page copy from code. Of the stored blocks it reads only the announcement, maintenance mode and the help directory; the rest is kept for reference.
-            </span>
-          </span>
-        </button>
-        {showBlocks && (
-          <div id={blocksId} className="min-w-0">
-            {blocks.length === 0 ? (
-              <EmptyState framed variant="first-use" icon="layers" title="No content saved yet" body="Saving the announcement creates the first block." />
-            ) : (
-              <DataTable
-                rows={blocks}
-                columns={columns}
-                exportName="content-blocks"
-                searchPlaceholder="Search blocks"
-                detailTitle={(b) => b.id}
-                renderDetail={(b) => {
-                  const entries = Object.entries(b.fields || {}).sort(([a], [z]) => a.localeCompare(z));
-                  return (
-                    <div className="grid gap-5">
-                      <KeyValue
-                        items={[
-                          { k: "Used by the site for", v: useOf(b.id).label },
-                          { k: "Last edited", v: `${fmtRelative(b.updatedAt)}${b.updatedByName ? `, ${b.updatedByName}` : ""}` },
-                        ]}
-                      />
-                      {entries.length === 0 ? (
-                        <EmptyState compact icon="layers" title="No fields stored" />
-                      ) : (
-                        <ul className="grid gap-2">
-                          {entries.map(([k, v]) => (
-                            <li key={k} className="rounded-lg bg-mist-50 p-3 ring-1 ring-inset ring-mist-200">
-                              <p className="flex items-center justify-between gap-2 text-adm-xs font-medium text-mist-600">
-                                <span className="min-w-0 break-all">{k}</span>
-                                {isLiveField(b.id, k) ? <Badge tone="green">Read by the site</Badge> : <Badge>Not used</Badge>}
-                              </p>
-                              <p className="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-adm-base text-navy-900">{v || <span className="text-mist-600">Empty</span>}</p>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {b.id === "help-directory" && (
-                        <a href="/portal/help" className="inline-flex min-h-10 items-center gap-1.5 text-adm-base font-medium text-ocean-700 hover:underline">
-                          Edit on the Help page
-                          <Icon name="chevronRight" className="size-4" />
-                        </a>
-                      )}
-                    </div>
-                  );
-                }}
-              />
-            )}
-          </div>
-        )}
-      </section>
-    </Page>
+    </ListPage>
   );
 }

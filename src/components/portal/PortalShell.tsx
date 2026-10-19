@@ -10,7 +10,7 @@ import { formatTimeAgo, useNotifications } from "@/hooks/use-notifications";
 import { hrPortalUrl } from "@/lib/site-content";
 import { useSession } from "./session";
 import PortalSearch, { type PortalSearchHandle } from "./PortalSearch";
-import { ChromeProvider, navItemFor, type PortalChrome } from "./chrome";
+import { ChromeProvider, navItemFor, titleFor, type PortalChrome } from "./chrome";
 import { useAuth } from "@/lib/auth";
 import { RECRUITING_ROLES } from "@/lib/auth/config";
 import { Avatar } from "./ui";
@@ -44,143 +44,177 @@ function useOutside<T extends HTMLElement>(open: boolean, close: () => void) {
   return ref;
 }
 
-const SIDEBAR_KEY = "portal.sidebar";
-const WIDE = "(min-width: 1280px)";
+const THEME_KEY = "portal.theme";
 
-/**
- * Desktop sidebar state. A stored choice wins; with none, it follows the
- * viewport: expanded from 1280px, an icon rail from 1024 to 1279px.
- */
-function useSidebarCollapsed() {
-  const read = () => {
-    try {
-      const v = window.localStorage.getItem(SIDEBAR_KEY);
-      if (v === "collapsed" || v === "expanded") return v === "collapsed";
-    } catch {}
-    return null;
-  };
-  const [stored, setStored] = useState<boolean | null>(() => (typeof window === "undefined" ? null : read()));
-  const [wide, setWide] = useState(() => (typeof window === "undefined" ? true : window.matchMedia(WIDE).matches));
-
+/** Light by default; the top-bar switch turns on the dark palette (src/styles/portal-dark.css) and remembers it here. */
+function usePortalTheme() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   useEffect(() => {
-    const mq = window.matchMedia(WIDE);
-    const on = () => setWide(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-
-  const collapsed = stored ?? !wide;
-  const toggle = useCallback(() => {
-    const next = !collapsed;
-    setStored(next);
     try {
-      window.localStorage.setItem(SIDEBAR_KEY, next ? "collapsed" : "expanded");
+      if (window.localStorage.getItem(THEME_KEY) === "dark") setTheme("dark");
     } catch {}
-  }, [collapsed]);
-  return [collapsed, toggle] as const;
+  }, []);
+  const toggle = useCallback(() => {
+    setTheme((t) => {
+      const next = t === "dark" ? "light" : "dark";
+      try {
+        window.localStorage.setItem(THEME_KEY, next);
+      } catch {}
+      return next;
+    });
+  }, []);
+  return [theme, toggle] as const;
 }
 
-type Tip = { label: string; top: number } | null;
+// The CRM's sidebar: no collapse, a drag handle on its right edge between these widths.
+const SIDEBAR_WIDTH_KEY = "portal.sidebar-width";
+const SIDEBAR_MIN = 200;
+const SIDEBAR_MAX = 400;
+const SIDEBAR_DEFAULT = 254;
+const clampWidth = (w: number) => Math.round(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, w)));
+
+function useSidebarWidth() {
+  const [width, setWidth] = useState(SIDEBAR_DEFAULT);
+  useEffect(() => {
+    try {
+      const w = parseInt(window.localStorage.getItem(SIDEBAR_WIDTH_KEY) ?? "", 10);
+      if (w >= SIDEBAR_MIN && w <= SIDEBAR_MAX) setWidth(w);
+    } catch {}
+  }, []);
+  const save = useCallback((w: number) => {
+    try {
+      window.localStorage.setItem(SIDEBAR_WIDTH_KEY, String(w));
+    } catch {}
+  }, []);
+  return [width, setWidth, save] as const;
+}
+
+/** Drag to resize, arrow keys in 10px steps, Home/End for the limits, double-click to reset. */
+function SidebarResizer({ width, onWidth, onCommit }: { width: number; onWidth: (w: number) => void; onCommit: (w: number) => void }) {
+  const drag = useRef<{ x: number; w: number } | null>(null);
+  const last = useRef(width);
+  last.current = width;
+  const set = (w: number) => onWidth(clampWidth(w));
+  const end = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current) return;
+    drag.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    delete document.documentElement.dataset.sidebarResizing;
+    onCommit(last.current);
+  };
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize sidebar"
+      aria-valuemin={SIDEBAR_MIN}
+      aria-valuemax={SIDEBAR_MAX}
+      aria-valuenow={width}
+      tabIndex={0}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { x: e.clientX, w: width };
+        document.documentElement.dataset.sidebarResizing = "";
+      }}
+      onPointerMove={(e) => drag.current && set(drag.current.w + e.clientX - drag.current.x)}
+      onPointerUp={end}
+      onPointerCancel={end}
+      onDoubleClick={() => {
+        onWidth(SIDEBAR_DEFAULT);
+        onCommit(SIDEBAR_DEFAULT);
+      }}
+      onKeyDown={(e) => {
+        const next: Record<string, number> = { ArrowLeft: width - 10, ArrowRight: width + 10, Home: SIDEBAR_MIN, End: SIDEBAR_MAX };
+        if (!(e.key in next)) return;
+        e.preventDefault();
+        const w = clampWidth(next[e.key]);
+        onWidth(w);
+        onCommit(w);
+      }}
+      className="group absolute inset-y-0 -right-1 z-10 w-2 cursor-col-resize touch-none select-none outline-none"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent transition-colors duration-150 group-hover:bg-mist-300 group-focus-visible:bg-mist-500 group-active:bg-mist-500"
+      />
+    </div>
+  );
+}
 
 function Sidebar({
   activeHref,
-  collapsed = false,
+  dark = false,
   onNavigate,
   onClose,
 }: {
   activeHref?: string;
-  /** Icon rail: labels become tooltips, group titles become dividers */
-  collapsed?: boolean;
+  /** Dark theme: the white logo */
+  dark?: boolean;
   onNavigate?: () => void;
   onClose?: () => void;
 }) {
   const { role } = useSession();
-  const [tip, setTip] = useState<Tip>(null);
   const groups = nav.map((g) => ({ ...g, items: g.items.filter((i) => canAccess(role, i.href)) })).filter((g) => g.items.length > 0);
   const labelled = groups.length > 1;
 
-  // Rail tooltips are fixed-position: the nav scrolls, so an absolute one would be clipped.
-  const tipProps = (label: string) =>
-    collapsed
-      ? {
-          onMouseEnter: (e: React.MouseEvent<HTMLElement>) => showTip(e.currentTarget, label),
-          onFocus: (e: React.FocusEvent<HTMLElement>) => showTip(e.currentTarget, label),
-          onMouseLeave: () => setTip(null),
-          onBlur: () => setTip(null),
-        }
-      : {};
-  const showTip = (el: HTMLElement, label: string) => {
-    const r = el.getBoundingClientRect();
-    setTip({ label, top: r.top + r.height / 2 });
+  // One nav row, as in the CRM: 30px, 14px icon; the active row is a raised pill 32px tall.
+  const row = (item: { href: string; label: string; icon: IconName }) => {
+    const active = item.href === activeHref;
+    return (
+      <li key={item.href} className={active ? "mb-0.5" : ""}>
+        <Link
+          href={item.href}
+          onClick={onNavigate}
+          aria-current={active ? "page" : undefined}
+          className={`group relative flex items-center gap-1.5 rounded-lg px-2 text-adm-base font-medium transition-colors duration-150 ${
+            active ? "h-8 bg-mist-0 text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200" : "h-[30px] text-mist-600 hover:text-navy-900"
+          }`}
+        >
+          <Icon name={item.icon} className={`size-3.5 shrink-0 transition-colors duration-150 ${active ? "text-navy-900" : "text-mist-500 group-hover:text-navy-900"}`} />
+          <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+        </Link>
+      </li>
+    );
   };
 
   return (
-    <div className="flex h-full flex-col border-r border-mist-200 bg-mist-0">
-      {/* Logo centred in its box; the phone drawer keeps it left of the close button */}
-      <div className={`flex h-16 shrink-0 items-center border-b border-mist-200 ${onClose ? "justify-between px-5" : "justify-center"}`}>
-        <Link href="/portal" onClick={onNavigate} aria-label="Portal home" className="rounded-md">
-          {collapsed ? <Logo mark className="size-9 object-center!" /> : <Logo className={`h-9 w-[7.6rem] ${onClose ? "" : "object-center!"}`} />}
+    <div className="flex h-full min-h-0 flex-col border-r border-mist-200 bg-mist-50">
+      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-mist-200 bg-mist-0 px-4">
+        <Link href="/portal" onClick={onNavigate} aria-label="Portal home" className="flex min-w-0 flex-1 items-center rounded-md">
+          <Logo variant={dark ? "white" : "color"} className="h-9 w-[7.6rem] object-left!" />
         </Link>
         {onClose && (
-          <button type="button" onClick={onClose} aria-label="Close navigation" className="-mr-2 grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100">
-            <Icon name="x" />
+          <button type="button" onClick={onClose} aria-label="Close navigation" className="grid size-[30px] place-items-center rounded-full text-navy-900 hover:bg-mist-100">
+            <Icon name="x" className="size-4" />
           </button>
         )}
       </div>
 
-      <nav id="portal-nav" aria-label="Portal" className="scroll-thin flex-1 overflow-y-auto overflow-x-hidden px-3 py-3" onScroll={() => setTip(null)}>
+      <nav id="portal-nav" aria-label="Portal" className="scroll-thin min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         {groups.map((group, gi) => (
-          <div key={group.title} className={gi === 0 ? "" : collapsed ? "mt-3 border-t border-mist-200 pt-3" : "mt-4"}>
-            {labelled && !collapsed && <p className="px-3 pb-1 text-adm-xs font-medium leading-4 text-mist-600">{group.title}</p>}
-            {labelled && collapsed && <span className="sr-only">{group.title}</span>}
-            <ul className="grid gap-1">
-              {group.items.map((item) => {
-                const active = item.href === activeHref;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onNavigate}
-                      aria-current={active ? "page" : undefined}
-                      {...tipProps(item.label)}
-                      className={`group relative flex min-h-8 items-center rounded-lg text-adm-base font-medium transition-colors ${
-                        collapsed ? "mx-auto w-10 justify-center" : "gap-3 px-3"
-                      } ${active ? "bg-ocean-50 text-ocean-700" : "text-mist-700 hover:bg-mist-100 hover:text-navy-900"}`}
-                    >
-                      {active && <span aria-hidden className="absolute -left-3 top-1 bottom-1 w-1 rounded-r bg-ocean-600" />}
-                      <Icon name={item.icon} className={`size-4 shrink-0 ${active ? "text-ocean-600" : "text-mist-500 group-hover:text-navy-900"}`} />
-                      <span className={collapsed ? "sr-only" : "truncate whitespace-nowrap"}>{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+          <div key={group.title} className={`flex flex-col gap-1 p-3 ${gi < groups.length - 1 ? "border-b border-mist-200" : ""}`}>
+            {labelled && gi > 0 && (
+              <span className="block px-2 pb-0.5 text-adm-xs font-medium uppercase leading-none tracking-[1px] text-mist-500">{group.title}</span>
+            )}
+            {labelled && gi === 0 && <span className="sr-only">{group.title}</span>}
+            <ul className="flex flex-col">{group.items.map((item) => row(item))}</ul>
           </div>
         ))}
       </nav>
-
-
-      {collapsed && tip && (
-        <span
-          aria-hidden
-          className="pointer-events-none fixed left-[72px] z-40 -translate-y-1/2 whitespace-nowrap rounded-md bg-navy-900 px-2.5 py-1.5 text-adm-base font-medium text-white shadow-lg"
-          style={{ top: tip.top }}
-        >
-          {tip.label}
-        </span>
-      )}
     </div>
   );
 }
 
 /** Off-canvas nav below lg: focus trapped, Escape and the backdrop close it. */
-function MobileNav({ activeHref, onClose }: { activeHref?: string; onClose: () => void }) {
+function MobileNav({ activeHref, dark, onClose }: { activeHref?: string; dark: boolean; onClose: () => void }) {
   const ref = useDialog<HTMLDivElement>(onClose);
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       <div aria-hidden className="kit-fade absolute inset-0 bg-navy-950/50" onClick={onClose} />
-      <div ref={ref} role="dialog" aria-modal="true" aria-label="Navigation" tabIndex={-1} className="kit-drawer-left relative h-full w-72 max-w-[85vw] shadow-xl focus:outline-none">
-        <Sidebar activeHref={activeHref} onNavigate={onClose} onClose={onClose} />
+      <div ref={ref} role="dialog" aria-modal="true" aria-label="Navigation" tabIndex={-1} className="kit-drawer-left relative h-full w-[254px] max-w-[85vw] shadow-xl focus:outline-none">
+        <Sidebar activeHref={activeHref} dark={dark} onNavigate={onClose} onClose={onClose} />
       </div>
     </div>
   );
@@ -198,7 +232,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   const { user, role, realRole, setRole, signOut } = useSession();
   const pathname = usePathname();
   const router = usePortalRouter();
-  const [collapsed, toggleSidebar] = useSidebarCollapsed();
+  const [sidebarWidth, setSidebarWidth, saveSidebarWidth] = useSidebarWidth();
+  const [theme, toggleTheme] = usePortalTheme();
   const notes = useNotifications();
   // Search answers RECRUITING_ROLES only (requireStaff on /api/admin/search).
   const canSearch = useAuth().hasAnyRole(RECRUITING_ROLES);
@@ -217,7 +252,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   const canHr = realRole === "admin" || realRole === "hr";
 
   const openSearch = useCallback(() => search.current?.focus(), []);
-  const chrome = useMemo<PortalChrome>(() => ({ openSearch, setNavSection }), [openSearch]);
+  const sectionTitle = titleFor(pathname);
+  const chrome = useMemo<PortalChrome>(() => ({ openSearch, setNavSection, sectionTitle }), [openSearch, sectionTitle]);
   const activeHref = navSection ?? navItemFor(pathname)?.href;
 
   useEffect(() => {
@@ -229,7 +265,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <ChromeProvider value={chrome}>
-    <div data-portal-shell className="min-h-svh bg-mist-50">
+    <div data-portal-shell data-theme={theme} className="min-h-svh bg-mist-50" style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}>
       <a
         href="#portal-main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[70] focus:rounded-lg focus:bg-ocean-600 focus:px-3 focus:py-2 focus:text-adm-base focus:font-medium focus:text-white"
@@ -237,48 +273,28 @@ function Shell({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
 
-      {/* Desktop sidebar: full width or an icon rail */}
-      <aside
-        className={`peer fixed inset-y-0 left-0 z-30 hidden overflow-hidden transition-[width] duration-200 ease-[var(--ease-standard)] motion-reduce:transition-none lg:block ${
-          collapsed ? "w-16" : "w-54 2xl:w-60"
-        }`}
-      >
-        <Sidebar activeHref={activeHref} collapsed={collapsed} />
+      {/* Desktop sidebar, resizable from its right edge as in the CRM */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] lg:block">
+        <Sidebar activeHref={activeHref} dark={theme === "dark"} />
+        <SidebarResizer width={sidebarWidth} onWidth={setSidebarWidth} onCommit={saveSidebarWidth} />
       </aside>
-      {/* Mid-height on the sidebar's edge, shown while the sidebar is hovered. Outside the
-          aside because the aside clips its overflow; it rides the edge as the width animates. */}
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        aria-controls="portal-nav"
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className={`adm-hit fixed top-1/2 z-40 hidden size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-mist-0 text-mist-600 opacity-0 shadow-sm ring-1 ring-mist-300 transition-[left,color,opacity] duration-200 peer-hover:opacity-100 hover:opacity-100 focus-visible:opacity-100 ease-[var(--ease-standard)] hover:text-navy-900 hover:ring-mist-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 motion-reduce:transition-none lg:grid ${
-          collapsed ? "left-16" : "left-54 2xl:left-60"
-        }`}
-      >
-        <Icon name={collapsed ? "chevronRight" : "chevronLeft"} className="size-3.5" />
-      </button>
 
-      {mobileNav && <MobileNav activeHref={activeHref} onClose={closeMobileNav} />}
+      {mobileNav && <MobileNav activeHref={activeHref} dark={theme === "dark"} onClose={closeMobileNav} />}
 
-      <div
-        className={`flex min-h-svh min-w-0 flex-col transition-[padding] duration-200 ease-[var(--ease-standard)] motion-reduce:transition-none ${
-          collapsed ? "lg:pl-16" : "lg:pl-54 2xl:pl-60"
-        }`}
-      >
+      <div className="flex min-h-svh min-w-0 flex-col lg:pl-[var(--sidebar-width)]">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-mist-200 bg-mist-0 px-3 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-mist-200 bg-mist-0 px-4">
           <button
             type="button"
             onClick={() => setMobileNav(true)}
             aria-label="Open navigation"
             aria-expanded={mobileNav}
-            className="grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100 lg:hidden"
+            className={`${PILL} size-8 lg:hidden`}
           >
-            <Icon name="menu" />
+            <Icon name="menu" className="size-4" />
           </button>
+          {/* The section's name, as the CRM's header names its page; the page's own h1 carries the semantics */}
+          <p className="min-w-0 truncate text-adm-md font-medium leading-none text-navy-900">{sectionTitle}</p>
 
           <div className="ml-auto flex items-center gap-2">
             {canSearch && <PortalSearch ref={search} />}
@@ -302,13 +318,13 @@ function Shell({ children }: { children: React.ReactNode }) {
                 onClick={() => setMenu(menu === "bell" ? null : "bell")}
                 aria-label={`Notifications, ${notes.unreadCount} unread`}
                 aria-expanded={menu === "bell"}
-                className="relative grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100"
+                className={`${PILL} relative size-8`}
               >
-                <Icon name="bell" />
-                {notes.unreadCount > 0 && <span className="absolute right-2 top-2 size-2 rounded-full bg-status-danger-mark ring-2 ring-mist-0" />}
+                <Icon name="bell" className="size-4" />
+                {notes.unreadCount > 0 && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-status-danger-mark ring-2 ring-mist-0" />}
               </button>
               {menu === "bell" && (
-                <div className="absolute right-0 top-12 w-80 rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200">
+                <div className="absolute right-0 top-10 w-80 overflow-hidden rounded-xl bg-mist-0 shadow-[0_12px_32px_rgba(15,23,42,0.12)] ring-1 ring-mist-200">
                   <div className="flex items-center justify-between border-b border-mist-200 px-4 py-3">
                     <p className="text-adm-base font-semibold">Notifications</p>
                     {notes.unreadCount > 0 && (
@@ -350,8 +366,18 @@ function Shell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            <Link href="/portal/help" aria-label="Help and team directory" title="Help and team directory" className="grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100">
-              <Icon name="help" />
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              title={theme === "dark" ? "Light theme" : "Dark theme"}
+              className={`${PILL} size-8`}
+            >
+              <Icon name={theme === "dark" ? "sun" : "moon"} className="size-4" />
+            </button>
+
+            <Link href="/portal/help" aria-label="Help and team directory" title="Help and team directory" className={`${PILL} size-8`}>
+              <Icon name="help" className="size-4" />
             </Link>
 
             {/* User menu */}
@@ -364,25 +390,22 @@ function Shell({ children }: { children: React.ReactNode }) {
                 }}
                 aria-expanded={menu === "user"}
                 aria-label="Account menu"
-                className="flex items-center gap-2 rounded-lg p-1 pr-2 hover:bg-mist-100"
+                className={`${PILL} h-8 gap-2 pl-1 pr-1 text-adm-xs sm:pr-2.5 ${menu === "user" ? "bg-mist-50" : ""}`}
               >
-                <UserAvatar id={user.id} name={user.name} failed={avatarFailed} onFail={() => setAvatarFailed(true)} />
-                <span className="hidden text-left leading-tight sm:block">
-                  <span className="block text-adm-base font-semibold text-navy-900">{user.name}</span>
-                  <span className="block text-adm-xs text-mist-600">{roles[role].label}</span>
-                </span>
-                <Icon name="chevronDown" className="hidden size-4 text-mist-500 sm:block" />
+                <UserAvatar id={user.id} name={user.name} failed={avatarFailed} onFail={() => setAvatarFailed(true)} small />
+                <span className="hidden max-w-36 truncate sm:inline">{user.name}</span>
+                <Icon name="chevronDown" className={`hidden size-3.5 text-mist-500 transition-transform sm:block ${menu === "user" ? "rotate-180" : ""}`} />
               </button>
               {menu === "user" && (
-                <div className="absolute right-0 top-12 w-72 rounded-xl bg-mist-0 p-2 shadow-xl ring-1 ring-mist-200">
-                  <div className="flex items-center gap-3 px-3 py-3">
+                <div className="absolute right-0 top-10 w-64 rounded-xl bg-mist-0 p-1.5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] ring-1 ring-mist-200">
+                  <div className="flex items-center gap-2.5 px-2 pb-2 pt-1.5">
                     <UserAvatar id={user.id} name={user.name} failed={avatarFailed} onFail={() => setAvatarFailed(true)} />
                     <div className="min-w-0">
-                      <p className="truncate text-adm-base font-semibold text-navy-900">{user.name}</p>
-                      <p className="truncate text-adm-xs text-mist-600">{user.email}</p>
+                      <p className="truncate text-adm-base font-medium leading-tight text-navy-900">{user.name}</p>
+                      <p className="truncate text-adm-xs text-mist-600">{roles[realRole].label} · {user.email}</p>
                     </div>
                   </div>
-                  <div className="my-1 h-px bg-mist-200" />
+                  <div className="-mx-1.5 my-1 h-px bg-mist-200" />
                   <MenuItem href="/portal/settings" icon="settings" label="Account settings" onClick={close} />
                   {canHr && <MenuItem href={hrPortalUrl("portal")} icon="idBadge" label="HR portal" external onClick={close} />}
 
@@ -395,20 +418,20 @@ function Shell({ children }: { children: React.ReactNode }) {
                         onClick={() => setViewAs((v) => !v)}
                         aria-expanded={viewAs}
                         aria-haspopup="true"
-                        className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-adm-base text-navy-900 hover:bg-mist-50 ${viewAs ? "bg-mist-50" : ""}`}
+                        className={`${ROW} w-full ${viewAs ? "bg-mist-100" : ""}`}
                       >
-                        <Icon name="eye" className="size-4 shrink-0 text-mist-600" />
+                        <Icon name="eye" className="size-4 shrink-0 text-mist-500" />
                         View portal as
-                        <span className="ml-auto text-adm-base text-mist-600">{roles[role].label}</span>
-                        <Icon name="chevronRight" className={`size-4 text-mist-500 transition-transform max-sm:rotate-90 ${viewAs ? "sm:rotate-180" : ""}`} />
+                        <span className="ml-auto text-adm-xs text-mist-600">{roles[role].label}</span>
+                        <Icon name="chevronRight" className={`size-3.5 text-mist-500 transition-transform max-sm:rotate-90 ${viewAs ? "sm:rotate-180" : ""}`} />
                       </button>
                       {viewAs && (
                         <div
                           role="radiogroup"
                           aria-label="View portal as"
-                          className="mt-1 grid gap-0.5 rounded-lg bg-mist-50 p-1 sm:absolute sm:right-full sm:top-0 sm:mr-3 sm:mt-0 sm:max-h-[calc(100svh-8rem)] sm:w-52 sm:overflow-y-auto sm:bg-mist-0 sm:p-2 sm:shadow-xl sm:ring-1 sm:ring-mist-200"
+                          className="mt-1 grid gap-0.5 rounded-lg bg-mist-50 p-1 sm:absolute sm:right-full sm:top-0 sm:mr-2 sm:mt-0 sm:max-h-[calc(100svh-8rem)] sm:w-48 sm:overflow-y-auto sm:rounded-xl sm:bg-mist-0 sm:p-1.5 sm:shadow-[0_12px_32px_rgba(15,23,42,0.12)] sm:ring-1 sm:ring-mist-200"
                         >
-                          <p className="hidden px-3 pb-1 pt-2 text-adm-xs font-medium text-mist-600 sm:block">Preview the portal as</p>
+                          <p className="hidden px-2 pb-1 pt-1 text-adm-xs text-mist-600 sm:block">Preview the portal as</p>
                           {(Object.keys(roles) as Role[]).map((r) => (
                             <button
                               key={r}
@@ -420,12 +443,12 @@ function Shell({ children }: { children: React.ReactNode }) {
                                 close();
                               }}
                               title={roles[r].description}
-                              className={`flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left ${r === role ? "bg-ocean-50" : "hover:bg-mist-50"}`}
+                              className={`${ROW} w-full text-left ${r === role ? "bg-mist-100" : ""}`}
                             >
-                              <span className={`grid size-4 shrink-0 place-items-center rounded-full ${r === role ? "bg-ocean-600" : "ring-1 ring-inset ring-mist-400"}`}>
+                              <span className={`grid size-3.5 shrink-0 place-items-center rounded-full ${r === role ? "bg-ocean-600" : "ring-1 ring-inset ring-mist-400"}`}>
                                 {r === role && <span className="size-1.5 rounded-full bg-white" />}
                               </span>
-                              <span className="text-adm-base font-medium text-navy-900">{roles[r].label}</span>
+                              <span className="text-adm-base text-navy-900">{roles[r].label}</span>
                               {r === realRole && <span className="ml-auto text-adm-xs text-mist-600">You</span>}
                             </button>
                           ))}
@@ -434,11 +457,11 @@ function Shell({ children }: { children: React.ReactNode }) {
                     </div>
                   )}
 
-                  <div className="my-1 h-px bg-mist-200" />
+                  <div className="-mx-1.5 my-1 h-px bg-mist-200" />
                   <button
                     type="button"
                     onClick={signOut}
-                    className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-adm-base text-status-danger hover:bg-status-danger-soft"
+                    className={`${ROW} w-full text-status-danger hover:bg-status-danger-soft`}
                   >
                     <Icon name="logout" className="size-4 shrink-0" />
                     Sign out
@@ -460,20 +483,34 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 /** The uploaded photo (Settings, Profile) when there is one, initials otherwise. */
-function UserAvatar({ id, name, failed, onFail }: { id: string; name: string; failed: boolean; onFail: () => void }) {
-  if (failed || !id) return <Avatar name={name} size="sm" />;
+function UserAvatar({ id, name, failed, onFail, small }: { id: string; name: string; failed: boolean; onFail: () => void; small?: boolean }) {
+  const size = small ? "size-6" : "size-8";
+  if (failed || !id) {
+    return (
+      <span aria-hidden className={`grid ${size} shrink-0 place-items-center rounded-full bg-ocean-100 text-adm-xs font-semibold leading-none text-ocean-800 ring-1 ring-inset ring-ocean-200`}>
+        {name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("")}
+      </span>
+    );
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={`/api/users/avatar/${id}`} alt="" onError={onFail} className="size-7 shrink-0 rounded-full object-cover" />
+    <img src={`/api/users/avatar/${id}`} alt="" onError={onFail} className={`${size} shrink-0 rounded-full object-cover ring-1 ring-mist-200`} />
   );
 }
 
+// A menu row: 32px, 16px muted icon, the hover wash every portal menu uses.
+const ROW = "flex h-8 items-center gap-2 rounded-lg px-2 text-adm-base text-navy-900 transition-colors hover:bg-mist-100";
+
+// The CRM's secondary pill: white, hairline edge, soft lift; every header control uses it.
+const PILL =
+  "inline-flex shrink-0 items-center justify-center rounded-full bg-mist-0 font-medium text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200 transition-colors duration-150 hover:bg-mist-50";
+
 /** Account menu row: icon, label, and an arrow when it leaves the portal */
 function MenuItem({ href, icon, label, external, onClick }: { href: string; icon: IconName; label: string; external?: boolean; onClick?: () => void }) {
-  const cls = "flex h-10 items-center gap-3 rounded-lg px-3 text-adm-base text-navy-900 hover:bg-mist-50";
+  const cls = ROW;
   const body = (
     <>
-      <Icon name={icon} className="size-4 shrink-0 text-mist-600" />
+      <Icon name={icon} className="size-4 shrink-0 text-mist-500" />
       {label}
       {external && <Icon name="external" className="ml-auto size-3.5 text-mist-500" />}
     </>

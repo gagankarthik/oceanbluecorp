@@ -37,6 +37,9 @@ export type Column<T> = {
   minWidth?: number;
 };
 
+/** One figure in the footer strip, computed from the rows the filters leave. */
+export type Summary = { label: string; value: React.ReactNode; warn?: boolean };
+
 // max-w-0 makes grow columns truncate while the table fits; once it overflows, auto
 // layout would squeeze them to their padding, so min-width (which beats max-width) holds them
 const growMin = (c: { grow?: number; minWidth?: number }) => c.minWidth ?? ((c.grow ?? 0) >= 30 ? 224 : (c.grow ?? 0) >= 20 ? 176 : 128);
@@ -45,8 +48,8 @@ const ALIGN = { left: "", center: "w-px whitespace-nowrap text-center", right: "
 const alignOf = <T,>(c: Column<T>) => ALIGN[c.numeric ? "right" : (c.align ?? "left")];
 
 type Density = "compact" | "default" | "relaxed";
-// Row heights 44 / 56 / 68 (DESIGN_SYSTEM §2.5); td height acts as a min-height
-const ROW_H: Record<Density, string> = { compact: "h-11 py-1.5", default: "h-14 py-2", relaxed: "h-[68px] py-3" };
+// Row heights 36 / 42 / 56: the CRM's 42px by default; td height acts as a min-height
+const ROW_H: Record<Density, string> = { compact: "h-9 py-1", default: "h-[42px] py-1", relaxed: "h-14 py-2" };
 const DENSITIES: { v: Density; l: string }[] = [
   { v: "compact", l: "Compact" },
   { v: "default", l: "Default" },
@@ -86,7 +89,9 @@ const matches = <T,>(f: Filter<T>, r: T, o: string) => (f.match ? f.match(r, o) 
 const hide = { md: "hidden md:table-cell", lg: "hidden lg:table-cell", xl: "hidden xl:table-cell", "2xl": "hidden 2xl:table-cell" };
 
 // Sticky header band (z-20; z-30 where it meets a pinned column) and pinned body cells (z-10)
-const HEAD = "sticky whitespace-nowrap border-b border-mist-200 bg-mist-50 px-4 py-3";
+const HEAD = "sticky h-[38px] whitespace-nowrap border-b border-mist-200 bg-mist-50 px-3";
+// The CRM's secondary control: a 30px white pill with a hairline edge
+const PILL = "inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-full bg-mist-0 px-[9px] text-adm-xs font-medium text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200 transition-colors hover:bg-mist-50";
 const PIN = "sticky z-10 bg-inherit";
 
 function useOutsideClose(open: boolean, close: () => void) {
@@ -140,6 +145,9 @@ export default function DataTable<T extends { id: string }>({
   onStateChange,
   storageKey,
   viewSwitch,
+  fill = false,
+  summary,
+  noun = "rows",
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -182,8 +190,17 @@ export default function DataTable<T extends { id: string }>({
   onStateChange?: (state: { query: string; filters: Record<string, string> }) => void;
   /** Persists rows per page and hidden columns in this browser */
   storageKey?: string;
-  /** Icon-only view switch (e.g. Table / Board), right after Filters; 40px tall like the toolbar controls */
+  /** Icon-only view switch (e.g. Table / Board), right after Filters */
   viewSwitch?: React.ReactNode;
+  /**
+   * The CRM list: fills its parent's height edge to edge, the rows scroll under a fixed header,
+   * every row shows (no pages), and the footer carries the count, the figures and the bulk actions.
+   */
+  fill?: boolean;
+  /** Footer figures (sums, averages) from the filtered rows */
+  summary?: (rows: T[]) => Summary[];
+  /** Plural for the footer count ("contacts in view") */
+  noun?: string;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [active, setActive] = useState<Record<string, string>>(initialFilters ?? {});
@@ -261,10 +278,10 @@ export default function DataTable<T extends { id: string }>({
     return out;
   }, [rows, filters, active, query, sort, columns, searchMatch]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pages = fill ? 1 : Math.max(1, Math.ceil(filtered.length / perPage));
   const current = Math.min(page, pages - 1);
-  const visible = filtered.slice(current * perPage, current * perPage + perPage);
-  const unpaged = !!renderGrid && gridAll;
+  const visible = fill ? filtered : filtered.slice(current * perPage, current * perPage + perPage);
+  const unpaged = fill || (!!renderGrid && gridAll);
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id));
   const someVisibleSelected = !allVisibleSelected && visible.some((r) => selected.has(r.id));
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -297,6 +314,7 @@ export default function DataTable<T extends { id: string }>({
         { value: "All", label: `All ${f.label.toLowerCase()}`, count: rows.length },
         ...f.options.map((o) => ({ value: o, label: o, count: rows.filter((r) => matches(f, r, o)).length })),
       ]}
+      size="sm"
       className={className}
     />
   );
@@ -329,6 +347,8 @@ export default function DataTable<T extends { id: string }>({
   const [portalReady, setPortalReady] = useState(false);
   useEffect(() => setPortalReady(true), []);
   const barOn = selectable && selected.size > 0;
+  // In the CRM list the bulk actions live in the footer, not a floating bar
+  const floatBar = selectable && !fill;
   const lastSel = useRef<string[]>([]);
   if (barOn) lastSel.current = [...selected];
 
@@ -355,9 +375,9 @@ export default function DataTable<T extends { id: string }>({
   }
 
   // Rules live on the cells: `border-separate` (needed for sticky cells) never paints tr borders
-  const cellPad = `border-b border-mist-100 px-4 ${ROW_H[density]}`;
-  // Against the page the header clears the 64px top bar; inside a sideways scroller it sits at 0
-  const head = `${HEAD} ${edges.wide ? "top-0" : "top-16"}`;
+  const cellPad = `border-b border-mist-100 px-3 ${ROW_H[density]}`;
+  // Filled lists scroll inside their own box, so the header pins at 0; otherwise it clears the 64px top bar
+  const head = `${HEAD} ${fill || edges.wide ? "top-0" : "top-16"}`;
   const hasRowEnd = !!renderDetail || !!rowMenu;
   const rowEnd = (r: T) => {
     const openRow = () => renderDetail && setOpen(r);
@@ -373,7 +393,7 @@ export default function DataTable<T extends { id: string }>({
             aria-label="Row actions"
             title="Row actions"
             onClick={(e) => e.stopPropagation()}
-            className="grid size-8 shrink-0 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900 data-[state=open]:bg-mist-100 data-[state=open]:text-navy-900"
+            className="grid size-7 shrink-0 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900 data-[state=open]:bg-mist-100 data-[state=open]:text-navy-900"
           >
             <Icon name="dotsVertical" className="size-4" />
           </button>
@@ -384,14 +404,14 @@ export default function DataTable<T extends { id: string }>({
 
   return (
     // Room under the footer while the batch bar floats, so it never sits on the pagination
-    <div className={`min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200 ${barOn ? "mb-20" : ""}`}>
-      {tabs && <div className="border-b border-mist-200 px-2 sm:px-4">{tabs}</div>}
+    <div className={fill ? "flex min-h-0 min-w-0 flex-1 flex-col bg-mist-0" : `min-w-0 overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200 ${barOn ? "mb-20" : ""}`}>
+      {tabs && <div className="shrink-0 border-b border-mist-200 px-4">{tabs}</div>}
 
       {/* Toolbar: search and tier-1 filters left; page controls and table settings right */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-3">
-          <label className={`relative block min-w-0 flex-1 sm:min-w-48 sm:max-w-sm ${inlineFilters.length ? "basis-full sm:basis-auto" : ""}`}>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-mist-200 p-4">
+          <label className={`relative block min-w-0 flex-1 sm:min-w-48 sm:max-w-60 ${inlineFilters.length ? "basis-full sm:basis-auto" : ""}`}>
             <span className="sr-only">{searchPlaceholder}</span>
-            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
+            <Icon name="search" className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-mist-500" />
             <input
               type="search"
               value={query}
@@ -400,10 +420,10 @@ export default function DataTable<T extends { id: string }>({
                 setPage(0);
               }}
               placeholder={searchPlaceholder}
-              className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+              className="h-[30px] w-full rounded-full bg-mist-0 pl-8 pr-3 text-adm-xs text-navy-900 ring-1 ring-inset ring-mist-200 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
             />
           </label>
-        {inlineFilters.map((f) => filterSelect(f, "w-auto min-w-[8.5rem] max-w-[13rem] flex-1 sm:flex-none"))}
+        {inlineFilters.map((f) => filterSelect(f, "w-auto shrink-0"))}
         {hasMore && (
           <button
             type="button"
@@ -411,18 +431,16 @@ export default function DataTable<T extends { id: string }>({
             aria-expanded={filtersOpen}
             aria-controls={filterRowId}
             aria-label={moreCount ? `Filters, ${moreCount} applied` : "Filters"}
-            className={`inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 text-adm-base font-medium ring-1 ring-inset transition-colors sm:px-3 ${
-              filtersOpen || moreCount ? "bg-ocean-50 text-ocean-800 ring-ocean-300" : "text-navy-900 ring-mist-300 hover:bg-mist-50"
-            }`}
+            className={`${PILL} ${filtersOpen || moreCount ? "bg-ocean-50 text-ocean-800 ring-ocean-300 hover:bg-ocean-100" : ""}`}
           >
-            <Icon name="filter" className="size-5" />
+            <Icon name="filter" className="size-3" />
             Filters
             {moreCount > 0 && (
-              <span className="grid min-w-5 place-items-center rounded-full bg-ocean-600 px-1.5 text-adm-xs font-semibold tabular-nums text-white">{moreCount}</span>
+              <span className="grid h-4 min-w-4 place-items-center rounded-full bg-ocean-600 px-1 text-adm-xs font-semibold leading-none tabular-nums text-white">{moreCount}</span>
             )}
           </button>
         )}
-        {viewSwitch && <div className="flex h-10 shrink-0 items-center">{viewSwitch}</div>}
+        {viewSwitch && <div className="flex h-[30px] shrink-0 items-center">{viewSwitch}</div>}
         <div className="ml-auto flex items-center gap-2">
           {toolbar}
           <div ref={menuRef} className="relative">
@@ -432,12 +450,12 @@ export default function DataTable<T extends { id: string }>({
               aria-expanded={menu}
               aria-label="Columns, density and export"
               title="Columns, density and export"
-              className={`grid size-10 place-items-center rounded-lg ring-1 ring-inset transition-colors ${menu ? "bg-mist-100 text-navy-900 ring-mist-400" : "text-navy-900 ring-mist-300 hover:bg-mist-50"}`}
+              className={`${PILL} size-[30px] justify-center px-0 ${menu ? "bg-mist-100" : ""}`}
             >
-              <Icon name="sliders" className="size-5" />
+              <Icon name="sliders" className="size-3.5" />
             </button>
             {menu && (
-              <div className="absolute right-0 top-12 z-30 w-64 rounded-xl bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
+              <div className="absolute right-0 top-9 z-30 w-64 rounded-xl bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
                 <p className="px-1 text-adm-xs font-semibold text-mist-600">Columns</p>
                 <ul className="scroll-thin mt-1.5 max-h-56 overflow-y-auto">
                   {columns.map((c) => (
@@ -497,16 +515,16 @@ export default function DataTable<T extends { id: string }>({
 
       {/* Tier 2: the remaining filters on one line, opened from the Filters button */}
       {hasMore && filtersOpen && (
-        <div id={filterRowId} className="flex flex-wrap items-center gap-2 border-b border-mist-200 bg-mist-50 px-4 py-3">
-          {moreFilters.map((f) => filterSelect(f, "min-w-[8.5rem] flex-1 sm:flex-none"))}
+        <div id={filterRowId} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-mist-200 bg-mist-50 px-4 py-3">
+          {moreFilters.map((f) => filterSelect(f, "w-auto shrink-0"))}
           {filterExtras}
         </div>
       )}
 
       {/* Active filter chips */}
       {chips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-2.5">
-          <span className="text-adm-base text-mist-600">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-2.5">
+          <span className="text-adm-xs text-mist-600">
             {filtered.length} of {rows.length}
           </span>
           {chips.map((c) => (
@@ -517,7 +535,7 @@ export default function DataTable<T extends { id: string }>({
                 c.clear();
                 setPage(0);
               }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 py-1 pl-3 pr-2 text-adm-base font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200 hover:bg-ocean-100"
+              className="inline-flex h-6 items-center gap-1 rounded-full bg-ocean-50 pl-2.5 pr-1.5 text-adm-xs font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200 hover:bg-ocean-100"
             >
               {c.label}
               <Icon name="x" className="size-3.5" />
@@ -532,13 +550,14 @@ export default function DataTable<T extends { id: string }>({
               extraChips.forEach((c) => c.clear());
               setPage(0);
             }}
-            className="text-adm-base font-medium text-ocean-700 hover:underline"
+            className="text-adm-xs font-medium text-ocean-700 hover:underline"
           >
             Clear all
           </button>
         </div>
       )}
 
+      <div className={fill ? "scroll-thin min-h-0 flex-1 overflow-auto" : "contents"}>
       {(unpaged ? filtered : visible).length === 0 ? (
         <EmptyState
           variant="no-results"
@@ -599,7 +618,7 @@ export default function DataTable<T extends { id: string }>({
             ref={scrollRef}
             data-left={edges.left || undefined}
             data-right={edges.right || undefined}
-            className={`dt-scroll relative isolate hidden md:block ${edges.wide ? "scroll-thin overflow-x-auto overflow-y-hidden" : ""}`}
+            className={`dt-scroll relative isolate hidden md:block ${!fill && edges.wide ? "scroll-thin overflow-x-auto overflow-y-hidden" : ""}`}
           >
             <table className="w-full min-w-[44rem] border-separate border-spacing-0 text-left text-adm-base">
               <thead>
@@ -704,6 +723,38 @@ export default function DataTable<T extends { id: string }>({
         </>
       )}
 
+      </div>
+
+      {/* The CRM footer: count and figures, or the bulk actions while rows are selected */}
+      {fill && (
+        <div className="flex min-h-12 shrink-0 flex-wrap items-center border-t border-mist-200 bg-mist-0 sm:px-2">
+          {barOn ? (
+            <div role="region" aria-label="Selected rows" className="flex flex-wrap items-center gap-2 px-2 py-2 sm:px-2">
+              <span className="mr-2 text-adm-base font-semibold tabular-nums text-navy-900" aria-live="polite">
+                {selected.size} selected
+              </span>
+              {bulkActions?.([...selected])}
+              <button type="button" onClick={() => setSelected(new Set())} className={PILL}>
+                Deselect all
+              </button>
+            </div>
+          ) : (
+            <dl className="flex flex-wrap items-center text-adm-base">
+              <div className="flex items-baseline gap-1.5 border-r border-mist-200 px-4 py-3 last:border-r-0">
+                <dd className="font-semibold tabular-nums text-navy-900">{filtered.length}</dd>
+                <dt className="text-mist-600">{filtered.length === rows.length ? noun : `of ${rows.length} ${noun}`} in view</dt>
+              </div>
+              {summary?.(filtered).map((f) => (
+                <div key={f.label} className="flex items-baseline gap-1.5 border-r border-mist-200 px-4 py-3 last:border-r-0">
+                  <dd className={`font-semibold tabular-nums ${f.warn ? "text-status-warning" : "text-navy-900"}`}>{f.value}</dd>
+                  <dt className="text-mist-600">{f.label}</dt>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      )}
+
       {/* Pagination */}
       {!unpaged && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-4 py-3 text-adm-base text-mist-600">
@@ -750,7 +801,7 @@ export default function DataTable<T extends { id: string }>({
                     onClick={() => setPage(p)}
                     aria-label={`Page ${p + 1}`}
                     aria-current={p === current ? "page" : undefined}
-                    className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-navy-900 text-white" : "text-navy-900 hover:bg-mist-100"}`}
+                    className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-contrast text-on-contrast" : "text-navy-900 hover:bg-mist-100"}`}
                   >
                     {p + 1}
                   </button>
@@ -771,14 +822,14 @@ export default function DataTable<T extends { id: string }>({
       )}
 
       {/* Batch bar: floats bottom-centre over the page (z-40), under drawers and modals (z-50) */}
-      {selectable &&
+      {floatBar &&
         portalReady &&
         createPortal(
           <div
             role="region"
             aria-label="Selected rows"
             inert={!barOn}
-            className={`dt-batch fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl bg-navy-900 py-2 pl-4 pr-2 text-adm-base text-white shadow-xl transition-[opacity,translate,visibility] motion-reduce:transition-none ${
+            className={`dt-batch fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl bg-navy-950 py-2 pl-4 pr-2 text-adm-base text-white shadow-xl ring-1 ring-white/10 transition-[opacity,translate,visibility] motion-reduce:transition-none ${
               barOn ? "visible translate-y-0 opacity-100 duration-200 ease-out" : "invisible translate-y-4 opacity-0 duration-150 ease-in"
             }`}
           >
@@ -825,32 +876,29 @@ export function TableTabs<T extends string>({
   options: { value: T; label: string; count?: number; tone?: "attention"; divider?: boolean }[];
 }) {
   return (
-    <div role="tablist" aria-label={label} className="-mb-px flex items-stretch scroll-strip">
-      {options.map((o, i) => {
+    // The CRM's tabs: small type, a 1px ink underline on the active one, no counts
+    <div role="tablist" aria-label={label} className="-mb-px flex items-stretch gap-4 scroll-strip">
+      {options.map((o) => {
         const on = o.value === value;
-        // Zero hides the number, except on the first ("All") tab
-        const showCount = o.count !== undefined && (o.count > 0 || i === 0);
         const flagged = o.tone === "attention" && (o.count ?? 0) > 0;
         return (
           <Fragment key={o.value}>
-            {o.divider && <span aria-hidden className="mx-1 h-5 w-px shrink-0 self-center bg-mist-200" />}
+            {o.divider && <span aria-hidden className="h-4 w-px shrink-0 self-center bg-mist-200" />}
             <button
               type="button"
               role="tab"
               aria-selected={on}
-              aria-label={o.count !== undefined ? `${o.label}, ${o.count}` : undefined}
               onClick={() => onChange(o.value)}
-              className={`inline-flex min-h-12 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-adm-base transition-colors duration-150 ${
-                on ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
+              className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap border-b py-4 text-adm-xs leading-none transition-colors duration-150 ${
+                on ? "border-navy-900 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
               }`}
             >
-              {flagged && <Icon name="alert" className="size-4 shrink-0 text-status-warning" />}
-              {/* Bold copy reserves the active width, so switching tabs never shifts the strip */}
+              {flagged && <Icon name="alert" className="size-3.5 shrink-0 text-status-warning" />}
+              {/* Medium copy reserves the active width, so switching tabs never shifts the strip */}
               <span className="inline-grid">
-                <span aria-hidden className="invisible font-semibold [grid-area:1/1]">{o.label}</span>
-                <span className={`[grid-area:1/1] ${on ? "font-semibold" : "font-medium"}`}>{o.label}</span>
+                <span aria-hidden className="invisible font-medium [grid-area:1/1]">{o.label}</span>
+                <span className={`[grid-area:1/1] ${on ? "font-medium" : ""}`}>{o.label}</span>
               </span>
-              {showCount && <span className={`tabular-nums ${flagged ? "text-status-warning" : on ? "text-navy-900" : "text-mist-600"}`}>{o.count}</span>}
             </button>
           </Fragment>
         );

@@ -276,3 +276,83 @@ export function FormSkeleton({ label = "Loading form", sections = 2, aside = fal
     </Busy>
   );
 }
+
+/**
+ * The CRM list while it loads: tabs, the pill toolbar, a 38px header, 42px rows and the
+ * footer strip, edge to edge. `page` also cancels the shell gutter (route loading.tsx),
+ * matching ListPage; inside a ListPage leave it off.
+ */
+export function CrmListSkeleton({
+  label = "Loading",
+  page = false,
+  tabs = 0,
+  filters = 3,
+  actions = 2,
+  rows = 14,
+}: {
+  label?: string;
+  page?: boolean;
+  /** Tabs under the header; 0 hides the row */
+  tabs?: number;
+  filters?: number;
+  actions?: number;
+  rows?: number;
+}) {
+  const cols = ["w-36", "w-28", "w-20", "w-24", "w-24", "w-16", "w-28"];
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label={label}
+      className={`flex min-h-0 flex-1 flex-col overflow-hidden bg-mist-0 ${page ? "-m-5 h-[calc(100svh-4rem)] min-h-[32rem] sm:-m-6 lg:-m-8" : ""}`}
+    >
+      {tabs > 0 && (
+        <div className="flex shrink-0 gap-4 border-b border-mist-200 px-4 py-4">
+          {Array.from({ length: tabs }, (_, i) => (
+            <Skeleton key={i} className={`h-3 ${i === 0 ? "w-8" : "w-16"}`} />
+          ))}
+        </div>
+      )}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-mist-200 p-4">
+        <Skeleton className="h-[30px] w-full rounded-full sm:w-60" />
+        {Array.from({ length: filters }, (_, i) => (
+          <Skeleton key={i} className="hidden h-[30px] w-28 rounded-full sm:block" />
+        ))}
+        <span className="ml-auto flex gap-2">
+          {Array.from({ length: actions }, (_, i) => (
+            <Skeleton key={i} className={`h-[30px] rounded-full ${i === actions - 1 ? "w-28" : "w-20"}`} />
+          ))}
+        </span>
+      </div>
+      <div className="hidden h-[38px] shrink-0 items-center justify-between border-b border-mist-200 bg-mist-50 px-3 md:flex">
+        <span className="flex items-center gap-4">
+          <Skeleton className="size-4 rounded" />
+          <Skeleton className="h-3 w-16" />
+        </span>
+        {cols.slice(1).map((w, i) => (
+          <Skeleton key={i} className="h-3 w-14" />
+        ))}
+      </div>
+      <ul className="min-h-0 flex-1 overflow-hidden">
+        {Array.from({ length: rows }, (_, r) => (
+          <li key={r} className="flex h-[42px] items-center justify-between gap-6 border-b border-mist-100 px-3">
+            <span className="flex items-center gap-4">
+              <Skeleton className="size-4 rounded" />
+              <Skeleton className="size-7 rounded-full" />
+              <Skeleton className={`h-3 ${cols[r % 3]}`} />
+            </span>
+            {cols.slice(1).map((w, i) => (
+              <Skeleton key={i} className={`hidden h-3 md:block ${i % 2 ? "w-16" : w}`} />
+            ))}
+          </li>
+        ))}
+      </ul>
+      <div className="flex h-12 shrink-0 items-center gap-6 border-t border-mist-200 px-4 sm:px-6">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="hidden h-3 w-24 sm:block" />
+      </div>
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}

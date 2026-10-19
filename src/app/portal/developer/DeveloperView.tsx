@@ -7,7 +7,7 @@ import { LIMITS } from "@/lib/form-validation";
 import { useAuth } from "@/lib/auth";
 import { SITE_URL } from "@/lib/seo";
 import { useResource } from "@/hooks/use-resource";
-import DataTable, { type Column, type Filter } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import Icon from "@/components/portal/icons";
 import Select from "@/components/portal/Select";
 import { RoleGate } from "@/components/portal/session";
@@ -19,16 +19,14 @@ import {
   deleteConfirmText,
   EmptyState,
   ErrorState,
-  KpiRow,
-  KpiRowSkeleton,
+  ListPage,
+  ListPageState,
   Modal,
-  Page,
-  PageHeader,
   Panel,
-  StatCard,
-  TableSkeleton,
+  PillButton,
+  CrmListSkeleton,
 } from "@/components/portal/kit";
-import { Facts, Field, FormError, GoneNotice, ViewTabs, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
+import { Facts, Field, FormError, GoneNotice, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
 
 const KEY = "/api/admin/api-keys";
 
@@ -361,7 +359,7 @@ function Reference() {
           </ul>
         </Panel>
         <Panel title="Example">
-          <pre className="scroll-thin overflow-x-auto overflow-y-hidden rounded-lg bg-navy-900 p-4 font-mono text-adm-xs leading-normal text-tide-200">
+          <pre className="scroll-thin overflow-x-auto overflow-y-hidden rounded-lg bg-navy-950 p-4 font-mono text-adm-xs leading-normal text-tide-200">
             {`curl -H "x-api-key: obk_live_…" \\\n  "${SITE_URL}/api/v1/jobs?status=active&limit=20"`}
           </pre>
         </Panel>
@@ -484,9 +482,15 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
     { label: "Revoke", icon: "trash", danger: true, onSelect: () => setRevoking(k) },
   ];
 
-  const active = keys.filter((k) => k.isActive).length;
-  const writers = keys.filter((k) => k.isActive && k.accessLevel === "write").length;
-  const recent = keys.filter((k) => k.lastUsedAt && Date.now() - new Date(k.lastUsedAt).getTime() < 30 * 86_400_000).length;
+  // Footer figures, from the filtered rows
+  const summary = (list: ApiKeyRow[]): Summary[] => {
+    const unused = list.filter((k) => k.isActive && !(k.lastUsedAt && Date.now() - new Date(k.lastUsedAt).getTime() < 30 * 86_400_000)).length;
+    return [
+      { label: "active", value: list.filter((k) => k.isActive).length },
+      { label: "can write", value: list.filter((k) => k.isActive && k.accessLevel === "write").length },
+      { label: "active, unused in 30 days", value: unused, warn: unused > 0 },
+    ];
+  };
 
   const columns: Column<ApiKeyRow>[] = [
     {
@@ -525,98 +529,88 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
 
   return (
     <RoleGate href="/portal/developer">
-      <Page>
-        <PageHeader
-          title="Developer"
-          icon="code"
-          section="workspace"
-          description="Partner API keys for the public job feed, and how to call it."
-          actions={
-            <>
-              <Button variant="secondary" icon="code" href="/portal/docs">
-                Docs
-              </Button>
-              <Button icon="key" onClick={() => setCreating(true)}>
-                Create API key
-              </Button>
-            </>
-          }
-          tabs={
-            <ViewTabs
-              label="Developer views"
-              tabs={[
-                { id: "keys", label: "Keys", count: data ? keys.length : undefined },
-                { id: "reference", label: "Reference" },
-              ]}
-              value={tab}
-              onChange={switchTab}
-            />
-          }
-        />
+      <ListPage title="Developer">
+        {/* Keys and Reference share one tab strip, so the docs stay a click away from the table */}
+        <div className="shrink-0 border-b border-mist-200 px-4">
+          <TableTabs
+            label="Developer views"
+            value={tab}
+            onChange={switchTab}
+            options={[
+              { value: "keys", label: "Keys" },
+              { value: "reference", label: "Reference" },
+            ]}
+          />
+        </div>
 
         {tab === "reference" ? (
-          <Reference />
-        ) : isLoading ? (
-          <div role="status" aria-label="Loading API keys" className="grid gap-6">
-            <KpiRowSkeleton count={3} />
-            <TableSkeleton rows={5} />
+          <div className="scroll-thin min-h-0 flex-1 overflow-auto p-4 sm:p-6">
+            <Reference />
           </div>
+        ) : isLoading ? (
+          <CrmListSkeleton label="Loading API keys" />
         ) : error && !data ? (
-          <ErrorState title="Couldn't load API keys" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          <ListPageState>
+            <ErrorState title="Couldn't load API keys" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          </ListPageState>
         ) : keys.length === 0 ? (
-          <EmptyState
-            framed
-            variant="first-use"
-            icon="key"
-            title="No API keys yet"
-            body="Create one for each partner that reads the job feed, so you can switch them off one at a time."
-            primary={{ label: "Create API key", icon: "key", onClick: () => setCreating(true) }}
-            secondary={{ label: "How the API works", icon: "code", onClick: () => switchTab("reference") }}
-          />
-        ) : (
-          <>
-            <KpiRow>
-              <StatCard section="workspace" label="Active keys" value={active} icon="key" hint={`${keys.length - active} disabled`} trend="flat" />
-              <StatCard section="workspace" label="Keys that can write" value={writers} icon="edit" hint="can file draft postings" trend="flat" />
-              <StatCard section="workspace" label="Used in 30 days" value={recent} icon="activity" hint={`of ${keys.length} keys`} trend="flat" />
-            </KpiRow>
-            <DataTable
-              rows={keys}
-              columns={columns}
-              filters={filters}
-              exportName="api-keys"
-              storageKey="portal.api-keys"
-              searchPlaceholder="Search keys"
-              emptyTitle="No keys match your filters"
-              initialSort={{ key: "lastUsedAt", dir: -1 }}
-              detailTitle={(k) => k.name}
-              detailActions={(k) => (
-                <Button size="sm" variant="secondary" icon="edit" onClick={() => setEditId(k.id)}>
-                  Edit
-                </Button>
-              )}
-              rowMenu={rowMenu}
-              renderDetail={(r) => {
-                const live = keys.find((x) => x.id === r.id);
-                return live ? (
-                  <KeyDetail
-                    key={live.id}
-                    k={live}
-                    onToggle={() => toggle(live)}
-                    onAccess={(l) => changeAccess(live, l)}
-                    onRename={(p) => rename(live, p)}
-                    onRevoke={() => setRevoking(live)}
-                    startEditing={editId === live.id}
-                    onEditStarted={clearEdit}
-                  />
-                ) : (
-                  <GoneNotice noun="key" />
-                );
-              }}
+          <ListPageState>
+            <EmptyState
+              framed
+              variant="first-use"
+              icon="key"
+              title="No API keys yet"
+              body="Create one for each partner that reads the job feed, so you can switch them off one at a time."
+              primary={{ label: "Create API key", icon: "key", onClick: () => setCreating(true) }}
+              secondary={{ label: "How the API works", icon: "code", onClick: () => switchTab("reference") }}
             />
-          </>
+          </ListPageState>
+        ) : (
+          <DataTable
+            fill
+            noun="keys"
+            summary={summary}
+            toolbar={
+              <>
+                <PillButton icon="code" href="/portal/docs">Docs</PillButton>
+                <PillButton variant="primary" icon="key" onClick={() => setCreating(true)}>Create API key</PillButton>
+              </>
+            }
+            rows={keys}
+            columns={columns}
+            filters={filters}
+            exportName="api-keys"
+            storageKey="portal.api-keys"
+            searchPlaceholder="Search keys"
+            emptyTitle="No keys match your filters"
+            initialSort={{ key: "lastUsedAt", dir: -1 }}
+            detailTitle={(k) => k.name}
+            detailActions={(k) => (
+              <Button size="sm" variant="secondary" icon="edit" onClick={() => setEditId(k.id)}>
+                Edit
+              </Button>
+            )}
+            rowMenu={rowMenu}
+            renderDetail={(r) => {
+              const live = keys.find((x) => x.id === r.id);
+              return live ? (
+                <KeyDetail
+                  key={live.id}
+                  k={live}
+                  onToggle={() => toggle(live)}
+                  onAccess={(l) => changeAccess(live, l)}
+                  onRename={(p) => rename(live, p)}
+                  onRevoke={() => setRevoking(live)}
+                  startEditing={editId === live.id}
+                  onEditStarted={clearEdit}
+                />
+              ) : (
+                <GoneNotice noun="key" />
+              );
+            }}
+          />
         )}
-      </Page>
+      </ListPage>
 
       {creating && <CreateKey onClose={() => setCreating(false)} onCreated={() => void reload()} />}
       {revoking && (

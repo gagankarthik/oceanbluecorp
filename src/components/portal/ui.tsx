@@ -103,14 +103,14 @@ export function StatCard({
   const footer = [change, hint].filter(Boolean).join(" · ");
   // Fixed rows (label, value, footer) so every card in a row is the same height
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200">
-      <p className="truncate text-adm-base font-medium text-mist-600">{label}</p>
-      <div className="mt-2 flex h-8 items-end justify-between gap-3">
-        <p className="text-adm-2xl font-semibold leading-none tracking-tight text-navy-900 tabular-nums">{value}</p>
+    <div className="flex h-full min-w-0 flex-col rounded-lg bg-mist-0 p-4 ring-1 ring-mist-200">
+      <p className="truncate text-adm-xs text-mist-600">{label}</p>
+      <div className="mt-2.5 flex h-7 items-end justify-between gap-3">
+        <p className="text-adm-xl font-medium leading-none tracking-tight text-navy-900 tabular-nums">{value}</p>
         {spark && <Sparkline values={spark} color={sectionTone[section].spark} width={80} height={28} label={`${label} trend`} />}
       </div>
       {delta && (
-        <div className="mt-auto grid gap-1 pt-3 text-adm-base text-mist-600">
+        <div className="mt-auto grid gap-1 pt-3 text-adm-xs text-mist-600">
           <p className="flex min-w-0 items-center gap-1.5">
             <DeltaPill {...delta} />
             {delta.label && <span className="truncate">{delta.label}</span>}
@@ -120,7 +120,7 @@ export function StatCard({
           </p>
         </div>
       )}
-      {!delta && <p className="mt-auto truncate pt-3 text-adm-base text-mist-600" title={footer || undefined}>
+      {!delta && <p className="mt-auto truncate pt-3 text-adm-xs text-mist-600" title={footer || undefined}>
         {change && <span className={`font-medium ${trendCls}`}>{change}</span>}
         {change && hint && <span aria-hidden> · </span>}
         {hint}
@@ -141,7 +141,7 @@ const toneStyles: Record<Tone, string> = {
   amber: "bg-buoy-50 text-buoy-700 ring-buoy-200",
   red: "bg-coral-50 text-coral-700 ring-coral-200",
   grey: "bg-mist-100 text-mist-700 ring-mist-300",
-  navy: "bg-navy-900 text-white ring-navy-900",
+  navy: "bg-contrast text-on-contrast ring-contrast",
   cyan: "bg-cyan-100 text-navy-900 ring-cyan-200",
   violet: "bg-ocean-100 text-ocean-800 ring-ocean-200",
   "stage-new": "bg-stage-new-badge-bg text-stage-new-badge-ink ring-stage-new-badge-rim",

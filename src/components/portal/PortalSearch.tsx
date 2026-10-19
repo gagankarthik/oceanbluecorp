@@ -131,9 +131,9 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
           onClick={focus}
           aria-label="Search roles, applicants and contacts (Ctrl K)"
           title="Search (Ctrl K)"
-          className="grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-mist-0 text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200 transition-colors hover:bg-mist-50"
         >
-          <Icon name="search" />
+          <Icon name="search" className="size-4" />
         </button>
       )}
       <div
@@ -163,7 +163,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
             onFocus={() => setOpen(true)}
             onKeyDown={onKeyDown}
             placeholder="Search roles, applicants, contacts"
-            className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-11 text-adm-base [&::-webkit-search-cancel-button]:hidden ring-1 ring-inset ring-mist-200 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+            className="h-8 w-full rounded-full bg-mist-0 pl-10 pr-11 text-adm-base [&::-webkit-search-cancel-button]:hidden ring-1 ring-inset ring-mist-200 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
           />
           {/* Close sits inside the field, at its end */}
           <button
