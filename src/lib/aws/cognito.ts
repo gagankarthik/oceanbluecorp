@@ -236,6 +236,7 @@ export async function getCognitoUser(username: string): Promise<{ success: boole
 
     const user: CognitoUser = {
       id: username,
+      sub: attrs.find((a) => a.Name === "sub")?.Value,
       email,
       name,
       phone,

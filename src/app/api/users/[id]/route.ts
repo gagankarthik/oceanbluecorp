@@ -10,6 +10,14 @@ import {
 } from "@/lib/aws/cognito";
 import { requireStaff, requireUserAdmin, denyElevatedAction, denySelfAction } from "@/lib/auth/verify";
 import { serverError } from "@/lib/api-errors";
+import { setSessionCutoff } from "@/lib/aws/dynamodb";
+
+/** Cut off every session the account already holds, so the change applies now, not at token expiry. */
+async function endSessions(sub: string | undefined, username: string) {
+  if (!(await setSessionCutoff(sub || username))) {
+    console.error(`[users] could not record a session cutoff for ${username}`);
+  }
+}
 
 // GET /api/users/[id] - Get a single user
 export async function GET(
@@ -75,6 +83,7 @@ export async function PATCH(
       if (!roleResult.success) {
         return serverError("Updating user role", roleResult.error, "Couldn't change the role. Please try again.");
       }
+      if (role !== current.user.role) await endSessions(current.user.sub, id);
     }
 
     // Update status if provided
@@ -89,6 +98,7 @@ export async function PATCH(
         if (!disableResult.success) {
           return serverError("Disabling user", disableResult.error, "Couldn't disable the account. Please try again.");
         }
+        await endSessions(current.user.sub, id);
       }
     }
 
@@ -129,6 +139,7 @@ export async function DELETE(
     if (!result.success) {
       return serverError("Deleting user", result.error, "Couldn't delete the user. Please try again.");
     }
+    await endSessions(current.user.sub, id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

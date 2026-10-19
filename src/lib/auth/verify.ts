@@ -16,6 +16,7 @@ import {
   hasJobEditAccess, staffRolesOf, hasAnyRole, isSameAccount,
 } from "./config";
 import type { Viewer } from "@/lib/bench";
+import { getSessionCutoff } from "@/lib/aws/dynamodb";
 
 const REGION = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-2";
 const POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "";
@@ -47,7 +48,7 @@ function b64urlToBuffer(s: string): Buffer {
   return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 }
 
-export type Claims = { sub: string; email?: string; name?: string; groups: string[]; tokenUse?: string };
+export type Claims = { sub: string; email?: string; name?: string; groups: string[]; tokenUse?: string; iat?: number };
 
 // Verify a Cognito JWT: RS256 signature against JWKS, plus issuer / audience /
 // expiry checks. Returns the claims, or null if anything fails.
@@ -88,6 +89,7 @@ export async function verifyCognitoJwt(token: string): Promise<Claims | null> {
       name: payload.name as string | undefined,
       groups,
       tokenUse: payload.token_use as string | undefined,
+      iat: typeof payload.iat === "number" ? payload.iat : undefined,
     };
   } catch {
     return null;
@@ -104,9 +106,31 @@ function tokenFromRequest(req: NextRequest): string | null {
   return null;
 }
 
+// Short per-instance cache so the cutoff costs one read per user every few seconds, not per request.
+const CUTOFF_CACHE_MS = 5_000;
+const cutoffCache = new Map<string, { cutoff: number | null; at: number }>();
+
+/**
+ * False when an admin disabled, deleted or re-roled this account after the
+ * token was issued (see setSessionCutoff). An unreadable cutoff allows the
+ * request, as the rate limiter does: the token itself is still verified.
+ */
+async function issuedAfterCutoff(claims: Claims): Promise<boolean> {
+  const hit = cutoffCache.get(claims.sub);
+  let cutoff: number | null | undefined = hit && Date.now() - hit.at < CUTOFF_CACHE_MS ? hit.cutoff : undefined;
+  if (cutoff === undefined) {
+    cutoff = await getSessionCutoff(claims.sub);
+    if (cutoff === undefined) return true;
+    cutoffCache.set(claims.sub, { cutoff, at: Date.now() });
+  }
+  return cutoff === null || (claims.iat ?? 0) > cutoff;
+}
+
 export async function getClaims(req: NextRequest): Promise<Claims | null> {
   const token = tokenFromRequest(req);
-  return token ? verifyCognitoJwt(token) : null;
+  const claims = token ? await verifyCognitoJwt(token) : null;
+  if (!claims) return null;
+  return (await issuedAfterCutoff(claims)) ? claims : null;
 }
 
 type Guard = { ok: true; claims: Claims } | { ok: false; response: NextResponse };

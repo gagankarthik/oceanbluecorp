@@ -2775,6 +2775,48 @@ export async function cancelIndexJobState(): Promise<void> {
   }
 }
 
+// ===========================================
+// Session cutoffs
+// ===========================================
+// Cognito ID tokens cannot be revoked, so disabling, deleting or re-roling an
+// account records the moment it happened; verify.ts rejects any token for that
+// sub issued at or before it. One item per sub in the counters table, expiring
+// once every token issued before the cutoff has expired too (ID tokens live at
+// most a day).
+
+const sessionCutoffId = (sub: string) => `session-cutoff#${sub}`;
+
+export async function setSessionCutoff(sub: string, at: number = Math.floor(Date.now() / 1000)): Promise<boolean> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return false;
+  try {
+    await db.client.send(
+      new PutCommand({
+        TableName: getTables().counters,
+        Item: { id: sessionCutoffId(sub), cutoff: at, expiresAt: at + 2 * 24 * 3600 },
+      }),
+    );
+    return true;
+  } catch (error) {
+    console.error("Error writing session cutoff:", error);
+    return false;
+  }
+}
+
+/** The cutoff in epoch seconds, null when there is none, undefined when it could not be read. */
+export async function getSessionCutoff(sub: string): Promise<number | null | undefined> {
+  const db = checkDbAvailable();
+  if (!db.available || !db.client) return undefined;
+  try {
+    const result = await db.client.send(new GetCommand({ TableName: getTables().counters, Key: { id: sessionCutoffId(sub) } }));
+    const cutoff = result.Item?.cutoff;
+    return typeof cutoff === "number" ? cutoff : null;
+  } catch (error) {
+    console.error("Error reading session cutoff:", error);
+    return undefined;
+  }
+}
+
 export async function getIndexJobState(): Promise<IndexJobState | null> {
   const dbCheck = checkDbAvailable();
   if (!dbCheck.available) return null;
