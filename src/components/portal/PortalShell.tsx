@@ -239,13 +239,13 @@ function Shell({ children }: { children: React.ReactNode }) {
 
       {/* Desktop sidebar: full width or an icon rail */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 hidden overflow-hidden transition-[width] duration-200 ease-[var(--ease-standard)] motion-reduce:transition-none lg:block ${
+        className={`peer fixed inset-y-0 left-0 z-30 hidden overflow-hidden transition-[width] duration-200 ease-[var(--ease-standard)] motion-reduce:transition-none lg:block ${
           collapsed ? "w-16" : "w-54 2xl:w-60"
         }`}
       >
         <Sidebar activeHref={activeHref} collapsed={collapsed} />
       </aside>
-      {/* On the sidebar's edge, level with the logo, as on the old console. Outside the
+      {/* Mid-height on the sidebar's edge, shown while the sidebar is hovered. Outside the
           aside because the aside clips its overflow; it rides the edge as the width animates. */}
       <button
         type="button"
@@ -254,7 +254,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className={`adm-hit fixed top-8 z-40 hidden size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-mist-0 text-mist-600 shadow-sm ring-1 ring-mist-300 transition-[left,color] duration-200 ease-[var(--ease-standard)] hover:text-navy-900 hover:ring-mist-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 motion-reduce:transition-none lg:grid ${
+        className={`adm-hit fixed top-1/2 z-40 hidden size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-mist-0 text-mist-600 opacity-0 shadow-sm ring-1 ring-mist-300 transition-[left,color,opacity] duration-200 peer-hover:opacity-100 hover:opacity-100 focus-visible:opacity-100 ease-[var(--ease-standard)] hover:text-navy-900 hover:ring-mist-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 motion-reduce:transition-none lg:grid ${
           collapsed ? "left-16" : "left-54 2xl:left-60"
         }`}
       >
@@ -384,7 +384,6 @@ function Shell({ children }: { children: React.ReactNode }) {
                   </div>
                   <div className="my-1 h-px bg-mist-200" />
                   <MenuItem href="/portal/settings" icon="settings" label="Account settings" onClick={close} />
-                  <MenuItem href="/" icon="globe" label="View website" onClick={close} />
                   {canHr && <MenuItem href={hrPortalUrl("portal")} icon="idBadge" label="HR portal" external onClick={close} />}
 
                   {/* Admins can preview another role's view; the API still answers as admin.
