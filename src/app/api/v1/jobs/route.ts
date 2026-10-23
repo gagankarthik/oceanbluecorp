@@ -10,6 +10,7 @@ import { randomUUID as uuidv4 } from "node:crypto";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isAcceptingApplications } from "@/lib/job-status";
 import { notifyJobIndexing } from "@/lib/google-indexing";
+import { revalidateJobPages } from "@/lib/jobs";
 import { JOB_TYPES, jobInputError, splitLegacyRemote } from "@/lib/job-input";
 import { WORKPLACES, jobLocationLabel } from "@/lib/workplace";
 
@@ -172,7 +173,10 @@ export async function POST(request: NextRequest) {
       return serverError("v1/jobs POST create failed", result.error, "Couldn't create the job. Please try again.");
     }
 
-    if (isAcceptingApplications(job)) after(() => notifyJobIndexing(job.id, true));
+    if (isAcceptingApplications(job)) {
+      revalidateJobPages(job.id);
+      after(() => notifyJobIndexing(job.id, true));
+    }
 
     // Tell the desk a posting arrived from outside. Deferred with `after` for
     // the reason the internal route documents: on Lambda an unawaited promise

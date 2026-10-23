@@ -12,6 +12,7 @@ import { isPubliclyOpen, isPastDeadline, isAcceptingApplications } from "@/lib/j
 import { jobLocationLabel } from "@/lib/workplace";
 import { FEE_PCT_MAX, TARGET_MARGIN_PCT_MAX, jobInputError, parsePct, parseSalary, parseSkills, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
 import { notifyJobIndexing } from "@/lib/google-indexing";
+import { revalidateJobPages } from "@/lib/jobs";
 
 // GET /api/jobs - Get all jobs (optionally filter by status)
 export async function GET(request: NextRequest) {
@@ -45,6 +46,8 @@ export async function GET(request: NextRequest) {
       const expired = jobs.filter((j) => j.status !== "closed" && isPastDeadline(j));
       for (const j of expired) j.status = "closed";
       if (expired.length) {
+        // The board filters on the deadline itself, so it can rebuild before the write lands.
+        revalidateJobPages();
         after(() => Promise.all(expired.map((j) =>
           updateJob(j.id, { status: "closed" })
             .then(() => notifyJobIndexing(j.id, false))
@@ -196,7 +199,10 @@ export async function POST(request: NextRequest) {
       return serverError("Creating job", result.error, "Couldn't create the job. Please try again.");
     }
 
-    if (isAcceptingApplications(job)) after(() => notifyJobIndexing(job.id, true));
+    if (isAcceptingApplications(job)) {
+      revalidateJobPages(job.id);
+      after(() => notifyJobIndexing(job.id, true));
+    }
 
     /* In-app notification, after the response and awaited inside it.
        Fired unawaited this was a promise nobody held: on Lambda the invocation

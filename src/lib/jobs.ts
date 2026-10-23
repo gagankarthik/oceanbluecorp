@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { revalidatePath } from "next/cache";
 import { getJob as getJobRecord, getPublicJobs, toCandidateJob, type CandidateJob } from "@/lib/aws/dynamodb";
 import { isAcceptingApplications } from "@/lib/job-status";
 import { displayTitle, workMode } from "@/lib/careers";
@@ -72,3 +73,19 @@ export const getJob = cache(async (id: string): Promise<{ job: CandidateJob; pub
     return null;
   }
 });
+
+/**
+ * Drop the cached board, careers page and posting page after a job write.
+ * ISR alone serves a stale board to the first visitor after a quiet spell,
+ * which on low traffic meant closed roles lingering for days.
+ */
+export function revalidateJobPages(id?: string): void {
+  try {
+    revalidatePath("/jobs");
+    revalidatePath("/careers");
+    revalidatePath("/sitemap.xml");
+    if (id) revalidatePath(`/jobs/${id}`);
+  } catch {
+    // ISR is the fallback.
+  }
+}

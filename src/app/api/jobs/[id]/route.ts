@@ -6,6 +6,7 @@ import { sanitizeRichText } from "@/lib/sanitize-server";
 import { serverError } from "@/lib/api-errors";
 import { isPubliclyOpen, isAcceptingApplications } from "@/lib/job-status";
 import { notifyJobIndexing } from "@/lib/google-indexing";
+import { revalidateJobPages } from "@/lib/jobs";
 import { FEE_PCT_MAX, TARGET_MARGIN_PCT_MAX, jobInputError, parsePct, parseSalary, parseSkills, publishedAtFor, splitLegacyRemote } from "@/lib/job-input";
 
 /**
@@ -187,7 +188,10 @@ export async function PUT(
     // it stops taking applications. Drafts that were never live stay silent.
     const wasOpen = isAcceptingApplications(existingJob.data);
     const isOpen = saved ? isAcceptingApplications(saved) : false;
-    if (isOpen || wasOpen) after(() => notifyJobIndexing(id, isOpen));
+    if (isOpen || wasOpen) {
+      revalidateJobPages(id);
+      after(() => notifyJobIndexing(id, isOpen));
+    }
     return NextResponse.json({
       job: saved ? (canPrice ? saved : toPublicJob(saved)) : saved,
     });
@@ -228,7 +232,10 @@ export async function DELETE(
       return serverError("Deleting job", result.error, "Couldn't delete the job. Please try again.");
     }
 
-    if (isAcceptingApplications(existingJob.data)) after(() => notifyJobIndexing(id, false));
+    if (isAcceptingApplications(existingJob.data)) {
+      revalidateJobPages(id);
+      after(() => notifyJobIndexing(id, false));
+    }
 
     return NextResponse.json({ message: "Job deleted successfully" });
   } catch (error) {
