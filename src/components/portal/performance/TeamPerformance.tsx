@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Application } from "@/lib/aws/dynamodb";
-import { BarChart, Funnel, Sparkline, TrendChart } from "@/components/portal/charts";
+import { Sparkline } from "@/components/portal/charts";
 import DataTable, { Drawer, type Column } from "@/components/portal/DataTable";
 import Icon from "@/components/portal/icons";
-import { Avatar, EmptyState, ErrorState, KpiRow, ListPageSkeleton, Panel, Segmented, StatCard } from "@/components/portal/kit";
+import { Avatar, EmptyState, ErrorState, ListPageSkeleton } from "@/components/portal/kit";
+import { ActivityChart, ConversionFunnel, FigureStrip, QuadrantScatter, Section, VIOLET, YieldBars } from "@/components/portal/viz";
 import { buckets, countIn, reachedAt, type Bucket } from "@/components/portal/recruiting/model";
 import { useApplicationSummaries, useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
@@ -102,7 +103,6 @@ export default function TeamPerformance({ period }: { period: Period }) {
   const appsRes = useApplicationSummaries();
   const jobsRes = useJobSummaries();
   const { users } = useUserDirectory();
-  const [metric, setMetric] = useState<"placements" | "submitted">("placements");
   const [open, setOpen] = useState<Scorecard | null>(null);
 
   const p = PERIODS.find((x) => x.id === period)!;
@@ -188,14 +188,14 @@ export default function TeamPerformance({ period }: { period: Period }) {
           <Icon name="funnel" className="size-4 text-ocean-700" />
           Pipeline
         </h3>
-        <Funnel
-          title={`${r.name} pipeline`}
+        <ConversionFunnel
+          height={140}
           stages={[
-            { label: "Submitted", value: r.submitted },
-            { label: "Interviewed", value: r.interviews },
-            { label: "Offers", value: r.offers },
-            { label: "Placed", value: r.placements },
-          ]}
+            { key: "submitted", label: "Submitted", count: r.submitted },
+            { key: "interview", label: "Interviewed", count: r.interviews },
+            { key: "offered", label: "Offers", count: r.offers },
+            { key: "hired", label: "Placed", count: r.placements },
+          ].map((x, i, a) => ({ ...x, conversion: i && a[i - 1].count ? Math.round((x.count / a[i - 1].count) * 100) : null, medianDays: null }))}
         />
       </section>
       <section>
@@ -228,66 +228,54 @@ export default function TeamPerformance({ period }: { period: Period }) {
   const ranked = rows.filter((r) => r.name !== "Unassigned");
   const s2i = total("submitted") ? total("interviews") / total("submitted") : null;
 
+  const unit = period === "year" ? "month" : "week";
   return (
     <>
-      <KpiRow>
-        <StatCard section="recruiting" label="Submissions" value={total("submitted")} icon="send" change={p.label} trend="flat" spark={series.submitted} />
-        <StatCard section="recruiting" label="Interviews" value={total("interviews")} icon="calendar" change={`${pct(s2i)} of submissions`} trend="flat" spark={series.interviews} />
-        <StatCard section="recruiting" label="Placements" value={total("placements")} icon="userCheck" change={`${total("offers")} offers`} trend="flat" spark={series.placements} />
-        <StatCard section="recruiting" label="Median days to hire" value={hireDays ?? "—"} icon="timer" change="Applied to hired" trend="flat" />
-      </KpiRow>
+      <FigureStrip
+        items={[
+          { label: "Submissions", icon: "send", value: total("submitted"), href: "/portal/applications?status=submitted", note: p.label, spark: series.submitted },
+          { label: "Interviews", icon: "calendar", value: total("interviews"), href: "/portal/applications?status=interview", note: `${pct(s2i)} of submissions`, spark: series.interviews },
+          { label: "Placements", icon: "userCheck", value: total("placements"), href: "/portal/applications?status=hired", note: `${total("offers")} offer${total("offers") === 1 ? "" : "s"}`, spark: series.placements },
+          { label: "Median days to hire", icon: "timer", value: hireDays ?? "—", href: "/portal/applications?status=hired", note: "Applied to hired" },
+        ]}
+      />
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Panel
-          className="xl:col-span-2"
-          title={`${metric === "placements" ? "Placements" : "Submissions"} per ${period === "year" ? "month" : "week"}`}
-          action={
-            <Segmented
-              label="Metric"
-              size="sm"
-              value={metric}
-              onChange={setMetric}
-              options={[
-                { value: "placements", label: "Placements" },
-                { value: "submitted", label: "Submissions" },
-              ]}
-            />
-          }
-        >
-          <TrendChart title={`Team ${metric}, ${p.label.toLowerCase()}`} labels={weeks.map((w) => w.label)} series={[{ name: metric === "placements" ? "Placements" : "Submissions", values: series[metric] }]} height={300} />
-        </Panel>
-        <Panel title="Top placements" padded={false}>
-          {ranked.length === 0 ? (
-            <EmptyState compact icon="trophy" title="No owners yet" body="Assign owners to candidates to track who places them." />
-          ) : (
-            <ol className="grid gap-0.5 p-3">
-              {ranked.slice(0, 7).map((r, i) => {
-                const max = ranked[0]?.placements || 1;
-                return (
-                  <li key={r.id}>
-                    <button type="button" onClick={() => setOpen(r)} className="group flex min-h-10 w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors duration-150 hover:bg-mist-50">
-                      <span className={`grid size-6 shrink-0 place-items-center rounded-full text-adm-xs font-semibold ${i === 0 && r.placements ? "bg-status-warning-hover text-status-warning-strong" : "bg-mist-100 text-mist-600"}`}>{i + 1}</span>
-                      <Avatar name={r.name} size="sm" />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="truncate text-adm-base font-medium text-navy-900 group-hover:text-ocean-700">{r.name}</span>
-                          <span className="text-adm-base font-semibold tabular-nums text-navy-900">{r.placements}</span>
-                        </span>
-                        <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-mist-100">
-                          <span className="block h-full rounded-full bg-ocean-600" style={{ width: `${(r.placements / max) * 100}%` }} />
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </Panel>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <Section title="Team throughput" meta={`Per ${unit}, ${p.label.toLowerCase()}`}>
+          <ActivityChart
+            range={p.label.toLowerCase()}
+            labels={weeks.map((w) => w.label)}
+            height={220}
+            series={[
+              { name: "Submissions", values: series.submitted },
+              { name: "Interviews", values: series.interviews, color: VIOLET },
+              { name: "Placements", values: series.placements },
+            ]}
+          />
+        </Section>
+        <Section title="Recruiter yield" meta="Submitted, then the share interviewed and placed">
+          <YieldBars
+            title={`Submissions by owner and how far they get, ${p.label.toLowerCase()}`}
+            rows={ranked.filter((r) => r.submitted > 0).map((r) => ({ key: r.id, label: r.name, total: r.submitted, mid: r.interviews, end: r.placements, onSelect: () => setOpen(r) }))}
+            labels={["Submitted", "Interviewed", "Placed"]}
+            limit={7}
+            avatars
+            empty="Nobody submitted a candidate in this period."
+          />
+        </Section>
       </div>
 
+      <Section title="Volume against conversion" meta="Each owner: submissions across, submit to interview rate up. Select a dot for their scorecard">
+        <QuadrantScatter
+          title={`Submissions against submit to interview rate by owner, ${p.label.toLowerCase()}`}
+          xLabel="Submissions"
+          yLabel="Reached interview"
+          points={ranked.filter((r) => r.submitted > 0).map((r) => ({ key: r.id, label: r.name, x: r.submitted, y: r.submitToInterview ?? 0, onSelect: () => setOpen(r) }))}
+        />
+      </Section>
+
       <section aria-labelledby="scorecards-title" className="grid min-w-0 gap-3">
-        <h2 id="scorecards-title" className="text-adm-md font-semibold text-navy-900">Scorecards</h2>
+        <h2 id="scorecards-title" className="text-adm-base font-semibold text-navy-900">Scorecards</h2>
         <DataTable
           rows={rows}
           columns={columns}
@@ -298,18 +286,6 @@ export default function TeamPerformance({ period }: { period: Period }) {
           detailTitle={(r) => r.name}
         />
       </section>
-
-      {ranked.length > 0 && (
-        <Panel title="Submit to interview rate" description="By owner, top ten">
-          <BarChart
-            title="Submit to interview conversion by owner"
-            labels={ranked.slice(0, 10).map((r) => r.name.split(" ")[0])}
-            series={[{ name: "Submit to interview", values: ranked.slice(0, 10).map((r) => Math.round((r.submitToInterview ?? 0) * 100)) }]}
-            format={(n) => `${n}%`}
-            height={220}
-          />
-        </Panel>
-      )}
 
       {open && (
         <Drawer title={open.name} onClose={() => setOpen(null)}>

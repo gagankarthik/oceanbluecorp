@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Application, Job, TaskEntry } from "@/lib/aws/dynamodb";
-import { BarChart, Sparkline } from "@/components/portal/charts";
+import { BarChart } from "@/components/portal/charts";
 import { FLOW, STAGE_LABEL, buckets, daysUntil, countIn, inPlayCount, needsCandidates, permissionsFor, reachedAt, tally, type Stage } from "@/components/portal/recruiting/model";
 import TeamPerformancePanel from "@/components/portal/recruiting/TeamPerformance";
 import TeamPerformance, { PERIODS, type Period } from "@/components/portal/performance/TeamPerformance";
@@ -12,18 +12,17 @@ import Icon, { type IconName } from "@/components/portal/icons";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  BarList, Button, EmptyState, ErrorState, ProgressBar, Skeleton, usePortalRouter,
+  Button, EmptyState, ErrorState, ProgressBar, Skeleton, usePortalRouter,
   ListHeader, MenuSelect, BTN_ICON, BTN_PRIMARY,
 } from "@/components/portal/kit";
-import { DeltaPill, type StatDelta } from "@/components/portal/ui";
-import { sectionTone } from "@/components/portal/kit/tone";
 import { TableTabs } from "@/components/portal/DataTable";
 import { MY_TASKS_KEY, refreshApplications, refreshTasks, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { useResource, type Resource } from "@/hooks/use-resource";
 import { isPubliclyOpen, jobCategory } from "@/lib/job-status";
 import { DAY, OFFER_STALE_DAYS, STALE_DAYS, TERMINAL, enteredStageAt, everReached, isStale, median } from "@/lib/pipeline";
 import { DashboardBodySkeleton } from "./DashboardSkeleton";
-import { ActivityChart, ActivityFeed, ConversionFunnel, RolesAtRisk, SourceTable, recentEvents, type FunnelStage, type SourceRow } from "./dashboard-widgets";
+import { ActivityFeed, RolesAtRisk, recentEvents } from "./dashboard-widgets";
+import { ActivityChart, BAR, CompositionBar, ConversionFunnel, DotStrip, FigureStrip, Meter, RhythmHeatmap, Section, YieldBars, type FunnelStage, type YieldRow } from "@/components/portal/viz";
 
 const RANGES = [
   { value: "7d", label: "7D", long: "last 7 days", days: 7 },
@@ -45,37 +44,6 @@ type Stats = {
   monthlyApplications: { month: string; applications: number }[];
 };
 type MyTask = TaskEntry & { applicationId: string; candidateName?: string; jobTitle?: string };
-
-/** A dashboard section, as Plane's home widgets: a plain heading above one bordered body. */
-function Section({
-  title,
-  meta,
-  action,
-  children,
-  className = "",
-  flush = false,
-}: {
-  title: string;
-  meta?: React.ReactNode;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  /** Lists and tabbed bodies run edge to edge */
-  flush?: boolean;
-}) {
-  return (
-    <section aria-label={title} className={`flex min-w-0 flex-col gap-3 ${className}`}>
-      <header className="flex h-7 items-center justify-between gap-3">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <h2 className="truncate text-adm-base font-semibold text-navy-900">{title}</h2>
-          {meta && <span className="truncate text-adm-xs text-mist-600">{meta}</span>}
-        </div>
-        {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
-      </header>
-      <div className={`min-w-0 rounded-lg border border-mist-200 bg-mist-0 ${flush ? "overflow-hidden" : "p-4 sm:p-5"}`}>{children}</div>
-    </section>
-  );
-}
 
 /** One section, several views: underline tabs along the top of its body. */
 function TabbedSection({ title, tabs, className = "" }: { title: string; tabs: { id: string; label: string; content: React.ReactNode }[]; className?: string }) {
@@ -99,37 +67,10 @@ function TabbedSection({ title, tabs, className = "" }: { title: string; tabs: {
           </button>
         ))}
       </div>
-      <div key={tab.id} role="tabpanel" className="kit-fade p-4 sm:p-5">
+      <div key={tab.id} role="tabpanel" className="kit-fade p-4">
         {tab.content}
       </div>
     </Section>
-  );
-}
-
-type Figure = { label: string; icon: IconName; value: number; href: string; delta?: StatDelta; note?: string; spark?: number[] };
-
-/** Plane's analytics overview: the headline figures in one ruled strip, each opening its list. */
-function FigureStrip({ items }: { items: Figure[] }) {
-  return (
-    <div className="grid gap-px overflow-hidden rounded-lg border border-mist-200 bg-mist-200 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map((f) => (
-        <Link key={f.label} href={f.href} className="group flex min-w-0 flex-col gap-3 bg-mist-0 p-4 transition-colors duration-150 hover:bg-mist-50 sm:p-5">
-          <span className="flex items-center gap-2 text-adm-base text-mist-600">
-            <Icon name={f.icon} className="size-4 shrink-0 text-mist-500" />
-            <span className="truncate">{f.label}</span>
-            <Icon name="chevronRight" className="ml-auto size-4 shrink-0 -translate-x-1 text-mist-500 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100" />
-          </span>
-          <span className="flex items-end justify-between gap-3">
-            <span className="text-adm-2xl font-semibold leading-none tracking-tight tabular-nums text-navy-900">{f.value}</span>
-            {f.spark && <Sparkline values={f.spark} color={sectionTone.recruiting.spark} width={88} height={28} label={`${f.label} trend`} />}
-          </span>
-          <span className="flex min-h-5 min-w-0 items-center gap-1.5 text-adm-xs text-mist-600">
-            {f.delta && <DeltaPill {...f.delta} />}
-            <span className="truncate">{[f.delta?.label, f.note].filter(Boolean).join(" · ")}</span>
-          </span>
-        </Link>
-      ))}
-    </div>
   );
 }
 
@@ -141,7 +82,7 @@ function Greeting({ first, updated }: { first: string; updated: Date | null }) {
   const part = h === undefined ? null : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
   return (
     <div className="kit-fade">
-      <h1 className="text-adm-xl font-semibold tracking-tight text-navy-900">
+      <h1 className="text-adm-lg font-semibold tracking-tight text-navy-900">
         {part ? `Good ${part}` : "Hello"}
         {first ? `, ${first}` : ""}
       </h1>
@@ -399,7 +340,7 @@ export default function Dashboard() {
           </Link>
         )}
       </ListHeader>
-      <div className="grid w-full flex-1 content-start gap-8 bg-mist-50 px-4 py-6 sm:px-6 lg:px-8">{content}</div>
+      <div className="grid w-full flex-1 content-start gap-6 bg-mist-50 px-4 py-5 sm:px-6">{content}</div>
     </div>
   );
 
@@ -518,7 +459,6 @@ function Overview({
   const vsPrev = (value: number | null) => (prev ? { value, label: value === null ? `for previous ${span}` : `vs previous ${span}` } : undefined);
   const offeredEver = apps.filter((a) => everReached(a, "offered"));
   const decided = offeredEver.filter((a) => a.status === "hired" || a.status === "rejected");
-  const offerAcceptance = decided.length ? Math.round((decided.filter((a) => a.status === "hired").length / decided.length) * 100) : null;
   const timeToHire = median(placements.map((a) => Math.max(0, Math.round(((reachedAt(a, "hired") ?? 0) - new Date(a.appliedAt).getTime()) / DAY))));
 
   const funnel = [...FLOW, "hired" as Stage].map((s, i) => ({
@@ -546,19 +486,29 @@ function Overview({
     medianDays: stageAges.find((x) => x.s === f.key)?.age ?? null,
   }));
 
-  // Source effectiveness: volume and how far each source's people get
-  const sourceRows: SourceRow[] = (() => {
-    const m = new Map<string, SourceRow>();
+  // How far each group's people get: everyone, reached interview, hired
+  const yieldBy = (key: (a: Application) => string): YieldRow[] => {
+    const m = new Map<string, YieldRow>();
     for (const a of apps) {
-      const k = a.source || "Unattributed";
-      const r = m.get(k) ?? { source: k, applicants: 0, interviewed: 0, hired: 0 };
-      r.applicants++;
-      if (everReached(a, "interview") || a.status === "hired") r.interviewed++;
-      if (a.status === "hired") r.hired++;
+      const k = key(a);
+      const r = m.get(k) ?? { key: k, label: k, total: 0, mid: 0, end: 0 };
+      r.total++;
+      if (everReached(a, "interview") || a.status === "hired") r.mid++;
+      if (a.status === "hired") r.end++;
       m.set(k, r);
     }
-    return [...m.values()].sort((a, b) => b.applicants - a.applicants).slice(0, 8);
-  })();
+    return [...m.values()];
+  };
+  const jobById = new Map(jobs.map((j) => [j.id, j]));
+  const sourceRows = yieldBy((a) => a.source || "Unattributed");
+  const clientRows = yieldBy((a) => (a.jobId && jobById.get(a.jobId)?.clientName) || "Unattributed");
+  const hireTimes = placements.map((a) => ({
+    key: a.id,
+    label: a.name || a.email,
+    sub: a.jobTitle || undefined,
+    value: Math.max(0, Math.round(((reachedAt(a, "hired") ?? 0) - new Date(a.appliedAt).getTime()) / DAY)),
+    href: `/portal/candidates/${a.id}`,
+  }));
 
   // Live roles closing within a week or with nobody in play, soonest first
   const atRisk = openJobs
@@ -568,21 +518,20 @@ function Overview({
     .slice(0, 6)
     .map((x) => x.j);
 
-  const events = recentEvents(all, 40).filter((e) => recentTab === "all" || e.kind === recentTab).slice(0, 6);
+  const events = recentEvents(all, 40).filter((e) => recentTab === "all" || e.kind === recentTab).slice(0, 5);
 
   const sources = tally(apps.map((a) => a.source || "Unattributed"));
-  const jobById = new Map(jobs.map((j) => [j.id, j]));
-  const clientMix = tally(apps.map((a) => (a.jobId && jobById.get(a.jobId)?.clientName) || "Unattributed"), 6);
-  const clientTotal = clientMix.reduce((n, c) => n + c.value, 0);
-  const topClientShare = clientTotal && clientMix.length ? Math.round((clientMix[0].value / clientTotal) * 100) : null;
+  const clientTotal = clientRows.reduce((n, c) => n + c.total, 0);
+  const topClient = [...clientRows].sort((a, b) => b.total - a.total)[0];
+  const topClientShare = clientTotal && topClient ? Math.round((topClient.total / clientTotal) * 100) : null;
   const stats = statsRes.data?.stats;
   const reqMix = stats
     ? [
-        { label: "Live", value: stats.activeJobs },
-        { label: "Draft", value: stats.draftJobs },
-        { label: "On hold", value: stats.onHoldJobs + stats.pausedJobs },
-        { label: "Closed", value: stats.closedJobs },
-      ].filter((x) => x.value > 0)
+        { key: "live", label: "Live", value: stats.activeJobs, color: BAR, href: "/portal/state-roles?focus=live" },
+        { key: "draft", label: "Draft", value: stats.draftJobs, color: "var(--color-mist-500)" },
+        { key: "hold", label: "On hold", value: stats.onHoldJobs + stats.pausedJobs, color: "var(--color-buoy-700)" },
+        { key: "closed", label: "Closed", value: stats.closedJobs, color: "var(--color-mist-300)", light: true },
+      ]
     : [];
 
   const statsBody = (render: (s: Stats) => React.ReactNode) =>
@@ -610,8 +559,8 @@ function Overview({
 
       {/* Two columns that flow on their own, as Plane's home does: the analysis wide on the left,
           what to act on in a rail on the right. Nothing stretches to match its neighbour. */}
-      <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="grid min-w-0 gap-8">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-6">
           <Section title="Hiring activity" meta={cap(r.long)}>
             {apps.length || placements.length ? (
               <div className="grid gap-4">
@@ -620,20 +569,13 @@ function Overview({
                   labels={bs.map((b) => b.label)}
                   series={[{ name: "Applications", values: appliedSeries }, { name: "Hired", values: hiredSeries }, { name: "Rejected", values: rejectedSeries }]}
                 />
-                <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-mist-200 bg-mist-200">
-                  {[
-                    { label: "Offer acceptance", value: offerAcceptance !== null ? `${offerAcceptance}%` : "—", hint: "of decided offers" },
-                    { label: "Median time to hire", value: timeToHire !== null ? `${timeToHire} days` : "—", hint: "application to hire" },
-                  ].map((x) => (
-                    <div key={x.label} className="bg-mist-0 px-3 py-2.5">
-                      <dt className="text-adm-xs text-mist-600">{x.label}</dt>
-                      <dd className="mt-0.5 flex items-baseline gap-2">
-                        <span className="text-adm-md font-semibold text-navy-900">{x.value}</span>
-                        <span className="text-adm-xs text-mist-600">{x.hint}</span>
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
+<div className="grid gap-5 border-t border-mist-200 pt-4 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]">
+                  <Meter label="Offer acceptance" value={decided.filter((a) => a.status === "hired").length} of={decided.length} hint="decided offers accepted" />
+                  <div className="grid min-w-0 content-start gap-1">
+                    <p className="text-adm-xs text-mist-600">Time to hire, one dot per placement</p>
+                    <DotStrip title="Days from application to hire" items={hireTimes} />
+                  </div>
+                </div>
               </div>
             ) : (
               quiet("No applications in this period", "Pick a longer range to see the trend.")
@@ -643,7 +585,7 @@ function Overview({
           <Section title="Pipeline conversion" meta="Select a stage to open it">
             {apps.length ? (
               <div className="grid gap-4">
-                <ConversionFunnel stages={funnelStages} />
+                <ConversionFunnel stages={funnelStages} href={(k) => (k === "pending" ? "/portal/applications" : `/portal/applications?status=${k}`)} />
                 {bottleneck && (
                   <p className="flex items-center gap-2 text-adm-base text-mist-700">
                     <Icon name="timer" className="size-4 shrink-0 text-status-warning" />
@@ -658,9 +600,12 @@ function Overview({
             )}
           </Section>
 
+          <Section title="Source effectiveness" meta="Applicants, then the share interviewed and hired">
+            <YieldBars title="Applicants by source and how far they get" rows={sourceRows} labels={["Applicants", "Interviewed", "Hired"]} limit={6} empty="No source data yet" />
+          </Section>
         </div>
 
-        <div className="grid min-w-0 gap-8">
+        <div className="grid min-w-0 gap-6">
           <Section title="Needs attention" meta="Right now, every role" flush>
             {openJobs.length > 0 && (
               <div className="grid gap-2 border-b border-mist-200 p-4">
@@ -705,14 +650,7 @@ function Overview({
 
 
           <MyTasks />
-        </div>
-      </div>
 
-      {/* Where people come from beside what just happened: two reads of the same flow */}
-      <div className="grid items-start gap-8 lg:grid-cols-2">
-          <Section title="Source effectiveness" meta="How far each source's applicants get">
-            {sourceRows.length ? <SourceTable rows={sourceRows} /> : quiet("No source data yet")}
-          </Section>
           <Section
             title="Recent activity"
             flush
@@ -731,6 +669,7 @@ function Overview({
           >
             <ActivityFeed events={events} />
           </Section>
+        </div>
       </div>
 
       {/* The deeper views, full width under both columns */}
@@ -741,12 +680,12 @@ function Overview({
           {
             id: "clients",
             label: "Pipeline by client",
-            content: clientMix.length ? (
-              <div className="grid gap-4">
-                <BarList items={clientMix} />
+            content: clientRows.length ? (
+              <div className="grid max-w-[60rem] gap-4">
+                <YieldBars title="Pipeline by client and how far it gets" rows={clientRows} labels={["Applicants", "Interviewed", "Hired"]} />
                 {topClientShare !== null && topClientShare >= 40 && (
                   <p className="text-adm-base text-mist-600">
-                    <span className="font-medium text-navy-900">{clientMix[0].label}</span> holds{" "}
+                    <span className="font-medium text-navy-900">{topClient.label}</span> holds{" "}
                     <span className="font-semibold text-status-warning">{topClientShare}%</span> of the pipeline.
                   </p>
                 )}
@@ -755,7 +694,8 @@ function Overview({
               quiet("No client data yet")
             ),
           },
-          { id: "reqs", label: "Requisitions", content: statsBody(() => (reqMix.length ? <BarList items={reqMix} /> : quiet("No roles posted yet"))) },
+          { id: "rhythm", label: "When people apply", content: <RhythmHeatmap title={`Applications by weekday and time of day, ${r.long}`} times={apps.map((a) => new Date(a.appliedAt).getTime())} /> },
+          { id: "reqs", label: "Requisitions", content: statsBody(() => (reqMix.some((x) => x.value) ? <CompositionBar title="Requisitions by status" parts={reqMix} /> : quiet("No roles posted yet"))) },
           {
             id: "monthly",
             label: "Six months",

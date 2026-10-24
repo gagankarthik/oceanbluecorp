@@ -1,47 +1,44 @@
 /*
- * The portal's colours: the dark sales-CRM palette, portal only.
- * Opt-in from the top-bar theme switch (light is the default). Imported by
- * src/app/portal/layout.tsx and keyed on <html> holding the shell with
- * data-theme="dark", so overlays portalled to <body> follow, and the public site
- * never sees it. The same token names are remapped, so every
- * bg-mist-0 / text-navy-900 / ring-mist-200 in the portal follows without edits.
- *
- *   mist   surfaces and lines: #161616 page, #1e1e1e raised, #2a2a2a lines (Plane's dark hairline)
- *   navy   ink: #f9fbff text; 950 is the scrim
- *   ocean  the CRM's violet-blue action (#4124fb), washes and light link ink
+ * The portal's dark palette: Plane's own dark tokens (@makeplane/propel 0.7.3,
+ * converted from OKLCH), portal only. Opt-in from the account menu's theme switch.
+ * Keyed on <html> holding the shell with data-theme="dark", so overlays portalled
+ * to <body> follow and the public site never sees it. The same token names are
+ * remapped, so every bg-mist-0 / text-navy-900 / border-mist-200 follows.
+ *   mist   canvas #0f0f10, surface #141415, layers #181a1b / #1d1f20, borders #222425..
+ *   navy   ink: #e4e6e7 primary, #cacdce secondary; 950 is the scrim
+ *   ocean  Plane's dark accent #2893cc, its brand washes and light link ink
  *   status kelp / buoy / coral as dark washes with light inks
- *   tide   left alone: it is light ink on dark code panels
  */
 html:has([data-portal-shell][data-theme="dark"]) {
   color-scheme: dark;
 
-  --color-mist-0: #161616;
-  --color-mist-50: #101010; /* tinted grounds and the sidebar sit below the #161616 surface */
-  --color-mist-100: #1e1e1e;
-  --color-mist-200: #2a2a2a;
-  --color-mist-300: #3d3d3d;
-  --color-mist-400: #454545;
-  --color-mist-500: #6e6e6e;
-  --color-mist-550: #858585;
-  --color-mist-600: #9a9a9a;
-  --color-mist-700: #cfcfcf;
+  --color-mist-0: #141415; /* surface-1 */
+  --color-mist-50: #0f0f10; /* canvas: tinted grounds sit below the surface */
+  --color-mist-100: #1d1f20; /* layer-1-hover */
+  --color-mist-200: #222425; /* border-subtle */
+  --color-mist-300: #2c2e30; /* border-subtle-1 */
+  --color-mist-400: #36393a; /* border-strong */
+  --color-mist-500: #7a8185; /* icons, disabled */
+  --color-mist-550: #959a9d; /* placeholder */
+  --color-mist-600: #afb3b6; /* text-tertiary */
+  --color-mist-700: #cacdce; /* text-secondary */
 
-  --color-navy-600: #a4a4a4;
-  --color-navy-700: #d0d4dd;
-  --color-navy-800: #e6e8ec;
-  --color-navy-900: #f2f2f2;
+  --color-navy-600: #959a9d;
+  --color-navy-700: #afb3b6;
+  --color-navy-800: #cacdce;
+  --color-navy-900: #e4e6e7; /* text-primary */
   --color-navy-950: #000000;
 
-  --color-ocean-50: #1d1a33;
-  --color-ocean-100: #231f3a;
-  --color-ocean-200: #2e2852;
-  --color-ocean-300: #4b437b;
-  --color-ocean-400: #5f4ff5;
-  --color-ocean-500: #4b30ff;
-  --color-ocean-600: #4124fb;
-  --color-ocean-700: #7a6aff;
-  --color-ocean-800: #b7aee9;
-  --color-ocean-900: #d6d0ff;
+  --color-ocean-50: #0b2231;
+  --color-ocean-100: #00283d;
+  --color-ocean-200: #003c5c;
+  --color-ocean-300: #005685;
+  --color-ocean-400: #007abb;
+  --color-ocean-500: #2893cc;
+  --color-ocean-600: #007abb; /* accent fills: white text holds 4.5:1 (Plane's #2893cc does not) */
+  --color-ocean-700: #47bfff; /* accent text and links */
+  --color-ocean-800: #8ad6ff;
+  --color-ocean-900: #b8e6ff;
 
   --color-cyan-100: #102a27;
   --color-cyan-700: #67e8f9;
@@ -67,8 +64,8 @@ html:has([data-portal-shell][data-theme="dark"]) {
   --color-coral-800: #febfc6;
 
   /* Console tokens with literal values */
-  --p-ocean-25: #1d1a33;
-  --p-ocean-10: #1a1826;
+  --p-ocean-25: #0b2231;
+  --p-ocean-10: #091a25;
   --p-green-fill: #22c55e;
   --p-green-wash: #1f3a2d;
   --p-green-rim: #275137;
@@ -81,10 +78,10 @@ html:has([data-portal-shell][data-theme="dark"]) {
   --p-red-wash: #3e1d1e;
   --p-red-rim: #4c2324;
   --p-red-ink: #febfc6;
-  --adm-focus-ring: rgb(65 36 251 / 0.35);
+  --adm-focus-ring: rgb(40 147 204 / 0.35);
   --adm-scrim: rgb(0 0 0 / 0.6);
 
-  --color-shell: #0e0e0e;
+  --color-shell: #0f0f10;
 
   /* A solid ink chip (tooltips, the current page, batch bars): light on dark here */
   --color-contrast: #f9fbff;
@@ -92,7 +89,7 @@ html:has([data-portal-shell][data-theme="dark"]) {
 }
 
 html:has([data-portal-shell][data-theme="dark"]) body {
-  background: #0e0e0e;
+  background: #0f0f10;
 }
 
 html:has([data-portal-shell][data-theme="dark"]) * {

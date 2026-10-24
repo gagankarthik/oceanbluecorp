@@ -34,6 +34,9 @@ for (const file of ["src/styles/portal-light.css", "src/styles/portal-dark.css"]
     }
     need("mist-550", "mist-0", 4.5); // placeholders
     need("mist-500", "mist-0", 3); // control edges, icons
+    // White on the accent fill (primary buttons); the accent text step on the surface
+    if (ratio("#ffffff", p["ocean-600"]) < 4.5) failures.push(`white on ocean-600 ${ratio("#ffffff", p["ocean-600"]).toFixed(2)}:1 < 4.5`);
+    need("ocean-700", "mist-0", 4.5);
     assert.deepEqual(failures, []);
   });
 }

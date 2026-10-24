@@ -147,6 +147,29 @@ the chain from them. Contrast is pinned in `tests/contrast.test.mjs`.
 | Elevation | Resting surfaces are ring-only. Menus and popovers `shadow-xl`; modals and drawers `shadow-2xl`; the batch bar `shadow-xl` |
 | Motion | Backdrop fade 160ms, modal rise 200ms, drawer slide 240ms (up on phones), phone nav 220ms, sidebar width 200ms on `--ease-standard`. Skeleton shimmer 2.4s. All off under reduced motion |
 
+### 2.8a Portal tokens are Plane's (Oct 24 2026)
+
+The portal's light and dark palettes (`src/styles/portal-light.css`, `portal-dark.css`)
+are Plane's own design tokens from `@makeplane/propel` 0.7.3, converted from OKLCH to hex
+and mapped onto the portal scales: `mist` = Plane neutrals (surface #fff, layer #f9f9f9,
+canvas #f2f2f3, borders #eaebec / #e1e2e3 / #d5d7d9, tertiary text #494d50, secondary
+#313435), `navy-900` = primary text #0f0f10, `ocean` = Plane's brand scale (accent
+#006399; dark #2893cc text, #007abb fills so white keeps 4.5:1), status = Plane's success /
+danger / warning. The portal's face is Inter, as Plane's, loaded in `app/portal/layout.tsx`
+(the public site keeps General Sans). Charts take grid and axis colours from these tokens
+and draw at their container's pixel width, so labels keep their size.
+
+### 2.8a-ii Portal analysis widgets (`components/portal/viz.tsx`)
+
+Charts are the funnel's pattern: drawn at the container's pixel width, slot-1 blue for volume,
+outcome green for hires (violet `#8b5cf6` as a validated third line), a readout line under each
+chart for the hovered mark or the headline, and marks that stand for a list open it. Pick by job:
+ConversionFunnel (stage flow), YieldBars (volume and how much passes two gates: sources,
+clients, recruiters), DotStrip (a distribution, e.g. days to hire), Meter (one share),
+CompositionBar (parts of a whole), RhythmHeatmap (weekday by time of day), QuadrantScatter
+(volume against rate, median quadrants), ActivityChart (trend with series toggles). Prefer one
+of these over a sentence of numbers.
+
 ### 2.8b Portal consistency rules (Oct 24 2026)
 
 Every portal screen follows these; a new screen that breaks one is a bug.

@@ -220,7 +220,7 @@ function Sidebar({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={`group flex h-8 items-center gap-2 rounded-md px-2 text-adm-base font-medium transition-colors duration-150 ${
-            active ? "bg-mist-0 text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200" : "text-mist-700 hover:bg-mist-0/60 hover:text-navy-900"
+            active ? "bg-mist-100 text-navy-900" : "text-mist-700 hover:bg-mist-50 hover:text-navy-900"
           }`}
         >
           <Icon name={item.icon} className={`size-4 shrink-0 ${active ? "text-ocean-600" : "text-mist-500 group-hover:text-navy-900"}`} />
@@ -231,8 +231,7 @@ function Sidebar({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-shell">
-      {/* The canvas grey: the nav recedes, the white work area beside it carries the focus */}
+    <div className="flex h-full min-h-0 flex-col bg-mist-0">
       {onClose && (
         <div className="flex h-11 shrink-0 items-center justify-between border-b border-mist-200 px-3">
           <WorkspaceMark dark={dark} onNavigate={onNavigate} />
@@ -617,7 +616,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             </aside>
           )}
           {/* The one gutter: pages never pad themselves (see portal README) */}
-          <main ref={mainRef} id="portal-main" tabIndex={-1} data-portal className="scroll-thin flex min-w-0 flex-1 flex-col overflow-y-auto p-5 focus:outline-none sm:p-6 lg:p-8">
+          <main ref={mainRef} id="portal-main" tabIndex={-1} data-portal className="scroll-thin relative flex min-w-0 flex-1 flex-col overflow-y-auto p-5 focus:outline-none sm:p-6 lg:p-8">
             {children}
           </main>
         </div>

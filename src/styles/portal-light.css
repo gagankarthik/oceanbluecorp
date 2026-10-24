@@ -1,31 +1,57 @@
 /*
- * The portal's light palette, Plane's neutrals: a grey canvas, a white work surface,
- * #e5e5e5 hairlines and near-black ink, with the ocean blue kept as the one accent.
+ * The portal's light palette: Plane's own design tokens (@makeplane/propel 0.7.3,
+ * converted from OKLCH), mapped onto the portal's scales so every class follows.
+ *   mist   surfaces, borders and muted text   (Plane neutral-white .. neutral-1000)
+ *   navy   ink                                (neutral-1100 secondary, neutral-1200 primary)
+ *   ocean  the accent                         (Plane brand scale, default #006399)
+ *   kelp / coral / buoy   status ink and washes (Plane success / danger / warning)
  * Portal only, keyed like portal-dark.css on the shell's data-theme, so overlays
- * portalled to <body> follow and the public site keeps its blue-tinted mist.
+ * portalled to <body> follow and the public site keeps its own palette.
  * Contrast pinned in tests/portal-palette.test.mjs.
  */
 html:has([data-portal-shell][data-theme="light"]) {
-  --color-mist-0: #ffffff;
-  --color-mist-50: #fafafa;
-  --color-mist-100: #f4f4f5;
-  --color-mist-200: #e5e5e5;
-  --color-mist-300: #d4d4d4;
-  --color-mist-400: #a3a3a3;
-  --color-mist-500: #737373;
-  --color-mist-550: #6b6b6b;
-  --color-mist-600: #525252;
-  --color-mist-700: #3f3f3f;
+  --color-mist-0: #ffffff; /* surface-1 */
+  --color-mist-50: #f9f9f9; /* layer-1 */
+  --color-mist-100: #f2f2f3; /* layer-1-hover, canvas */
+  --color-mist-200: #eaebec; /* border-subtle */
+  --color-mist-300: #e1e2e3; /* border-subtle-1 */
+  --color-mist-400: #d5d7d9; /* border-strong */
+  --color-mist-500: #767c7f; /* icons, disabled */
+  --color-mist-550: #5d6265; /* placeholder */
+  --color-mist-600: #494d50; /* text-tertiary */
+  --color-mist-700: #313435; /* text-secondary */
 
-  --color-navy-600: #525252;
-  --color-navy-700: #3f3f3f;
-  --color-navy-800: #262626;
-  --color-navy-900: #171717;
-  --color-navy-950: #0a0a0a;
+  --color-navy-600: #5d6265;
+  --color-navy-700: #494d50;
+  --color-navy-800: #313435;
+  --color-navy-900: #0f0f10; /* text-primary */
+  --color-navy-950: #000000;
 
-  --color-shell: #f0f0f0;
+  --color-ocean-50: #ebf8ff;
+  --color-ocean-100: #d6f1ff;
+  --color-ocean-200: #b8e6ff;
+  --color-ocean-300: #8ad6ff;
+  --color-ocean-400: #47bfff;
+  --color-ocean-500: #007abb;
+  --color-ocean-600: #006399; /* brand-default: accent fill, focus */
+  --color-ocean-700: #005685; /* brand-900: accent text */
+  --color-ocean-800: #003c5c;
+  --color-ocean-900: #00283d;
+
+  --color-kelp-50: #e4f6e9;
+  --color-kelp-700: #25743b;
+  --color-kelp-800: #1d5c2f;
+  --color-coral-50: #fbeae9;
+  --color-coral-600: #c42b1f;
+  --color-coral-700: #a5261d;
+  --color-coral-800: #851f18;
+  --color-buoy-50: #fef3c6;
+  --color-buoy-700: #973c00;
+  --color-buoy-800: #7a3100;
+
+  --color-shell: #f2f2f3; /* canvas */
 }
 
 html:has([data-portal-shell][data-theme="light"]) body {
-  background: #f0f0f0;
+  background: #f2f2f3;
 }

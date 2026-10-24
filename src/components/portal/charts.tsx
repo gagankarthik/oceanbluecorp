@@ -11,7 +11,7 @@
  * - Thin marks: 2px lines, rounded data-ends on the baseline, 2px gaps, recessive grid.
  * - One y-axis only. Hover tooltips by default. Text never wears the series colour.
  */
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 // Slot 1 and the two outcomes were run through the dataviz validator together: they pass every
 // check on the white surface and on the dark one (#161616), so one set serves both themes.
@@ -31,8 +31,9 @@ export const RAMP = ["#6fb2e3", "#3794d4", "#1580c8", "#0a72c0", "#085c9c", "#0a
 /** Sequential ramp for heatmaps: light means near zero */
 export const SEQ = ["#eaf4fb", "#d2e8f7", "#a6d0ef", "#6fb2e3", "#3794d4", "#0a72c0", "#085c9c"] as const;
 
-const GRID = "#e3e9ed";
-const AXIS_TEXT = "#4b6273"; // mist-600: axis labels are text, 4.5:1
+// Theme tokens, applied through style (SVG presentation attributes don't resolve var())
+const GRID = "var(--color-mist-200)";
+const AXIS_TEXT = "var(--color-mist-600)"; // axis labels are text: 4.5:1 in both themes
 
 const fmtDefault = (n: number) => n.toLocaleString("en-US");
 
@@ -74,6 +75,21 @@ function Tooltip({ x, y, children, containerWidth }: { x: number; y: number; chi
   );
 }
 
+/** The container's pixel width, so a chart draws 1:1 and its 11px labels stay 11px at any width. */
+export function useWidth(ref: React.RefObject<HTMLDivElement | null>, fallback = 640) {
+  const [w, setW] = useState(fallback);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => el.clientWidth && setW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return w;
+}
+
 /* ------------------------------------------------------------------ */
 /* Sparkline: a single series, no axes, last point marked              */
 /* ------------------------------------------------------------------ */
@@ -90,7 +106,7 @@ export function Sparkline({ values, color = SERIES[0], width = 96, height = 28, 
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label ?? `Trend from ${values[0]} to ${values[values.length - 1]}`}>
       <path d={`${d} L${last[0]} ${height} L2 ${height} Z`} fill={color} opacity="0.08" />
       <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={last[0]} cy={last[1]} r="3" fill={color} stroke="#fff" strokeWidth="1.5" />
+      <circle cx={last[0]} cy={last[1]} r="3" fill={color} strokeWidth="1.5" style={{ stroke: "var(--color-mist-0, #fff)" }} />
     </svg>
   );
 }
@@ -109,7 +125,8 @@ export function TrendChart({
   legend = true,
 }: {
   labels: string[];
-  series: { name: string; values: number[] }[];
+  /** color pins a validated hue to a series, so it keeps it when its neighbours are hidden */
+  series: { name: string; values: number[]; color?: string }[];
   height?: number;
   area?: boolean;
   format?: (n: number) => string;
@@ -119,7 +136,7 @@ export function TrendChart({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
-  const W = 640;
+  const W = useWidth(ref);
   const H = height;
   const pad = { l: 44, r: 12, t: 12, b: 28 };
   const max = niceMax(Math.max(0, ...series.flatMap((s) => s.values)));
@@ -135,9 +152,10 @@ export function TrendChart({
     setHover(Math.max(0, Math.min(labels.length - 1, i)));
   };
 
-  const cw = ref.current?.clientWidth ?? W;
-  const scale = cw / W;
-  const colors = seriesColors(series.map((s) => s.name));
+  // Drawn at the container's own width, so screen and chart coordinates are one scale
+  const cw = W;
+  const scale = 1;
+  const colors = seriesColors(series.map((s) => s.name)).map((c, i) => series[i].color ?? c);
 
   return (
     <figure>
@@ -151,15 +169,15 @@ export function TrendChart({
         <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full touch-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-label={title}>
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke={GRID} strokeWidth="1" />
-              <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill={AXIS_TEXT}>
+              <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} style={{ stroke: GRID }} strokeWidth="1" />
+              <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" style={{ fill: AXIS_TEXT }}>
                 {format(t)}
               </text>
             </g>
           ))}
           {labels.map((l, i) =>
             i % step === 0 || i === labels.length - 1 ? (
-              <text key={l + i} x={x(i)} y={H - 8} textAnchor="middle" fontSize="11" fill={AXIS_TEXT}>
+              <text key={l + i} x={x(i)} y={H - 8} textAnchor="middle" fontSize="11" style={{ fill: AXIS_TEXT }}>
                 {l}
               </text>
             ) : null,
@@ -176,9 +194,9 @@ export function TrendChart({
           })}
           {hover !== null && (
             <g>
-              <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} stroke="#98a9b4" strokeWidth="1" />
+              <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} strokeWidth="1" style={{ stroke: "var(--color-mist-400)" }} />
               {series.map((s, si) => (
-                <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={colors[si]} stroke="#fff" strokeWidth="2" />
+                <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={colors[si]} strokeWidth="2" style={{ stroke: "var(--color-mist-0)" }} />
               ))}
             </g>
           )}
@@ -227,7 +245,7 @@ export function BarChart({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
-  const W = 640;
+  const W = useWidth(ref);
   const H = height;
   const pad = { l: 44, r: 8, t: 12, b: 28 };
   const totals = labels.map((_, i) => series.reduce((a, s) => a + (s.values[i] ?? 0), 0));
@@ -236,8 +254,9 @@ export function BarChart({
   const barW = Math.min(36, band * 0.62);
   const y = (v: number) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * max);
-  const cw = ref.current?.clientWidth ?? W;
-  const scale = cw / W;
+  // Drawn at the container's own width, so screen and chart coordinates are one scale
+  const cw = W;
+  const scale = 1;
   const colors = seriesColors(series.map((s) => s.name));
 
   return (
@@ -252,8 +271,8 @@ export function BarChart({
         <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={title} onPointerLeave={() => setHover(null)}>
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke={GRID} />
-              <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill={AXIS_TEXT}>
+              <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} style={{ stroke: GRID }} />
+              <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" style={{ fill: AXIS_TEXT }}>
                 {format(t)}
               </text>
             </g>
@@ -283,7 +302,7 @@ export function BarChart({
                   );
                 })}
                 {i % Math.ceil(labels.length / 12) === 0 && (
-                  <text x={cx} y={H - 8} textAnchor="middle" fontSize="11" fill={AXIS_TEXT}>
+                  <text x={cx} y={H - 8} textAnchor="middle" fontSize="11" style={{ fill: AXIS_TEXT }}>
                     {l}
                   </text>
                 )}
@@ -378,7 +397,7 @@ export function DonutChart({
         <text x={C} y={C - 4} textAnchor="middle" fontSize="22" fontWeight="600" fill="#0b2e46">
           {format(active ? active.value : total)}
         </text>
-        <text x={C} y={C + 16} textAnchor="middle" fontSize="11" fill={AXIS_TEXT}>
+        <text x={C} y={C + 16} textAnchor="middle" fontSize="11" style={{ fill: AXIS_TEXT }}>
           {active ? `${Math.round((active.value / total) * 100)}% ${active.label}`.slice(0, 22) : centerLabel}
         </text>
       </svg>
