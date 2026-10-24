@@ -384,7 +384,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       />
 
       {saveError && (
-        <div role="alert" className="flex items-start gap-3 rounded-xl bg-status-danger-soft p-4 text-adm-base text-status-danger ring-1 ring-inset ring-status-danger-line">
+        <div role="alert" className="flex items-start gap-3 rounded-lg bg-status-danger-soft p-4 text-adm-base text-status-danger ring-1 ring-inset ring-status-danger-line">
           <Icon name="alert" className="mt-0.5 size-5 shrink-0" />
           <p className="min-w-0 flex-1">
             {saveError} <span className="text-mist-700">Your changes are still here.</span>
@@ -835,7 +835,7 @@ export function ArticleEditor({ kind, id }: { kind: ArticleKind; id: string }) {
       </div>
 
       {/* Sticky action bar: floats over the page bottom, never pads the page. */}
-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-mist-0 px-4 py-3 ring-1 ring-mist-200">
+      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-lg bg-mist-0 px-4 py-3 ring-1 ring-mist-200">
         <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-adm-base">
           {dirty ? (
             <span className="inline-flex items-center gap-2 font-medium text-status-warning">

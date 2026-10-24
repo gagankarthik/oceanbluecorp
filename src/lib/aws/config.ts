@@ -1,3 +1,5 @@
+import "server-only";
+
 // AWS Configuration
 // This file contains the base AWS configuration used by all AWS services
 

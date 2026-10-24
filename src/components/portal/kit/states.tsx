@@ -7,7 +7,7 @@ import { Button } from "./Button";
 
 type Action = { label: string; onClick?: () => void; href?: string; icon?: IconName };
 
-const card = "rounded-xl bg-mist-0 ring-1 ring-mist-200";
+const card = "rounded-lg bg-mist-0 ring-1 ring-mist-200";
 
 /**
  * Nothing to show. Pick the variant by why it is empty:

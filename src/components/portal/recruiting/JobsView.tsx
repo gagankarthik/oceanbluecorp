@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Job } from "@/lib/aws/dynamodb";
-import { BarChart, DonutChart } from "@/components/portal/charts";
-import DataTable, { type Column, type Filter } from "@/components/portal/DataTable";
-import Icon from "@/components/portal/icons";
+import DataTable, { type Column, type Filter, type Summary } from "@/components/portal/DataTable";
+import Icon, { type IconName } from "@/components/portal/icons";
+import { StateIcon } from "@/components/portal/kit/state-icon";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  Badge, Button, ConfirmDialog, deleteConfirmText, Drawer, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader,
-  Panel, Skeleton, StatCard, usePortalRouter,
+  Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, KeyValue, CrmListSkeleton, ListPage, ListPageState, PillButton,
+  Skeleton, usePortalRouter, PeekSection, PeekFooter, ClampText,
 } from "@/components/portal/kit";
 import { refreshApplications, refreshJobs, useJobSummaries } from "@/hooks/use-console-data";
 import { downloadCsv } from "@/lib/csv";
@@ -19,11 +19,11 @@ import { DAY } from "@/lib/pipeline";
 import { renderRichText } from "@/lib/rich-text";
 import { formatSalary } from "@/lib/salary";
 import { jobLocationLabel, workplaceOf, WORKPLACE_LABEL } from "@/lib/workplace";
-import { AvatarStack, JobStatusSelect, KpiButton, StageBadge, jobMenuItems } from "./bits";
+import { AvatarStack, JobStatusSelect, StageBadge, jobMenuItems } from "./bits";
 import { ActionMenu } from "@/components/portal/records/Menu";
 import {
-  JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, PIPELINE, STAGE_LABEL, assigneesOf, buckets, countIn, daysUntil, duplicateJobHref,
-  jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, stageColors, tally,
+  JOB_STATE, JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, stageState, PIPELINE, STAGE_LABEL, assigneesOf, daysUntil, duplicateJobHref,
+  jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, stageColors,
 } from "./model";
 
 const COPY: Record<JobCategory, { title: string; noun: string; icon: "capitol" | "briefcase"; post: string; query: string }> = {
@@ -131,30 +131,6 @@ function exportJobs(name: string, list: Job[], canPrice: boolean) {
   );
 }
 
-/** Live roles due in the next three weeks, soonest first */
-function DeadlineList({ jobs, onPick }: { jobs: Job[]; onPick: (j: Job) => void }) {
-  const due = jobs
-    .map((j) => ({ j, d: daysUntil(j.submissionDueDate) }))
-    .filter((x): x is { j: Job; d: number } => isLive(x.j) && x.d !== null && x.d >= 0 && x.d <= 21)
-    .sort((a, b) => a.d - b.d);
-  if (due.length === 0) return <EmptyState compact icon="calendar" title="Nothing due soon" body="No live role has a deadline in the next three weeks." />;
-  return (
-    <ul className="grid gap-1">
-      {due.slice(0, 7).map(({ j, d }) => (
-        <li key={j.id}>
-          <button type="button" onClick={() => onPick(j)} className="grid min-h-10 w-full grid-cols-[3rem_1fr] items-center gap-3 rounded-lg p-2 text-left transition-colors duration-150 hover:bg-mist-50">
-            <span className={`rounded-md py-1 text-center text-adm-xs font-semibold tabular-nums ${d === 0 ? "bg-status-danger-soft text-status-danger" : d <= 3 ? "bg-status-warning-soft text-status-warning" : "bg-ocean-50 text-ocean-700"}`}>{d === 0 ? "Today" : `${d}d`}</span>
-            <span className="min-w-0">
-              <span className="block truncate text-adm-base font-medium text-navy-900">{j.title}</span>
-              <span className="block truncate text-adm-xs text-mist-600">{[j.postingId, fmtDate(j.submissionDueDate)].filter(Boolean).join(", ")}</span>
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export default function JobsView({ category }: { category: JobCategory }) {
   const copy = COPY[category];
   const notify = useToast();
@@ -169,7 +145,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
     [res.jobs, category],
   );
 
-  // KPIs, charts and deep links all drive the table's own filters, so every constraint shows as a chip.
+  // Deep links drive the table's own filters, so every constraint shows as a chip.
   const [table, setTable] = useState<TableState>({ query: "", filters: {} });
   const [tableKey, setTableKey] = useState(0);
   const [from, setFrom] = useState("");
@@ -177,7 +153,6 @@ export default function JobsView({ category }: { category: JobCategory }) {
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [picked, setPicked] = useState<string | null>(null);
   const [confirmStatus, setConfirmStatus] = useState<{ job: Job; to: Job["status"] } | null>(null);
 
   // Dashboard drill-through: ?focus=starved | due | live
@@ -189,17 +164,6 @@ export default function JobsView({ category }: { category: JobCategory }) {
       setTableKey((k) => k + 1);
     }
   }, []);
-
-  const setFilter = (key: string, value: string | null) => {
-    setTable((t) => {
-      const next = { ...t.filters };
-      if (!value || next[key] === value) delete next[key];
-      else next[key] = value;
-      return { ...t, filters: next };
-    });
-    setTableKey((k) => k + 1);
-  };
-  const isOn = (key: string, value: string) => table.filters[key] === value;
 
   const patchJobs = (fn: (list: Job[]) => Job[]) => setData((d) => ({ ...d, jobs: fn(d?.jobs ?? []) }));
 
@@ -243,7 +207,6 @@ export default function JobsView({ category }: { category: JobCategory }) {
       // A posting's applications go with it.
       void refreshApplications();
       notify("Job deleted");
-      if (picked === deleteId) setPicked(null);
       setDeleteId(null);
     } catch {
       notify("Couldn't delete the job. Try again.", { tone: "error" });
@@ -252,18 +215,27 @@ export default function JobsView({ category }: { category: JobCategory }) {
     }
   };
 
-  const live = jobs.filter(isLive);
-  const starved = live.filter(needsCandidates);
-  const dueWeek = live.filter(dueThisWeek);
-  const applicants = jobs.reduce((n, j) => n + (j.applicationsCount || 0), 0);
-  const postedTrend = countIn(buckets(56), jobs.map((j) => new Date(j.createdAt).getTime()));
-  const statusMix = JOB_STATUSES.map((s) => ({ label: s.label, value: jobs.filter((j) => j.status === s.value).length })).filter((s) => s.value > 0);
-  const stageTotals = PIPELINE.map((s) => live.reduce((n, j) => n + (j.pipeline?.[s] ?? 0), 0));
-  const clients = canPrice ? tally(jobs.map((j) => j.clientName || "No client"), 8) : [];
+  // Footer figures, from the filtered rows
+  const summary = (list: Job[]): Summary[] => {
+    const live = list.filter(isLive);
+    const due = live.filter(dueThisWeek).length;
+    if (canPrice) {
+      const starved = live.filter(needsCandidates).length;
+      return [
+        { label: "live", value: live.length },
+        { label: "due this week", value: due, warn: due > 0 },
+        { label: "no candidates", value: starved, warn: starved > 0 },
+        { label: "applicants", value: list.reduce((n, j) => n + (j.applicationsCount || 0), 0) },
+      ];
+    }
+    return [
+      { label: "live", value: live.length },
+      { label: "due this week", value: due, warn: due > 0 },
+      { label: "drafts", value: list.filter((j) => j.status === "draft").length },
+    ];
+  };
 
   const dated = useMemo(() => jobs.filter((j) => (!from || j.createdAt.slice(0, 10) >= from) && (!to || j.createdAt.slice(0, 10) <= to)), [jobs, from, to]);
-
-
 
   const columns: Column<Job>[] = [
     {
@@ -379,7 +351,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
       : []),
   ];
 
-  const dateCls = "h-10 min-w-0 rounded-lg bg-mist-0 px-2.5 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600";
+  const dateCls = "h-8 min-w-0 rounded-md border border-mist-200 bg-mist-0 px-2.5 text-adm-base text-navy-900 focus:border-mist-400 focus:outline-none";
   const detailFor = (job: Job) => (
     <JobDetail
       job={jobs.find((x) => x.id === job.id) ?? job}
@@ -403,173 +375,76 @@ export default function JobsView({ category }: { category: JobCategory }) {
       canEdit: canEditJobs,
       canDelete: canPrice,
     });
-  const pickedJob = picked ? jobs.find((j) => j.id === picked) : undefined;
 
   const canPost = canEditJobs && !(res.jobs && jobs.length === 0);
-  // Charts live in the Insights sheet; a click that filters the table closes it.
-  const insights = (
-    <InsightsSheet title={`${copy.title} insights`} description="Where applicants sit, what is due soon and how the roles break down. Click a chip to filter the table.">
-      {(close) => {
-        const filterBy = (key: string, value: string) => {
-          setFilter(key, value);
-          close();
-        };
-        return (
-          <>
-            {canPrice ? (
-              <Panel title="Applicants by stage, live roles">
-                {stageTotals.some((n) => n > 0) ? (
-                  <BarChart title="Applicants on live roles by pipeline stage" labels={PIPELINE.map((s) => STAGE_LABEL[s])} series={[{ name: "Applicants", values: stageTotals }]} height={220} />
-                ) : (
-                  <EmptyState compact icon="inbox" title="No applicants on live roles" body="Applicants show here by stage once a live role has some." />
-                )}
-              </Panel>
-            ) : (
-              <Panel title="Roles by status">
-                <DonutChart title="Roles by status" data={statusMix} centerLabel="Roles" />
-              </Panel>
-            )}
-            <Panel title="Deadlines, next 3 weeks">
-              <DeadlineList
-                jobs={jobs}
-                onPick={(j) => {
-                  close();
-                  setPicked(j.id);
-                }}
-              />
-            </Panel>
-            {canPrice && (
-              <Panel title="Status mix">
-                <DonutChart title="Roles by status" data={statusMix} centerLabel="Roles" />
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {statusMix.map((s) => (
-                    <Button key={s.label} size="sm" variant={isOn("status", s.label) ? "primary" : "secondary"} onClick={() => filterBy("status", s.label)}>
-                      {s.label} <span className="tabular-nums opacity-70">{s.value}</span>
-                    </Button>
-                  ))}
-                </div>
-              </Panel>
-            )}
-            {canPrice && clients.length > 0 && (
-              <Panel title="Roles by client">
-                <BarChart title="Roles by client" labels={clients.map((c) => c.label.split(" ")[0])} series={[{ name: "Roles", values: clients.map((c) => c.value) }]} height={200} />
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {clients.filter((c) => !c.label.startsWith("Other (")).map((c) => (
-                    <Button key={c.label} size="sm" variant={isOn("client", c.label) ? "primary" : "secondary"} onClick={() => filterBy("client", c.label)}>
-                      {c.label} <span className="tabular-nums opacity-70">{c.value}</span>
-                    </Button>
-                  ))}
-                </div>
-              </Panel>
-            )}
-          </>
-        );
-      }}
-    </InsightsSheet>
-  );
-
   let body: React.ReactNode;
-  if (res.isLoading) body = <ListPageSkeleton header={false} label={`Loading ${copy.title.toLowerCase()}`} kpis={4} insights={false} />;
+  if (res.isLoading)
+    body = (
+      <CrmListSkeleton label={`Loading ${copy.title.toLowerCase()}`} filters={3} actions={1} />
+    );
   else if (!res.jobs && res.error)
-    body = <ErrorState title={`Couldn't load ${copy.title.toLowerCase()}`} message={res.error.message} onRetry={() => void res.reload()} retrying={res.isValidating} />;
+    body = (
+      <ListPageState>
+        <ErrorState title={`Couldn't load ${copy.title.toLowerCase()}`} message={res.error.message} onRetry={() => void res.reload()} retrying={res.isValidating} />
+      </ListPageState>
+    );
   else if (jobs.length === 0)
     body = (
-      <EmptyState
-        framed
-        variant="first-use"
-        icon={copy.icon}
-        title={`No ${copy.noun}s posted yet`}
-        body={canEditJobs ? "Post a role to track its deadline, team and applicants here. It stays a draft until you set it to Active." : "Roles appear here once a job editor posts one."}
-        primary={canEditJobs ? { label: copy.post, icon: "plus", href: `/portal/jobs/new${copy.query}` } : undefined}
-      />
+      <ListPageState>
+        <EmptyState
+          framed
+          variant="first-use"
+          icon={copy.icon}
+          title={`No ${copy.noun}s posted yet`}
+          body={canEditJobs ? "Post a role to track its deadline, team and applicants here. It stays a draft until you set it to Active." : "Roles appear here once a job editor posts one."}
+          primary={canEditJobs ? { label: copy.post, icon: "plus", href: `/portal/jobs/new${copy.query}` } : undefined}
+        />
+      </ListPageState>
     );
   else
     body = (
-      <>
-        <KpiRow>
-          <KpiButton label="Show live roles" active={isOn("status", LIVE)} onClick={() => setFilter("status", LIVE)}>
-            <StatCard section="recruiting" label="Live on website" value={live.length} icon={copy.icon} change={`${jobs.length} total`} trend="flat" spark={postedTrend} hint="posted, last 8 weeks" />
-          </KpiButton>
-          <KpiButton label="Show roles due this week" active={isOn("attention", DUE_WEEK)} onClick={() => setFilter("attention", DUE_WEEK)}>
-            <StatCard section="recruiting" label="Due this week" value={dueWeek.length} icon="timer" change={dueWeek.length ? "Submit on time" : "Nothing due"} trend={dueWeek.length ? "down" : "flat"} />
-          </KpiButton>
-          {canPrice ? (
-            <KpiButton label="Show live roles with no candidates in play" active={isOn("attention", NO_CANDIDATES)} onClick={() => setFilter("attention", NO_CANDIDATES)}>
-              <StatCard section="recruiting" label="No candidates" value={starved.length} icon="alert" change={starved.length ? "Needs sourcing" : "All covered"} trend={starved.length ? "down" : "up"} hint="live roles" />
-            </KpiButton>
-          ) : (
-            <KpiButton label="Show drafts" active={isOn("status", "Draft")} onClick={() => setFilter("status", "Draft")}>
-              <StatCard section="recruiting" label="Drafts" value={jobs.filter((j) => j.status === "draft").length} icon="edit" change="Not yet live" trend="flat" />
-            </KpiButton>
-          )}
-          {canPrice ? (
-            <StatCard section="recruiting" label="Applicants" value={applicants} icon="inbox" change={`${(applicants / Math.max(1, jobs.length)).toFixed(1)} per role`} trend="flat" />
-          ) : (
-            <KpiButton label="Show closed roles" active={isOn("status", "Closed")} onClick={() => setFilter("status", "Closed")}>
-              <StatCard section="recruiting" label="Closed" value={jobs.filter((j) => j.status === "closed").length} icon="check" change="Past deadline or filled" trend="flat" />
-            </KpiButton>
-          )}
-        </KpiRow>
-
-        <DataTable
-          key={tableKey}
-          rows={dated}
-          columns={columns}
-          filters={filters}
-          initialQuery={table.query}
-          initialFilters={table.filters}
-          onStateChange={setTable}
-          storageKey={`roles-${category}`}
-          exportName={category === "open" ? "open-roles" : "state-roles"}
-          onExport={(list) => exportJobs(category === "open" ? "open-roles" : "state-roles", list, canPrice)}
-          searchPlaceholder="Search title, client, location or ID"
-          emptyTitle={`No ${copy.noun}s match your filters`}
-          filterExtras={
-            <span className="flex shrink-0 items-center gap-1.5 text-adm-base text-mist-600">
-              <span className="whitespace-nowrap">Posted between</span>
-              <label className="sr-only" htmlFor={`${category}-from`}>Posted from</label>
-              <input id={`${category}-from`} type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={dateCls} title="Posted from" />
-              <span aria-hidden>to</span>
-              <label className="sr-only" htmlFor={`${category}-to`}>Posted to</label>
-              <input id={`${category}-to`} type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={dateCls} title="Posted to" />
-            </span>
-          }
-          extraChips={
-            from || to
-              ? [{ key: "posted-range", label: `Posted between: ${from ? fmtDate(`${from}T00:00`) : "any"} to ${to ? fmtDate(`${to}T00:00`) : "today"}`, clear: () => { setFrom(""); setTo(""); } }]
-              : []
-          }
-          detailTitle={(j) => j.title}
-          renderDetail={(j) => detailFor(j)}
-          detailActions={(j) => openJobAction(j)}
-          rowMenu={rowMenu}
-        />
-      </>
+      <DataTable
+        key={tableKey}
+        fill
+        noun={`${copy.noun}s`}
+        summary={summary}
+        toolbar={canPost && <PillButton variant="primary" icon="plus" href={`/portal/jobs/new${copy.query}`}>{copy.post}</PillButton>}
+        rows={dated}
+        columns={columns}
+        filters={filters}
+        initialQuery={table.query}
+        initialFilters={table.filters}
+        onStateChange={setTable}
+        storageKey={`roles-${category}`}
+        exportName={category === "open" ? "open-roles" : "state-roles"}
+        onExport={(list) => exportJobs(category === "open" ? "open-roles" : "state-roles", list, canPrice)}
+        searchPlaceholder="Search title, client, location or ID"
+        emptyTitle={`No ${copy.noun}s match your filters`}
+        filterExtras={
+          <span className="flex shrink-0 items-center gap-1.5 text-adm-base text-mist-600">
+            <span className="whitespace-nowrap">Posted between</span>
+            <label className="sr-only" htmlFor={`${category}-from`}>Posted from</label>
+            <input id={`${category}-from`} type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={dateCls} title="Posted from" />
+            <span aria-hidden>to</span>
+            <label className="sr-only" htmlFor={`${category}-to`}>Posted to</label>
+            <input id={`${category}-to`} type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={dateCls} title="Posted to" />
+          </span>
+        }
+        extraChips={
+          from || to
+            ? [{ key: "posted-range", label: `Posted between: ${from ? fmtDate(`${from}T00:00`) : "any"} to ${to ? fmtDate(`${to}T00:00`) : "today"}`, clear: () => { setFrom(""); setTo(""); } }]
+            : []
+        }
+        detailTitle={(j) => j.title}
+        renderDetail={(j) => detailFor(j)}
+        detailActions={(j) => openJobAction(j)}
+        rowMenu={rowMenu}
+      />
     );
 
   return (
-    <Page>
-      <PageHeader
-        section="recruiting"
-        icon={copy.icon}
-        title={copy.title}
-
-        actions={
-          (jobs.length > 0 || canPost) && (
-            <>
-              {jobs.length > 0 && insights}
-              {canPost && <Button icon="plus" href={`/portal/jobs/new${copy.query}`}>{copy.post}</Button>}
-            </>
-          )
-        }
-      />
+    <ListPage title={copy.title}>
       {body}
-
-      {pickedJob && (
-        <Drawer title={pickedJob.title} onClose={() => setPicked(null)} actions={openJobAction(pickedJob)}>
-          {detailFor(pickedJob)}
-        </Drawer>
-      )}
 
       {confirmStatus && (
         <ConfirmDialog
@@ -600,7 +475,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
           onConfirm={() => void remove()}
         />
       )}
-    </Page>
+    </ListPage>
   );
 }
 
@@ -637,70 +512,72 @@ function JobDetail({
   const wp = workplaceOf(job);
   const pay = job.salary ? formatSalary(job.salary) : null;
   const total = job.applicationsCount ?? 0;
-  const facts: { k: string; v: React.ReactNode }[] = [
-    { k: "Job ID", v: job.postingId },
-    { k: "Client", v: canPrice ? job.clientName : undefined },
-    { k: "Vendor", v: canPrice ? job.vendorName : undefined },
-    { k: "Manager", v: canPrice ? job.recruitmentManagerName : undefined },
-    { k: "Location", v: jobLocationLabel(job) || (wp ? WORKPLACE_LABEL[wp] : undefined) },
-    { k: "Type", v: [JOB_TYPE_LABEL[job.type] ?? job.type, wp && WORKPLACE_LABEL[wp]].filter(Boolean).join(", ") },
-    { k: "Salary", v: pay },
-    { k: "Pay / bill", v: canPrice && (job.payRate || job.clientBillRate) ? `$${job.payRate ?? "—"} / $${job.clientBillRate ?? "—"} per hour` : undefined },
-    { k: "Department", v: job.department },
-    { k: "Assignees", v: canPrice ? <AvatarStack names={assigneesOf(job)} max={5} /> : undefined },
-    { k: "Deadline", v: job.submissionDueDate ? <DueCell job={job} /> : undefined },
-    { k: "Posted", v: fmtDate(job.publishedAt ?? job.createdAt) },
-  ].filter((f) => !!f.v);
+  const facts: { k: string; v: React.ReactNode; icon: IconName }[] = (
+    [
+      { k: "Status", icon: "activity", v: <Badge mark={JOB_STATE[job.status]}>{jobStatusShort(job.status)}</Badge> },
+      { k: "Deadline", icon: "calendar", v: job.submissionDueDate ? <DueCell job={job} /> : undefined },
+      { k: "Client", icon: "building", v: canPrice ? job.clientName : undefined },
+      { k: "Vendor", icon: "handshake", v: canPrice ? job.vendorName : undefined },
+      { k: "Manager", icon: "userCheck", v: canPrice ? job.recruitmentManagerName : undefined },
+      { k: "Assignees", icon: "userPlus", v: canPrice && assigneesOf(job).length ? <AvatarStack names={assigneesOf(job)} max={5} /> : undefined },
+      { k: "Location", icon: "map", v: jobLocationLabel(job) || (wp ? WORKPLACE_LABEL[wp] : undefined) },
+      { k: "Type", icon: "clock", v: [JOB_TYPE_LABEL[job.type] ?? job.type, wp && WORKPLACE_LABEL[wp]].filter(Boolean).join(", ") },
+      { k: "Salary", icon: "dollar", v: pay },
+      { k: "Pay / bill", icon: "dollar", v: canPrice && (job.payRate || job.clientBillRate) ? `$${job.payRate ?? "—"} / $${job.clientBillRate ?? "—"} per hour` : undefined },
+      { k: "Department", icon: "layers", v: job.department },
+      { k: "Posted", icon: "calendar", v: fmtDate(job.publishedAt ?? job.createdAt) },
+    ] as { k: string; v: React.ReactNode; icon: IconName }[]
+  ).filter((f) => !!f.v);
 
   return (
-    <div className="grid gap-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={JOB_STATUS_TONE[job.status] ?? "grey"} dot>
-          {jobStatusShort(job.status)}
-        </Badge>
-        {!isPubliclyOpen(job.status) && <span className="text-adm-base text-mist-600">Not on the careers site</span>}
+    <div className="grid gap-5">
+      {/* The role names itself first: title, ID and client, and whether it is on the careers site */}
+      <div className="grid gap-1">
+        <h3 className="text-adm-lg font-semibold leading-tight text-navy-900">{job.title}</h3>
+        <p className="text-adm-base text-mist-600">
+          {[job.postingId, canPrice ? job.clientName : null].filter(Boolean).join(" · ")}
+          {!isPubliclyOpen(job.status) && <span> · Not on the careers site</span>}
+        </p>
       </div>
       <KeyValue items={facts} />
-      <section>
-        <div className="flex items-baseline justify-between">
-          <h3 className="text-adm-base font-semibold text-navy-900">Applicants</h3>
-          <span className="text-adm-base tabular-nums text-mist-600">{total} total</span>
-        </div>
+      <PeekSection title={`Applicants · ${total}`}>
         {/* Media's projection carries the count without the stage breakdown. */}
         {total > 0 ? (
           job.pipeline && (
-            <ul className="mt-2 grid gap-1.5">
-              {PIPELINE.filter((s) => (job.pipeline?.[s] ?? 0) > 0).map((s) => (
-                <li key={s} className="flex items-center justify-between rounded-lg bg-mist-50 px-3 py-2">
-                  <StageBadge stage={s} />
-                  <span className="text-adm-base font-semibold tabular-nums">{job.pipeline?.[s]}</span>
+            <ul className="-mx-2 grid">
+              {PIPELINE.filter((st) => (job.pipeline?.[st] ?? 0) > 0).map((st) => (
+                <li key={st} className="flex h-8 items-center gap-2 rounded-md px-2 text-adm-base">
+                  <StateIcon {...stageState(st)} />
+                  <span className="flex-1 text-navy-900">{STAGE_LABEL[st]}</span>
+                  <span className="font-semibold tabular-nums text-navy-900">{job.pipeline?.[st]}</span>
                 </li>
               ))}
             </ul>
           )
         ) : (
-          <p className="mt-2 rounded-lg bg-mist-50 p-3 text-adm-base text-mist-600">No applicants yet.</p>
+          <p className="text-adm-base text-mist-600">No applicants yet.</p>
         )}
-      </section>
-      <section>
-        <h3 className="text-adm-base font-semibold text-navy-900">Description</h3>
+      </PeekSection>
+      <PeekSection title="Description">
         {descError ? (
-          <p className="mt-2 text-adm-base text-mist-600">Couldn&apos;t load the description. Open the job page to read it.</p>
+          <p className="text-adm-base text-mist-600">Couldn&apos;t load the description. Open the job page to read it.</p>
         ) : description === null ? (
-          <div className="mt-2 grid gap-2" role="status" aria-label="Loading description">
+          <div className="grid gap-2" role="status" aria-label="Loading description">
             <Skeleton className="h-3 w-full rounded" />
             <Skeleton className="h-3 w-11/12 rounded" />
             <Skeleton className="h-3 w-4/5 rounded" />
           </div>
         ) : description ? (
-          <div className="prose prose-sm mt-2 max-w-none text-adm-base text-navy-900" dangerouslySetInnerHTML={renderRichText(description)} />
+          <ClampText>
+            <div className="prose prose-sm max-w-none text-adm-base text-navy-900" dangerouslySetInnerHTML={renderRichText(description)} />
+          </ClampText>
         ) : (
-          <p className="mt-2 text-adm-base text-mist-600">No description yet.</p>
+          <p className="text-adm-base text-mist-600">No description yet.</p>
         )}
-      </section>
-      {/* One primary, one secondary, the rest in the overflow */}
+      </PeekSection>
+      {/* One primary, one secondary, the rest in the overflow; pinned so they never need a scroll */}
       {(canEdit || canPrice) && (
-        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+        <PeekFooter>
           {canPrice ? (
             <Button icon="plus" className="flex-1" href={`/portal/applications/new?jobId=${job.id}`}>Add applicant</Button>
           ) : (
@@ -715,7 +592,7 @@ function JobDetail({
               ...(canPrice ? [{ label: "Delete", icon: "trash" as const, danger: true, onSelect: () => onDelete(job) }] : []),
             ]}
           />
-        </div>
+        </PeekFooter>
       )}
     </div>
   );

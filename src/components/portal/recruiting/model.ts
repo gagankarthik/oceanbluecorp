@@ -5,6 +5,7 @@ import type { Application, Job } from "@/lib/aws/dynamodb";
 import { UserRole, canEditJobs, canSeeJobCommercials } from "@/lib/auth/config";
 import type { Role } from "@/lib/portal/roles";
 import type { Tone } from "@/components/portal/ui";
+import type { StateMark } from "@/components/portal/kit/state-icon";
 import { DAY, TERMINAL } from "@/lib/pipeline";
 import { isPubliclyOpen } from "@/lib/job-status";
 
@@ -111,6 +112,30 @@ export const JOB_STATUS_DOT: Record<string, string> = {
 };
 
 /** The public posting a candidate opens; only Active roles resolve. */
+/** Plane's state group per stage (kit/state-icon): the icon fills as a candidate advances. */
+export const STAGE_STATE: Record<Stage, StateMark> = {
+  pending: { group: "backlog" },
+  reviewing: { group: "started", progress: 0.25 },
+  submitted: { group: "started", progress: 0.5 },
+  interview: { group: "started", progress: 0.7 },
+  offered: { group: "started", progress: 0.9 },
+  hired: { group: "completed" },
+  rejected: { group: "cancelled" },
+  active: { group: "unstarted" },
+  inactive: { group: "backlog" },
+};
+export const stageState = (s: string): StateMark => STAGE_STATE[s as Stage] ?? { group: "backlog" };
+
+/** Job postings as Plane states: a draft is backlog, an internal opening unstarted, a live one in progress. */
+export const JOB_STATE: Record<string, StateMark> = {
+  draft: { group: "backlog" },
+  "on-hold": { group: "backlog" },
+  paused: { group: "backlog" },
+  open: { group: "unstarted" },
+  active: { group: "started", progress: 0.5 },
+  closed: { group: "completed" },
+};
+
 export const publicJobPath = (id: string) => `/jobs/${id}`;
 
 /** New-role form prefilled from another role. */

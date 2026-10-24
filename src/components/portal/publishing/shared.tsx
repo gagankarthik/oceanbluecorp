@@ -45,7 +45,7 @@ export function fmtRelative(iso?: string | null) {
 }
 
 const inputCls =
-  "mt-1.5 block w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:bg-mist-50 disabled:text-mist-600";
+  "mt-1.5 block w-full rounded-md bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:bg-mist-50 disabled:text-mist-600";
 
 export function TextField({
   label,
@@ -210,7 +210,7 @@ export function ChartFilter({
               aria-pressed={on}
               onClick={() => onChange(on ? null : d.label)}
               className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1 text-adm-xs font-medium transition-colors ${
-                on ? "bg-navy-900 text-white" : "bg-mist-50 text-navy-900 ring-1 ring-inset ring-mist-200 hover:bg-mist-100"
+                on ? "bg-contrast text-on-contrast" : "bg-mist-50 text-navy-900 ring-1 ring-inset ring-mist-200 hover:bg-mist-100"
               }`}
             >
               <span aria-hidden className="size-2 rounded-full" style={{ background: palette[i] ?? SERIES[SERIES.length - 1] }} />
@@ -285,7 +285,7 @@ export function MiniStat({
       </span>
     </>
   );
-  const cls = `flex min-h-16 min-w-0 items-center gap-3 rounded-xl bg-mist-0 px-4 py-3 ring-1 ${active ? "ring-2 ring-ocean-600" : "ring-mist-200"}`;
+  const cls = `flex min-h-16 min-w-0 items-center gap-3 rounded-lg bg-mist-0 px-4 py-3 ring-1 ${active ? "ring-2 ring-ocean-600" : "ring-mist-200"}`;
   return onClick ? (
     <button type="button" onClick={onClick} aria-pressed={active} className={`${cls} transition-colors duration-150 hover:bg-mist-50`}>
       {inner}

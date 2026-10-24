@@ -8,6 +8,7 @@
 //
 // Verification is done with Node's built-in crypto against Cognito's JWKS, no
 // extra dependency. Route handlers run in the Node.js runtime, so this is safe.
+import "server-only";
 import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";

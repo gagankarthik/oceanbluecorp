@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Icon from "../icons";
+import { usePortalChrome } from "../chrome";
 import { Button } from "./Button";
 import { FieldError, inputCls } from "../fields/base";
 
@@ -279,32 +280,47 @@ export function Drawer({
 }) {
   const ref = useDialog<HTMLDivElement>(onClose);
   const titleId = useId();
+  const section = usePortalChrome()?.sectionTitle;
   return (
     <Portal>
+      {/* Plane's side peek: from sm it sits in the work surface under the top bar, its left edge a
+          hairline over the list (a faint scrim catches the click out); a bottom sheet on phones. */}
       <div className="fixed inset-0 z-50 flex items-end sm:items-stretch sm:justify-end">
-        {/* Lighter from sm, so the list behind stays readable beside the panel */}
-        <div aria-hidden className="kit-fade absolute inset-0 bg-navy-950/40 sm:bg-navy-950/20" onClick={onClose} />
+        <div aria-hidden className="kit-fade absolute inset-0 bg-navy-950/40 sm:bg-navy-950/5" onClick={onClose} />
         <div
           ref={ref}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className={`kit-slide relative flex h-[92svh] w-full flex-col rounded-t-2xl bg-mist-0 text-navy-900 shadow-2xl focus:outline-none sm:h-full sm:rounded-none ${width === "lg" ? "sm:max-w-3xl" : "sm:max-w-136"}`}
+          className={`kit-peek relative flex h-[92svh] w-full flex-col rounded-t-2xl bg-mist-0 text-navy-900 shadow-2xl focus:outline-none sm:mb-2 sm:mr-2 sm:mt-13 sm:h-auto sm:rounded-none sm:rounded-r-lg sm:border sm:border-mist-200 sm:shadow-[-12px_0_32px_rgba(15,23,42,0.08)] ${
+            width === "lg" ? "sm:max-w-3xl lg:w-[60%] lg:max-w-[64rem]" : "sm:max-w-136 lg:w-1/2 lg:max-w-[56rem]"
+          }`}
         >
-          <div className="flex items-center justify-between gap-4 border-b border-mist-200 px-5 py-3 sm:px-6">
-            <h2 id={titleId} className="min-w-0 truncate text-adm-md font-semibold text-navy-900">{title}</h2>
-            <div className="flex shrink-0 items-center gap-2">
-              {actions}
-              <CloseButton onClose={onClose} />
-            </div>
+          <div className="flex h-12 shrink-0 items-center gap-2 border-b border-mist-200 px-3 sm:px-4">
+            <button type="button" onClick={onClose} aria-label="Close" title="Close" className={PEEK_ICON}>
+              <Icon name="collapse" className="size-4" />
+            </button>
+            <span aria-hidden className="h-4 w-px bg-mist-200" />
+            {/* The record names itself in the body; the header says where it lives, as Plane's does */}
+            {section ? (
+              <>
+                <span className="min-w-0 flex-1 truncate text-adm-base font-medium text-mist-700">{section}</span>
+                <h2 id={titleId} className="sr-only">{title}</h2>
+              </>
+            ) : (
+              <h2 id={titleId} className="min-w-0 flex-1 truncate text-adm-base font-medium text-mist-700">{title}</h2>
+            )}
+            {actions && <div className="flex shrink-0 items-center gap-1.5">{actions}</div>}
           </div>
-          <div className="scroll-thin min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">{children}</div>
+          <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8">{children}</div>
           {footer && (
-            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-mist-200 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">{footer}</div>
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-mist-200 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8">{footer}</div>
           )}
         </div>
       </div>
     </Portal>
   );
 }
+
+const PEEK_ICON = "grid size-7 shrink-0 place-items-center rounded-md text-mist-600 transition-colors duration-150 hover:bg-mist-100 hover:text-navy-900";

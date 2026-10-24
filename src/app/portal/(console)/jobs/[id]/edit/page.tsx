@@ -12,6 +12,7 @@ import type { AssigneeUser } from "@/components/portal/records/JobForm";
 import { EmptyState, ErrorState, FormSkeleton, Page, PageHeader } from "@/components/portal/kit";
 import { useNavSection } from "@/components/portal/console/provider";
 import { jobCategory, JOB_LIST_HREF, JOB_LIST_LABEL } from "@/lib/job-status";
+import { scrollPageTop } from "@/components/portal/chrome";
 
 export default function EditJobPage({
   params,
@@ -106,7 +107,7 @@ export default function EditJobPage({
       router.push(`/portal/jobs/${id}`);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Your changes could not be saved. Try again in a moment.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollPageTop(true);
     } finally {
       setSubmitting(false);
     }

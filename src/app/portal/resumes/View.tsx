@@ -1,17 +1,16 @@
 "use client";
 
+import { usePolling } from "@/hooks/use-polling";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import Icon from "@/components/portal/icons";
-import { BarChart, TrendChart } from "@/components/portal/charts";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import { fieldCls } from "@/components/portal/recruiting/bits";
-import { buckets, countIn, tally } from "@/components/portal/recruiting/model";
 import type { MenuEntry } from "@/components/portal/records/Menu";
 import {
-  Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KeyValue, Modal, Page, PageHeader, Panel, PanelSkeleton, ProgressBar, Spinner,
-  TableSkeleton,
+  Badge, Button, ConfirmDialog, EmptyState, ErrorState, KeyValue, ListPage, ListPageState, Modal, Panel, PillButton, ProgressBar, Spinner,
+  CrmListSkeleton, PeekFooter
 } from "@/components/portal/kit";
 import { downloadCsv } from "@/lib/csv";
 import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
@@ -98,14 +97,15 @@ export default function ResumesView() {
     void loadJob();
   }, [loadJob]);
   const jobBusy = job?.phase === "running" || job?.phase === "stopping";
-  useEffect(() => {
-    if (!jobBusy) return;
-    const t = setInterval(() => {
+  // The job's progress and the rows' search status while it runs, paused in a hidden tab
+  usePolling(
+    () => {
       void loadJob();
       void load(true);
-    }, 10_000);
-    return () => clearInterval(t);
-  }, [jobBusy, loadJob, load]);
+    },
+    10_000,
+    jobBusy,
+  );
   const wasBusy = useRef(false);
   useEffect(() => {
     if (wasBusy.current && !jobBusy) {
@@ -301,12 +301,8 @@ export default function ResumesView() {
 
   const loading = resumes === null && !error;
   const searchable = list.filter((r) => r.indexed).length;
-  const searchablePct = list.length ? Math.round((searchable / list.length) * 100) : 0;
-  const weeks = buckets(84);
-  const uploadsWeekly = countIn(weeks, list.map((r) => Date.parse(r.uploadedAt) || null));
-  const byUploader = tally(list.map((r) => r.uploaderEmail.split("@")[0] || "Unknown"), 7);
 
-  const IndexCell = ({ r }: { r: BankResume }) =>
+  const indexCell = (r: BankResume) =>
     r.indexing ? (
       <span className="inline-flex items-center gap-1.5 text-adm-base text-mist-600"><Spinner className="size-4 text-ocean-600" /> Indexing</span>
     ) : r.indexed ? (
@@ -349,7 +345,7 @@ export default function ResumesView() {
     { key: "uploader", header: "Uploaded by", sortable: true, card: false, hideBelow: "xl", value: (r) => r.uploaderEmail, cell: (r) => <span className="text-adm-base text-mist-700">{r.uploaderEmail}</span> },
     { key: "size", header: "Size", sortable: true, numeric: true, card: false, hideBelow: "lg", value: (r) => r.fileSize || 0, cell: (r) => <span className="tabular-nums text-mist-600">{fmtSize(r.fileSize || 0)}</span> },
     { key: "uploadedAt", header: "Uploaded", sortable: true, hideBelow: "md", value: (r) => r.uploadedAt, cell: (r) => <span className="text-adm-base tabular-nums text-mist-600">{fmtDate(r.uploadedAt)}</span> },
-    { key: "indexed", header: "Search", sortable: true, align: "center", value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => <IndexCell r={r} /> },
+    { key: "indexed", header: "Search", sortable: true, align: "center", value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => indexCell(r) },
   ];
   const filters: Filter<BankResume>[] = [
     { key: "type", label: "Type", options: ["PDF", "Word"], value: (r) => formatLabel(r.fileType) },
@@ -364,20 +360,21 @@ export default function ResumesView() {
     { value: "duplicates", label: "Duplicates", count: dupRole.size },
   ];
 
-  // One health bar instead of stacked notices: the state, its numbers and the one next action.
-  const healthAction = job && jobBusy ? (
-    job.phase === "running" && <Button size="sm" variant="secondary" loading={jobAction === "stop"} disabled={jobAction !== null} onClick={() => void stopIndexing()}>Stop</Button>
-  ) : job?.phase === "stalled" ? (
-    <Button size="sm" icon="refresh" loading={jobAction === "start"} disabled={jobAction !== null} onClick={() => void startIndexing()}>Resume</Button>
-  ) : (
+  // Bank actions sit in the toolbar; the strip above the table only shows while there is something to report.
+  const toolbar = (
     <>
-      {(job?.failed.length ?? 0) > 0 && (
-        <Button size="sm" variant="secondary" icon="refresh" loading={jobAction === "retry"} disabled={jobAction !== null} onClick={() => void startIndexing(true)}>Retry failed</Button>
+      {job && jobBusy ? (
+        job.phase === "running" && <PillButton icon="x" disabled={jobAction !== null} onClick={() => void stopIndexing()}>Stop indexing</PillButton>
+      ) : job?.phase === "stalled" ? (
+        <PillButton icon="refresh" disabled={jobAction !== null} onClick={() => void startIndexing()}>Resume indexing</PillButton>
+      ) : (
+        <>
+          {(job?.failed.length ?? 0) > 0 && <PillButton icon="refresh" disabled={jobAction !== null} onClick={() => void startIndexing(true)}>Retry failed</PillButton>}
+          {dupGroups.length > 0 && <PillButton icon="layers" onClick={() => setDupOpen(true)}>Review duplicates</PillButton>}
+          {pendingNotFailed > 0 && <PillButton icon="search" disabled={jobAction !== null} onClick={() => void startIndexing()}>Make all searchable</PillButton>}
+        </>
       )}
-      {dupGroups.length > 0 && <Button size="sm" variant="secondary" icon="layers" onClick={() => setDupOpen(true)}>Review duplicates</Button>}
-      {pendingNotFailed > 0 && (
-        <Button size="sm" icon="search" loading={jobAction === "start"} disabled={jobAction !== null} onClick={() => void startIndexing()}>Make all searchable</Button>
-      )}
+      <PillButton variant="primary" icon="upload" onClick={() => fileInput.current?.click()}>Upload</PillButton>
     </>
   );
   const healthLine = job && jobBusy ? (
@@ -391,31 +388,24 @@ export default function ResumesView() {
     <span className="text-mist-700">
       {failedRows.length} file{failedRows.length === 1 ? "" : "s"} couldn&apos;t be read{appFailures > 0 ? `, plus ${appFailures} bench and applicant resume${appFailures === 1 ? "" : "s"}` : ""}. Usually a scanned PDF with no text, or a damaged file.
     </span>
-  ) : pendingNotFailed ? (
-    <span className="text-mist-700">Make the rest searchable to include them in Lead sourcing and Best candidates. Extra copies are skipped.</span>
-  ) : (
-    <span className="text-mist-700">Every resume on file is searchable in Lead sourcing and Best candidates.</span>
-  );
+  ) : null;
   const runPct = job && jobBusy && job.total ? ((job.total - job.remaining) / job.total) * 100 : null;
-  const stat = (key: StatusKey, label: string, value: number, tone: string) => (
-    <button
-      type="button"
-      aria-pressed={statusKey === key}
-      onClick={() => setStatusKey((k) => (k === key ? null : key))}
-      className={`flex min-h-10 min-w-0 flex-col items-start rounded-lg px-3 py-2 text-left ring-1 ring-inset transition-colors duration-150 ${statusKey === key ? "bg-ocean-50 ring-ocean-300" : "ring-mist-200 hover:bg-mist-50"}`}
-    >
-      <span className={`text-adm-lg font-semibold leading-tight tabular-nums ${value ? tone : "text-mist-600"}`}>{value}</span>
-      <span className="truncate text-adm-xs text-mist-600">{label}</span>
-    </button>
-  );
+  const summary = (rows: BankResume[]): Summary[] => {
+    const on = rows.filter((r) => r.indexed).length;
+    const bad = rows.filter(isFailed).length;
+    const extra = rows.filter(isExtra).length;
+    return [
+      { label: "searchable", value: `${rows.length ? Math.round((on / rows.length) * 100) : 0}%` },
+      { label: "not searchable yet", value: rows.filter((r) => matches(r, "pending")).length },
+      { label: "failed", value: bad, warn: bad > 0 },
+      { label: "extra copies", value: extra, warn: extra > 0 },
+    ];
+  };
 
   let body: React.ReactNode;
   if (loading)
     body = (
-      <div role="status" aria-busy="true" aria-label="Loading the resume bank" className="grid gap-6">
-        <PanelSkeleton height="h-24" />
-        <TableSkeleton rows={8} />
-      </div>
+      <CrmListSkeleton label="Loading the resume bank" tabs={3} filters={2} />
     );
   else if (resumes === null) body = <ErrorState title="Couldn't load the resume bank" onRetry={() => void load()} />;
   else if (list.length === 0)
@@ -433,25 +423,18 @@ export default function ResumesView() {
   else
     body = (
       <>
-        <Panel title="Bank health" action={healthAction}>
-          <div className="grid gap-4">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-adm-2xl font-semibold leading-none tracking-tight tabular-nums text-navy-900">{searchablePct}%</span>
-              <span className="text-adm-base text-mist-600">searchable, {searchable} of {list.length} files</span>
-            </div>
-            <ProgressBar value={runPct ?? searchablePct} tone={runPct === null && searchablePct === 100 ? "green" : "blue"} />
+        {healthLine && (
+          <div className="grid shrink-0 gap-2 border-b border-mist-200 px-4 py-3">
             <p className="text-adm-base">{healthLine}</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {stat("indexed", "Searchable", searchable, "text-status-success")}
-              {stat("pending", "Not searchable yet", pendingNotFailed, "text-navy-900")}
-              {stat("failed", "Failed", failedRows.length, "text-status-danger")}
-              {stat("duplicates", "Extra copies", extraCount, "text-status-warning")}
-            </div>
+            {runPct !== null && <ProgressBar value={runPct} tone="blue" />}
           </div>
-        </Panel>
-
-        <section aria-label="Resume files" className="grid min-w-0 gap-3">
+        )}
+        <section aria-label="Resume files" className="flex min-h-0 flex-1 flex-col">
           <DataTable
+            fill
+            noun="files"
+            summary={summary}
+            toolbar={toolbar}
             rows={shown}
             tabs={<TableTabs label="Search status" value={statusKey ?? "all"} onChange={(v) => setStatusKey(v === "all" ? null : v)} options={statusOptions} />}
             columns={columns}
@@ -486,10 +469,14 @@ export default function ResumesView() {
             renderDetail={(r) => {
               const row = list.find((x) => x.id === r.id) ?? r;
               return (
-                <div className="grid gap-6">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone="grey">{formatLabel(row.fileType)}</Badge>
-                    <IndexCell r={row} />
+                <div className="grid gap-5">
+                  <div className="grid gap-2">
+                    <h3 className="break-words text-adm-lg font-semibold leading-tight text-navy-900">{row.candidateName || row.fileName}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-adm-base text-mist-600">
+                      <Badge tone="grey">{formatLabel(row.fileType)}</Badge>
+                      {indexCell(row)}
+                      {row.candidateName && <span className="min-w-0 truncate">{row.fileName}</span>}
+                    </div>
                   </div>
                   <KeyValue
                     items={[
@@ -500,13 +487,13 @@ export default function ResumesView() {
                     ]}
                   />
                   {isFailed(row) && serverFailures.get(row.fileKey) && <p className="rounded-lg bg-status-danger-soft p-3 text-adm-base text-status-danger">{serverFailures.get(row.fileKey)}</p>}
-                  <div className="flex flex-wrap gap-2 border-t border-mist-200 pt-5">
-                    <Button icon="download" onClick={() => void download(row)}>Download</Button>
+                  <PeekFooter>
+                    <Button icon="download" className="flex-1" onClick={() => void download(row)}>Download</Button>
                     {!row.indexed && !isExtra(row) && (
                       <Button variant="secondary" icon="search" loading={row.indexing} disabled={rowIndexing || jobBusy} onClick={() => void indexOne(row)}>Make searchable</Button>
                     )}
-                    <Button variant="danger" icon="trash" className="sm:ml-auto" onClick={() => setDeleteRow(row)}>Delete</Button>
-                  </div>
+                    <Button variant="danger" icon="trash" onClick={() => setDeleteRow(row)}>Delete</Button>
+                  </PeekFooter>
                 </div>
               );
             }}
@@ -515,150 +502,132 @@ export default function ResumesView() {
       </>
     );
 
+  const ready = !loading && resumes !== null && list.length > 0;
+
   return (
-    <div
-      className="min-w-0"
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDrag(true);
-      }}
-      onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDrag(false);
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDrag(false);
-        addFiles(e.dataTransfer.files);
-      }}
-    >
-      <input
-        ref={fileInput}
-        type="file"
-        multiple
-        accept=".pdf,.doc,.docx"
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files) addFiles(e.target.files);
-          e.target.value = "";
+    <ListPage title="Resumes">
+      <div
+        className="flex min-h-0 min-w-0 flex-1 flex-col"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
         }}
-      />
-      {drag && (
-        <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-navy-950/40 p-4">
-          <div className="w-full max-w-sm rounded-xl border-2 border-dashed border-ocean-600 bg-mist-0 px-6 py-10 text-center shadow-2xl">
-            <Icon name="upload" className="mx-auto size-7 text-ocean-600" />
-            <p className="mt-3 text-adm-md font-semibold">Drop resumes to upload</p>
-            <p className="mt-1 text-adm-base text-mist-600">PDF or Word, up to 5 MB each</p>
-          </div>
-        </div>
-      )}
-
-      <Page>
-        <PageHeader
-          section="recruiting"
-          icon="resume"
-          title="Resumes"
-          description="Drop files anywhere to upload."
-          actions={
-            <>
-              {list.length > 0 && (
-                <InsightsSheet title="Resume insights" description="How fast the bank grows and who adds to it.">
-                  <Panel title="Uploads per week" description="Last 12 weeks">
-                    <TrendChart title="Resumes uploaded per week, last 12 weeks" labels={weeks.map((w) => w.label)} series={[{ name: "Uploads", values: uploadsWeekly }]} area height={220} />
-                  </Panel>
-                  <Panel title="By uploader">
-                    <BarChart title="Resumes by uploader" labels={byUploader.map((u) => u.label)} series={[{ name: "Resumes", values: byUploader.map((u) => u.value) }]} height={220} />
-                  </Panel>
-                </InsightsSheet>
-              )}
-              <Button icon="upload" onClick={() => fileInput.current?.click()}>Upload</Button>
-            </>
-          }
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDrag(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          addFiles(e.dataTransfer.files);
+        }}
+      >
+        <input
+          ref={fileInput}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx"
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) addFiles(e.target.files);
+            e.target.value = "";
+          }}
         />
-
-        {queue.length > 0 && (
-          <Panel
-            title={`Upload queue (${queue.length})`}
-            action={
+        {drag && (
+          <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-navy-950/40 p-4">
+            <div className="w-full max-w-sm rounded-lg border-2 border-dashed border-ocean-600 bg-mist-0 px-6 py-10 text-center shadow-2xl">
+              <Icon name="upload" className="mx-auto size-7 text-ocean-600" />
+              <p className="mt-3 text-adm-md font-semibold">Drop resumes to upload</p>
+              <p className="mt-1 text-adm-base text-mist-600">PDF or Word, up to 5 MB each</p>
+            </div>
+          </div>
+        )}
+  
+          {queue.length > 0 && (
+            <div className="shrink-0 border-b border-mist-200 p-4">
+            <Panel
+              title={`Upload queue (${queue.length})`}
+              action={
+                <>
+                  {queue.some((q) => q.status === "done") && (
+                    <Button size="sm" variant="ghost" onClick={() => setQueue((q) => q.filter((i) => i.status !== "done"))}>Clear done</Button>
+                  )}
+                  {!uploading && <Button size="sm" variant="ghost" icon="x" label="Close upload queue" onClick={() => setQueue([])} />}
+                </>
+              }
+              padded={false}
+            >
+              <ul className="scroll-thin max-h-[30svh] divide-y divide-mist-100 overflow-y-auto">
+                {queue.map((item) => (
+                  <li key={item.id} className="flex items-start gap-3 px-5 py-3">
+                    <Badge tone="grey">{formatLabel(item.file.type)}</Badge>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex min-w-0 items-center gap-2 text-adm-base">
+                        <span className="truncate font-medium">{item.file.name}</span>
+                        <span className="shrink-0 text-adm-xs tabular-nums text-mist-600">{fmtSize(item.file.size)}</span>
+                        {item.status === "uploading" && <Spinner className="size-4 text-ocean-600" label="Uploading" />}
+                        {item.status === "done" && <Icon name="check" className="size-4 shrink-0 text-status-success" title="Uploaded" />}
+                      </p>
+                      {item.status === "pending" && (
+                        <input
+                          aria-label={`Candidate name for ${item.file.name}`}
+                          placeholder="Candidate name (optional)"
+                          value={item.candidateName}
+                          onChange={(e) => setItem(item.id, { candidateName: e.target.value })}
+                          className={`${fieldCls} h-10`}
+                        />
+                      )}
+                      {item.status === "error" && <p className="mt-1 text-adm-base text-status-danger">{item.error}</p>}
+                    </div>
+                    {(item.status === "pending" || item.status === "error") && (
+                      <Button size="sm" variant="ghost" icon="x" label={`Remove ${item.file.name}`} onClick={() => setQueue((q) => q.filter((i) => i.id !== item.id))} />
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {(pendingCount > 0 || uploading) && (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-5 py-3">
+                  <span className="text-adm-base text-mist-600">{pendingCount ? `${pendingCount} ready to upload` : "Uploading"}</span>
+                  <Button icon="upload" loading={uploading} disabled={!pendingCount} onClick={() => void uploadAll()}>
+                    Upload {pendingCount || ""} file{pendingCount === 1 ? "" : "s"}
+                  </Button>
+                </div>
+              )}
+            </Panel>
+            </div>
+          )}
+  
+          {ready ? body : body && <ListPageState>{body}</ListPageState>}
+  
+        {deleteRow && (
+          <ConfirmDialog title="Delete resume?" body={`${deleteRow.fileName} will be permanently removed from storage.`} confirmLabel="Delete" busy={deleting} onCancel={() => setDeleteRow(null)} onConfirm={() => void remove()} />
+        )}
+        {dupOpen && <DuplicatesDialog groups={dupGroups} onClose={() => setDupOpen(false)} onPreview={(r) => void openPreview(r)} onDelete={deleteKeys} />}
+        {preview && (
+          <Modal
+            size="xl"
+            title={preview.name}
+            onClose={() => setPreview(null)}
+            footer={
               <>
-                {queue.some((q) => q.status === "done") && (
-                  <Button size="sm" variant="ghost" onClick={() => setQueue((q) => q.filter((i) => i.status !== "done"))}>Clear done</Button>
-                )}
-                {!uploading && <Button size="sm" variant="ghost" icon="x" label="Close upload queue" onClick={() => setQueue([])} />}
+                <a href={preview.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-adm-base font-medium text-navy-900 transition-colors hover:bg-mist-100">
+                  <Icon name="external" className="size-5" />
+                  Open in a new tab
+                </a>
+                <Button variant="secondary" icon="download" onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = preview.url;
+                  a.download = preview.name;
+                  a.rel = "noopener noreferrer";
+                  a.click();
+                }}>Download</Button>
               </>
             }
-            padded={false}
           >
-            <ul className="scroll-thin max-h-[360px] divide-y divide-mist-100 overflow-y-auto">
-              {queue.map((item) => (
-                <li key={item.id} className="flex items-start gap-3 px-5 py-3">
-                  <Badge tone="grey">{formatLabel(item.file.type)}</Badge>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex min-w-0 items-center gap-2 text-adm-base">
-                      <span className="truncate font-medium">{item.file.name}</span>
-                      <span className="shrink-0 text-adm-xs tabular-nums text-mist-600">{fmtSize(item.file.size)}</span>
-                      {item.status === "uploading" && <Spinner className="size-4 text-ocean-600" label="Uploading" />}
-                      {item.status === "done" && <Icon name="check" className="size-4 shrink-0 text-status-success" title="Uploaded" />}
-                    </p>
-                    {item.status === "pending" && (
-                      <input
-                        aria-label={`Candidate name for ${item.file.name}`}
-                        placeholder="Candidate name (optional)"
-                        value={item.candidateName}
-                        onChange={(e) => setItem(item.id, { candidateName: e.target.value })}
-                        className={`${fieldCls} h-10`}
-                      />
-                    )}
-                    {item.status === "error" && <p className="mt-1 text-adm-base text-status-danger">{item.error}</p>}
-                  </div>
-                  {(item.status === "pending" || item.status === "error") && (
-                    <Button size="sm" variant="ghost" icon="x" label={`Remove ${item.file.name}`} onClick={() => setQueue((q) => q.filter((i) => i.id !== item.id))} />
-                  )}
-                </li>
-              ))}
-            </ul>
-            {(pendingCount > 0 || uploading) && (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-mist-200 px-5 py-3">
-                <span className="text-adm-base text-mist-600">{pendingCount ? `${pendingCount} ready to upload` : "Uploading"}</span>
-                <Button icon="upload" loading={uploading} disabled={!pendingCount} onClick={() => void uploadAll()}>
-                  Upload {pendingCount || ""} file{pendingCount === 1 ? "" : "s"}
-                </Button>
-              </div>
-            )}
-          </Panel>
+            <iframe src={preview.url} title={preview.name} className="block h-[70svh] w-full rounded-lg ring-1 ring-mist-200" />
+          </Modal>
         )}
-
-        {body}
-      </Page>
-
-      {deleteRow && (
-        <ConfirmDialog title="Delete resume?" body={`${deleteRow.fileName} will be permanently removed from storage.`} confirmLabel="Delete" busy={deleting} onCancel={() => setDeleteRow(null)} onConfirm={() => void remove()} />
-      )}
-      {dupOpen && <DuplicatesDialog groups={dupGroups} onClose={() => setDupOpen(false)} onPreview={(r) => void openPreview(r)} onDelete={deleteKeys} />}
-      {preview && (
-        <Modal
-          size="xl"
-          title={preview.name}
-          onClose={() => setPreview(null)}
-          footer={
-            <>
-              <a href={preview.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-adm-base font-medium text-navy-900 transition-colors hover:bg-mist-100">
-                <Icon name="external" className="size-5" />
-                Open in a new tab
-              </a>
-              <Button variant="secondary" icon="download" onClick={() => {
-                const a = document.createElement("a");
-                a.href = preview.url;
-                a.download = preview.name;
-                a.rel = "noopener noreferrer";
-                a.click();
-              }}>Download</Button>
-            </>
-          }
-        >
-          <iframe src={preview.url} title={preview.name} className="block h-[70svh] w-full rounded-lg ring-1 ring-mist-200" />
-        </Modal>
-      )}
-    </div>
+      </div>
+    </ListPage>
   );
 }
 

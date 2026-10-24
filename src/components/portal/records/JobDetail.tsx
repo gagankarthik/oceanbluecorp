@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react";
 import type { Application, Job } from "@/lib/aws/dynamodb";
 import { useAuth, canEditJobs, canSeeJobCommercials, RECRUITING_ROLES } from "@/lib/auth";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useResource } from "@/hooks/use-resource";
 import { refreshApplications, refreshJobs } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
@@ -14,20 +13,25 @@ import { jobLocationLabel } from "@/lib/workplace";
 import { JOB_STATUS_COPY } from "@/lib/job-options";
 import { SALARY_PERIODS } from "@/components/portal/console/theme";
 import { usePageCrumb, useNavSection } from "@/components/portal/console/provider";
-import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, usePortalRouter } from "@/components/portal/kit";
-import { useToast } from "@/components/portal/toast";
-import { StageSelect } from "@/components/portal/fields";
+import Link from "next/link";
 import {
-  BOARD, STAGE_DOT, STAGE_LABEL, JOB_STATUS_TONE, JOB_TYPE_LABEL, daysUntil, publicJobPath, type Stage,
+  Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, DetailSkeleton, EmptyState, ErrorState, KeyValue, Page, PageHeader, usePortalRouter,
+  ListHeader, BTN_ICON, BTN_PRIMARY, BTN_SECONDARY, TableSkeleton,
+} from "@/components/portal/kit";
+import DataTable, { type Column, type Filter } from "@/components/portal/DataTable";
+import { StateIcon } from "@/components/portal/kit/state-icon";
+import { useToast } from "@/components/portal/toast";
+import {
+  BOARD, JOB_STATE, STAGE_LABEL, JOB_TYPE_LABEL, daysUntil, publicJobPath, stageState, type Stage,
 } from "@/components/portal/recruiting/model";
-import { jobMenuItems } from "@/components/portal/recruiting/bits";
-import Icon from "@/components/portal/icons";
+import { InlineSelect, jobMenuItems } from "@/components/portal/recruiting/bits";
+import Icon, { type IconName } from "@/components/portal/icons";
 import { CandidateEditDrawer } from "./CandidateEditDrawer";
 import { ActionMenu } from "./Menu";
 import { BestCandidates } from "./BestCandidates";
 import { JobSubmissions } from "./JobSubmissions";
 import { JobTeamCard } from "./JobTeam";
-import { FactLine, FactRows, PROSE, RecordTabs } from "./parts";
+import { PROSE, RecordTabs } from "./parts";
 
 type Tab = "info" | "applicants" | "submissions" | "candidates";
 
@@ -61,8 +65,9 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   );
 
   const [storedTab, setActiveTab] = useState<Tab | null>(null);
-  const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<Stage | "all">("all");
+  // A pick in the Pipeline rail opens the applicants table filtered to that stage; `n` remounts it once per pick
+  const [pick, setPick] = useState<{ stage: Stage | "all"; n: number }>({ stage: "all", n: 0 });
+  const [tableStage, setTableStage] = useState<string>("All");
   const [editingApp, setEditingApp] = useState<Application | null>(null);
   const [moving, setMoving] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -76,7 +81,6 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   usePageCrumb(job?.postingId);
   const back = { label: JOB_LIST_LABEL[category], href: JOB_LIST_HREF[category] };
 
-  const debounced = useDebouncedValue(search, 200);
 
   /** Optimistic stage move; reports with Undo (the undo itself reports nothing). */
   const move = async (app: Application, to: Stage, offerUndo = true) => {
@@ -130,18 +134,6 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
     }
   };
 
-  const filteredApps = applications.filter((a) => {
-    const q = debounced.trim().toLowerCase();
-    return (!q || a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)) && (stageFilter === "all" || a.status === stageFilter);
-  }).sort((a, b) => +new Date(b.appliedAt) - +new Date(a.appliedAt));
-
-  const exportApplicants = () =>
-    downloadCsv(
-      `${job?.title?.replace(/\s+/g, "_") || "job"}_applicants`,
-      ["Name", "Email", "Phone", "Status", "Applied", "Source", "Work Auth"],
-      filteredApps.map((a) => [a.name, a.email, a.phone || "", a.status, fmtDate(a.appliedAt), a.source || "", a.workAuthorization || ""]),
-    );
-
   const counts = applications.reduce<Record<string, number>>((acc, a) => {
     acc[a.status] = (acc[a.status] || 0) + 1;
     return acc;
@@ -176,30 +168,46 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
   const dueTone = due === null ? "" : due <= 0 ? "font-semibold text-status-danger" : due <= 3 ? "font-semibold text-status-warning" : "";
   const dueNote = due === null || due > 3 ? "" : due < 0 ? "overdue" : due === 0 ? "due today" : `in ${due} day${due === 1 ? "" : "s"}`;
 
-  const details: { label: string; value?: React.ReactNode }[] = [
+  const unset = canEdit ? (
+    <span className="text-mist-600">
+      Not set ·{" "}
+      <Link href={editHref} className="font-medium text-ocean-700 hover:underline">
+        Add
+      </Link>
+    </span>
+  ) : (
+    <span className="text-mist-600">Not set</span>
+  );
+  const prop = (v: React.ReactNode) => v || unset;
+  const properties: { k: string; v: React.ReactNode; icon: IconName }[] = [
+    { k: "Status", icon: "activity", v: <Badge mark={JOB_STATE[job.status]}>{statusCopy?.label ?? job.status}</Badge> },
+    { k: "Deadline", icon: "calendar", v: prop(job.submissionDueDate && <span className={`tabular-nums ${dueTone}`}>{fmtDate(job.submissionDueDate)}{dueNote && ` · ${dueNote}`}</span>) },
     ...(canPrice
       ? [
-          { label: "Client", value: job.clientName },
-          { label: "Vendor", value: job.vendorName },
-          { label: "Pay rate", value: job.payRate ? <span className="tabular-nums">${job.payRate}/hr</span> : undefined },
-          { label: "Bill rate", value: job.clientBillRate ? <span className="tabular-nums">${job.clientBillRate}/hr</span> : undefined },
+          { k: "Client", icon: "building" as IconName, v: prop(job.clientName) },
+          { k: "Vendor", icon: "handshake" as IconName, v: prop(job.vendorName) },
+          { k: "Pay rate", icon: "dollar" as IconName, v: prop(job.payRate && <span className="tabular-nums">${job.payRate}/hr</span>) },
+          { k: "Bill rate", icon: "dollar" as IconName, v: prop(job.clientBillRate && <span className="tabular-nums">${job.clientBillRate}/hr</span>) },
         ]
       : []),
     {
-      label: "Salary range",
-      value: job.salary ? (
-        <span className="tabular-nums">
-          ${job.salary.min.toLocaleString()} – ${job.salary.max.toLocaleString()}
-          {SALARY_PERIODS.find((p) => p.value === (job.salary?.period || "year"))?.short}
-        </span>
-      ) : undefined,
+      k: "Salary range",
+      icon: "dollar",
+      v: prop(
+        job.salary && (
+          <span className="tabular-nums">
+            ${job.salary.min.toLocaleString()} – ${job.salary.max.toLocaleString()}
+            {SALARY_PERIODS.find((p) => p.value === (job.salary?.period || "year"))?.short}
+          </span>
+        ),
+      ),
     },
-    { label: "Deadline", value: job.submissionDueDate ? <span className={`tabular-nums ${dueTone}`}>{fmtDate(job.submissionDueDate)}{dueNote && ` · ${dueNote}`}</span> : undefined },
-    { label: "Created", value: <span className="tabular-nums">{fmtDate(job.createdAt)}</span> },
-    { label: "Posted by", value: job.postedByName },
+    { k: "Location", icon: "map", v: prop(jobLocationLabel(job)) },
+    { k: "Type", icon: "clock", v: prop(job.type && (JOB_TYPE_LABEL[job.type] ?? job.type)) },
+    { k: "Department", icon: "layers", v: prop(job.department) },
+    { k: "Posted by", icon: "userCheck", v: prop(job.postedByName) },
+    { k: "Created", icon: "calendar", v: <span className="tabular-nums">{fmtDate(job.createdAt)}</span> },
   ];
-  const shown = details.filter((d) => d.value);
-  const notRecorded = details.filter((d) => !d.value).map((d) => d.label.toLowerCase());
 
   const hasRequirements = !!richTextToPlain(job.requirements);
   const hasResponsibilities = !!richTextToPlain(job.responsibilities);
@@ -224,14 +232,11 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
       live
         ? { label: "Copy public link", icon: "external", onSelect: () => void shareLink() }
         : { label: "Copy public link", icon: "external", onSelect: () => {}, disabled: true, hint: "Set the role to Active to share it." },
-      ...(canManageApplicants && filteredApps.length > 0
-        ? [{ label: `Export ${filteredApps.length} applicant${filteredApps.length === 1 ? "" : "s"}`, icon: "download" as const, onSelect: exportApplicants }]
-        : []),
     ],
   });
 
   const posting = job.description || hasRequirements || hasResponsibilities || job.clientNotes ? (
-    <div className="grid gap-6 p-5">
+    <div className="grid gap-8 py-6">
       {[
         { title: "Description", html: job.description ? renderRichText(job.description) : null },
         { title: "Requirements", html: hasRequirements ? renderListField(job.requirements) : null },
@@ -240,7 +245,7 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
         .filter((s) => s.html)
         .map((s) => (
           <section key={s.title}>
-            <h3 className="mb-2 text-adm-base font-semibold text-navy-900">{s.title}</h3>
+            <h3 className="mb-2 text-adm-md font-semibold text-navy-900">{s.title}</h3>
             <div className={PROSE} dangerouslySetInnerHTML={s.html!} />
           </section>
         ))}
@@ -261,177 +266,222 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
     />
   );
 
-  const applicantsTab = (
-    <div>
-      <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 p-4">
-        <label className="relative min-w-0 flex-1 sm:max-w-xs">
-          <span className="sr-only">Search applicants</span>
-          <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email"
-            className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
-          />
-        </label>
-        {stageFilter !== "all" && (
-          <Button size="sm" variant="secondary" icon="x" onClick={() => setStageFilter("all")}>
-            {STAGE_LABEL[stageFilter]} only
-          </Button>
-        )}
-        <span className="ml-auto text-adm-base tabular-nums text-mist-600">
-          {filteredApps.length} of {applications.length}
+  const applicantColumns: Column<Application>[] = [
+    {
+      key: "name",
+      header: "Applicant",
+      sortable: true,
+      grow: 32,
+      value: (a) => a.name || a.email,
+      cell: (a) => (
+        <span className="flex min-w-0 items-center gap-3">
+          <Avatar name={a.name || a.email} size="sm" />
+          <span className="min-w-0">
+            <Link href={`/portal/candidates/${a.id}`} onClick={(e) => e.stopPropagation()} className="block truncate font-medium text-navy-900 hover:text-ocean-700 hover:underline">
+              {a.name || "Unnamed"}
+            </Link>
+            <span className="block truncate text-adm-xs text-mist-600">{a.email}</span>
+          </span>
         </span>
-      </div>
-      {appsRes.isLoading && !appsRes.data ? (
-        <ul role="status" aria-label="Loading applicants" className="divide-y divide-mist-100">
-          {Array.from({ length: 5 }, (_, i) => (
-            <li key={i} className="flex items-center gap-3 px-5 py-4">
-              <span className="kit-skel block size-9 rounded-full" />
-              <span className="grid flex-1 gap-1.5">
-                <span className="kit-skel block h-3.5 w-40" />
-                <span className="kit-skel block h-3 w-56 max-w-full" />
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : appsRes.error && !appsRes.data ? (
-        <ErrorState framed={false} title="Couldn't load the applicants" onRetry={() => void appsRes.reload()} retrying={appsRes.isLoading} />
-      ) : filteredApps.length === 0 ? (
-        applications.length === 0 ? (
-          <EmptyState
-            compact
-            variant="first-use"
-            icon="inbox"
-            title="No applicants yet"
-            body="Add the first applicant for this role, or check the AI matches tab for people already on file."
-            primary={canManageApplicants ? { label: "Add applicant", icon: "plus", href: `/portal/applications/new?jobId=${jobId}` } : undefined}
-          />
-        ) : (
-          <EmptyState
-            compact
-            variant="no-results"
-            title="No applicants match"
-            body="Try another name, or clear the stage filter."
-            onClearFilters={() => {
-              setSearch("");
-              setStageFilter("all");
-            }}
-          />
-        )
-      ) : (
-        <ul className="divide-y divide-mist-100">
-          {filteredApps.map((a) => (
-            <li key={a.id} className="group relative flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 hover:bg-mist-50">
-              <span className="flex min-w-0 flex-1 basis-56 items-center gap-3">
-                <Avatar name={a.name || a.email} />
-                <span className="min-w-0">
-                  <a href={`/portal/candidates/${a.id}`} onClick={(e) => { e.preventDefault(); router.push(`/portal/candidates/${a.id}`); }} className="block truncate text-adm-base font-medium text-navy-900 after:absolute after:inset-0 hover:text-ocean-700">
-                    {a.name || "Unnamed"}
-                  </a>
-                  <span className="block truncate text-adm-xs text-mist-600">
-                    {[a.email, a.city && `${a.city}${a.state ? `, ${a.state}` : ""}`].filter(Boolean).join(" · ")}
-                  </span>
-                </span>
-              </span>
-              <span className="hidden w-28 shrink-0 text-adm-base text-mist-600 xl:block">{a.source || "–"}</span>
-              <span className="hidden w-24 shrink-0 text-adm-base tabular-nums text-mist-600 md:block">{fmtDate(a.appliedAt)}</span>
-              <span className="relative z-10 flex shrink-0 items-center gap-1">
-                <StageSelect size="sm" value={a.status} label={`Stage for ${a.name || a.email}`} disabled={moving === a.id} onChange={(s) => void move(a, s)} />
-                <ActionMenu
-                  label={`Actions for ${a.name || a.email}`}
-                  items={[
-                    { label: "View profile", icon: "eye", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
-                    { label: "Edit applicant", icon: "edit", onSelect: () => setEditingApp(a) },
-                  ]}
-                  width="w-48"
-                />
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+      ),
+    },
+    {
+      key: "status",
+      header: "Stage",
+      sortable: true,
+      value: (a) => BOARD.indexOf(a.status),
+      cell: (a) => (
+        <InlineSelect
+          value={a.status}
+          label={`Stage for ${a.name || a.email}`}
+          mark={stageState(a.status)}
+          width="w-36"
+          disabled={moving === a.id}
+          options={BOARD.map((st) => ({ value: st, label: STAGE_LABEL[st] }))}
+          onChange={(st) => void move(a, st as Stage)}
+        />
+      ),
+    },
+    { key: "source", header: "Source", sortable: true, value: (a) => a.source || "" },
+    {
+      key: "appliedAt",
+      header: "Applied",
+      sortable: true,
+      value: (a) => new Date(a.appliedAt).getTime(),
+      cell: (a) => <span className="whitespace-nowrap tabular-nums text-mist-700">{fmtDate(a.appliedAt)}</span>,
+    },
+    { key: "location", header: "Location", sortable: true, hideBelow: "xl", value: (a) => [a.city, a.state].filter(Boolean).join(", ") },
+    { key: "workAuthorization", header: "Work authorization", sortable: true, hideBelow: "2xl", value: (a) => a.workAuthorization || "" },
+    { key: "phone", header: "Phone", defaultHidden: true, value: (a) => a.phone || "" },
+  ];
+  const optionsOf = (get: (a: Application) => string | undefined) => [...new Set(applications.map(get).filter((x): x is string => !!x))].sort();
+  const allFilters: Filter<Application>[] = [
+    { key: "source", label: "Source", options: optionsOf((a) => a.source), value: (a) => a.source || "" },
+    { key: "workAuthorization", label: "Work authorization", options: optionsOf((a) => a.workAuthorization), value: (a) => a.workAuthorization || "" },
+  ];
+  const applicantFilters: Filter<Application>[] = [
+    { key: "stage", label: "Stage", options: BOARD.map((st) => STAGE_LABEL[st]), value: (a) => STAGE_LABEL[a.status] ?? a.status },
+    ...allFilters.filter((f) => f.options.length > 0),
+  ];
+  const openStage = (stage: Stage | "all") => {
+    setPick((p) => ({ stage, n: p.n + 1 }));
+    setActiveTab("applicants");
+  };
+
+  const applicantsTab =
+    appsRes.isLoading && !appsRes.data ? (
+      <TableSkeleton rows={6} />
+    ) : appsRes.error && !appsRes.data ? (
+      <ErrorState title="Couldn't load the applicants" onRetry={() => void appsRes.reload()} retrying={appsRes.isLoading} />
+    ) : applications.length === 0 ? (
+      <EmptyState
+        framed
+        variant="first-use"
+        icon="inbox"
+        title="No applicants yet"
+        body="Add the first applicant for this role, or check the AI matches tab for people already on file."
+        primary={canManageApplicants ? { label: "Add applicant", icon: "plus", href: `/portal/applications/new?jobId=${jobId}` } : undefined}
+      />
+    ) : (
+      <DataTable
+        key={pick.n}
+        rows={applications}
+        initialFilters={pick.stage === "all" ? {} : { stage: STAGE_LABEL[pick.stage] }}
+        onStateChange={(st) => setTableStage(st.filters.stage ?? "All")}
+        columns={applicantColumns}
+        filters={applicantFilters}
+        searchPlaceholder="Search by name or email"
+        searchMatch={(a, q) => a.email.toLowerCase().includes(q)}
+        initialSort={{ key: "appliedAt", dir: -1 }}
+        storageKey="job-applicants"
+        exportName={`${job.title.replace(/\s+/g, "_")}_applicants`}
+        onExport={(list) =>
+          downloadCsv(
+            `${job.title.replace(/\s+/g, "_")}_applicants`,
+            ["Name", "Email", "Phone", "Status", "Applied", "Source", "Work Auth"],
+            list.map((a) => [a.name, a.email, a.phone || "", STAGE_LABEL[a.status] ?? a.status, fmtDate(a.appliedAt), a.source || "", a.workAuthorization || ""]),
+          )
+        }
+        emptyTitle="No applicants match"
+        pageSize={25}
+        rowMenu={(a) => [
+          { label: "View profile", icon: "eye", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
+          { label: "Edit applicant", icon: "edit", onSelect: () => setEditingApp(a) },
+        ]}
+        toolbar={
+          canManageApplicants && (
+            <Link href={`/portal/applications/new?jobId=${jobId}`} className={BTN_PRIMARY}>
+              <Icon name="plus" className="size-4" />
+              Add applicant
+            </Link>
+          )
+        }
+      />
+    );
+
 
   return (
-    <Page>
-      <PageHeader
-        back={back}
-        icon={category === "open" ? "briefcase" : "capitol"}
-        title={job.title}
-        meta={<Badge tone={JOB_STATUS_TONE[job.status] ?? "grey"} dot>{statusCopy?.label ?? job.status}</Badge>}
-        description={
-          <FactLine
-            items={[
-              ...(job.postingId ? [{ icon: "tag" as const, text: <span className="font-mono text-adm-xs">{job.postingId}</span> }] : []),
-              ...(job.department ? [{ icon: "layers" as const, text: job.department }] : []),
-              { icon: "map" as const, text: jobLocationLabel(job) || "Location not set" },
-              ...(canPrice && job.clientName ? [{ icon: "building" as const, text: job.clientName }] : []),
-              ...(job.type ? [{ icon: "clock" as const, text: JOB_TYPE_LABEL[job.type] ?? job.type }] : []),
-            ]}
-          />
-        }
-        actions={<ActionMenu label="Job actions" items={menu} />}
-      />
+    // Plane's work-item page: the 44px header, the record in the main pane, its properties in a rail
+    <div className="-m-5 flex min-h-[calc(100svh-3.75rem-2px)] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
+      <ListHeader
+        crumbs={[
+          { label: back.label, href: back.href, icon: category === "open" ? "briefcase" : "capitol" },
+          { label: job.postingId || job.title },
+        ]}
+      >
+        {live && (
+          <a href={publicJobPath(jobId)} target="_blank" rel="noopener" className={`${BTN_SECONDARY} hidden sm:inline-flex`}>
+            <Icon name="external" className="size-4" />
+            View posting
+          </a>
+        )}
+        {canEdit && (
+          <Link href={editHref} className={BTN_SECONDARY}>
+            <Icon name="edit" className="size-4" />
+            Edit
+          </Link>
+        )}
+        <ActionMenu
+          label="Job actions"
+          items={menu}
+          trigger={
+            <button type="button" aria-label="Job actions" title="More actions" className={`${BTN_ICON} data-[state=open]:bg-mist-100`}>
+              <Icon name="dots" className="size-4" />
+            </button>
+          }
+        />
+      </ListHeader>
 
-      {canPrice && applications.length > 0 && (
-        <div role="group" aria-label="Applicants by stage" className=" flex gap-2 scroll-strip pb-1">
-          {[{ key: "all" as const, label: "All", count: applications.length }, ...BOARD.map((s) => ({ key: s, label: STAGE_LABEL[s], count: counts[s] || 0 }))].map((s) => {
-            const on = activeTab === "applicants" && stageFilter === s.key;
-            return (
-              <button
-                key={s.key}
-                type="button"
-                aria-pressed={on}
-                onClick={() => {
-                  setStageFilter(s.key);
-                  setActiveTab("applicants");
-                }}
-                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full px-3.5 text-adm-base font-medium ring-1 ring-inset transition-colors ${
-                  on ? "bg-navy-900 text-white ring-navy-900" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
-                }`}
-              >
-                {s.key !== "all" && <span aria-hidden className="size-2 rounded-full" style={{ background: STAGE_DOT[s.key] }} />}
-                {s.label}
-                <span className={`tabular-nums ${on ? "text-tide-300" : "text-mist-600"}`}>{s.count}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="min-w-0 flex-1 px-5 py-6 sm:px-6 lg:px-8">
+          <div className="grid min-w-0 gap-6">
+            <header className="kit-fade grid gap-2">
+              {/* Status, place and terms live in Properties; the title block names the record only */}
+              {job.postingId && <span className="font-mono text-adm-xs text-mist-600">{job.postingId}</span>}
+              <h1 className="text-adm-xl font-semibold leading-tight tracking-tight text-navy-900">{job.title}</h1>
+            </header>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-          <RecordTabs label="Job sections" tabs={tabs} value={activeTab} onChange={setActiveTab} className="p-4 pb-0 sm:px-3 sm:pt-1" />
-          <div className="max-sm:mt-4">
-            {activeTab === "applicants" && applicantsTab}
-            {activeTab === "submissions" && <JobSubmissions jobId={jobId} />}
-            {activeTab === "candidates" && <BestCandidates jobId={jobId} />}
-            {activeTab === "info" && posting}
-          </div>
-        </section>
-
-        <aside className="grid min-w-0 gap-6 lg:sticky lg:top-[5.5rem]">
-          <Panel title="Requisition" description={live ? "On the careers site" : statusCopy?.detail}>
-            {shown.length > 0 ? <FactRows items={shown} /> : <p className="text-adm-base text-mist-600">Nothing recorded yet.</p>}
-            {notRecorded.length > 0 && (
-              <p className="mt-4 border-t border-mist-100 pt-3 text-adm-xs text-mist-600">
-                Not recorded: {notRecorded.join(", ")}.
-                {canEdit && (
-                  <>
-                    {" "}
-                    <a href={editHref} className="font-medium text-ocean-700 underline-offset-4 hover:underline">
-                      Add them
-                    </a>
-                  </>
+            <section aria-label="Job sections" className="min-w-0">
+              <RecordTabs label="Job sections" tabs={tabs} value={activeTab} onChange={setActiveTab} />
+              <div key={activeTab} className="kit-fade max-sm:mt-4">
+                {activeTab === "info" && posting}
+                {activeTab === "applicants" && <div className="mt-4">{applicantsTab}</div>}
+                {activeTab !== "info" && activeTab !== "applicants" && (
+                  <div className="mt-4 overflow-hidden rounded-lg border border-mist-200">
+                    {activeTab === "submissions" && <JobSubmissions jobId={jobId} />}
+                    {activeTab === "candidates" && <BestCandidates jobId={jobId} />}
+                  </div>
                 )}
-              </p>
-            )}
-          </Panel>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Properties rail: pinned to the top of the page from lg, its own scroll */}
+        <aside
+          aria-label="Properties"
+          className="scroll-thin grid shrink-0 content-start gap-6 border-t border-mist-200 px-5 py-6 sm:px-8 lg:sticky lg:-top-8 lg:h-[calc(100svh-3.75rem-2px)] lg:w-[22.5rem] lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-5"
+        >
+          <section className="grid gap-2">
+            <h2 className="flex h-7 items-center text-adm-base font-semibold text-navy-900">Properties</h2>
+            <KeyValue items={properties} narrow />
+          </section>
+          {canPrice && applications.length > 0 && (
+            <section aria-label="Pipeline" className="grid gap-2 border-t border-mist-200 pt-5">
+              <div className="flex h-7 items-center justify-between">
+                <h2 className="text-adm-base font-semibold text-navy-900">Pipeline</h2>
+                <button type="button" onClick={() => openStage("all")} className="text-adm-xs font-medium text-ocean-700 hover:underline">
+                  All {applications.length}
+                </button>
+              </div>
+              <ul className="-mx-2 grid">
+                {BOARD.map((st) => {
+                  const n = counts[st] || 0;
+                  const on = activeTab === "applicants" && tableStage === STAGE_LABEL[st];
+                  return (
+                    <li key={st}>
+                      <button
+                        type="button"
+                        onClick={() => openStage(st)}
+                        aria-pressed={on}
+                        className={`flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-adm-base transition-colors duration-150 ${on ? "bg-mist-100 text-navy-900" : n ? "text-navy-900 hover:bg-mist-50" : "text-mist-600 hover:bg-mist-50"}`}
+                      >
+                        <StateIcon {...stageState(st)} />
+                        <span className="flex-1 truncate">{STAGE_LABEL[st]}</span>
+                        <span className={`tabular-nums ${n ? "font-medium" : ""}`}>{n}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
           {/* Always rendered, even when empty: its + is how the first recruiter gets assigned. */}
-          {canPrice && <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />}
+          {canPrice && (
+            <div className="border-t border-mist-200 pt-5">
+              <JobTeamCard job={job} canEdit={canEdit} onJobChange={setJob} />
+            </div>
+          )}
         </aside>
       </div>
 
@@ -459,6 +509,6 @@ export function JobDetail({ jobId, hint }: { jobId: string; hint: { category?: s
           void refreshApplications();
         }}
       />
-    </Page>
+    </div>
   );
 }

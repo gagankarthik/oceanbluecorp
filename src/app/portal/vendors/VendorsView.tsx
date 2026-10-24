@@ -7,14 +7,13 @@ import { downloadCsv } from "@/lib/csv";
 import { check, collectErrors, email, LIMITS, maxLen, required, type FieldErrors } from "@/lib/form-validation";
 import { useResource } from "@/hooks/use-resource";
 import { useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Modal, Page, PageHeader, Panel, StatCard } from "@/components/portal/kit";
-import { BarChart, DonutChart } from "@/components/portal/charts";
+import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, ListPage, ListPageState, Modal, PillButton, CrmListSkeleton, PeekFooter } from "@/components/portal/kit";
 import Select from "@/components/portal/Select";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, LinkedRoles, errorText, inputCls, send, useDiscardGuard, useToast } from "@/components/portal/relationships/shared";
-import { FieldShell, KpiFilter, RecordHead, RecordStats, RoleCount, StateField, stateName, stateOf, useTablePreset } from "@/components/portal/relationships/register";
+import { FieldShell, RecordHead, RecordStats, RoleCount, StateField, stateName, stateOf } from "@/components/portal/relationships/register";
 
 const KEY = "/api/vendors";
 type LeadRole = Vendor["vendorLeadRole"];
@@ -201,7 +200,7 @@ function VendorDetail({ v, jobs, jobsLoading, jobsError, onDelete }: { v: Vendor
         <LinkedRoles jobs={jobs} loading={jobsLoading} error={jobsError} />
       </section>
 
-      <div className="border-t border-mist-200 pt-5">
+      <PeekFooter>
         <InlineDelete
           label="Delete vendor"
           warning="The vendor record is removed permanently. Roles that name it keep their copy of the name. This cannot be undone."
@@ -211,7 +210,7 @@ function VendorDetail({ v, jobs, jobsLoading, jobsError, onDelete }: { v: Vendor
             void onDelete().finally(() => setDeleting(false));
           }}
         />
-      </div>
+      </PeekFooter>
     </div>
   );
 }
@@ -223,7 +222,6 @@ export default function VendorsView() {
   const directory = useUserDirectory();
   const [lead, setLead] = useState("All");
   const [form, setForm] = useState<{ editing: Vendor | null } | null>(null);
-  const preset = useTablePreset();
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState<Vendor | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -264,9 +262,6 @@ export default function VendorsView() {
     }
   };
 
-  const openRoles = vendors.reduce((a, v) => a + (v.openJobCount ?? 0), 0);
-  const withRoles = vendors.filter((v) => v.jobCount).length;
-  const noContact = vendors.filter((v) => !hasContact(v)).length;
   const byLead = useMemo(() => {
     const m = new Map<string, number>();
     for (const v of vendors) {
@@ -280,8 +275,15 @@ export default function VendorsView() {
     const k = v.vendorLeadName || "Unassigned";
     return byLead.some((b) => b.label === k) ? k : "Others";
   };
-  const top = [...vendors].sort((a, b) => (b.jobCount ?? 0) - (a.jobCount ?? 0)).filter((v) => v.jobCount).slice(0, 8);
   const visible = vendors.filter((v) => lead === "All" || leadBucket(v) === lead);
+  const summary = (rows: Vendor[]): Summary[] => {
+    const missing = rows.filter((v) => !hasContact(v)).length;
+    return [
+      { label: "with roles", value: rows.filter((v) => v.jobCount).length },
+      { label: "open roles", value: rows.reduce((n, v) => n + (v.openJobCount ?? 0), 0) },
+      { label: "missing contact", value: missing, warn: missing > 0 },
+    ];
+  };
 
   const columns: Column<Vendor>[] = [
     {
@@ -360,121 +362,79 @@ export default function VendorsView() {
         label="Filter by vendor lead"
         value={lead}
         onChange={setLead}
-        options={[{ value: "All", label: "All", count: byLead.reduce((n, b) => n + b.value, 0) }, ...byLead.map((b) => ({ value: b.label, label: b.label, count: b.value }))]}
+        options={[{ value: "All", label: "All" }, ...byLead.map((b) => ({ value: b.label, label: b.label }))]}
       />
     ) : undefined;
 
   return (
     <RoleGate href="/portal/vendors">
-      <Page>
-        <PageHeader
-          title="Vendors"
-          icon="handshake"
-          section="relationships"
-
-          actions={
-            <>
-              {vendors.length > 0 && (
-                <InsightsSheet title="Vendors insights" description="Which vendors carry the most roles, and who leads each one.">
-                  <Panel title="Roles by vendor" description="The vendors with the most roles">
-                    {top.length ? (
-                      <BarChart
-                        title="Open and other roles for the vendors with the most roles"
-                        labels={top.map((v) => (v.name.length > 14 ? `${v.name.slice(0, 13)}…` : v.name))}
-                        series={[
-                          { name: "Open", values: top.map((v) => v.openJobCount ?? 0) },
-                          { name: "Other", values: top.map((v) => (v.jobCount ?? 0) - (v.openJobCount ?? 0)) },
-                        ]}
-                        height={268}
-                      />
-                    ) : (
-                      <EmptyState compact icon="briefcase" title="No roles linked to a vendor yet" body="Pick a vendor on a job posting and it shows up here." />
-                    )}
-                  </Panel>
-                  <Panel title="Vendors by lead">
-                    <DonutChart title="Vendors by vendor lead" data={byLead} centerLabel="Vendors" size={168} />
-                  </Panel>
-                </InsightsSheet>
-              )}
-              <Button icon="plus" onClick={openNew}>
-                Add vendor
-              </Button>
-            </>
-          }
-        />
-
+      <ListPage title="Vendors">
         {isLoading ? (
-          <ListPageSkeleton header={false} label="Loading vendors" kpis={3} insights={false} />
+          <CrmListSkeleton label="Loading vendors" />
         ) : error && !data ? (
-          <ErrorState title="Couldn't load vendors" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          <ListPageState>
+            <ErrorState title="Couldn't load vendors" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          </ListPageState>
         ) : vendors.length === 0 ? (
-          <EmptyState
-            framed
-            variant="first-use"
-            icon="handshake"
-            title="No vendors yet"
-            body="Add a vendor and choose the HR or admin teammate who owns it. Job postings can then link to it."
-            primary={{ label: "Add vendor", icon: "plus", onClick: openNew }}
-          />
+          <ListPageState>
+            <EmptyState
+              framed
+              variant="first-use"
+              icon="handshake"
+              title="No vendors yet"
+              body="Add a vendor and choose the HR or admin teammate who owns it. Job postings can then link to it."
+              primary={{ label: "Add vendor", icon: "plus", onClick: openNew }}
+            />
+          </ListPageState>
+        ) : visible.length === 0 ? (
+          <section aria-label="Vendor list" className="flex min-h-0 flex-1 flex-col">
+            {leadTabs && <div className="border-b border-mist-200 px-2 sm:px-4">{leadTabs}</div>}
+            <EmptyState variant="no-results" title="No vendors for this lead" onClearFilters={() => setLead("All")} />
+          </section>
         ) : (
-          <>
-            <KpiRow>
-              <StatCard section="relationships" label="Vendors" value={vendors.length} icon="handshake" hint={`${withRoles} with roles`} trend="flat" />
-              <KpiFilter label="Show vendors with open roles" active={preset.isOn("roles", "Has open roles")} onClick={() => preset.toggle("roles", "Has open roles")}>
-                <StatCard section="relationships" label="Open roles through vendors" value={openRoles} icon="briefcase" hint={`across ${vendors.filter((v) => v.openJobCount).length} vendors`} trend="flat" />
-              </KpiFilter>
-              <KpiFilter label="Show vendors missing contact details" active={preset.isOn("contact", "Missing")} onClick={() => preset.toggle("contact", "Missing")}>
-                <StatCard section="relationships" label="Missing contact details" value={noContact} icon="alert" hint={noContact ? "no contact person or email · fix these" : "every vendor has one"} trend="flat" />
-              </KpiFilter>
-            </KpiRow>
-
-            <section aria-label="Vendor list" className="grid gap-4">
-              {visible.length === 0 ? (
-                <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-                  {leadTabs && <div className="border-b border-mist-200 px-2 sm:px-4">{leadTabs}</div>}
-                  <EmptyState variant="no-results" title="No vendors for this lead" onClearFilters={() => setLead("All")} />
-                </div>
-              ) : (
-                <DataTable
-                  key={preset.key}
-                  {...preset.table}
-                  rows={visible}
-                  tabs={leadTabs}
-                  columns={columns}
-                  filters={filters}
-                  exportName="vendors"
-                  onExport={exportCsv}
-                  storageKey="vendors"
-                  initialSort={{ key: "createdAt", dir: -1 }}
-                  searchPlaceholder="Search vendor, contact, email or lead"
-                  emptyTitle="No vendors match your filters"
-                  detailTitle={(v) => v.name}
-                  detailActions={(v) => (
-                    <Button size="sm" variant="secondary" icon="edit" onClick={() => setForm({ editing: vendors.find((x) => x.id === v.id) ?? v })}>
-                      Edit
-                    </Button>
-                  )}
-                  rowMenu={rowMenu}
-                  renderDetail={(r, close) => {
-                    const live = vendors.find((x) => x.id === r.id);
-                    return live ? (
-                      <VendorDetail
-                        v={live}
-                        jobs={(jobsRes.jobs ?? []).filter((j) => j.vendorId === live.id)}
-                        jobsLoading={jobsRes.isLoading}
-                        jobsError={!!jobsRes.error && !jobsRes.jobs}
-                        onDelete={() => remove(live, close)}
-                      />
-                    ) : (
-                      <GoneNotice noun="vendor" />
-                    );
-                  }}
+          <DataTable
+            fill
+            noun="vendors"
+            summary={summary}
+            rows={visible}
+            tabs={leadTabs}
+            toolbar={
+              <PillButton variant="primary" icon="plus" onClick={openNew}>
+                Add vendor
+              </PillButton>
+            }
+            columns={columns}
+            filters={filters}
+            exportName="vendors"
+            onExport={exportCsv}
+            storageKey="vendors"
+            initialSort={{ key: "createdAt", dir: -1 }}
+            searchPlaceholder="Search vendor, contact, email or lead"
+            emptyTitle="No vendors match your filters"
+            detailTitle={(v) => v.name}
+            detailActions={(v) => (
+              <Button size="sm" variant="secondary" icon="edit" onClick={() => setForm({ editing: vendors.find((x) => x.id === v.id) ?? v })}>
+                Edit
+              </Button>
+            )}
+            rowMenu={rowMenu}
+            renderDetail={(r, close) => {
+              const live = vendors.find((x) => x.id === r.id);
+              return live ? (
+                <VendorDetail
+                  v={live}
+                  jobs={(jobsRes.jobs ?? []).filter((j) => j.vendorId === live.id)}
+                  jobsLoading={jobsRes.isLoading}
+                  jobsError={!!jobsRes.error && !jobsRes.jobs}
+                  onDelete={() => remove(live, close)}
                 />
-              )}
-            </section>
-          </>
+              ) : (
+                <GoneNotice noun="vendor" />
+              );
+            }}
+          />
         )}
-      </Page>
+      </ListPage>
 
       {confirmDelete && (
         <ConfirmDialog

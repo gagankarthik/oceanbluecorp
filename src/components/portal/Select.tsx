@@ -33,6 +33,8 @@ export default function Select({
   width = "w-64",
   variant = "filter",
   disabled = false,
+  defaultLabel = "All",
+  size = "md",
 }: {
   label: string;
   value: string;
@@ -49,6 +51,10 @@ export default function Select({
   /** "filter" tints when not at its default; "field" is a plain form input */
   variant?: "filter" | "field";
   disabled?: boolean;
+  /** What a filter shows while at its first option ("Stage: All"); a sort menu says "Default" */
+  defaultLabel?: string;
+  /** "sm" is the CRM's 30px pill: label and value split by a hairline */
+  size?: "md" | "sm";
 }) {
   const id = useId();
   const side = useContext(SelectSide);
@@ -138,21 +144,38 @@ export default function Select({
         aria-label={`${label}: ${current?.label ?? ""}`}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex h-10 w-full items-center gap-2 rounded-lg pl-3 pr-2.5 text-left text-adm-base ring-1 ring-inset transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`inline-flex w-full items-center text-left ring-1 ring-inset transition-colors ${size === "sm" ? "h-8 gap-0 rounded-md text-adm-base" : "h-10 gap-2 rounded-md pl-3 pr-2.5 text-adm-base"} focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600 disabled:cursor-not-allowed disabled:opacity-60 ${
           isDefault ? "bg-mist-0 text-navy-900 ring-[var(--color-border-control)] hover:bg-mist-50" : "bg-ocean-50 text-ocean-800 ring-ocean-600 hover:bg-ocean-100"
         }`}
       >
         {current?.icon && <Icon name={current.icon} className="size-4 shrink-0 opacity-80" />}
-        <span className="min-w-0 flex-1 truncate">
-          {showLabel && variant === "filter" && <span className={isDefault ? "text-mist-600" : "text-ocean-700"}>{label}: </span>}
-          <span className={variant === "field" ? "" : "font-medium"}>{isDefault && showLabel && variant === "filter" ? "All" : current?.label}</span>
-        </span>
-        <Icon name="chevronDown" className={`size-4 shrink-0 text-mist-500 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+        {size === "sm" ? (
+          <>
+            {showLabel && variant === "filter" && (
+              <>
+                <span className={`px-2.5 ${isDefault ? "text-mist-600" : "text-ocean-700"}`}>{label}</span>
+                <span aria-hidden className="h-full w-px bg-mist-200" />
+              </>
+            )}
+            <span className="flex min-w-0 items-center gap-1.5 px-2.5 font-medium">
+              <span className="truncate">{isDefault && showLabel && variant === "filter" ? defaultLabel : current?.label}</span>
+              <Icon name="chevronDown" className={`size-3 shrink-0 text-mist-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="min-w-0 flex-1 truncate">
+              {showLabel && variant === "filter" && <span className={isDefault ? "text-mist-600" : "text-ocean-700"}>{label}: </span>}
+              <span className={variant === "field" ? "" : "font-medium"}>{isDefault && showLabel && variant === "filter" ? defaultLabel : current?.label}</span>
+            </span>
+            <Icon name="chevronDown" className={`size-4 shrink-0 text-mist-500 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+          </>
+        )}
       </button>
 
       {open && (
         <div
-          className={`absolute ${side === "top" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"} z-40 ${width} max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200 ${
+          className={`kit-pop absolute ${side === "top" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"} z-40 ${width} max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg bg-mist-0 shadow-xl ring-1 ring-mist-200 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
@@ -169,7 +192,7 @@ export default function Select({
                     setActive(0);
                   }}
                   placeholder={`Search ${label.toLowerCase()}`}
-                  className="h-9 w-full rounded-md bg-mist-50 pl-8 pr-2 text-adm-base ring-1 ring-inset ring-[var(--color-border-control)] placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                  className="h-8 w-full rounded-md bg-mist-50 pl-8 pr-2 text-adm-base ring-1 ring-inset ring-[var(--color-border-control)] placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
                 />
               </label>
             </div>

@@ -1,13 +1,15 @@
 "use client";
 
-import { Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { downloadCsv } from "@/lib/csv";
 import Icon from "./icons";
 import { EmptyState } from "./ui";
 import { Drawer } from "./kit/overlay";
-import Select, { SelectSide } from "./Select";
+import { SelectSide } from "./Select";
 import { ActionMenu, type MenuEntry } from "./records/Menu";
+import { AppliedFilters, BTN_SECONDARY, DisplayMenu, FilterMenu, HeaderSearch, LayoutSwitch, ListHeader, type Density } from "./kit/list-chrome";
+import type { IconName } from "./icons";
 
 export type Column<T> = {
   key: string;
@@ -20,7 +22,7 @@ export type Column<T> = {
   className?: string;
   /** Hide this column on smaller desktops (phones always get the card layout) */
   hideBelow?: "md" | "lg" | "xl" | "2xl";
-  /** Start hidden; the viewer can turn it on from the Columns menu */
+  /** Start hidden; the viewer can turn it on from the Display menu */
   defaultHidden?: boolean;
   /** false leaves the column off the phone card (still in the table from md) */
   card?: boolean;
@@ -37,6 +39,9 @@ export type Column<T> = {
   minWidth?: number;
 };
 
+/** One figure in the footer strip, computed from the rows the filters leave. */
+export type Summary = { label: string; value: React.ReactNode; warn?: boolean };
+
 // max-w-0 makes grow columns truncate while the table fits; once it overflows, auto
 // layout would squeeze them to their padding, so min-width (which beats max-width) holds them
 const growMin = (c: { grow?: number; minWidth?: number }) => c.minWidth ?? ((c.grow ?? 0) >= 30 ? 224 : (c.grow ?? 0) >= 20 ? 176 : 128);
@@ -44,14 +49,8 @@ const growMin = (c: { grow?: number; minWidth?: number }) => c.minWidth ?? ((c.g
 const ALIGN = { left: "", center: "w-px whitespace-nowrap text-center", right: "text-right" } as const;
 const alignOf = <T,>(c: Column<T>) => ALIGN[c.numeric ? "right" : (c.align ?? "left")];
 
-type Density = "compact" | "default" | "relaxed";
-// Row heights 44 / 56 / 68 (DESIGN_SYSTEM §2.5); td height acts as a min-height
-const ROW_H: Record<Density, string> = { compact: "h-11 py-1.5", default: "h-14 py-2", relaxed: "h-[68px] py-3" };
-const DENSITIES: { v: Density; l: string }[] = [
-  { v: "compact", l: "Compact" },
-  { v: "default", l: "Default" },
-  { v: "relaxed", l: "Relaxed" },
-];
+// Row heights 36 / 44 / 56, Plane's 44px by default; td height acts as a min-height
+const ROW_H: Record<Density, string> = { compact: "h-9 py-1", default: "h-11 py-1", relaxed: "h-14 py-2" };
 const PER_PAGE = [10, 25, 50];
 
 /** Page numbers with gaps: 1 … 4 5 6 … 12 */
@@ -74,36 +73,18 @@ export type Filter<T> = {
   value: (row: T) => string;
   /** Overrides equality, for rows that hold several values (e.g. multiple assignees) */
   match?: (row: T, option: string) => boolean;
-  /** Shown in the toolbar rather than behind the Filters button; without any flag the first two are */
+  /** Accepted for existing call sites; every filter now lives in the Filters menu */
   inline?: boolean;
 };
-
-/** Up to this many filters all sit in the toolbar; past it, two stay and the rest go behind the Filters button */
-const INLINE_ALL = 3;
 
 const matches = <T,>(f: Filter<T>, r: T, o: string) => (f.match ? f.match(r, o) : f.value(r) === o);
 
 const hide = { md: "hidden md:table-cell", lg: "hidden lg:table-cell", xl: "hidden xl:table-cell", "2xl": "hidden 2xl:table-cell" };
 
-// Sticky header band (z-20; z-30 where it meets a pinned column) and pinned body cells (z-10)
-const HEAD = "sticky whitespace-nowrap border-b border-mist-200 bg-mist-50 px-4 py-3";
+// Sticky 44px header band (z-20; z-30 where it meets a pinned column) and pinned body cells (z-10).
+// Row rules only: every table in the portal reads the same, without column lines.
+const HEAD = "sticky h-11 whitespace-nowrap border-b border-mist-200 bg-mist-50 px-3";
 const PIN = "sticky z-10 bg-inherit";
-
-function useOutsideClose(open: boolean, close: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && close();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
-  return ref;
-}
 
 /**
  * Searchable, filterable, sortable table.
@@ -139,7 +120,10 @@ export default function DataTable<T extends { id: string }>({
   initialFilters,
   onStateChange,
   storageKey,
-  viewSwitch,
+  layouts,
+  fill = false,
+  summary,
+  noun = "rows",
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -182,8 +166,17 @@ export default function DataTable<T extends { id: string }>({
   onStateChange?: (state: { query: string; filters: Record<string, string> }) => void;
   /** Persists rows per page and hidden columns in this browser */
   storageKey?: string;
-  /** Icon-only view switch (e.g. Table / Board), right after Filters; 40px tall like the toolbar controls */
-  viewSwitch?: React.ReactNode;
+  /** Icon-only layout switch (e.g. Table / Cards) at the head of the header controls */
+  layouts?: { value: string; onChange: (v: string) => void; options: { value: string; label: string; icon: IconName }[] };
+  /**
+   * The CRM list: fills its parent's height edge to edge, the rows scroll under a fixed header,
+   * every row shows (no pages), and the footer carries the count, the figures and the bulk actions.
+   */
+  fill?: boolean;
+  /** Footer figures (sums, averages) from the filtered rows */
+  summary?: (rows: T[]) => Summary[];
+  /** Plural for the footer count ("contacts in view") */
+  noun?: string;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [active, setActive] = useState<Record<string, string>>(initialFilters ?? {});
@@ -194,16 +187,6 @@ export default function DataTable<T extends { id: string }>({
   const [perPage, setPerPage] = useState(pageSize);
   const [density, setDensity] = useState<Density>("default");
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(columns.filter((c) => c.defaultHidden).map((c) => c.key)));
-  const [menu, setMenu] = useState(false);
-  const menuRef = useOutsideClose(menu, () => setMenu(false));
-  // Tier 1 sits in the toolbar; tier 2 opens from the Filters button
-  const flagged = filters.some((f) => f.inline);
-  const isInline = (f: Filter<T>, i: number) => (flagged ? !!f.inline : filters.length <= INLINE_ALL || i < 2);
-  const inlineFilters = filters.filter(isInline);
-  const moreFilters = filters.filter((f, i) => !isInline(f, i));
-  // Starts open when the page arrives with a tier-2 filter set (deep links, KPI cards)
-  const [filtersOpen, setFiltersOpen] = useState(() => extraChips.length > 0 || moreFilters.some((f) => (initialFilters?.[f.key] ?? "All") !== "All"));
-  const filterRowId = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ wide: false, left: false, right: false });
 
@@ -234,8 +217,10 @@ export default function DataTable<T extends { id: string }>({
   const shown = columns.filter((c) => !hidden.has(c.key));
   const getValue = (c: Column<T>, r: T) => (c.value ? c.value(r) : ((r as Record<string, unknown>)[c.key] as string | number | undefined));
 
+  // The field updates at once; the filter over every row follows a deferred copy, so typing never waits on it
+  const deferredQuery = useDeferredValue(query);
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     let out = rows.filter((r) => {
       for (const f of filters) {
         const v = active[f.key];
@@ -259,12 +244,12 @@ export default function DataTable<T extends { id: string }>({
       }
     }
     return out;
-  }, [rows, filters, active, query, sort, columns, searchMatch]);
+  }, [rows, filters, active, deferredQuery, sort, columns, searchMatch]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pages = fill ? 1 : Math.max(1, Math.ceil(filtered.length / perPage));
   const current = Math.min(page, pages - 1);
-  const visible = filtered.slice(current * perPage, current * perPage + perPage);
-  const unpaged = !!renderGrid && gridAll;
+  const visible = fill ? filtered : filtered.slice(current * perPage, current * perPage + perPage);
+  const unpaged = fill || (!!renderGrid && gridAll);
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id));
   const someVisibleSelected = !allVisibleSelected && visible.some((r) => selected.has(r.id));
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -272,34 +257,50 @@ export default function DataTable<T extends { id: string }>({
     if (selectAllRef.current) selectAllRef.current.indeterminate = someVisibleSelected;
   }, [someVisibleSelected]);
 
-  const chips = [
-    ...(query ? [{ key: "__q", label: `Search: “${query}”`, clear: () => setQuery("") }] : []),
-    ...filters
-      .filter((f) => active[f.key] && active[f.key] !== "All")
-      .map((f) => ({ key: f.key, label: `${f.label}: ${active[f.key]}`, clear: () => setActive((a) => ({ ...a, [f.key]: "All" })) })),
-    ...extraChips,
-  ];
-
   const isOn = (f: Filter<T>) => !!active[f.key] && active[f.key] !== "All";
-  const moreCount = moreFilters.filter(isOn).length + extraChips.length;
-  const hasMore = moreFilters.length > 0 || filterExtras != null;
+  // Extra chips arrive as "Label: value"; split them so they read like the rest
+  const chips = [
+    ...(query ? [{ key: "__q", label: "Search", value: `“${query}”`, clear: () => setQuery("") }] : []),
+    ...filters.filter(isOn).map((f) => ({ key: f.key, label: f.label, value: active[f.key], clear: () => setActive((a) => ({ ...a, [f.key]: "All" })) })),
+    ...extraChips.map((c) => {
+      const i = c.label.indexOf(": ");
+      return { key: c.key, label: i > 0 ? c.label.slice(0, i) : "Filter", value: i > 0 ? c.label.slice(i + 2) : c.label, clear: c.clear };
+    }),
+  ];
+  const applied = filters.filter(isOn).length + extraChips.length;
   const setFilter = (key: string, v: string) => {
     setActive((a) => ({ ...a, [key]: v }));
     setPage(0);
   };
-  const filterSelect = (f: Filter<T>, className: string) => (
-    <Select
-      key={f.key}
-      label={f.label}
-      value={active[f.key] ?? "All"}
-      onChange={(v) => setFilter(f.key, v)}
-      options={[
-        { value: "All", label: `All ${f.label.toLowerCase()}`, count: rows.length },
-        ...f.options.map((o) => ({ value: o, label: o, count: rows.filter((r) => matches(f, r, o)).length })),
-      ]}
-      className={className}
-    />
+  const clearAll = () => {
+    setQuery("");
+    setActive({});
+    extraChips.forEach((c) => c.clear());
+    setPage(0);
+  };
+  // Option counts walk every row once per option: worked out when the rows or the option lists
+  // change, not on every keystroke, hover or menu toggle (pages rebuild `filters` each render).
+  const optionsKey = filters.map((f) => `${f.key}:${f.options.join("")}`).join("");
+  const optionCounts = useMemo(
+    () => filters.map((f) => f.options.map((o) => rows.reduce((n, r) => n + (matches(f, r, o) ? 1 : 0), 0))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, optionsKey],
   );
+  const filterSections = filters.map((f, i) => ({
+    key: f.key,
+    label: f.label,
+    value: active[f.key] ?? "All",
+    onChange: (v: string) => setFilter(f.key, v),
+    options: [{ value: "All", label: "All" }, ...f.options.map((o, j) => ({ value: o, label: o, count: optionCounts[i]?.[j] }))],
+  }));
+  const sortable = columns.filter((c) => c.sortable);
+  const dirWord = (c: Column<T>, dir: 1 | -1) => (c.numeric ? (dir === 1 ? "low to high" : "high to low") : dir === 1 ? "ascending" : "descending");
+  const orderOptions = [
+    { value: "", label: "Default" },
+    ...sortable.map((c) => ({ value: c.key, label: sort?.key === c.key ? `${c.header}, ${dirWord(c, sort.dir)}` : c.header })),
+  ];
+  const defaultHidden = columns.filter((c) => c.defaultHidden).map((c) => c.key).sort().join();
+  const displayChanged = density !== "default" || [...hidden].sort().join() !== defaultHidden;
 
   // A table that fits stays un-clipped, so its header sticks under the top bar as the page
   // scrolls. Only a table wider than its box scrolls sideways (pinned columns, seams once
@@ -329,10 +330,12 @@ export default function DataTable<T extends { id: string }>({
   const [portalReady, setPortalReady] = useState(false);
   useEffect(() => setPortalReady(true), []);
   const barOn = selectable && selected.size > 0;
+  // In the CRM list the bulk actions live in the footer, not a floating bar
+  const floatBar = selectable && !fill;
   const lastSel = useRef<string[]>([]);
   if (barOn) lastSel.current = [...selected];
 
-  const toggleSort =(key: string) => setSort((s) => (!s || s.key !== key ? { key, dir: 1 } : s.dir === 1 ? { key, dir: -1 } : null));
+  const toggleSort = (key: string) => setSort((s) => (!s || s.key !== key ? { key, dir: 1 } : s.dir === 1 ? { key, dir: -1 } : null));
   const toggleRow = (id: string) =>
     setSelected((s) => {
       const n = new Set(s);
@@ -355,9 +358,12 @@ export default function DataTable<T extends { id: string }>({
   }
 
   // Rules live on the cells: `border-separate` (needed for sticky cells) never paints tr borders
-  const cellPad = `border-b border-mist-100 px-4 ${ROW_H[density]}`;
-  // Against the page the header clears the 64px top bar; inside a sideways scroller it sits at 0
-  const head = `${HEAD} ${edges.wide ? "top-0" : "top-16"}`;
+  const cellPad = `border-b border-mist-100 px-3 ${ROW_H[density]}`;
+  // <main> is the scroller, so the header pins to its top whether the list fills or flows
+  const head = `${HEAD} top-0`;
+  // Plane shows a row's checkbox on hover; once anything is selected they all stay visible
+  const anySelected = selected.size > 0;
+  const boxReveal = anySelected ? "" : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
   const hasRowEnd = !!renderDetail || !!rowMenu;
   const rowEnd = (r: T) => {
     const openRow = () => renderDetail && setOpen(r);
@@ -373,7 +379,7 @@ export default function DataTable<T extends { id: string }>({
             aria-label="Row actions"
             title="Row actions"
             onClick={(e) => e.stopPropagation()}
-            className="grid size-8 shrink-0 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900 data-[state=open]:bg-mist-100 data-[state=open]:text-navy-900"
+            className="grid size-7 shrink-0 place-items-center rounded-md text-mist-500 hover:bg-mist-100 hover:text-navy-900 data-[state=open]:bg-mist-100 data-[state=open]:text-navy-900"
           >
             <Icon name="dotsVertical" className="size-4" />
           </button>
@@ -384,176 +390,50 @@ export default function DataTable<T extends { id: string }>({
 
   return (
     // Room under the footer while the batch bar floats, so it never sits on the pagination
-    <div className={`min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200 ${barOn ? "mb-20" : ""}`}>
-      {tabs && <div className="border-b border-mist-200 px-2 sm:px-4">{tabs}</div>}
+    <div className={fill ? "flex min-h-0 min-w-0 flex-1 flex-col bg-mist-0" : `min-w-0 overflow-hidden rounded-lg border border-mist-200 bg-mist-0 ${barOn ? "mb-20" : ""}`}>
+      <ListHeader crumb={fill} count={fill ? filtered.length : undefined} total={rows.length} tabs={tabs}>
+        {layouts && <LayoutSwitch value={layouts.value} onChange={layouts.onChange} options={layouts.options} />}
+        <HeaderSearch
+          value={query}
+          onChange={(v) => {
+            setQuery(v);
+            setPage(0);
+          }}
+          placeholder={searchPlaceholder}
+        />
+        <FilterMenu sections={filterSections} extras={filterExtras} applied={applied} />
+        <DisplayMenu
+          properties={columns.map((c) => ({ key: c.key, label: c.header, on: !hidden.has(c.key), locked: !hidden.has(c.key) && shown.length === 1 }))}
+          onToggleProperty={(key) =>
+            setHidden((h) => {
+              const n = new Set(h);
+              if (n.has(key)) n.delete(key);
+              else n.add(key);
+              return n;
+            })
+          }
+          order={sortable.length ? {
+            options: orderOptions,
+            value: sort?.key ?? "",
+            onChange: (key) => (key ? toggleSort(key) : setSort(null)),
+          } : undefined}
+          density={density}
+          onDensity={setDensity}
+          actions={[{ label: `Export ${filtered.length === rows.length ? "all" : filtered.length} as CSV`, icon: "download", onSelect: exportCsv }]}
+          changed={displayChanged}
+        />
+        {toolbar}
+      </ListHeader>
 
-      {/* Toolbar: search and tier-1 filters left; page controls and table settings right */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-3">
-          <label className={`relative block min-w-0 flex-1 sm:min-w-48 sm:max-w-sm ${inlineFilters.length ? "basis-full sm:basis-auto" : ""}`}>
-            <span className="sr-only">{searchPlaceholder}</span>
-            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(0);
-              }}
-              placeholder={searchPlaceholder}
-              className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
-            />
-          </label>
-        {inlineFilters.map((f) => filterSelect(f, "w-auto min-w-[8.5rem] max-w-[13rem] flex-1 sm:flex-none"))}
-        {hasMore && (
-          <button
-            type="button"
-            onClick={() => setFiltersOpen((v) => !v)}
-            aria-expanded={filtersOpen}
-            aria-controls={filterRowId}
-            aria-label={moreCount ? `Filters, ${moreCount} applied` : "Filters"}
-            className={`inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 text-adm-base font-medium ring-1 ring-inset transition-colors sm:px-3 ${
-              filtersOpen || moreCount ? "bg-ocean-50 text-ocean-800 ring-ocean-300" : "text-navy-900 ring-mist-300 hover:bg-mist-50"
-            }`}
-          >
-            <Icon name="filter" className="size-5" />
-            Filters
-            {moreCount > 0 && (
-              <span className="grid min-w-5 place-items-center rounded-full bg-ocean-600 px-1.5 text-adm-xs font-semibold tabular-nums text-white">{moreCount}</span>
-            )}
-          </button>
-        )}
-        {viewSwitch && <div className="flex h-10 shrink-0 items-center">{viewSwitch}</div>}
-        <div className="ml-auto flex items-center gap-2">
-          {toolbar}
-          <div ref={menuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setMenu((v) => !v)}
-              aria-expanded={menu}
-              aria-label="Columns, density and export"
-              title="Columns, density and export"
-              className={`grid size-10 place-items-center rounded-lg ring-1 ring-inset transition-colors ${menu ? "bg-mist-100 text-navy-900 ring-mist-400" : "text-navy-900 ring-mist-300 hover:bg-mist-50"}`}
-            >
-              <Icon name="sliders" className="size-5" />
-            </button>
-            {menu && (
-              <div className="absolute right-0 top-12 z-30 w-64 rounded-xl bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
-                <p className="px-1 text-adm-xs font-semibold text-mist-600">Columns</p>
-                <ul className="scroll-thin mt-1.5 max-h-56 overflow-y-auto">
-                  {columns.map((c) => (
-                    <li key={c.key}>
-                      <label className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1.5 text-adm-base hover:bg-mist-50">
-                        <input
-                          type="checkbox"
-                          checked={!hidden.has(c.key)}
-                          disabled={!hidden.has(c.key) && shown.length === 1}
-                          onChange={() =>
-                            setHidden((h) => {
-                              const n = new Set(h);
-                              if (n.has(c.key)) n.delete(c.key);
-                              else n.add(c.key);
-                              return n;
-                            })
-                          }
-                          className="size-4 accent-ocean-600"
-                        />
-                        {c.header}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-                <div className="my-2.5 h-px bg-mist-200" />
-                <p className="px-1 text-adm-xs font-semibold text-mist-600">Density</p>
-                <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg bg-mist-100 p-1">
-                  {DENSITIES.map((o) => (
-                    <button
-                      key={o.v}
-                      type="button"
-                      onClick={() => setDensity(o.v)}
-                      aria-pressed={density === o.v}
-                      className={`rounded-md py-1.5 text-adm-base font-medium ${density === o.v ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600"}`}
-                    >
-                      {o.l}
-                    </button>
-                  ))}
-                </div>
-                <div className="my-2.5 h-px bg-mist-200" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    exportCsv();
-                    setMenu(false);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-md px-1 py-1.5 text-left text-adm-base font-medium text-navy-900 hover:bg-mist-50"
-                >
-                  <Icon name="download" className="size-5 text-mist-600" />
-                  Export {filtered.length === rows.length ? "all" : filtered.length} as CSV
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <AppliedFilters chips={chips} onClearAll={clearAll} />
 
-      {/* Tier 2: the remaining filters on one line, opened from the Filters button */}
-      {hasMore && filtersOpen && (
-        <div id={filterRowId} className="flex flex-wrap items-center gap-2 border-b border-mist-200 bg-mist-50 px-4 py-3">
-          {moreFilters.map((f) => filterSelect(f, "min-w-[8.5rem] flex-1 sm:flex-none"))}
-          {filterExtras}
-        </div>
-      )}
-
-      {/* Active filter chips */}
-      {chips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-mist-200 px-4 py-2.5">
-          <span className="text-adm-base text-mist-600">
-            {filtered.length} of {rows.length}
-          </span>
-          {chips.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              onClick={() => {
-                c.clear();
-                setPage(0);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-ocean-50 py-1 pl-3 pr-2 text-adm-base font-medium text-ocean-800 ring-1 ring-inset ring-ocean-200 hover:bg-ocean-100"
-            >
-              {c.label}
-              <Icon name="x" className="size-3.5" />
-              <span className="sr-only">Remove filter</span>
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setActive({});
-              extraChips.forEach((c) => c.clear());
-              setPage(0);
-            }}
-            className="text-adm-base font-medium text-ocean-700 hover:underline"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
-
+      <div className={fill ? "scroll-thin min-h-0 flex-1 overflow-auto" : "contents"}>
       {(unpaged ? filtered : visible).length === 0 ? (
         <EmptyState
           variant="no-results"
           title={emptyTitle}
           body={chips.length ? "Try a different search or clear the filters." : undefined}
-          onClearFilters={
-            chips.length
-              ? () => {
-                  setQuery("");
-                  setActive({});
-                  extraChips.forEach((c) => c.clear());
-                  setPage(0);
-                }
-              : undefined
-          }
+          onClearFilters={chips.length ? clearAll : undefined}
         />
       ) : renderGrid ? (
         renderGrid(unpaged ? filtered : visible, (r) => setOpen(r))
@@ -581,7 +461,9 @@ export default function DataTable<T extends { id: string }>({
                         {rest.filter((c) => c.card !== false).map((c) => (
                           <div key={c.key} className="min-w-0">
                             <dt className="text-adm-xs font-medium text-mist-600">{c.header}</dt>
-                            <dd className="mt-0.5 truncate text-adm-base text-navy-900">{c.cell ? c.cell(r) : String(getValue(c, r) ?? "")}</dd>
+                            <dd className="mt-0.5 truncate text-adm-base text-navy-900">
+                              {c.cell ? c.cell(r) : String(getValue(c, r) ?? "").trim() || <span className="text-mist-600">—</span>}
+                            </dd>
                           </div>
                         ))}
                       </dl>
@@ -599,15 +481,15 @@ export default function DataTable<T extends { id: string }>({
             ref={scrollRef}
             data-left={edges.left || undefined}
             data-right={edges.right || undefined}
-            className={`dt-scroll relative isolate hidden md:block ${edges.wide ? "scroll-thin overflow-x-auto overflow-y-hidden" : ""}`}
+            className={`dt-scroll relative isolate hidden md:block ${!fill && edges.wide ? "scroll-thin overflow-x-auto overflow-y-hidden" : ""}`}
           >
             <table className="w-full min-w-[44rem] border-separate border-spacing-0 text-left text-adm-base">
               <thead>
-                <tr className="text-adm-xs font-medium text-mist-600">
+                <tr className="group/row text-adm-base font-medium text-mist-600">
                   {selectable && (
-                    <th scope="col" className={`${head} left-0 z-30 w-12 min-w-12`}>
+                    <th scope="col" className={`${head} left-0 z-30 w-10 min-w-10 pr-0`}>
                       <label className="adm-hit inline-grid cursor-pointer place-items-center align-middle">
-                        <input ref={selectAllRef} type="checkbox" aria-label="Select all on this page" checked={allVisibleSelected} onChange={toggleAll} className="size-4 cursor-pointer accent-ocean-600" />
+                        <input ref={selectAllRef} type="checkbox" aria-label="Select all on this page" checked={allVisibleSelected} onChange={toggleAll} className={`size-3.5 cursor-pointer accent-ocean-600 ${boxReveal}`} />
                       </label>
                     </th>
                   )}
@@ -618,7 +500,7 @@ export default function DataTable<T extends { id: string }>({
                         key={c.key}
                         scope="col"
                         aria-sort={sorted ? (sort.dir === 1 ? "ascending" : "descending") : undefined}
-                        className={`${head} font-medium ${i === 0 ? `dt-pin-l z-30 ${selectable ? "left-12" : "left-0"}` : "z-20"} ${c.grow ? "max-w-0" : ""} ${alignOf(c)} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
+                        className={`${head} font-medium ${i === 0 ? `dt-pin-l z-30 ${selectable ? "left-10" : "left-0"}` : "z-20"} ${c.grow ? "max-w-0" : ""} ${alignOf(c)} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
                         // max-width 0 + a share of the width: the column absorbs what is spare and its cells truncate
                         style={c.grow ? { width: `${c.grow}%`, minWidth: growMin(c) } : undefined}
                       >
@@ -653,7 +535,7 @@ export default function DataTable<T extends { id: string }>({
                   <tr
                     key={r.id}
                     // Solid row fills: the pinned cells inherit them, so nothing shows through
-                    className={`transition-colors ${selected.has(r.id) ? "bg-ocean-50" : "bg-mist-0 hover:bg-mist-50"} ${renderDetail ? "cursor-pointer focus-visible:bg-mist-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600" : ""}`}
+                    className={`group/row transition-colors ${selected.has(r.id) ? "bg-ocean-50" : "bg-mist-0 hover:bg-mist-50"} ${renderDetail ? "cursor-pointer focus-visible:bg-mist-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600" : ""}`}
                     onClick={() => renderDetail && setOpen(r)}
                     // Keyboard reaches the same detail as a click
                     tabIndex={renderDetail ? 0 : undefined}
@@ -665,20 +547,23 @@ export default function DataTable<T extends { id: string }>({
                     }}
                   >
                     {selectable && (
-                      <td className={`${cellPad} ${PIN} left-0 w-12 min-w-12`} onClick={(e) => e.stopPropagation()}>
+                      <td className={`${cellPad} ${PIN} left-0 w-10 min-w-10 pr-0`} onClick={(e) => e.stopPropagation()}>
                         <label className="adm-hit inline-grid cursor-pointer place-items-center align-middle">
-                          <input type="checkbox" aria-label="Select row" checked={selected.has(r.id)} onChange={() => toggleRow(r.id)} className="size-4 cursor-pointer accent-ocean-600" />
+                          <input type="checkbox" aria-label="Select row" checked={selected.has(r.id)} onChange={() => toggleRow(r.id)} className={`size-3.5 cursor-pointer accent-ocean-600 ${boxReveal}`} />
                         </label>
                       </td>
                     )}
                     {shown.map((c, i) => (
                       <td
                         key={c.key}
-                        className={`${cellPad} align-middle text-navy-900 ${i === 0 ? `dt-pin-l ${PIN} ${selectable ? "left-12" : "left-0"}` : ""} ${c.grow ? "max-w-0 overflow-hidden" : c.cell ? "" : "whitespace-nowrap"} ${alignOf(c)} ${c.numeric ? "tabular-nums" : ""} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
+                        className={`${cellPad} align-middle text-navy-900 ${i === 0 ? `dt-pin-l ${PIN} ${selectable ? "left-10" : "left-0"}` : ""} ${c.grow ? "max-w-0 overflow-hidden" : c.cell ? "" : "whitespace-nowrap"} ${alignOf(c)} ${c.numeric ? "tabular-nums" : ""} ${c.hideBelow ? hide[c.hideBelow] : ""} ${c.className ?? ""}`}
                         style={c.grow ? { minWidth: growMin(c) } : undefined}
                       >
                         {c.cell ? (
                           c.cell(r)
+                        ) : String(getValue(c, r) ?? "").trim() === "" ? (
+                          // An empty value reads as empty, not as a missing cell
+                          <span className="text-mist-600">—</span>
                         ) : c.grow ? (
                           <span className="block truncate" title={String(getValue(c, r) ?? "")}>
                             {String(getValue(c, r) ?? "")}
@@ -702,6 +587,34 @@ export default function DataTable<T extends { id: string }>({
             </table>
           </div>
         </>
+      )}
+
+      </div>
+
+      {/* The CRM footer: count and figures, or the bulk actions while rows are selected */}
+      {fill && (barOn || summary) && (
+        <div className="flex min-h-10 shrink-0 flex-wrap items-center border-t border-mist-200 bg-mist-0 sm:px-1">
+          {barOn ? (
+            <div role="region" aria-label="Selected rows" className="flex flex-wrap items-center gap-2 px-2 py-2 sm:px-2">
+              <span className="mr-2 text-adm-base font-semibold tabular-nums text-navy-900" aria-live="polite">
+                {selected.size} selected
+              </span>
+              {bulkActions?.([...selected])}
+              <button type="button" onClick={() => setSelected(new Set())} className={BTN_SECONDARY}>
+                Deselect all
+              </button>
+            </div>
+          ) : (
+            <dl className="flex flex-wrap items-center text-adm-xs">
+              {summary?.(filtered).map((f) => (
+                <div key={f.label} className="flex items-baseline gap-1.5 border-r border-mist-200 px-3 py-2.5 last:border-r-0">
+                  <dd className={`font-semibold tabular-nums ${f.warn ? "text-status-warning" : "text-navy-900"}`}>{f.value}</dd>
+                  <dt className="text-mist-600">{f.label}</dt>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       )}
 
       {/* Pagination */}
@@ -750,7 +663,7 @@ export default function DataTable<T extends { id: string }>({
                     onClick={() => setPage(p)}
                     aria-label={`Page ${p + 1}`}
                     aria-current={p === current ? "page" : undefined}
-                    className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-navy-900 text-white" : "text-navy-900 hover:bg-mist-100"}`}
+                    className={`grid h-8 min-w-8 place-items-center rounded-md px-1.5 font-medium tabular-nums ${p === current ? "bg-contrast text-on-contrast" : "text-navy-900 hover:bg-mist-100"}`}
                   >
                     {p + 1}
                   </button>
@@ -771,14 +684,14 @@ export default function DataTable<T extends { id: string }>({
       )}
 
       {/* Batch bar: floats bottom-centre over the page (z-40), under drawers and modals (z-50) */}
-      {selectable &&
+      {floatBar &&
         portalReady &&
         createPortal(
           <div
             role="region"
             aria-label="Selected rows"
             inert={!barOn}
-            className={`dt-batch fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl bg-navy-900 py-2 pl-4 pr-2 text-adm-base text-white shadow-xl transition-[opacity,translate,visibility] motion-reduce:transition-none ${
+            className={`dt-batch fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-2 rounded-lg bg-navy-950 py-2 pl-4 pr-2 text-adm-base text-white shadow-xl ring-1 ring-white/10 transition-[opacity,translate,visibility] motion-reduce:transition-none ${
               barOn ? "visible translate-y-0 opacity-100 duration-200 ease-out" : "invisible translate-y-4 opacity-0 duration-150 ease-in"
             }`}
           >
@@ -825,32 +738,29 @@ export function TableTabs<T extends string>({
   options: { value: T; label: string; count?: number; tone?: "attention"; divider?: boolean }[];
 }) {
   return (
-    <div role="tablist" aria-label={label} className="-mb-px flex items-stretch scroll-strip">
-      {options.map((o, i) => {
+    // Plane's underline tabs: they fill the 44px header and the active one sits on its rule
+    <div role="tablist" aria-label={label} className="-mb-px flex h-full min-h-11 items-stretch gap-4 scroll-strip">
+      {options.map((o) => {
         const on = o.value === value;
-        // Zero hides the number, except on the first ("All") tab
-        const showCount = o.count !== undefined && (o.count > 0 || i === 0);
         const flagged = o.tone === "attention" && (o.count ?? 0) > 0;
         return (
           <Fragment key={o.value}>
-            {o.divider && <span aria-hidden className="mx-1 h-5 w-px shrink-0 self-center bg-mist-200" />}
+            {o.divider && <span aria-hidden className="h-4 w-px shrink-0 self-center bg-mist-200" />}
             <button
               type="button"
               role="tab"
               aria-selected={on}
-              aria-label={o.count !== undefined ? `${o.label}, ${o.count}` : undefined}
               onClick={() => onChange(o.value)}
-              className={`inline-flex min-h-12 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-adm-base transition-colors duration-150 ${
-                on ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
+              className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 pt-0.5 text-adm-base leading-none transition-colors duration-150 ${
+                on ? "border-ocean-600 font-semibold text-navy-900" : "border-transparent text-mist-600 hover:border-mist-300 hover:text-navy-900"
               }`}
             >
-              {flagged && <Icon name="alert" className="size-4 shrink-0 text-status-warning" />}
-              {/* Bold copy reserves the active width, so switching tabs never shifts the strip */}
+              {flagged && <Icon name="alert" className="size-3.5 shrink-0 text-status-warning" />}
+              {/* Medium copy reserves the active width, so switching tabs never shifts the strip */}
               <span className="inline-grid">
                 <span aria-hidden className="invisible font-semibold [grid-area:1/1]">{o.label}</span>
-                <span className={`[grid-area:1/1] ${on ? "font-semibold" : "font-medium"}`}>{o.label}</span>
+                <span className="[grid-area:1/1]">{o.label}</span>
               </span>
-              {showCount && <span className={`tabular-nums ${flagged ? "text-status-warning" : on ? "text-navy-900" : "text-mist-600"}`}>{o.count}</span>}
             </button>
           </Fragment>
         );

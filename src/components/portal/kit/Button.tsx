@@ -59,7 +59,8 @@ export function Button({
   autoFocus?: boolean;
 }) {
   // A busy button stays at full strength; only a truly disabled one fades.
-  const cls = `relative inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors not-disabled:active:scale-[0.98] disabled:cursor-not-allowed ${
+  // kit-btn / kit-btn-icon: hooks for the header bar's compact size (globals.css .ph-bar)
+  const cls = `kit-btn ${children ? "" : "kit-btn-icon"} relative inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors not-disabled:active:scale-[0.98] disabled:cursor-not-allowed ${
     loading ? "cursor-progress" : "disabled:opacity-[var(--opacity-disabled)]"
   } ${
     children ? (size === "sm" ? "min-h-8 px-3 text-adm-base" : "min-h-10 px-4 text-adm-base") : size === "sm" ? "size-8" : "size-10"

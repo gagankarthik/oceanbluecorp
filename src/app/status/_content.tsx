@@ -204,16 +204,15 @@ export default function StatusContent() {
 
   useEffect(() => {
     const t = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          void load();
-          return REFRESH;
-        }
-        return c - 1;
-      });
+      if (!document.hidden) setCountdown((c) => (c <= 1 ? REFRESH : c - 1));
     }, 1000);
     return () => clearInterval(t);
-  }, [load]);
+  }, []);
+  // The refresh runs here, not inside the updater, so it fires once per cycle
+  useEffect(() => {
+    if (countdown === REFRESH && data) void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdown]);
 
   const overall: S = loading ? "unknown" : (data?.overall ?? "unknown");
   const banner = loading ? { heading: "Checking status", sub: "Fetching the latest status of our platform services." } : BANNER[overall];

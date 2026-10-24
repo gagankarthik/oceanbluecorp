@@ -310,7 +310,7 @@ export function ResumeAnalysisPanel({ analysis }: { analysis: ResumeAnalysis }) 
 
 /** Same shape as the panels above, for the wait while a resume is analysed. */
 export function ResumeAnalysisSkeleton({ label = "Analyzing the resume" }: { label?: string }) {
-  const card = "rounded-xl bg-mist-0 ring-1 ring-mist-200";
+  const card = "rounded-lg bg-mist-0 ring-1 ring-mist-200";
   return (
     <div role="status" aria-busy="true" aria-label={label} className="grid gap-6">
       <div className={card}>

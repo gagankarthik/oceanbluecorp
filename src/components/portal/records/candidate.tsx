@@ -214,7 +214,7 @@ export function RecordRail({
   const overdue = open.filter((t) => dueState(t.dueAt) === "overdue").length;
   const dueToday = open.filter((t) => dueState(t.dueAt) === "today").length;
   return (
-    <section className="min-w-0 divide-y divide-mist-200 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+    <section className="min-w-0 divide-y divide-mist-200 rounded-lg bg-mist-0 ring-1 ring-mist-200">
       {candidate.jobTitle && (
         <div className="p-5">
           <h2 className={head}>Position</h2>

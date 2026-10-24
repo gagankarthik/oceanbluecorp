@@ -1,0 +1,97 @@
+/*
+ * The portal's dark palette: Plane's own dark tokens (@makeplane/propel 0.7.3,
+ * converted from OKLCH), portal only. Opt-in from the account menu's theme switch.
+ * Keyed on <html> holding the shell with data-theme="dark", so overlays portalled
+ * to <body> follow and the public site never sees it. The same token names are
+ * remapped, so every bg-mist-0 / text-navy-900 / border-mist-200 follows.
+ *   mist   canvas #0f0f10, surface #141415, layers #181a1b / #1d1f20, borders #222425..
+ *   navy   ink: #e4e6e7 primary, #cacdce secondary; 950 is the scrim
+ *   ocean  Plane's dark accent #2893cc, its brand washes and light link ink
+ *   status kelp / buoy / coral as dark washes with light inks
+ */
+html:has([data-portal-shell][data-theme="dark"]) {
+  color-scheme: dark;
+
+  --color-mist-0: #141415; /* surface-1 */
+  --color-mist-50: #0f0f10; /* canvas: tinted grounds sit below the surface */
+  --color-mist-100: #1d1f20; /* layer-1-hover */
+  --color-mist-200: #222425; /* border-subtle */
+  --color-mist-300: #2c2e30; /* border-subtle-1 */
+  --color-mist-400: #36393a; /* border-strong */
+  --color-mist-500: #7a8185; /* icons, disabled */
+  --color-mist-550: #959a9d; /* placeholder */
+  --color-mist-600: #afb3b6; /* text-tertiary */
+  --color-mist-700: #cacdce; /* text-secondary */
+
+  --color-navy-600: #959a9d;
+  --color-navy-700: #afb3b6;
+  --color-navy-800: #cacdce;
+  --color-navy-900: #e4e6e7; /* text-primary */
+  --color-navy-950: #000000;
+
+  --color-ocean-50: #0b2231;
+  --color-ocean-100: #00283d;
+  --color-ocean-200: #003c5c;
+  --color-ocean-300: #005685;
+  --color-ocean-400: #007abb;
+  --color-ocean-500: #2893cc;
+  --color-ocean-600: #007abb; /* accent fills: white text holds 4.5:1 (Plane's #2893cc does not) */
+  --color-ocean-700: #47bfff; /* accent text and links */
+  --color-ocean-800: #8ad6ff;
+  --color-ocean-900: #b8e6ff;
+
+  --color-cyan-100: #102a27;
+  --color-cyan-700: #67e8f9;
+
+  --color-kelp-50: #1f3a2d;
+  --color-kelp-200: #275137;
+  --color-kelp-700: #22c55e;
+  --color-kelp-800: #b1ebc5;
+
+  --color-buoy-50: #31221b;
+  --color-buoy-100: #3e291d;
+  --color-buoy-200: #6c4830;
+  --color-buoy-500: #fbbf24;
+  --color-buoy-600: #f59e0b;
+  --color-buoy-700: #fbbf24;
+  --color-buoy-800: #fed7aa;
+
+  --color-coral-50: #3e1d1e;
+  --color-coral-100: #4c2324;
+  --color-coral-200: #5c2a2c;
+  --color-coral-600: #f97373;
+  --color-coral-700: #f97373;
+  --color-coral-800: #febfc6;
+
+  /* Console tokens with literal values */
+  --p-ocean-25: #0b2231;
+  --p-ocean-10: #091a25;
+  --p-green-fill: #22c55e;
+  --p-green-wash: #1f3a2d;
+  --p-green-rim: #275137;
+  --p-green-ink: #b1ebc5;
+  --p-amber-fill: #fbbf24;
+  --p-amber-wash: #31221b;
+  --p-amber-rim: #6c4830;
+  --p-amber-ink: #fed7aa;
+  --p-red-fill: #f97373;
+  --p-red-wash: #3e1d1e;
+  --p-red-rim: #4c2324;
+  --p-red-ink: #febfc6;
+  --adm-focus-ring: rgb(40 147 204 / 0.35);
+  --adm-scrim: rgb(0 0 0 / 0.6);
+
+  --color-shell: #0f0f10;
+
+  /* A solid ink chip (tooltips, the current page, batch bars): light on dark here */
+  --color-contrast: #f9fbff;
+  --color-on-contrast: #161616;
+}
+
+html:has([data-portal-shell][data-theme="dark"]) body {
+  background: #0f0f10;
+}
+
+html:has([data-portal-shell][data-theme="dark"]) * {
+  scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+}

@@ -8,8 +8,8 @@ import { useAuth, UserRole } from "@/lib/auth";
 import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/company";
 import { hrPortalUrl } from "@/lib/site-content";
 import Icon, { type IconName } from "@/components/portal/icons";
-import { TableTabs } from "@/components/portal/DataTable";
-import { Avatar, Badge, Button, ConfirmDialog, EmptyState, Modal, Page, PageHeader, Skeleton } from "@/components/portal/kit";
+import DataTable, { TableTabs, type Column } from "@/components/portal/DataTable";
+import { Avatar, Badge, Button, ConfirmDialog, EmptyState, Modal, Page, PageHeader, TableSkeleton } from "@/components/portal/kit";
 import { FormError, inputCls, useToast } from "@/components/portal/relationships/shared";
 
 type Team = "Leadership" | "People & HR" | "Recruiting" | "Sales";
@@ -65,7 +65,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
           // Clipboard can be blocked; the value stays visible and selectable.
         }
       }}
-      className={`grid size-10 shrink-0 place-items-center rounded-lg transition-colors duration-150 ${copied ? "text-status-success" : "text-mist-500 hover:bg-mist-100 hover:text-navy-900"}`}
+      className={`grid size-7 shrink-0 place-items-center rounded-md opacity-0 transition-[color,background-color,opacity] duration-150 group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 ${copied ? "text-status-success opacity-100" : "text-mist-500 hover:bg-mist-100 hover:text-navy-900"}`}
     >
       <Icon name={copied ? "check" : "copy"} className="size-4" />
     </button>
@@ -75,7 +75,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 function ContactCell({ icon, href, value, label }: { icon: IconName; href?: string; value?: string; label: string }) {
   if (!value) {
     return (
-      <span className="flex min-h-10 min-w-0 items-center gap-2 text-adm-base text-mist-600">
+      <span className="flex min-w-0 items-center gap-2 text-adm-base text-mist-600">
         <Icon name={icon} className="size-4 shrink-0" />
         <span className="md:sr-only">No {label.split(" ")[0]} on record</span>
         <span aria-hidden className="hidden md:inline">–</span>
@@ -90,51 +90,6 @@ function ContactCell({ icon, href, value, label }: { icon: IconName; href?: stri
       </a>
       <CopyButton value={value} label={label} />
     </span>
-  );
-}
-
-const rowCols = "md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.9fr)]";
-
-function PersonRow({ m, showTeam }: { m: TeamMember; showTeam: boolean }) {
-  return (
-    <li className={`grid gap-x-4 px-4 py-2.5 md:items-center ${rowCols}`}>
-      <div className="flex min-h-10 min-w-0 items-center gap-3">
-        <Avatar name={m.name} />
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2">
-            <p className="min-w-0 truncate text-adm-base font-semibold text-navy-900">{m.name}</p>
-            {showTeam && <Badge>{m.team}</Badge>}
-          </div>
-          <p className="truncate text-adm-base text-mist-600">{m.designation || "No title on record"}</p>
-        </div>
-      </div>
-      <div className="min-w-0 pl-12 md:pl-0">
-        <ContactCell icon="mail" href={`mailto:${m.email}`} value={m.email} label="email address" />
-      </div>
-      <div className="min-w-0 pl-12 md:pl-0">
-        <ContactCell icon="phone" href={m.phone ? `tel:${m.phone.replace(/[^+\d]/g, "")}` : undefined} value={m.phone} label="phone number" />
-      </div>
-    </li>
-  );
-}
-
-function DirectorySkeleton() {
-  return (
-    <ul role="status" aria-label="Loading the directory" className="divide-y divide-mist-100">
-      {Array.from({ length: 6 }, (_, i) => (
-        <li key={i} className={`grid gap-x-4 gap-y-2 px-4 py-3.5 md:items-center ${rowCols}`}>
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-9 rounded-full" />
-            <div className="grid flex-1 gap-2">
-              <Skeleton className="h-3.5 w-36" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-          <Skeleton className="ml-12 h-3.5 w-48 md:ml-0" />
-          <Skeleton className="ml-12 h-3.5 w-32 md:ml-0" />
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -259,7 +214,7 @@ function DirectoryEditor({ initial, onClose, onSaved }: { initial: TeamMember[];
             {rows.map((m, i) => {
               const id = (f: string) => `dir-${i}-${f}`;
               return (
-                <li key={i} className="grid gap-3 rounded-xl bg-mist-50 p-4 ring-1 ring-inset ring-mist-200 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-start">
+                <li key={i} className="grid gap-3 rounded-lg bg-mist-50 p-4 ring-1 ring-inset ring-mist-200 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-start">
                   {(
                     [
                       ["name", "Name", "text"],
@@ -328,7 +283,7 @@ interface Topic {
 }
 
 const topicCls =
-  "group flex h-full min-w-0 flex-col rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200 transition-colors duration-150 hover:ring-ocean-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-600";
+  "group flex h-full min-w-0 flex-col rounded-lg border border-mist-200 bg-mist-0 p-4 transition-colors duration-150 hover:border-mist-300 hover:bg-mist-50 focus-visible:outline-2 focus-visible:outline-ocean-600";
 
 function TopicCard({ t }: { t: Topic }) {
   const inner = (
@@ -399,15 +354,45 @@ export default function HelpView() {
     setAttempt((a) => a + 1);
   };
 
-  const q = query.trim().toLowerCase();
-  const searched = useMemo(
-    () =>
-      members
-        .filter((m) => !q || [m.name, m.designation, m.email, m.phone, m.team].some((f) => f?.toLowerCase().includes(q)))
-        .sort((a, b) => teamRank(a.team) - teamRank(b.team) || a.name.localeCompare(b.name)),
-    [q, members],
+  // Seniority order by default; the table's own search and sort work from here
+  const searched = useMemo(() => [...members].sort((a, b) => teamRank(a.team) - teamRank(b.team) || a.name.localeCompare(b.name)), [members]);
+  const rows = useMemo(
+    () => (team === "all" ? searched : searched.filter((m) => m.team === team)).map((m, i) => ({ ...m, id: `${m.email}|${m.name}|${i}` })),
+    [searched, team],
   );
-  const rows = team === "all" ? searched : searched.filter((m) => m.team === team);
+  const columns: Column<TeamMember & { id: string }>[] = [
+    {
+      key: "name",
+      header: "Person",
+      sortable: true,
+      grow: 30,
+      value: (m) => m.name,
+      cell: (m) => (
+        <span className="flex min-w-0 items-center gap-3">
+          <Avatar name={m.name} size="sm" />
+          <span className="min-w-0">
+            <span className="block truncate font-medium text-navy-900">{m.name}</span>
+            <span className="block truncate text-adm-xs text-mist-600">{m.designation || "No title on record"}</span>
+          </span>
+        </span>
+      ),
+    },
+    { key: "team", header: "Team", sortable: true, value: (m) => m.team, cell: (m) => <Badge>{m.team}</Badge> },
+    {
+      key: "email",
+      header: "Email",
+      sortable: true,
+      grow: 30,
+      value: (m) => m.email,
+      cell: (m) => <ContactCell icon="mail" href={`mailto:${m.email}`} value={m.email} label="email address" />,
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      value: (m) => m.phone,
+      cell: (m) => <ContactCell icon="phone" href={m.phone ? `tel:${m.phone.replace(/[^+\d]/g, "")}` : undefined} value={m.phone} label="phone number" />,
+    },
+  ];
 
   const help: Topic[] = [
     { title: "Report a problem", value: CONTACT_EMAIL, icon: "alert" as IconName, href: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Portal problem")}`, show: true },
@@ -416,13 +401,8 @@ export default function HelpView() {
     { title: "Portal guide", value: "Routes, roles and API reference", icon: "code" as IconName, href: "/portal/docs", show: isAdmin },
   ].filter((t) => t.show);
 
-  const clear = () => {
-    setQuery("");
-    setTeam("all");
-  };
-
   return (
-    <Page>
+    <Page tinted>
       <PageHeader
         title="Help"
         icon="help"
@@ -454,70 +434,49 @@ export default function HelpView() {
         <h2 id="directory-title" className="text-adm-md font-semibold text-navy-900">
           Team directory
         </h2>
-        <div className="min-w-0 overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
-          <div className="flex flex-col-reverse gap-x-4 border-b border-mist-200 px-2 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
+        {loadFailed && !loading && (
+          <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg border border-status-warning-line bg-status-warning-soft px-4 py-2 text-adm-base text-status-warning">
+            <Icon name="alert" className="size-4 shrink-0" />
+            <span className="min-w-0 flex-1 basis-60">The saved directory couldn&apos;t be loaded, so this is the built-in list and may be out of date.</span>
+            <Button variant="secondary" size="sm" icon="refresh" onClick={retry}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {loading ? (
+          <TableSkeleton rows={6} columns={4} />
+        ) : members.length === 0 ? (
+          <EmptyState
+            framed
+            icon="userCheck"
+            title="No one in the directory yet"
+            body={canEdit ? "Add people with Edit directory." : "Ask an admin to add the team."}
+            primary={canEdit ? { label: "Edit directory", icon: "edit", onClick: () => setEditing(true) } : undefined}
+          />
+        ) : (
+          <DataTable
+            rows={rows}
+            columns={columns}
+            tabs={
               <TableTabs
                 label="Team"
                 value={team}
                 onChange={setTeam}
-                options={[{ value: "all" as TeamFilter, label: "All", count: loading ? undefined : searched.length }, ...TEAM_ORDER.map((t) => ({ value: t.key as TeamFilter, label: t.key, count: loading ? undefined : searched.filter((m) => m.team === t.key).length }))]}
+                options={[{ value: "all" as TeamFilter, label: "All" }, ...TEAM_ORDER.map((t) => ({ value: t.key as TeamFilter, label: t.key }))]}
               />
-            </div>
-            <label className="relative block w-full shrink-0 px-2 pt-3 sm:w-64 sm:px-0 sm:py-2">
-              <span className="sr-only">Search people</span>
-              <span className="relative block">
-                <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search people"
-                className="h-9 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
-              />
-              </span>
-            </label>
-          </div>
-
-          {loadFailed && !loading && (
-            <div role="status" className="flex flex-wrap items-center gap-3 border-b border-status-warning-line bg-status-warning-soft px-4 py-2 text-adm-base text-status-warning">
-              <Icon name="alert" className="size-4 shrink-0" />
-              <span className="min-w-0 flex-1 basis-60">The saved directory couldn&apos;t be loaded, so this is the built-in list and may be out of date.</span>
-              <Button variant="secondary" size="sm" icon="refresh" onClick={retry}>
-                Try again
-              </Button>
-            </div>
-          )}
-
-          {loading ? (
-            <DirectorySkeleton />
-          ) : rows.length === 0 ? (
-            q ? (
-              <EmptyState variant="no-results" title={`No one matches “${query.trim()}”`} body="Try a name, a title or an email." onClearFilters={clear} />
-            ) : (
-              <EmptyState
-                icon="userCheck"
-                title={team === "all" ? "No one in the directory yet" : "No one in this team yet"}
-                body={canEdit ? "Add people with Edit directory." : "Pick another team."}
-                primary={canEdit ? { label: "Edit directory", icon: "edit", onClick: () => setEditing(true) } : undefined}
-                secondary={team === "all" ? undefined : { label: "Show everyone", onClick: () => setTeam("all") }}
-              />
-            )
-          ) : (
-            <>
-              <div className={`hidden gap-x-4 border-b border-mist-100 bg-mist-50 px-4 py-2 text-adm-xs font-medium text-mist-600 md:grid ${rowCols}`}>
-                <span>Person</span>
-                <span>Email</span>
-                <span>Phone</span>
-              </div>
-              <ul className="divide-y divide-mist-100">
-                {rows.map((m, i) => (
-                  <PersonRow key={`${m.email}${m.name}${i}`} m={m} showTeam={team === "all"} />
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+            }
+            initialQuery={query}
+            onStateChange={(st) => setQuery(st.query)}
+            searchPlaceholder="Search name, title, email or phone"
+            searchMatch={(m, q2) => [m.designation, m.phone, m.team].some((f) => f?.toLowerCase().includes(q2))}
+            initialSort={null}
+            storageKey="team-directory"
+            exportName="team-directory"
+            emptyTitle={team === "all" ? "No one matches" : "No one in this team matches"}
+            pageSize={25}
+          />
+        )}
       </section>
 
       {editing && canEdit && <DirectoryEditor initial={members} onClose={() => setEditing(false)} onSaved={setMembers} />}

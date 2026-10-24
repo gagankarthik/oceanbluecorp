@@ -17,7 +17,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 
 const jiti = createJiti(import.meta.url, {
-  alias: { "@": resolve(root, "src") },
+  // "server-only" throws outside a React server build; the pure modules it guards are still testable
+  alias: { "@": resolve(root, "src"), "server-only": resolve(here, "stubs/server-only.mjs") },
   interopDefault: true,
 });
 

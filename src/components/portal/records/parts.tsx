@@ -43,7 +43,7 @@ export function RecordTabs<K extends string>({
         </select>
         <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
       </div>
-      <div role="tablist" aria-label={label} className=" hidden gap-1 scroll-strip border-b border-mist-200 sm:flex">
+      <div role="tablist" aria-label={label} className="hidden gap-5 scroll-strip border-b border-mist-200 sm:flex">
         {tabs.map((t) => {
           const on = t.key === value;
           return (
@@ -53,8 +53,8 @@ export function RecordTabs<K extends string>({
               role="tab"
               aria-selected={on}
               onClick={() => onChange(t.key)}
-              className={`-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-adm-base font-medium transition-colors ${
-                on ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:border-mist-300 hover:text-navy-900"
+              className={`-mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 text-adm-base transition-colors duration-150 ${
+                on ? "border-ocean-600 font-semibold text-navy-900" : "border-transparent text-mist-600 hover:border-mist-300 hover:text-navy-900"
               }`}
             >
               {t.icon && <Icon name={t.icon} className={`size-4 ${on ? "text-ocean-600" : "text-mist-500"}`} />}

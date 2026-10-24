@@ -1,5 +1,5 @@
-import { ListPageSkeleton } from "@/components/portal/kit/skeletons";
+import { CrmListSkeleton } from "@/components/portal/kit/skeletons";
 
 export default function Loading() {
-  return <ListPageSkeleton label="Loading users" actions={2} kpis={4} insights={false} />;
+  return <CrmListSkeleton page label="Loading users" tabs={3} filters={2} />;
 }

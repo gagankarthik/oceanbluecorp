@@ -1,143 +1,134 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import type { Application } from "@/lib/aws/dynamodb";
 import { useToast } from "@/components/portal/toast";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
+import Icon from "@/components/portal/icons";
 import Select from "@/components/portal/Select";
-import { DonutChart, TrendChart } from "@/components/portal/charts";
-import { InlineSelect, KpiButton, RatingValue, StageBadge, StageFunnel, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
-import { BOARD, FLOW, STAGE_LABEL, buckets, countIn, locationOf, reachedAt, stageLabel, tally, type Stage } from "@/components/portal/recruiting/model";
-import { BoardView, SavedViewsMenu, ViewSwitch, nextStage, type SavedSearch } from "@/components/portal/recruiting/applications-views";
+import { Drawer } from "@/components/portal/kit/overlay";
+import { InlineSelect, RatingValue, StageBadge, StageProgress, StarInput, Tags } from "@/components/portal/recruiting/bits";
+import { stageState } from "@/components/portal/recruiting/model";
+import { BOARD, STAGE_LABEL, locationOf, stageLabel, type Stage } from "@/components/portal/recruiting/model";
+import { nextStage } from "@/components/portal/recruiting/applications-views";
 import {
-  Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel,
-  StatCard, usePortalRouter,
+  Avatar, Button, ConfirmDialog, PeekTitle, PeekFooter, PeekSection, deleteConfirmText, EmptyState, ErrorState, KeyValue, usePortalRouter,
+  CrmListSkeleton, ListHeader, HeaderSearch, FilterMenu, DisplayMenu, AppliedFilters, BTN_PRIMARY,
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
-import { useAuth } from "@/lib/auth";
 import { refreshApplications, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { fmtDate } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import { haystackOf, matchesTerms, searchTerms } from "@/lib/candidate-search";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { STATE_NAME, WORK_AUTH_OPTIONS, hireTypeLabel, stateOf } from "@/components/portal/console/theme";
-import { daysInStage, everReached, isStale, STALE_DAYS, TERMINAL } from "@/lib/pipeline";
+import { hireTypeLabel, stateOf } from "@/components/portal/console/theme";
+import { DAY, daysInStage, isStale, STALE_DAYS, TERMINAL } from "@/lib/pipeline";
 
-type Row = Application & { searchText?: string };
-
-type SavedView = "all" | "mine" | "review" | "interviewing" | "offers" | "stale" | "hired";
-const SAVED: { key: SavedView; label: string; test: (a: Row, me: { id?: string; name?: string }) => boolean; tone?: "attention"; divider?: boolean }[] = [
-  { key: "all", label: "All", test: () => true },
-  { key: "mine", label: "My queue", test: (a, me) => !!a.ownership && (a.ownership === me.id || a.ownershipName === me.name) },
-  { key: "review", label: "To review", test: (a) => a.status === "pending" || a.status === "reviewing" },
-  { key: "interviewing", label: "Interviewing", test: (a) => a.status === "interview" },
-  { key: "offers", label: "Offers", test: (a) => a.status === "offered" },
-  { key: "hired", label: "Hired", test: (a) => a.status === "hired" },
-  // Same rule as the dashboard's "Stalled" count.
-  { key: "stale", label: "Stalled", test: (a) => isStale(a), tone: "attention", divider: true },
-];
+type Row = Application;
+type SortKey = "name" | "jobTitle" | "status" | "progress" | "owner" | "rating" | "activity";
+type Sort = { key: SortKey; dir: 1 | -1 } | null;
 
 const stageOptions = BOARD.map((s) => ({ value: s, label: STAGE_LABEL[s] }));
+const ALL = "";
+const IN_PROGRESS = "inprogress";
+const STALLED = "stalled";
+const UNASSIGNED = "__unassigned";
 
-/** Stage filter value for every candidate not yet hired or rejected. */
-const IN_PROGRESS = "In progress";
-const UNASSIGNED = "Unassigned";
-const NO_LOCATION = "No location recorded";
-/** Filters on the market (state), not the city spelling; legacy full names normalise to the same state. */
-const stateName = (a: Row) => {
-  const code = stateOf(a.state);
-  return code ? (STATE_NAME.get(code) ?? code) : NO_LOCATION;
+/** The latest thing that happened to the record: a stage move, or the application itself. */
+const lastActivity = (a: Row) => {
+  const h = a.statusHistory?.at(-1);
+  return h?.changedAt ? { at: h.changedAt, label: stageLabel(h.status) } : { at: a.appliedAt, label: "Applied" };
 };
-const RATING_OPTS = ["1+ stars", "2+ stars", "3+ stars", "4+ stars", "5 stars"];
-/** All terms must match ("java aws" means both), over the server-built resume haystack. */
-const matchesQuery = (a: Row, q: string) => matchesTerms(haystackOf(a), searchTerms(q));
+const progressOf = (a: Row) => (a.status === "hired" ? 6 : a.status === "rejected" ? -1 : BOARD.indexOf(a.status));
+/** "Oct 19" this year, "Oct 19, 2025" before it: the year only when it says something. */
+const shortDate = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) });
+};
+const avg = (xs: number[]) => (xs.length ? xs.reduce((n, x) => n + x, 0) / xs.length : 0);
 
-/** ?status= value to the Stage filter's label. */
-const stageFilterFor = (s: string | null) =>
-  !s ? null : s === "inprogress" || s === "open" ? IN_PROGRESS : (BOARD as string[]).includes(s) || s === "active" || s === "inactive" ? STAGE_LABEL[s as Stage] : null;
+const SORTS: { value: string; label: string }[] = [
+  { value: ALL, label: "Newest" },
+  { value: "name:1", label: "Applicant, A to Z" },
+  { value: "status:1", label: "Stage" },
+  { value: "progress:-1", label: "Furthest along" },
+  { value: "activity:-1", label: "Recent activity" },
+  { value: "activity:1", label: "Longest quiet" },
+  { value: "rating:-1", label: "Highest rated" },
+  { value: "owner:1", label: "Owner, A to Z" },
+];
+const WINDOWS = [
+  { value: ALL, label: "Any time" },
+  { value: "7", label: "7 days" },
+  { value: "14", label: "14 days" },
+  { value: "30", label: "30 days" },
+  { value: "90", label: "90 days" },
+];
 
-type TableState = { query: string; filters: Record<string, string> };
-/** `focus` is read from views saved before the stage moved into the filters. */
-type ListState = { saved: SavedView; view: "board" | "table"; focus?: Stage | null } & TableState;
+const sortValue = (a: Row, key: SortKey): string | number => {
+  switch (key) {
+    case "name": return (a.name || a.email).toLowerCase();
+    case "jobTitle": return (a.jobTitle || "").toLowerCase();
+    case "status": return BOARD.indexOf(a.status);
+    case "progress": return progressOf(a);
+    case "owner": return (a.ownershipName || "~").toLowerCase();
+    case "rating": return a.rating || 0;
+    case "activity": return new Date(lastActivity(a).at).getTime();
+  }
+};
 
-/** Saved searches from the old console, mapped onto this screen's filters. */
-type LegacyState = { savedView?: string; view?: string; search?: string; status?: string; position?: string; location?: string; source?: string; auth?: string; hire?: string; minRating?: number };
-function fromLegacy(st: LegacyState): ListState {
-  const f: Record<string, string> = {};
-  const set = (k: string, v?: string) => {
-    if (v && v !== "all") f[k] = v;
-  };
-  set("stage", st.status ? STAGE_LABEL[st.status as Stage] : undefined);
-  set("position", st.position);
-  set("location", st.location === "__none" ? NO_LOCATION : st.location && st.location !== "all" ? (STATE_NAME.get(st.location) ?? st.location) : undefined);
-  set("source", st.source);
-  set("auth", st.auth);
-  set("hire", st.hire && st.hire !== "all" ? hireTypeLabel(st.hire) : undefined);
-  if (st.minRating && st.minRating > 0) f.rating = RATING_OPTS[Math.min(5, st.minRating) - 1];
-  return {
-    saved: SAVED.some((x) => x.key === st.savedView) ? (st.savedView as SavedView) : "all",
-    view: st.view === "kanban" ? "board" : "table",
-    query: typeof st.search === "string" ? st.search : "",
-    filters: f,
-  };
-}
+// Plane's spreadsheet: a grid of max-content columns spread edge to edge, each row a subgrid so
+// the cells line up; 44px header and rows, one line per cell.
+const GRID = "grid min-w-max grid-cols-[repeat(8,max-content)] justify-between";
+const ROW = "col-span-full grid grid-cols-subgrid";
+const TH = "flex h-11 items-center whitespace-nowrap px-3 text-adm-base font-medium text-mist-600";
+const TD = "flex h-11 min-w-0 items-center whitespace-nowrap px-3";
+
+// md and up gets the grid, phones the cards: one is rendered, never both. Rows only exist after
+// the client fetch, so reading the media query directly never meets a hydration pass.
+const MD = "(min-width: 768px)";
+const subscribeMd = (cb: () => void) => {
+  const mql = window.matchMedia(MD);
+  mql.addEventListener("change", cb);
+  return () => mql.removeEventListener("change", cb);
+};
+const useIsDesktop = () => useSyncExternalStore(subscribeMd, () => window.matchMedia(MD).matches, () => true);
 
 export default function ApplicationsView() {
   const notify = useToast();
   const router = usePortalRouter();
-  const { user } = useAuth();
-  const me = useMemo(() => ({ id: user?.id, name: user?.name }), [user?.id, user?.name]);
-
   const appsRes = useApplicationSummaries();
   const jobsRes = useJobSummaries();
   const { setData } = appsRes;
 
-  const [view, setView] = useState<"board" | "table">("table");
-  const [insightsOpen, setInsightsOpen] = useState(false);
-  const [saved, setSaved] = useState<SavedView>("all");
-  // KPIs, the funnel, deep links and saved views all write the table's filters: one bar, every constraint a chip.
-  const [table, setTable] = useState<TableState>({ query: "", filters: {} });
-  const [tableKey, setTableKey] = useState(0);
+  const [query, setQuery] = useState("");
+  const [sortParam, setSortParam] = useState(ALL);
+  const [stage, setStage] = useState(ALL);
+  const [owner, setOwner] = useState(ALL);
+  const [windowDays, setWindowDays] = useState(ALL);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [openId, setOpenId] = useState<string | null>(null);
   const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [bulkStage, setBulkStage] = useState("");
-  const closeDetail = useRef<(() => void) | null>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
-  // Dashboard drill-through: ?status=interview|inprogress, ?owner=unassigned, ?saved=stale, ?view=board
+  // Dashboard drill-through: ?status=interview|inprogress, ?owner=unassigned, ?saved=stale
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
-    const f: Record<string, string> = {};
-    const stage = stageFilterFor(sp.get("status") ?? sp.get("stage"));
-    if (stage) f.stage = stage;
-    const owner = sp.get("owner");
-    if (owner) f.owner = owner === "unassigned" || owner === "none" ? UNASSIGNED : owner;
-    if (Object.keys(f).length) {
-      setTable((t) => ({ ...t, filters: f }));
-      setTableKey((k) => k + 1);
-    }
-    const sv = sp.get("saved");
-    if (sv && SAVED.some((x) => x.key === sv)) setSaved(sv as SavedView);
-    const v = sp.get("view");
-    if (v === "board" || v === "kanban") setView("board");
-    else if (v === "table") setView("table");
+    const s = sp.get("status") ?? sp.get("stage");
+    if (s === "inprogress" || s === "open") setStage(IN_PROGRESS);
+    else if (s && (BOARD as string[]).includes(s)) setStage(s);
+    if (sp.get("saved") === "stale") setStage(STALLED);
+    const o = sp.get("owner");
+    if (o) setOwner(o === "unassigned" || o === "none" ? UNASSIGNED : o);
   }, []);
 
   const refreshFailed = !!(appsRes.applications && appsRes.error);
   useEffect(() => {
     if (refreshFailed) notify("Couldn't refresh applications. Showing the last loaded list.", { tone: "error" });
   }, [refreshFailed, notify]);
-
-  const [savedList, setSavedList] = useLocalStorage<SavedSearch<ListState>[]>("portal.applications.savedSearches", []);
-  const [legacyList, setLegacyList] = useLocalStorage<SavedSearch<LegacyState>[] | null>("adm.applications.savedSearches", null);
-  useEffect(() => {
-    if (!Array.isArray(legacyList) || !legacyList.length) return;
-    setSavedList((prev) => {
-      const cur = Array.isArray(prev) ? prev : [];
-      return [...cur, ...legacyList.filter((l) => !cur.some((p) => p.name === l.name)).map((l) => ({ ...l, state: fromLegacy(l.state ?? {}) }))];
-    });
-    setLegacyList([]);
-  }, [legacyList, setLegacyList, setSavedList]);
-  const savedSearches = Array.isArray(savedList) ? savedList : [];
 
   const rows: Row[] = useMemo(() => {
     const titles = new Map((jobsRes.jobs ?? []).map((j) => [j.id, j.title]));
@@ -146,11 +137,49 @@ export default function ApplicationsView() {
       .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
   }, [appsRes.applications, jobsRes.jobs]);
 
+  const sort: Sort = sortParam ? { key: sortParam.split(":")[0] as SortKey, dir: sortParam.endsWith(":-1") ? -1 : 1 } : null;
+
+  const deferredQuery = useDeferredValue(query);
+  const visible = useMemo(() => {
+    const terms = searchTerms(deferredQuery);
+    const since = windowDays ? Date.now() - Number(windowDays) * DAY : 0;
+    const out = rows.filter((a) => {
+      if (stage === IN_PROGRESS && TERMINAL.has(a.status)) return false;
+      if (stage === STALLED && !isStale(a)) return false;
+      if (stage && stage !== IN_PROGRESS && stage !== STALLED && a.status !== stage) return false;
+      if (owner === UNASSIGNED && (a.ownership || a.ownershipName)) return false;
+      if (owner && owner !== UNASSIGNED && a.ownershipName !== owner) return false;
+      if (since && new Date(lastActivity(a).at).getTime() < since) return false;
+      return !terms.length || matchesTerms(haystackOf(a), terms);
+    });
+    if (!sort) return out;
+    return [...out].sort((a, b) => {
+      const av = sortValue(a, sort.key), bv = sortValue(b, sort.key);
+      return (typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv))) * sort.dir;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, deferredQuery, stage, owner, windowDays, sortParam]);
+
+  const allSelected = visible.length > 0 && visible.every((a) => selected.has(a.id));
+  const someSelected = !allSelected && visible.some((a) => selected.has(a.id));
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected;
+  }, [someSelected]);
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(visible.map((a) => a.id)));
+  const headSort = (key: SortKey) =>
+    setSortParam((p) => (p === `${key}:1` ? `${key}:-1` : p === `${key}:-1` ? ALL : `${key}:1`));
+
   const patch = useCallback(
     (fn: (l: Application[]) => Application[]) => setData((d) => ({ ...d, applications: fn(d?.applications ?? []) })),
     [setData],
   );
-
   const put = (id: string, body: Partial<Application>) =>
     fetch(`/api/applications/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => {
       if (!r.ok) throw new Error();
@@ -205,316 +234,109 @@ export default function ApplicationsView() {
     if (gone.length) {
       void refreshApplications();
       notify(`${gone.length} application${gone.length > 1 ? "s" : ""} deleted`);
+      setSelected((s) => new Set([...s].filter((id) => !gone.includes(id))));
+      if (openId && gone.includes(openId)) setOpenId(null);
     }
     if (gone.length < deleteIds.length) notify(`Couldn't delete ${deleteIds.length - gone.length}. Try again.`, { tone: "error" });
-    if (gone.length) closeDetail.current?.();
-    closeDetail.current = null;
     setDeleting(false);
     setDeleteIds(null);
   };
 
-  const inSaved = useMemo(() => rows.filter((a) => SAVED.find((s) => s.key === saved)!.test(a, me)), [rows, saved, me]);
-
-  const setFilters = (filters: Record<string, string>) => {
-    setTable((t) => ({ ...t, filters }));
-    setTableKey((k) => k + 1);
-  };
-  const toggleStage = (label: string | null) => {
-    const next = { ...table.filters };
-    if (!label || next.stage === label) delete next.stage;
-    else next.stage = label;
-    setFilters(next);
-  };
-
-  const loading = appsRes.isLoading || jobsRes.isLoading;
-  const failed = (!appsRes.applications && appsRes.error) || (!jobsRes.jobs && jobsRes.error);
-
-  const weeks = buckets(84);
-  const appliedWeekly = countIn(weeks, rows.map((a) => new Date(a.appliedAt).getTime()));
-  const interviewWeekly = countIn(weeks, rows.map((a) => reachedAt(a, "interview")));
-  const hiredWeekly = countIn(weeks, rows.map((a) => reachedAt(a, "hired")));
-  const byStage = (s: Stage) => rows.filter((a) => a.status === s).length;
-  const funnel = [...FLOW, "hired" as Stage].map((s, i) => ({
-    label: STAGE_LABEL[s],
-    value: s === "hired" ? byStage("hired") : rows.filter((a) => a.status === "hired" || FLOW.slice(i).some((f) => everReached(a, f))).length,
-  }));
-  const sources = tally(rows.map((a) => a.source || "Unattributed"));
-  const positions = [...new Set(rows.map((a) => a.jobTitle).filter((t): t is string => !!t))].sort();
-  const opts = (vals: (string | undefined)[]) => [...new Set(vals.filter((v): v is string => !!v))].sort();
-  const benchStages = (["active", "inactive"] as Stage[]).filter((s) => rows.some((a) => a.status === s));
-
-  const columns: Column<Row>[] = [
-    {
-      key: "name",
-      header: "Applicant",
-      sortable: true,
-      grow: 30,
-      value: (a) => a.name || a.email,
-      cell: (a) => (
-        <span className="flex min-w-0 items-center gap-3">
-          <Avatar name={a.name || a.email} size="sm" />
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate font-semibold" title={a.name || a.email}>{a.name || a.email}</span>
-            <span className="truncate text-adm-xs text-mist-600">{a.applicationId || locationOf(a)}</span>
-          </span>
-        </span>
-      ),
-    },
-    { key: "email", header: "Email", card: false, defaultHidden: true, value: (a) => a.email },
-    { key: "phone", header: "Phone", card: false, defaultHidden: true, value: (a) => a.phone ?? "" },
-    { key: "jobTitle", header: "Position", sortable: true, grow: 20, hideBelow: "md", value: (a) => a.jobTitle ?? "", cell: (a) => <span className="block truncate text-mist-700" title={a.jobTitle || undefined}>{a.jobTitle || "—"}</span> },
-    {
-      key: "status",
-      header: "Stage",
-      sortable: true,
-      align: "center",
-      value: (a) => stageLabel(a.status),
-      cell: (a) => (
-        <InlineSelect
-          value={a.status}
-          label={`Stage for ${a.name || a.email}`}
-          dot={stageDot(a.status)}
-          options={stageOptions.some((o) => o.value === a.status) ? stageOptions : [...stageOptions, { value: a.status, label: stageLabel(a.status) }]}
-          onChange={(v) => void move(a, v as Stage)}
-        />
-      ),
-    },
-    {
-      key: "age",
-      header: "In stage",
-      sortable: true,
-      numeric: true,
-      hideBelow: "xl",
-      value: (a) => (TERMINAL.has(a.status) ? -1 : daysInStage(a)),
-      cell: (a) => {
-        if (TERMINAL.has(a.status)) return <span className="text-mist-600">&mdash;</span>;
-        const d = daysInStage(a);
-        return <span className={`tabular-nums ${d >= STALE_DAYS ? "font-semibold text-status-warning" : "text-mist-600"}`}>{d}d</span>;
-      },
-    },
-    { key: "location", header: "Location", sortable: true, card: false, hideBelow: "2xl", value: (a) => locationOf(a) },
-    { key: "owner", header: "Owner", sortable: true, hideBelow: "lg", value: (a) => a.ownershipName ?? "", cell: (a) => (a.ownershipName ? <span className="block max-w-40 truncate whitespace-nowrap text-adm-base" title={a.ownershipName}>{a.ownershipName}</span> : <span className="whitespace-nowrap text-adm-base font-medium text-status-danger">Unassigned</span>) },
-    { key: "source", header: "Source", sortable: true, card: false, defaultHidden: true, value: (a) => a.source ?? "" },
-    { key: "hireType", header: "Hire type", sortable: true, card: false, defaultHidden: true, value: (a) => hireTypeLabel(a.hireType) },
-    { key: "workAuth", header: "Work authorization", card: false, defaultHidden: true, value: (a) => a.workAuthorization ?? "" },
-    { key: "skills", header: "Skills", card: false, defaultHidden: true, value: (a) => a.skills?.join(", ") ?? "" },
-    { key: "appliedAt", header: "Applied", sortable: true, card: false, hideBelow: "2xl", value: (a) => a.appliedAt, cell: (a) => <span className="text-adm-base tabular-nums text-mist-600">{fmtDate(a.appliedAt)}</span> },
-    { key: "rating", header: "Rating", sortable: true, hideBelow: "xl", value: (a) => a.rating || 0, cell: (a) => <RatingValue value={a.rating} /> },
-  ];
-
-  const filters: Filter<Row>[] = [
-    {
-      key: "stage",
-      label: "Stage",
-      options: [IN_PROGRESS, ...BOARD.map((s) => STAGE_LABEL[s]), ...benchStages.map((s) => STAGE_LABEL[s])],
-      value: (a) => stageLabel(a.status),
-      match: (a, o) => (o === IN_PROGRESS ? !TERMINAL.has(a.status) : stageLabel(a.status) === o),
-    },
-    {
-      key: "owner",
-      label: "Owner",
-      options: [UNASSIGNED, ...opts(rows.map((a) => a.ownershipName))],
-      value: (a) => a.ownershipName || UNASSIGNED,
-      match: (a, o) => (o === UNASSIGNED ? !a.ownership && !a.ownershipName : a.ownershipName === o),
-    },
-    { key: "position", label: "Position", options: positions, value: (a) => a.jobTitle ?? "" },
-    {
-      key: "location",
-      label: "State",
-      options: (() => {
-        const names = rows.map(stateName);
-        const named = opts(names.filter((n) => n !== NO_LOCATION));
-        return names.includes(NO_LOCATION) ? [...named, NO_LOCATION] : named;
-      })(),
-      value: stateName,
-    },
-    { key: "source", label: "Source", options: opts(rows.map((a) => a.source)), value: (a) => a.source ?? "" },
-    { key: "hire", label: "Hire type", options: opts(rows.map((a) => (a.hireType ? hireTypeLabel(a.hireType) : undefined))), value: (a) => hireTypeLabel(a.hireType) },
-    {
-      key: "auth",
-      label: "Work authorization",
-      options: (() => {
-        const present = new Set<string>(rows.map((a) => a.workAuthorization ?? "").filter(Boolean));
-        return [...WORK_AUTH_OPTIONS.filter((v) => present.has(v)), ...[...present].filter((v) => !WORK_AUTH_OPTIONS.includes(v)).sort()];
-      })(),
-      value: (a) => a.workAuthorization ?? "",
-    },
-    {
-      key: "rating",
-      label: "Minimum rating",
-      options: RATING_OPTS,
-      value: (a) => (a.rating ? String(a.rating) : ""),
-      match: (a, o) => (a.rating || 0) >= Number(o[0]),
-    },
-  ];
-
-  const detail = (a: Row, close?: () => void) => {
-    const nxt = nextStage(a.status);
-    return (
-      <div className="grid gap-6">
-        <div className="flex items-center gap-4">
-          <Avatar name={a.name || a.email} size="lg" />
-          <div className="min-w-0">
-            <h3 className="truncate text-adm-lg font-semibold">{a.name || a.email}</h3>
-            <p className="truncate text-adm-base text-mist-600">{a.jobTitle || "No position"}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <StageBadge stage={a.status} />
-          {!TERMINAL.has(a.status) && <span className="text-adm-base text-mist-600">{daysInStage(a)} days in stage</span>}
-          <StarInput value={a.rating || 0} onChange={(n) => void rate(a, n)} label={`Rating for ${a.name}`} />
-          {a.addToTalentBench && <Badge tone="green">Bench</Badge>}
-        </div>
-        <Select
-          label="Move to stage"
-          variant="field"
-          value={a.status}
-          onChange={(v) => void move(a, v as Stage)}
-          options={stageOptions.some((o) => o.value === a.status) ? stageOptions : [...stageOptions, { value: a.status, label: stageLabel(a.status) }]}
-        />
-        <KeyValue
-          items={[
-            { k: "Email", v: <a className="break-all text-ocean-700 underline underline-offset-2" href={`mailto:${a.email}`}>{a.email}</a> },
-            { k: "Phone", v: a.phone || "—" },
-            { k: "Location", v: locationOf(a) || "—" },
-            { k: "Applied", v: fmtDate(a.appliedAt) },
-            { k: "Source", v: a.source || "—" },
-            { k: "Owner", v: a.ownershipName || <span className="font-medium text-status-danger">Unassigned</span> },
-            { k: "Work authorization", v: a.workAuthorization || "—" },
-            { k: "Hire type", v: hireTypeLabel(a.hireType) || "—" },
-          ]}
-        />
-        {!!a.skills?.length && (
-          <section>
-            <h4 className="text-adm-base font-semibold">Skills</h4>
-            <div className="mt-2">
-              <Tags items={a.skills} />
-            </div>
-          </section>
-        )}
-        {!!a.statusHistory?.length && (
-          <section>
-            <h4 className="text-adm-base font-semibold">Stage history</h4>
-            <ol className="mt-2 grid gap-1.5">
-              {[...a.statusHistory].reverse().slice(0, 6).map((h, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 text-adm-base">
-                  <StageBadge stage={h.status} />
-                  <span className="truncate text-mist-600">
-                    {h.changedByName ? `${h.changedByName}, ` : ""}
-                    {fmtDate(h.changedAt)}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-        {/* One primary (the next stage), one secondary, the rest in the overflow */}
-        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
-          {nxt && (
-            <Button icon="chevronRight" className="flex-1" onClick={() => void move(a, nxt)}>
-              Move to {STAGE_LABEL[nxt]}
-            </Button>
-          )}
-          {a.email && (
-            <Button variant="secondary" icon="mail" className={nxt ? "" : "flex-1"} href={`mailto:${a.email}`}>
-              Email
-            </Button>
-          )}
-          <ActionMenu
-            label="More actions"
-            items={[
-              { label: "Edit", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/applications`) },
-              // Reversible from the undo toast, so not styled as danger
-              ...(!TERMINAL.has(a.status) ? [{ label: "Reject", icon: "x" as const, danger: true, onSelect: () => void move(a, "rejected") }] : []),
-              { kind: "separator" },
-              {
-                label: "Delete",
-                icon: "trash",
-                danger: true,
-                onSelect: () => {
-                  closeDetail.current = close ?? null;
-                  setDeleteIds([a.id]);
-                },
-              },
-            ]}
-          />
-        </div>
-      </div>
+  const exportRows = () =>
+    downloadCsv(
+      "applications",
+      ["ID", "Name", "Email", "Phone", "Job", "Status", "Source", "Hire Type", "Work Auth", "City", "State", "Applied", "Last activity", "Rating"],
+      visible.map((a) => [
+        a.applicationId || "", a.name || "", a.email, a.phone || "", a.jobTitle || "", stageLabel(a.status), a.source || "",
+        hireTypeLabel(a.hireType), a.workAuthorization || "", a.city || "", stateOf(a.state), fmtDate(a.appliedAt), fmtDate(lastActivity(a).at), a.rating || "",
+      ]),
     );
-  };
 
-  const headerActions = (a: Row) => (
-    <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />
-  );
-
-  const rowMenu = (a: Row, openDetail: () => void): MenuEntry[] => {
+  const rowMenu = (a: Row, inDrawer = false): MenuEntry[] => {
     const nxt = nextStage(a.status);
     const items: MenuEntry[] = [
-      { label: "Open", icon: "eye", onSelect: openDetail },
+      ...(inDrawer ? [] : [{ label: "Open", icon: "eye" as const, onSelect: () => setOpenId(a.id) }]),
+      { label: "Open full record", icon: "expand", onSelect: () => router.push(`/portal/candidates/${a.id}`) },
       { label: "Edit", icon: "edit", onSelect: () => router.push(`/portal/applications/${a.id}/edit?return=/portal/applications`) },
       { label: "Email", icon: "mail", disabled: !a.email, onSelect: () => (window.location.href = `mailto:${a.email}`) },
     ];
     if (nxt || !TERMINAL.has(a.status)) items.push({ kind: "separator" });
-    if (nxt) items.push({ label: `Move to ${STAGE_LABEL[nxt]}`, icon: "chevronRight", onSelect: () => void move(a, nxt) });
-    // Reversible from the undo toast, so not styled as danger.
+    if (nxt && !inDrawer) items.push({ label: `Move to ${STAGE_LABEL[nxt]}`, icon: "chevronRight", onSelect: () => void move(a, nxt) });
     if (!TERMINAL.has(a.status)) items.push({ label: "Reject", icon: "x", danger: true, onSelect: () => void move(a, "rejected") });
     items.push({ kind: "separator" }, { label: "Delete", icon: "trash", danger: true, onSelect: () => setDeleteIds([a.id]) });
     return items;
   };
 
-  // A single real stage narrows the board to its column.
-  const boardFocus = (BOARD.find((s) => STAGE_LABEL[s] === table.filters.stage) ?? null) as Stage | null;
-  const scope = saved !== "all" ? SAVED.find((s) => s.key === saved)!.label : null;
+  // Every filter count in one pass over the rows, redone only when the rows change
+  const tallies = useMemo(() => {
+    const byStage = new Map<string, number>();
+    const byOwner = new Map<string, number>();
+    let inProgress = 0, stalled = 0, unassigned = 0;
+    for (const a of rows) {
+      byStage.set(a.status, (byStage.get(a.status) ?? 0) + 1);
+      if (a.ownershipName) byOwner.set(a.ownershipName, (byOwner.get(a.ownershipName) ?? 0) + 1);
+      else if (!a.ownership) unassigned++;
+      if (!TERMINAL.has(a.status)) inProgress++;
+      if (isStale(a)) stalled++;
+    }
+    return { byStage, byOwner, inProgress, stalled, unassigned, owners: [...byOwner.keys()].sort() };
+  }, [rows]);
+  const stageFilterOptions = [
+    { value: ALL, label: "All", count: rows.length },
+    { value: IN_PROGRESS, label: "In progress", count: tallies.inProgress },
+    { value: STALLED, label: "Stalled", count: tallies.stalled },
+    ...BOARD.map((s) => ({ value: s, label: STAGE_LABEL[s], count: tallies.byStage.get(s) ?? 0 })),
+  ];
+  const ownerOptions = [
+    { value: ALL, label: "All", count: rows.length },
+    { value: UNASSIGNED, label: "Unassigned", count: tallies.unassigned },
+    ...tallies.owners.map((o) => ({ value: o, label: o, count: tallies.byOwner.get(o) ?? 0 })),
+  ];
+  const filtering = !!(query || stage || owner || windowDays);
+  const clearAll = () => {
+    setQuery("");
+    setStage(ALL);
+    setOwner(ALL);
+    setWindowDays(ALL);
+  };
 
-  const listState: ListState = {
-    saved,
-    view,
-    query: table.query,
-    filters: Object.fromEntries(Object.entries(table.filters).filter(([, v]) => v && v !== "All")),
-  };
-  const stateKey = JSON.stringify(listState);
-  const activeSavedId = savedSearches.find((s) => JSON.stringify({ ...s.state, focus: undefined }) === stateKey)?.id ?? null;
-  const applySaved = ({ state: st }: SavedSearch<ListState>) => {
-    setSaved(SAVED.some((x) => x.key === st.saved) ? st.saved : "all");
-    setView(st.view === "board" ? "board" : "table");
-    const f = st.filters && typeof st.filters === "object" ? { ...st.filters } : {};
-    if (st.focus && (BOARD as string[]).includes(st.focus)) f.stage = STAGE_LABEL[st.focus];
-    setTable({ query: typeof st.query === "string" ? st.query : "", filters: f });
-    setTableKey((k) => k + 1);
-  };
-  const saveCurrent = (name: string) => {
-    setSavedList((prev) => [
-      ...(Array.isArray(prev) ? prev.filter((s) => s.name !== name) : []),
-      { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name, state: listState, createdAt: new Date().toISOString() },
-    ]);
-    notify(`Saved view "${name}"`);
-  };
-  const deleteSaved = (id: string) => setSavedList((prev) => (Array.isArray(prev) ? prev.filter((s) => s.id !== id) : []));
+  // Footer figures, from what the filters leave
+  const figures = useMemo(() => {
+    const inFlight = visible.filter((a) => !TERMINAL.has(a.status));
+    const rated = visible.filter((a) => a.rating);
+    const stalled = inFlight.filter((a) => isStale(a)).length;
+    return [
+      { label: "avg days in stage", value: inFlight.length ? Math.round(avg(inFlight.map(daysInStage))) : "—", warn: false },
+      { label: "stalled", value: stalled, warn: stalled > 0 },
+      { label: "unassigned", value: visible.filter((a) => !a.ownership && !a.ownershipName).length, warn: false },
+      { label: "avg rating", value: rated.length ? avg(rated.map((a) => a.rating!)).toFixed(1) : "—", warn: false },
+    ];
+  }, [visible]);
+  const picked = [...selected];
+  const desktop = useIsDesktop();
+  // Plane shows a row's checkbox on hover; once anything is selected they all stay visible
+  const boxReveal = picked.length ? "" : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
 
-  const exportRows = (list: Row[]) =>
-    downloadCsv(
-      "applications",
-      ["ID", "Name", "Email", "Phone", "Job", "Status", "Source", "Hire Type", "Work Auth", "City", "State", "Applied", "Rating"],
-      list.map((a) => [
-        a.applicationId || "", a.name || "", a.email, a.phone || "", a.jobTitle || "", stageLabel(a.status), a.source || "",
-        hireTypeLabel(a.hireType), a.workAuthorization || "", a.city || "", stateOf(a.state), fmtDate(a.appliedAt), a.rating || "",
-      ]),
+  const loading = appsRes.isLoading || jobsRes.isLoading;
+  const failed = (!appsRes.applications && appsRes.error) || (!jobsRes.jobs && jobsRes.error);
+  const current = openId ? rows.find((r) => r.id === openId) ?? null : null;
+
+  const sortButton = (key: SortKey, label: string) => {
+    const on = sort?.key === key;
+    return (
+      <button
+        type="button"
+        onClick={() => headSort(key)}
+        className={`group/s inline-flex items-center gap-1 hover:text-navy-900 ${on ? "text-navy-900" : ""}`}
+      >
+        {label}
+        <Icon name="chevronDown" className={`size-3.5 transition ${on ? "opacity-100" : "opacity-0 group-hover/s:opacity-50"} ${on && sort!.dir === 1 ? "rotate-180" : ""}`} />
+      </button>
     );
-
-  const ready = !loading && !failed && rows.length > 0;
-  const stageKpi = (stage: Stage) => table.filters.stage === STAGE_LABEL[stage];
-
-  const savedTabs = (
-    <TableTabs
-      label="Saved views"
-      value={saved}
-      onChange={setSaved}
-      options={SAVED.map((s) => ({ value: s.key, label: s.label, tone: s.tone, divider: s.divider, count: s.key === "all" ? rows.length : rows.filter((a) => s.test(a, me)).length }))}
-    />
-  );
+  };
 
   let body: React.ReactNode;
-  if (loading) body = <ListPageSkeleton header={false} label="Loading applications" kpis={4} insights={false} />;
+  if (loading) body = <CrmListSkeleton label="Loading applications" />;
   else if (failed)
     body = (
       <ErrorState
@@ -537,118 +359,329 @@ export default function ApplicationsView() {
     );
   else
     body = (
-      <>
-        <KpiRow>
-          <KpiButton label="Show new applications" active={stageKpi("pending")} onClick={() => toggleStage(STAGE_LABEL.pending)}>
-            <StatCard section="recruiting" label="New" value={byStage("pending")} icon="inbox" change={`${appliedWeekly.at(-1) ?? 0} this week`} trend="flat" spark={appliedWeekly} />
-          </KpiButton>
-          <KpiButton label="Show candidates in interviews" active={stageKpi("interview")} onClick={() => toggleStage(STAGE_LABEL.interview)}>
-            <StatCard section="recruiting" label="In interviews" value={byStage("interview")} icon="calendar" change={`${interviewWeekly.at(-1) ?? 0} this week`} trend="flat" spark={interviewWeekly} />
-          </KpiButton>
-          <KpiButton label="Show offers out" active={stageKpi("offered")} onClick={() => toggleStage(STAGE_LABEL.offered)}>
-            <StatCard section="recruiting" label="Offers out" value={byStage("offered")} icon="mail" change="Awaiting reply" trend="flat" />
-          </KpiButton>
-          <KpiButton label="Show hires" active={stageKpi("hired")} onClick={() => toggleStage(STAGE_LABEL.hired)}>
-            <StatCard section="recruiting" label="Hired" value={byStage("hired")} icon="userCheck" change={`${hiredWeekly.slice(-4).reduce((n, v) => n + v, 0)} in 4 weeks`} trend="up" spark={hiredWeekly} />
-          </KpiButton>
-        </KpiRow>
+      // One panel that fills the screen: toolbar, the table scrolling inside it, and the summary footer.
+      <section aria-label="Applicants" className="flex min-h-0 flex-1 flex-col">
+        <ListHeader count={visible.length} total={rows.length}>
+          <HeaderSearch value={query} onChange={setQuery} placeholder="Search applicants, emails or skills" />
+          <FilterMenu
+            applied={[stage, owner, windowDays].filter(Boolean).length}
+            sections={[
+              { key: "stage", label: "Stage", value: stage, onChange: setStage, options: stageFilterOptions },
+              { key: "owner", label: "Owner", value: owner, onChange: setOwner, options: ownerOptions },
+              { key: "window", label: "Last activity", value: windowDays, onChange: setWindowDays, options: WINDOWS.map((w) => ({ ...w, label: w.value ? `Within ${w.label}` : w.label })) },
+            ]}
+          />
+          <DisplayMenu
+            order={{ options: SORTS, value: sortParam, onChange: setSortParam }}
+            actions={[{ label: `Export ${visible.length === rows.length ? "all" : visible.length} as CSV`, icon: "download", onSelect: exportRows }]}
+            changed={!!sortParam}
+          />
+          <Link href="/portal/applications/new" className={BTN_PRIMARY}>
+            <Icon name="plus" className="size-4" />
+            Add applicant
+          </Link>
+        </ListHeader>
 
-        <DataTable
-          key={tableKey}
-          rows={inSaved}
-          tabs={savedTabs}
-          initialQuery={table.query}
-          initialFilters={table.filters}
-          onStateChange={setTable}
-          searchMatch={matchesQuery}
-          onExport={exportRows}
-          storageKey="applications"
-          columns={columns}
-          filters={filters}
-          exportName="applications"
-          searchPlaceholder="Search applicants, emails or skills"
-          emptyTitle={scope ? `Nothing in ${scope}` : "No matching applicants"}
-          selectable
-          bulkActions={(ids) => (
+        <AppliedFilters
+          onClearAll={clearAll}
+          chips={[
+            ...(query ? [{ key: "q", label: "Search", value: `“${query}”`, clear: () => setQuery("") }] : []),
+            ...(stage ? [{ key: "stage", label: "Stage", value: stageFilterOptions.find((o) => o.value === stage)?.label ?? stage, clear: () => setStage(ALL) }] : []),
+            ...(owner ? [{ key: "owner", label: "Owner", value: ownerOptions.find((o) => o.value === owner)?.label ?? owner, clear: () => setOwner(ALL) }] : []),
+            ...(windowDays ? [{ key: "window", label: "Last activity", value: `Within ${WINDOWS.find((w) => w.value === windowDays)?.label}`, clear: () => setWindowDays(ALL) }] : []),
+          ]}
+        />
+
+        <div className="scroll-thin min-h-0 flex-1 overflow-auto">
+          {visible.length === 0 ? (
+            <EmptyState variant="no-results" title="No applicants match" body="Try a different search or clear the filters." onClearFilters={clearAll} />
+          ) : (
+            // The CRM grid: one column per field sized to its widest cell, spread across the panel
+            // (justify-between), rows on subgrid so every cell lines up; scrolls sideways only when narrower.
             <>
+            {!desktop && (
+            <ul className="divide-y divide-mist-100">
+              {visible.map((a) => {
+                const last = lastActivity(a);
+                return (
+                  <li key={a.id} className={`flex items-start gap-3 px-4 py-3 ${selected.has(a.id) ? "bg-ocean-50" : ""}`}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${a.name || a.email}`}
+                      checked={selected.has(a.id)}
+                      onChange={() => toggle(a.id)}
+                      className="mt-2 size-4 shrink-0 cursor-pointer accent-ocean-600"
+                    />
+                    <button type="button" onClick={() => setOpenId(a.id)} className="min-w-0 flex-1 text-left">
+                      <span className="flex items-center gap-2">
+                        <Avatar name={a.name || a.email} size="sm" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium text-navy-900">{a.name || a.email}</span>
+                          <span className="block truncate text-adm-xs text-mist-600">{a.jobTitle || "No position"}</span>
+                        </span>
+                      </span>
+                      <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-adm-xs text-mist-600">
+                        <StageBadge stage={a.status} />
+                        <span>{a.ownershipName || <span className="font-medium text-status-danger">Unassigned</span>}</span>
+                        <span className="tabular-nums">{shortDate(last.at)} · {last.label}</span>
+                      </span>
+                    </button>
+                    <ActionMenu
+                      label={`Actions for ${a.name || a.email}`}
+                      width="w-52"
+                      items={rowMenu(a)}
+                      trigger={
+                        <button type="button" aria-label={`Actions for ${a.name || a.email}`} className="grid size-9 shrink-0 place-items-center rounded-md text-mist-600 hover:bg-mist-100">
+                          <Icon name="dotsVertical" className="size-4" />
+                        </button>
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+            )}
+            {desktop && (
+            <table className={`${GRID} w-full text-adm-base`}>
+              <thead className="contents">
+                <tr className={`${ROW} group/row sticky top-0 z-10 border-b border-mist-200 bg-mist-50`}>
+                  <th scope="col" className={`${TH} justify-start`}>
+                    <span className="flex items-center gap-3">
+                      <input ref={selectAllRef} type="checkbox" aria-label="Select all applicants in view" checked={allSelected} onChange={toggleAll} className={`size-3.5 cursor-pointer accent-ocean-600 ${boxReveal}`} />
+                      {sortButton("name", "Applicant")}
+                    </span>
+                  </th>
+                  <th scope="col" className={`${TH} justify-start`}>{sortButton("jobTitle", "Position")}</th>
+                  <th scope="col" className={`${TH} justify-start`}>{sortButton("status", "Stage")}</th>
+                  <th scope="col" className={`${TH} justify-start`}>{sortButton("progress", "Progress")}</th>
+                  <th scope="col" className={`${TH} justify-start`}>{sortButton("owner", "Owner")}</th>
+                  <th scope="col" className={`${TH} justify-end`}>{sortButton("rating", "Rating")}</th>
+                  <th scope="col" className={`${TH} justify-start`}>{sortButton("activity", "Last activity")}</th>
+                  <th scope="col" className={`${TH} justify-center`}>Action</th>
+                </tr>
+              </thead>
+              <tbody className="contents">
+                {visible.map((a) => {
+                  const on = selected.has(a.id);
+                  const days = TERMINAL.has(a.status) ? null : daysInStage(a);
+                  const last = lastActivity(a);
+                  return (
+                    <tr
+                      key={a.id}
+                      tabIndex={0}
+                      data-active={on || openId === a.id}
+                      onClick={() => setOpenId(a.id)}
+                      onKeyDown={(e) => {
+                        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault();
+                          setOpenId(a.id);
+                        }
+                      }}
+                      className={`${ROW} group/row cursor-pointer border-b border-mist-100 transition-colors duration-150 hover:bg-mist-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600 data-[active=true]:bg-ocean-50`}
+                    >
+                      <td className={`${TD} justify-start`}>
+                        <span className="flex min-w-0 items-center gap-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${a.name || a.email}`}
+                            checked={on}
+                            onChange={() => toggle(a.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className={`size-3.5 shrink-0 cursor-pointer accent-ocean-600 ${boxReveal}`}
+                          />
+                          <span className="flex min-w-0 items-center gap-2" title={a.applicationId || undefined}>
+                            <Avatar name={a.name || a.email} size="sm" />
+                            <span className="max-w-40 truncate font-medium text-navy-900">{a.name || a.email}</span>
+                          </span>
+                        </span>
+                      </td>
+                      <td className={`${TD} justify-start`}>
+                        <span className="block max-w-40 truncate text-mist-700" title={a.jobTitle || undefined}>{a.jobTitle || "—"}</span>
+                      </td>
+                      <td className={`${TD} justify-start`}>
+                        <InlineSelect
+                          value={a.status}
+                          label={`Stage for ${a.name || a.email}`}
+                          mark={stageState(a.status)}
+                          width="w-32"
+                          options={stageOptions.some((o) => o.value === a.status) ? stageOptions : [...stageOptions, { value: a.status, label: stageLabel(a.status) }]}
+                          onChange={(v) => void move(a, v as Stage)}
+                        />
+                      </td>
+                      <td className={`${TD} justify-start`}>
+                        <span className="flex items-center gap-2">
+                          <StageProgress status={a.status} history={a.statusHistory} />
+                          <span className={`w-[4ch] text-right tabular-nums ${days !== null && days >= STALE_DAYS ? "font-semibold text-status-warning" : "text-mist-600"}`}>
+                            {days === null ? "—" : `${days}d`}
+                          </span>
+                        </span>
+                      </td>
+                      <td className={`${TD} justify-start`}>
+                        {a.ownershipName ? (
+                          <span className="flex items-center gap-1.5" title={a.ownershipName}>
+                            <Avatar name={a.ownershipName} size="sm" />
+                            <span className="max-w-28 truncate">{a.ownershipName}</span>
+                          </span>
+                        ) : (
+                          <span className="font-medium text-status-danger">Unassigned</span>
+                        )}
+                      </td>
+                      <td className={`${TD} justify-end tabular-nums`}>
+                        <RatingValue value={a.rating} />
+                      </td>
+                      <td className={`${TD} justify-start`}>
+                        <span className="flex items-center gap-1">
+                          <Icon name="calendar" className="size-3.5 shrink-0 text-navy-900" />
+                          <span className="tabular-nums" title={fmtDate(last.at)}>{shortDate(last.at)}</span>
+                          <span aria-hidden className="mx-[3px] h-2 w-px bg-mist-300" />
+                          <span className="text-mist-600">{last.label}</span>
+                        </span>
+                      </td>
+                      <td className={`${TD} justify-center`} onClick={(e) => e.stopPropagation()}>
+                        <ActionMenu
+                          label="Row actions"
+                          width="w-52"
+                          items={rowMenu(a)}
+                          trigger={
+                            <button
+                              type="button"
+                              aria-label={`Actions for ${a.name || a.email}`}
+                              className="grid size-7 place-items-center rounded-md text-mist-600 hover:bg-mist-100 hover:text-navy-900 data-[state=open]:bg-mist-100 data-[state=open]:text-navy-900"
+                            >
+                              <Icon name="dotsVertical" className="size-4" />
+                            </button>
+                          }
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            )}
+            </>
+          )}
+        </div>
+
+        {/* Footer: what is in view and its figures, or the batch actions while rows are selected */}
+        <div className="flex min-h-10 shrink-0 flex-wrap items-center border-t border-mist-200 bg-mist-0 sm:px-1">
+          {picked.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2 px-4 py-2" role="region" aria-label="Selected applicants">
+              <span className="mr-2 font-semibold tabular-nums text-navy-900" aria-live="polite">{picked.length} selected</span>
               <Select
                 label="Move to stage"
                 showLabel={false}
                 value={bulkStage}
                 onChange={(v) => {
                   setBulkStage("");
-                  if (v) void moveMany(ids, v as Stage);
+                  if (v) void moveMany(picked, v as Stage);
                 }}
                 options={[{ value: "", label: "Move to stage" }, ...stageOptions]}
                 className="min-w-[10rem]"
               />
-              <Button size="sm" variant="danger" icon="trash" onClick={() => setDeleteIds(ids)}>Delete</Button>
-            </>
+              <Button size="sm" variant="danger" icon="trash" onClick={() => setDeleteIds(picked)}>Delete</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Deselect all</Button>
+            </div>
+          ) : (
+            <dl className="flex flex-wrap items-center text-adm-xs">
+              {figures.map((f) => (
+                <div key={f.label} className="flex items-baseline gap-1.5 border-r border-mist-200 px-3 py-2.5 last:border-r-0">
+                  <dd className={`font-semibold tabular-nums ${f.warn ? "text-status-warning" : "text-navy-900"}`}>{f.value}</dd>
+                  <dt className="text-mist-600">{f.label}</dt>
+                </div>
+              ))}
+            </dl>
           )}
-          detailTitle={(a) => a.name || a.email}
-          renderDetail={(a, close) => detail(rows.find((r) => r.id === a.id) ?? a, close)}
-          detailActions={headerActions}
-          rowMenu={rowMenu}
-          viewSwitch={
-            <ViewSwitch
-              label="Layout"
-              value={view}
-              onChange={setView}
-              options={[
-                { value: "table", label: "Table view", icon: "table" },
-                { value: "board", label: "Board view", icon: "board" },
-              ]}
-            />
-          }
-          gridAll={view === "board"}
-          renderGrid={
-            view === "board"
-              ? (list, openRow) => <BoardView rows={list} focus={boardFocus} onOpen={openRow} onMove={(a, to) => void move(a, to)} menu={(a) => rowMenu(a, () => openRow(a))} />
-              : undefined
-          }
-        />
-      </>
+        </div>
+      </section>
     );
 
+  const nxt = current ? nextStage(current.status) : null;
+
   return (
-    <Page>
-      <PageHeader
-        section="recruiting"
-        icon="inbox"
-        title="Applications"
-        actions={
-          <>
-            {ready && <SavedViewsMenu items={savedSearches} activeId={activeSavedId} onApply={applySaved} onSave={saveCurrent} onDelete={deleteSaved} />}
-            {ready && <ActionMenu items={[{ label: "Insights", icon: "chart", onSelect: () => setInsightsOpen(true) }]} />}
-            {ready && (
-              <InsightsSheet open={insightsOpen} onOpenChange={setInsightsOpen} title="Applications insights" description="Volume over time, how far candidates get and where they come from. Click a stage to filter.">
-                {(close) => (
-                  <>
-                    <Panel title="Applications per week" description="Last 12 weeks">
-                      <TrendChart title="Applications received and hires per week, last 12 weeks" labels={weeks.map((w) => w.label)} series={[{ name: "Applications", values: appliedWeekly }, { name: "Hired", values: hiredWeekly }]} area />
-                    </Panel>
-                    <Panel title="Pipeline conversion" description="Click a stage to filter">
-                      <StageFunnel
-                        stages={funnel}
-                        active={table.filters.stage ?? null}
-                        onSelect={(label) => {
-                          toggleStage(label);
-                          close();
-                        }}
+    // Full-bleed like ListPage: cancels the shell's padding and fills the work surface.
+    <div className="-m-5 flex h-[calc(100svh-3.75rem-2px)] min-h-[32rem] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
+      {/* The shell header shows "Applications"; this keeps the page's heading for screen readers */}
+      <h1 className="sr-only">Applications</h1>
+      {loading || (rows.length > 0 && !failed) ? body : <div className="p-4 sm:p-6">{body}</div>}
+
+      {current && (
+        <Drawer
+          title={current.name || current.email}
+          onClose={() => setOpenId(null)}
+          actions={<Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${current.id}`} />}
+        >
+          <div className="grid gap-5">
+            <PeekTitle name={current.name || current.email} subtitle={current.jobTitle || "No position"} />
+            <KeyValue
+              items={[
+                {
+                  k: "Stage",
+                  icon: "activity",
+                  v: (
+                    <>
+                      <InlineSelect
+                        value={current.status}
+                        label={`Stage for ${current.name || current.email}`}
+                        mark={stageState(current.status)}
+                        width="w-40"
+                        options={stageOptions.some((o) => o.value === current.status) ? stageOptions : [...stageOptions, { value: current.status, label: stageLabel(current.status) }]}
+                        onChange={(v) => void move(current, v as Stage)}
                       />
-                    </Panel>
-                    <Panel title="Where candidates come from">
-                      <DonutChart title="Applications by source" data={sources} centerLabel="Applications" />
-                    </Panel>
-                  </>
-                )}
-              </InsightsSheet>
+                      {!TERMINAL.has(current.status) && <span className="text-adm-xs text-mist-600">{daysInStage(current)} days in stage</span>}
+                    </>
+                  ),
+                },
+                { k: "Progress", icon: "trendUp", v: <StageProgress status={current.status} history={current.statusHistory} /> },
+                { k: "Rating", icon: "star", v: <StarInput value={current.rating || 0} onChange={(n) => void rate(current, n)} label={`Rating for ${current.name}`} /> },
+                { k: "Owner", icon: "userCheck", v: current.ownershipName || <span className="font-medium text-status-danger">Unassigned</span> },
+                { k: "Email", icon: "mail", v: <a className="break-all text-ocean-700 hover:underline" href={`mailto:${current.email}`}>{current.email}</a> },
+                { k: "Phone", icon: "phone", v: current.phone || "—" },
+                { k: "Location", icon: "map", v: locationOf(current) || "—" },
+                { k: "Applied", icon: "calendar", v: fmtDate(current.appliedAt) },
+                { k: "Last activity", icon: "clock", v: `${fmtDate(lastActivity(current).at)}, ${lastActivity(current).label === "Applied" ? "applied" : `moved to ${lastActivity(current).label}`}` },
+                { k: "Source", icon: "globe", v: current.source || "—" },
+                { k: "Work authorization", icon: "idBadge", v: current.workAuthorization || "—" },
+                { k: "Hire type", icon: "briefcase", v: hireTypeLabel(current.hireType) || "—" },
+                ...(current.addToTalentBench ? [{ k: "Talent bench", icon: "bench" as const, v: "On the bench" }] : []),
+              ]}
+            />
+            {!!current.skills?.length && (
+              <PeekSection title="Skills">
+                <Tags items={current.skills} />
+              </PeekSection>
             )}
-            <Button icon="plus" href="/portal/applications/new">Add applicant</Button>
-          </>
-        }
-      />
-      {body}
+            {!!current.statusHistory?.length && (
+              <PeekSection title="Stage history">
+                <ol className="grid gap-1.5">
+                  {[...current.statusHistory].reverse().slice(0, 6).map((h, i) => (
+                    <li key={i} className="flex items-center justify-between gap-3 text-adm-base">
+                      <StageBadge stage={h.status} />
+                      <span className="truncate text-adm-xs text-mist-600">
+                        {h.changedByName ? `${h.changedByName}, ` : ""}
+                        {fmtDate(h.changedAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </PeekSection>
+            )}
+            <PeekFooter>
+              {nxt && (
+                <Button icon="chevronRight" className="flex-1" onClick={() => void move(current, nxt)}>
+                  Move to {STAGE_LABEL[nxt]}
+                </Button>
+              )}
+              {current.email && (
+                <Button variant="secondary" icon="mail" className={nxt ? "" : "flex-1"} href={`mailto:${current.email}`}>
+                  Email
+                </Button>
+              )}
+              <ActionMenu label="More actions" items={rowMenu(current, true)} />
+            </PeekFooter>
+          </div>
+        </Drawer>
+      )}
 
       {deleteIds && (
         <ConfirmDialog
@@ -661,6 +694,6 @@ export default function ApplicationsView() {
           onConfirm={() => void removeMany()}
         />
       )}
-    </Page>
+    </div>
   );
 }

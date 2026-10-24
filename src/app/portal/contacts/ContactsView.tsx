@@ -6,16 +6,16 @@ import { isJobSeeker } from "@/lib/contact";
 import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
 import { downloadCsv } from "@/lib/csv";
 import { useResource } from "@/hooks/use-resource";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { RoleGate, useSession } from "@/components/portal/session";
 import { permissionsFor } from "@/components/portal/recruiting/model";
 import { canCreateRoleFromContact } from "@/lib/job-from-contact";
 import {
-  Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorState, InsightsSheet, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, StatCard, usePortalRouter,
+  Avatar, Button, ConfirmDialog, EmptyState, ErrorState, ListPage, ListPageState, usePortalRouter,
+  CrmListSkeleton, PeekFooter, ClampText
 } from "@/components/portal/kit";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { DonutChart, TrendChart } from "@/components/portal/charts";
-import { GoneNotice, InlineDelete, SegmentChips, errorText, send, useToast, weekBuckets } from "@/components/portal/relationships/shared";
+import { GoneNotice, InlineDelete, errorText, send, useToast } from "@/components/portal/relationships/shared";
 import {
   AudienceBadge,
   CONTACT_STATUSES,
@@ -41,7 +41,7 @@ import {
 const KEY = "/api/contacts";
 /** An unanswered enquiry older than this reads as waiting too long. */
 const WAITING_MS = 2 * 86_400_000;
-const typeOf = (c: Contact) => (isJobSeeker(c.inquiryType) ? "Job seekers" : c.inquiryType || "Other");
+const isWaiting = (c: Contact) => c.status === "new" && Date.now() - new Date(c.createdAt).getTime() > WAITING_MS;
 
 function DrawerBody({
   c,
@@ -73,15 +73,17 @@ function DrawerBody({
       <ContactRespond c={c} busy={busy !== null} onStatus={(s) => void run("status", () => onStatus(s))} />
       <section className="grid gap-2">
         <h3 className="text-adm-base font-semibold text-navy-900">{c.inquiryType} enquiry</h3>
-        <div className="rounded-xl p-4 ring-1 ring-mist-200">
-          <ContactMessage c={c} />
+        <div className="rounded-lg p-4 ring-1 ring-mist-200">
+          <ClampText>
+            <ContactMessage c={c} />
+          </ClampText>
         </div>
       </section>
-      <ContactFacts c={c} />
+      <ContactFacts c={c} withContact={false} />
       <ContactNotes c={c} onSave={onNotes} />
-      <div className="flex flex-wrap items-start justify-end gap-3 border-t border-mist-200 pt-5">
+      <PeekFooter>
         <InlineDelete label="Delete enquiry" warning="This enquiry is removed permanently. This cannot be undone." busy={busy === "delete"} onConfirm={() => void run("delete", onDelete)} />
-      </div>
+      </PeekFooter>
     </div>
   );
 }
@@ -90,7 +92,6 @@ export default function ContactsView() {
   const { data, error, isLoading, isValidating, reload } = useResource<{ contacts?: Contact[] }>(KEY);
   const contacts = useMemo(() => data?.contacts ?? [], [data]);
   const [tab, setTab] = useState<"all" | ContactStatus>("all");
-  const [segment, setSegment] = useState("All");
   const toast = useToast();
   const router = usePortalRouter();
   const { canEditJobs } = permissionsFor(useSession().role);
@@ -190,32 +191,7 @@ export default function ContactsView() {
     return out;
   }, [contacts]);
 
-  const weeks = useMemo(() => {
-    const b = weekBuckets(12);
-    return {
-      labels: b.labels,
-      series: [
-        { name: "Hiring staff", values: b.count(contacts.filter((c) => !isJobSeeker(c.inquiryType)).map((c) => c.createdAt)) },
-        { name: "Looking for work", values: b.count(contacts.filter((c) => isJobSeeker(c.inquiryType)).map((c) => c.createdAt)) },
-      ],
-      total: b.count(contacts.map((c) => c.createdAt)),
-    };
-  }, [contacts]);
-
-  const byType = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const c of contacts) m.set(typeOf(c), (m.get(typeOf(c)) ?? 0) + 1);
-    const sorted = [...m].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
-    // Donut keeps to six slices; the tail folds into "Other".
-    if (sorted.length <= 6) return sorted;
-    return [...sorted.slice(0, 5), { label: "Other", value: sorted.slice(5).reduce((a, x) => a + x.value, 0) }];
-  }, [contacts]);
-  const bucketOf = (c: Contact) => (byType.some((t) => t.label === typeOf(c)) ? typeOf(c) : "Other");
-
-  const since30 = Date.now() - 30 * 86_400_000;
-  const last30 = contacts.filter((c) => new Date(c.createdAt).getTime() >= since30).length;
-  const seekers = contacts.filter((c) => isJobSeeker(c.inquiryType)).length;
-  const visible = contacts.filter((c) => (tab === "all" || c.status === tab) && (segment === "All" || bucketOf(c) === segment));
+  const visible = contacts.filter((c) => tab === "all" || c.status === tab);
 
   const columns: Column<Contact>[] = [
     {
@@ -264,7 +240,7 @@ export default function ContactsView() {
         <time
           dateTime={c.createdAt}
           className={`whitespace-nowrap tabular-nums ${
-            c.status !== "new" ? "text-mist-600" : Date.now() - new Date(c.createdAt).getTime() > WAITING_MS ? "font-medium text-status-warning" : "font-medium text-navy-900"
+            c.status !== "new" ? "text-mist-600" : isWaiting(c) ? "font-medium text-status-warning" : "font-medium text-navy-900"
           }`}
           title={fmtDateTime(c.createdAt)}
         >
@@ -297,83 +273,47 @@ export default function ContactsView() {
     />
   );
 
-  const clearScope = () => {
-    setTab("all");
-    setSegment("All");
+  const summary = (rows: Contact[]): Summary[] => {
+    const waiting = rows.filter(isWaiting).length;
+    return [
+      { label: "awaiting a reply", value: rows.filter((c) => c.status === "new").length },
+      { label: "waiting over 2 days", value: waiting, warn: waiting > 0 },
+      { label: "looking for work", value: rows.filter((c) => isJobSeeker(c.inquiryType)).length },
+    ];
   };
 
   return (
     <RoleGate href="/portal/contacts">
-      <Page>
-        <PageHeader
-          title="Contacts"
-          icon="contact"
-          section="relationships"
-
-          meta={
-            counts.new > 0 ? (
-              <Badge tone="blue" dot>
-                {counts.new} awaiting a reply
-              </Badge>
-            ) : undefined
-          }
-          actions={
-            contacts.length > 0 && (
-              <InsightsSheet title="Contacts insights" description="How many enquiries arrive, who sends them and what is still waiting. Pick a type to filter the list.">
-                {(close) => (
-                  <>
-                    <KpiRow>
-                      <StatCard section="relationships" label="Enquiries" value={contacts.length} icon="contact" hint={`${last30} in the last 30 days`} trend="flat" spark={weeks.total} />
-                      <StatCard section="relationships" label="Awaiting a reply" value={counts.new} icon="inbox" hint="status New" trend="flat" />
-                      <StatCard section="relationships" label="Looking for work" value={seekers} icon="userCheck" hint={`${contacts.length - seekers} hiring staff`} trend="flat" />
-                    </KpiRow>
-                    <Panel title="Enquiries per week" description="Last 12 weeks">
-                      <TrendChart title="Enquiries per week from companies hiring and people looking for work" labels={weeks.labels} series={weeks.series} height={268} />
-                    </Panel>
-                    <Panel title="Enquiries by type" description="Pick a type to filter the list">
-                      <div className="grid gap-5">
-                        <DonutChart title="Enquiries by type" data={byType} centerLabel="Enquiries" size={168} />
-                        <SegmentChips
-                          label="Filter the list by type"
-                          items={byType.map((b) => ({ label: b.label, count: b.value }))}
-                          value={segment}
-                          onChange={(v) => {
-                            setSegment(v);
-                            close();
-                          }}
-                        />
-                      </div>
-                    </Panel>
-                  </>
-                )}
-              </InsightsSheet>
-            )
-          }
-        />
-
+      <ListPage title="Contacts">
         {isLoading ? (
-          <ListPageSkeleton header={false} label="Loading contacts" kpis={0} insights={false} />
+          <CrmListSkeleton label="Loading contacts" />
         ) : error && !data ? (
-          <ErrorState title="Couldn't load contacts" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          <ListPageState>
+            <ErrorState title="Couldn't load contacts" message={error.message} onRetry={() => void reload()} retrying={isValidating} />
+          </ListPageState>
         ) : contacts.length === 0 ? (
-          <EmptyState framed variant="first-use" icon="contact" title="No enquiries yet" body="Submissions from the website contact form appear here, newest first." />
+          <ListPageState>
+            <EmptyState framed variant="first-use" icon="contact" title="No enquiries yet" body="Submissions from the website contact form appear here, newest first." />
+          </ListPageState>
         ) : (
-          <section aria-label="Enquiries" className="grid gap-4">
+          <section aria-label="Enquiries" className="flex min-h-0 flex-1 flex-col">
             {visible.length === 0 ? (
-              <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-                <div className="border-b border-mist-200 px-2 sm:px-4">{statusTabs}</div>
-                {tab === "new" && segment === "All" ? (
-                  <EmptyState icon="check" title="You're all caught up" body="No enquiries are waiting for a reply." secondary={{ label: "Show all enquiries", onClick: clearScope }} />
+              <>
+                <div className="shrink-0 border-b border-mist-200 px-4">{statusTabs}</div>
+                {tab === "new" ? (
+                  <EmptyState icon="check" title="You're all caught up" body="No enquiries are waiting for a reply." secondary={{ label: "Show all enquiries", onClick: () => setTab("all") }} />
                 ) : (
-                  <EmptyState variant="no-results" title="No enquiries match your filters" body="Try another status or type." onClearFilters={clearScope} />
+                  <EmptyState variant="no-results" title="No enquiries match your filters" body="Try another status." onClearFilters={() => setTab("all")} />
                 )}
-              </div>
+              </>
             ) : (
               <DataTable
                 key={deepSearch}
                 rows={visible}
                 tabs={statusTabs}
-                extraChips={segment !== "All" ? [{ key: "segment", label: `Type: ${segment}`, clear: () => setSegment("All") }] : []}
+                fill
+                noun="enquiries"
+                summary={summary}
                 columns={columns}
                 filters={filters}
                 initialQuery={deepSearch}
@@ -429,7 +369,7 @@ export default function ContactsView() {
             onConfirm={() => void confirmRemove()}
           />
         )}
-      </Page>
+      </ListPage>
     </RoleGate>
   );
 }

@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useFormErrors } from "@/hooks/use-form-errors";
 import { check, collectErrors, maxLen, phone, required, strongPassword, LIMITS } from "@/lib/form-validation";
 import Icon, { type IconName } from "@/components/portal/icons";
-import { useSession } from "@/components/portal/session";
 import { Avatar, Badge, Button, ConfirmDialog, Page, PageHeader, Skeleton, Spinner, type Tone } from "@/components/portal/kit";
 import { inputCls } from "@/components/portal/relationships/shared";
 
@@ -37,17 +36,35 @@ export function toE164(v: string): string {
 
 type Status = { tone: "ok" | "error"; text: string } | null;
 
-function Card({ id, title, action, footer, children }: { id?: string; title?: string; action?: React.ReactNode; footer?: React.ReactNode; children: React.ReactNode }) {
+/** One settings section, as Plane lays them out: what it is on the left, the fields on the right. */
+function Card({
+  id,
+  title,
+  description,
+  action,
+  footer,
+  children,
+}: {
+  id?: string;
+  title?: string;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <section id={id} aria-label={title} className="min-w-0 scroll-mt-20 rounded-xl bg-mist-0 ring-1 ring-mist-200">
-      {title && (
-        <header className="flex min-h-12 items-center justify-between gap-3 border-b border-mist-100 px-4 py-2.5">
-          <h2 className="text-adm-base font-semibold text-navy-900">{title}</h2>
+    <section id={id} aria-label={title} className="grid min-w-0 scroll-mt-16 gap-4 border-b border-mist-200 py-8 first:pt-2 last:border-b-0 md:grid-cols-[15rem_minmax(0,1fr)] md:gap-10">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          {title && <h2 className="text-adm-base font-semibold text-navy-900">{title}</h2>}
           {action}
-        </header>
-      )}
-      <div className="p-4">{children}</div>
-      {footer}
+        </div>
+        {description && <p className="mt-1 text-adm-xs leading-relaxed text-mist-600">{description}</p>}
+      </div>
+      <div className="grid min-w-0 content-start gap-4">
+        {children}
+        {footer}
+      </div>
     </section>
   );
 }
@@ -84,7 +101,7 @@ function StatusLine({ status }: { status: Status }) {
 
 function Footer({ status, children }: { status: Status; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-xl border-t border-mist-100 bg-mist-50 px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
       <div className="min-w-0 flex-1 basis-40">
         <StatusLine status={status} />
       </div>
@@ -97,7 +114,6 @@ function Footer({ status, children }: { status: Status; children: React.ReactNod
 /* Profile header                                                      */
 /* ------------------------------------------------------------------ */
 
-const linkBtn = "rounded text-adm-base font-medium text-ocean-700 hover:text-ocean-800 hover:underline disabled:opacity-50 disabled:no-underline";
 
 function ProfileCard() {
   const { user } = useAuth();
@@ -155,7 +171,7 @@ function ProfileCard() {
   };
 
   return (
-    <Card id="settings-profile">
+    <Card id="settings-profile" title="Profile" description="How you appear to teammates across the portal: the sidebar, assignments and activity.">
       <div className="flex min-w-0 items-center gap-4">
         <div className="relative size-16 shrink-0">
           {user?.id && !failed ? (
@@ -187,15 +203,16 @@ function ProfileCard() {
             {chip && <Badge tone={chip.tone}>{chip.label}</Badge>}
           </div>
           <p className="truncate text-adm-base text-mist-600">{user?.email || "–"}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3">
-            <button type="button" className={linkBtn} disabled={!!busy} onClick={() => input.current?.click()}>
-              {hasPhoto ? "Change photo" : "Add photo"}
-            </button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="secondary" icon="upload" disabled={!!busy} onClick={() => input.current?.click()}>
+              {hasPhoto ? "Change photo" : "Upload photo"}
+            </Button>
             {hasPhoto && (
-              <button type="button" className={linkBtn} disabled={!!busy} onClick={() => void remove()}>
+              <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => void remove()}>
                 Remove
-              </button>
+              </Button>
             )}
+            <span className="text-adm-xs text-mist-600">JPG, PNG or WebP, up to 2 MB</span>
           </div>
           <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" aria-label="Choose a profile photo" onChange={upload} />
         </div>
@@ -265,7 +282,9 @@ function DetailsCard() {
   return (
     <form onSubmit={save} onBlur={v.revalidate} noValidate>
       <Card
+        id="settings-details"
         title="Personal details"
+        description="Your name and phone number. Your email is your sign-in and is changed by an admin."
         footer={
           <Footer status={status}>
             {dirty && (
@@ -401,6 +420,7 @@ function PasswordCard() {
       <Card
         id="settings-security"
         title="Password"
+        description="At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol."
         footer={
           <Footer status={status}>
             <Button type="submit" loading={saving} disabled={!dirty}>
@@ -415,7 +435,6 @@ function PasswordCard() {
             {input("newPassword", "New password", "new-password")}
             {input("confirmPassword", "Confirm new password", "new-password")}
           </div>
-          <p className="text-adm-xs text-mist-600">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</p>
         </div>
       </Card>
     </form>
@@ -499,6 +518,7 @@ function WebsiteCard() {
     <Card
       id="settings-system"
       title="Website status"
+      description="Take the public site offline for planned work. The portal and sign-in stay reachable."
       action={
         loaded && !loadError ? (
           <Badge tone={base.enabled ? "amber" : "green"} dot>
@@ -590,7 +610,6 @@ function WebsiteCard() {
 
 export default function SettingsView({ initialTab }: { initialTab: SettingsTab }) {
   const { user } = useAuth();
-  const { signOut } = useSession();
   const isAdmin = user?.role === "admin";
 
   // Deep links (?tab=security) scroll to their card.
@@ -599,24 +618,48 @@ export default function SettingsView({ initialTab }: { initialTab: SettingsTab }
     document.getElementById(`settings-${initialTab}`)?.scrollIntoView({ block: "start" });
   }, [initialTab, isAdmin]);
 
+  const sections = [
+    { id: "settings-profile", label: "Profile", icon: "userCheck" as IconName },
+    { id: "settings-details", label: "Personal details", icon: "idBadge" as IconName },
+    { id: "settings-security", label: "Password", icon: "lock" as IconName },
+    ...(isAdmin ? [{ id: "settings-system", label: "Website", icon: "globe" as IconName }] : []),
+  ];
+  const [current, setCurrent] = useState(sections[0].id);
+  const jump = (id: string) => {
+    setCurrent(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <Page width="narrow">
-      <div className="mx-auto grid w-full max-w-[40rem] min-w-0 content-start gap-4">
-        <PageHeader title="Account settings" icon="settings" section="workspace" />
-        <ProfileCard />
-        <DetailsCard key={user?.id ?? "anon"} />
-        <PasswordCard />
-        {isAdmin && <WebsiteCard />}
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-adm-base text-mist-600">
-          <span className="min-w-0 truncate">
-            Signed in as <span className="font-medium text-navy-900">{user?.email || "–"}</span>
-          </span>
-          <span aria-hidden>·</span>
-          <button type="button" onClick={signOut} className="inline-flex items-center gap-1 rounded font-medium text-ocean-700 hover:text-ocean-800 hover:underline">
-            <Icon name="logout" className="size-4" />
-            Sign out
-          </button>
-        </p>
+    <Page>
+      <PageHeader title="Settings" />
+      <div className="grid min-w-0 items-start gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        {/* Plane's settings nav: where each section is, pinned while the page scrolls */}
+        <nav aria-label="Settings sections" className="lg:sticky lg:top-12">
+          <ul className="flex gap-1 scroll-strip lg:grid lg:gap-0.5">
+            {sections.map((sec) => (
+              <li key={sec.id}>
+                <button
+                  type="button"
+                  onClick={() => jump(sec.id)}
+                  aria-current={current === sec.id ? "true" : undefined}
+                  className={`flex h-8 w-full items-center gap-2 whitespace-nowrap rounded-md px-2 text-left text-adm-base font-medium transition-colors duration-150 ${
+                    current === sec.id ? "bg-mist-100 text-navy-900" : "text-mist-700 hover:bg-mist-100/70 hover:text-navy-900"
+                  }`}
+                >
+                  <Icon name={sec.icon} className={`size-4 shrink-0 ${current === sec.id ? "text-navy-900" : "text-mist-500"}`} />
+                  {sec.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="min-w-0 max-w-4xl">
+          <ProfileCard />
+          <DetailsCard key={user?.id ?? "anon"} />
+          <PasswordCard />
+          {isAdmin && <WebsiteCard />}
+        </div>
       </div>
     </Page>
   );

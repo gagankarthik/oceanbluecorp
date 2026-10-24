@@ -5,7 +5,7 @@ import Icon, { type IconName } from "../icons";
 // Form primitives for the publishing screens (article editor, content).
 
 export const inputCls =
-  "block w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-status-danger-mark disabled:bg-mist-50 disabled:text-mist-600";
+  "block w-full rounded-md bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-status-danger-mark disabled:bg-mist-50 disabled:text-mist-600";
 
 /** `n/limit`: amber past the soft (guidance) limit, red past the hard (schema) one. */
 export function Counter({ value, hard, soft }: { value: number; hard?: number; soft?: number }) {

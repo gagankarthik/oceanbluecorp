@@ -1,27 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Application, Job, TaskEntry } from "@/lib/aws/dynamodb";
-import { BarChart, DonutChart, TrendChart } from "@/components/portal/charts";
-import { StageBadge, StageFunnel } from "@/components/portal/recruiting/bits";
-import { FLOW, STAGE_LABEL, buckets, countIn, inPlayCount, needsCandidates, permissionsFor, reachedAt, tally, type Stage } from "@/components/portal/recruiting/model";
+import { BarChart } from "@/components/portal/charts";
+import { FLOW, STAGE_LABEL, buckets, daysUntil, countIn, inPlayCount, needsCandidates, permissionsFor, reachedAt, tally, type Stage } from "@/components/portal/recruiting/model";
 import TeamPerformancePanel from "@/components/portal/recruiting/TeamPerformance";
 import TeamPerformance, { PERIODS, type Period } from "@/components/portal/performance/TeamPerformance";
-import Icon from "@/components/portal/icons";
+import Icon, { type IconName } from "@/components/portal/icons";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
-  Avatar, BarList, Button, EmptyState, ErrorState, KpiRow, Page, PageHeader, Panel, ProgressBar, Segmented, Skeleton, StatCard, usePortalRouter,
+  Button, EmptyState, ErrorState, ProgressBar, Skeleton, usePortalRouter,
+  ListHeader, MenuSelect, BTN_ICON, BTN_PRIMARY,
 } from "@/components/portal/kit";
+import { TableTabs } from "@/components/portal/DataTable";
 import { MY_TASKS_KEY, refreshApplications, refreshTasks, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
 import { useResource, type Resource } from "@/hooks/use-resource";
-import { fmtRelative } from "@/lib/format";
 import { isPubliclyOpen, jobCategory } from "@/lib/job-status";
 import { DAY, OFFER_STALE_DAYS, STALE_DAYS, TERMINAL, enteredStageAt, everReached, isStale, median } from "@/lib/pipeline";
-import { ActionMenu } from "@/components/portal/records/Menu";
 import { DashboardBodySkeleton } from "./DashboardSkeleton";
+import { ActivityFeed, RolesAtRisk, recentEvents } from "./dashboard-widgets";
+import { ActivityChart, BAR, CompositionBar, ConversionFunnel, DotStrip, FigureStrip, Meter, RhythmHeatmap, Section, YieldBars, type FunnelStage, type YieldRow } from "@/components/portal/viz";
 
 const RANGES = [
   { value: "7d", label: "7D", long: "last 7 days", days: 7 },
@@ -32,6 +33,7 @@ const RANGES = [
 ] as const;
 type RangeKey = (typeof RANGES)[number]["value"];
 const DEFAULT_RANGE: RangeKey = "90d";
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 type Stats = {
   activeJobs: number;
@@ -41,17 +43,15 @@ type Stats = {
   closedJobs: number;
   monthlyApplications: { month: string; applications: number }[];
 };
-/** KPI card as a link: hover firms the hairline instead of lifting a shadow */
-const kpiLink = "block rounded-xl [&>div]:transition-shadow [&>div]:duration-150 hover:[&>div]:ring-mist-400";
 type MyTask = TaskEntry & { applicationId: string; candidateName?: string; jobTitle?: string };
 
-/** One panel, several views: keeps secondary charts off the page until asked for */
-function TabbedPanel({ tabs, className = "" }: { tabs: { id: string; label: string; content: React.ReactNode }[]; className?: string }) {
+/** One section, several views: underline tabs along the top of its body. */
+function TabbedSection({ title, tabs, className = "" }: { title: string; tabs: { id: string; label: string; content: React.ReactNode }[]; className?: string }) {
   const [active, setActive] = useState(tabs[0].id);
   const tab = tabs.find((t) => t.id === active) ?? tabs[0];
   return (
-    <section aria-label="More insights" className={`flex min-w-0 flex-col rounded-xl bg-mist-0 ring-1 ring-mist-200 ${className}`}>
-      <div role="tablist" aria-label="More insights" className=" flex gap-1 scroll-strip border-b border-mist-200 px-3 pt-2">
+    <Section title={title} className={className} flush>
+      <div role="tablist" aria-label={title} className="flex gap-5 scroll-strip border-b border-mist-200 px-4 sm:px-5">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -59,53 +59,94 @@ function TabbedPanel({ tabs, className = "" }: { tabs: { id: string; label: stri
             type="button"
             aria-selected={t.id === active}
             onClick={() => setActive(t.id)}
-            className={`-mb-px min-h-10 shrink-0 whitespace-nowrap border-b-2 px-3 text-adm-base font-medium transition-colors duration-150 ${
-              t.id === active ? "border-ocean-600 text-navy-900" : "border-transparent text-mist-600 hover:text-navy-900"
+            className={`-mb-px h-10 shrink-0 whitespace-nowrap border-b-2 text-adm-base transition-colors duration-150 ${
+              t.id === active ? "border-ocean-600 font-semibold text-navy-900" : "border-transparent text-mist-600 hover:border-mist-300 hover:text-navy-900"
             }`}
           >
             {t.label}
           </button>
         ))}
       </div>
-      <div role="tabpanel" className="flex-1 p-5">
+      <div key={tab.id} role="tabpanel" className="kit-fade p-4">
         {tab.content}
       </div>
-    </section>
+    </Section>
   );
 }
 
-/** One attention row: a count and where to act on it. Two targets when the count spans both role lists. */
-function AttentionRow({ label, hint, value, tone, href, split }: { label: string; hint: string; value: number; tone: "red" | "amber"; href: string; split?: { label: string; href: string }[] }) {
-  const badge = !value ? "bg-mist-100 text-mist-600" : tone === "red" ? "bg-status-danger-soft text-status-danger" : "bg-status-warning-soft text-status-warning";
-  const count = <span className={`grid h-8 min-w-10 shrink-0 place-items-center rounded-md px-2 text-adm-base font-semibold tabular-nums ${badge}`}>{value}</span>;
+/** "Good morning, Gagan" and today's date, as Plane's home opens. Time of day is read after mount. */
+function Greeting({ first, updated }: { first: string; updated: Date | null }) {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => setNow(new Date()), []);
+  const h = now?.getHours();
+  const part = h === undefined ? null : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+  return (
+    <div className="kit-fade">
+      <h1 className="text-adm-lg font-semibold tracking-tight text-navy-900">
+        {part ? `Good ${part}` : "Hello"}
+        {first ? `, ${first}` : ""}
+      </h1>
+      <p className="mt-1 text-adm-base text-mist-600">
+        {now ? now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : " "}
+        {updated && <span> · Updated {updated.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>}
+      </p>
+    </div>
+  );
+}
+
+const TONE_TEXT = { red: "text-status-danger", amber: "text-status-warning" } as const;
+
+/** One attention row: what, why, how many. Two targets when the count spans both role lists. */
+function AttentionRow({
+  label,
+  hint,
+  value,
+  tone,
+  icon,
+  href,
+  split,
+}: {
+  label: string;
+  hint: string;
+  value: number;
+  tone: "red" | "amber";
+  icon: IconName;
+  href: string;
+  split?: { label: string; href: string }[];
+}) {
+  const mark = <Icon name={icon} className={`mt-0.5 size-4 shrink-0 ${value ? TONE_TEXT[tone] : "text-mist-500"}`} />;
+  const count = <span className={`shrink-0 text-adm-md font-semibold tabular-nums ${value ? TONE_TEXT[tone] : "text-mist-600"}`}>{value}</span>;
   if (split)
     return (
-      // Rail width: the two targets sit under the label rather than beside it
-      <div className="flex min-h-12 items-start gap-3 rounded-lg p-2">
-        {count}
+      <li className="flex items-start gap-3 px-4 py-3">
+        {mark}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-adm-base font-medium text-navy-900">{label}</span>
           <span className="block truncate text-adm-xs text-mist-600">{hint}</span>
-          <span className="-ml-2 mt-1 flex flex-wrap gap-1">
+          <span className="-ml-1.5 mt-1 flex flex-wrap gap-1">
             {split.map((s) => (
-              <Link key={s.href} href={s.href} className="inline-flex min-h-8 items-center gap-0.5 rounded-md px-2 text-adm-base font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50">
+              <Link key={s.href} href={s.href} className="inline-flex h-7 items-center gap-0.5 rounded-md px-1.5 text-adm-xs font-medium text-ocean-700 transition-colors duration-150 hover:bg-ocean-50">
                 {s.label}
                 <Icon name="chevronRight" className="size-3.5" />
               </Link>
             ))}
           </span>
         </span>
-      </div>
+        {count}
+      </li>
     );
   return (
-    <Link href={href} className="flex min-h-12 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
-      {count}
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-adm-base font-medium text-navy-900">{label}</span>
-        <span className="block truncate text-adm-xs text-mist-600">{hint}</span>
-      </span>
-      <Icon name="chevronRight" className="size-4 shrink-0 text-mist-500" />
-    </Link>
+    <li>
+      <Link href={href} className="group flex items-start gap-3 px-4 py-3 transition-colors duration-150 hover:bg-mist-50">
+        {mark}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-adm-base font-medium text-navy-900">{label}</span>
+          <span className="block truncate text-adm-xs text-mist-600">{hint}</span>
+        </span>
+        {count}
+        <Icon name="chevronRight" className="mt-1 size-4 shrink-0 -translate-x-1 text-mist-500 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100" />
+      </Link>
+    </li>
   );
 }
 
@@ -145,11 +186,13 @@ function MyTasks() {
   const status = (res.error as { status?: number } | undefined)?.status;
   if (status === 401 || status === 403) return null;
   return (
-    <Panel
-      title={`My tasks${tasks.length ? ` (${tasks.length})` : ""}`}
+    <Section
+      title="My tasks"
+      meta={tasks.length ? `${tasks.length} open` : undefined}
+      flush
       action={
         overdue || dueToday ? (
-          <span className="text-adm-base font-medium">
+          <span className="text-adm-xs font-medium">
             {overdue > 0 && <span className="text-status-danger">{overdue} overdue</span>}
             {overdue > 0 && dueToday > 0 && <span className="text-mist-600">, </span>}
             {dueToday > 0 && <span className="text-status-warning">{dueToday} due today</span>}
@@ -158,7 +201,7 @@ function MyTasks() {
       }
     >
       {res.isLoading ? (
-        <ul className="grid gap-3" role="status" aria-label="Loading tasks">
+        <ul className="grid gap-3 p-4" role="status" aria-label="Loading tasks">
           {[0, 1, 2].map((i) => (
             <li key={i} className="flex items-start gap-3 p-2">
               <Skeleton className="size-5 shrink-0 rounded-md" />
@@ -172,13 +215,21 @@ function MyTasks() {
       ) : res.error && !res.data ? (
         <EmptyState compact icon="alert" title="Couldn't load your tasks" action={<Button size="sm" variant="secondary" icon="refresh" loading={res.isValidating} onClick={() => void res.reload()}>Try again</Button>} />
       ) : tasks.length === 0 ? (
-        <EmptyState compact icon="check" title="No open tasks" body="Follow-ups you add on a candidate's record, or that teammates assign you, show here." />
+        <div className="flex items-start gap-3 px-4 py-3.5">
+          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-status-success-soft text-status-success">
+            <Icon name="check" className="size-3.5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-adm-base font-medium text-navy-900">No open tasks</span>
+            <span className="block text-adm-xs text-mist-600">Follow-ups you add on a candidate, or that teammates assign you, show here.</span>
+          </span>
+        </div>
       ) : (
-        <ul className="grid gap-1">
+        <ul className="divide-y divide-mist-100">
           {tasks.slice(0, 6).map((t) => {
             const late = !!t.dueAt && t.dueAt.slice(0, 10) < today;
             return (
-              <li key={t.id} className="flex items-start gap-1 rounded-lg transition-colors duration-150 hover:bg-mist-50">
+              <li key={t.id} className="flex items-start gap-1 pl-1.5 pr-3 transition-colors duration-150 hover:bg-mist-50">
                 <button
                   type="button"
                   aria-label={`Mark "${t.text}" done`}
@@ -187,8 +238,8 @@ function MyTasks() {
                   onClick={() => void setDone(t, true)}
                   className="group grid size-10 shrink-0 place-items-center rounded-lg disabled:opacity-50"
                 >
-                  <span className="grid size-5 place-items-center rounded-md text-transparent ring-1 ring-inset ring-mist-400 transition-colors group-hover:text-ocean-700 group-hover:ring-ocean-600">
-                    <Icon name="check" className="size-3.5" />
+                  <span className="grid size-4 place-items-center rounded-full text-transparent ring-1 ring-inset ring-mist-400 transition-colors duration-150 group-hover:bg-kelp-700 group-hover:text-white group-hover:ring-kelp-700">
+                    <Icon name="check" className="size-3" />
                   </span>
                 </button>
                 <Link href={`/portal/candidates/${t.applicationId}`} className="group min-w-0 flex-1 py-2 pr-2">
@@ -201,10 +252,10 @@ function MyTasks() {
               </li>
             );
           })}
-          {tasks.length > 6 && <li className="px-2 pt-1 text-adm-xs text-mist-600">+{tasks.length - 6} more on candidate records</li>}
+          {tasks.length > 6 && <li className="px-4 py-2.5 text-adm-xs text-mist-600">+{tasks.length - 6} more on candidate records</li>}
         </ul>
       )}
-    </Panel>
+    </Section>
   );
 }
 
@@ -231,7 +282,7 @@ export default function Dashboard() {
     router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
   };
 
-  const [recentTab, setRecentTab] = useState<"all" | "interview" | "offered">("all");
+  const [recentTab, setRecentTab] = useState<"all" | "applied" | "moved">("all");
   const appsRes = useApplicationSummaries();
   const jobsRes = useJobSummaries();
   const statsRes = useResource<{ stats?: Stats }>("/api/admin/stats");
@@ -250,57 +301,60 @@ export default function Dashboard() {
 
   const first = user.name.split(" ")[0];
 
-  const header = (
-    <PageHeader
-      icon="dashboard"
-      title={first ? `Welcome back, ${first}` : "Welcome back"}
-      description={loadedAt ? `Updated ${loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : undefined}
-      actions={
-        <>
-          <Button
-            variant="ghost"
-            icon="refresh"
-            label="Refresh"
-            loading={appsRes.isValidating || jobsRes.isValidating}
-            onClick={() => void Promise.all([appsRes.reload(), jobsRes.reload(), statsRes.reload()])}
-          />
-          <Button href="/portal/applications" variant="secondary" icon="inbox">Applications</Button>
-          {role === "sales" && <ActionMenu items={[{ label: "State roles", icon: "capitol", onSelect: () => router.push("/portal/state-roles") }]} />}
-          {role === "hr" && <ActionMenu items={[{ label: "Resumes", icon: "resume", onSelect: () => router.push("/portal/resumes") }]} />}
-          {canEditJobs && <Button href="/portal/jobs/new" icon="plus">New role</Button>}
-        </>
-      }
-      tabs={
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Segmented
+  const refreshing = appsRes.isValidating || jobsRes.isValidating;
+  // Plane's page frame: the 44px header with the view tabs and controls, then the page on white.
+  const frame = (content: React.ReactNode) => (
+    <div className="-m-5 flex min-h-[calc(100svh-3.75rem-2px)] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
+      <ListHeader
+        tabs={
+          <TableTabs
             label="Dashboard view"
             value={view}
             onChange={(v) => setParams({ view: v === "team" ? "team" : null })}
             options={[
-              { value: "overview", label: "Overview", icon: "dashboard" },
-              { value: "team", label: "Team performance", icon: "target" },
+              { value: "overview", label: "Overview" },
+              { value: "team", label: "Team performance" },
             ]}
           />
-          {view === "team" ? (
-            <Segmented label="Period" value={teamPeriod} onChange={(v) => setParams({ period: v === "month" ? null : v })} options={PERIODS.map((x) => ({ value: x.id, label: x.label }))} />
-          ) : (
-            <Segmented label="Date range" value={range} onChange={(v) => setParams({ range: v === DEFAULT_RANGE ? null : v })} options={RANGES.map((x) => ({ value: x.value, label: x.label }))} />
-          )}
-        </div>
-      }
-    />
+        }
+      >
+        {view === "team" ? (
+          <MenuSelect label="Period" icon="calendar" value={teamPeriod} onChange={(v) => setParams({ period: v === "month" ? null : v })} options={PERIODS.map((x) => ({ value: x.id, label: x.label }))} />
+        ) : (
+          <MenuSelect label="Date range" icon="calendar" value={range} onChange={(v) => setParams({ range: v === DEFAULT_RANGE ? null : v })} options={RANGES.map((x) => ({ value: x.value, label: cap(x.long) }))} />
+        )}
+        <button
+          type="button"
+          onClick={() => void Promise.all([appsRes.reload(), jobsRes.reload(), statsRes.reload()])}
+          disabled={refreshing}
+          aria-label={refreshing ? "Refreshing" : "Refresh"}
+          title="Refresh"
+          className={`${BTN_ICON} disabled:opacity-60`}
+        >
+          <Icon name="refresh" className={`size-4 ${refreshing ? "animate-spin motion-reduce:animate-none" : ""}`} />
+        </button>
+        {canEditJobs && (
+          <Link href="/portal/jobs/new" className={BTN_PRIMARY}>
+            <Icon name="plus" className="size-4" />
+            New role
+          </Link>
+        )}
+      </ListHeader>
+      <div className="grid w-full flex-1 content-start gap-6 bg-mist-50 px-4 py-5 sm:px-6">{content}</div>
+    </div>
   );
 
-  if (view === "team") {
-    return (
-      <Page>
-        {header}
+  if (view === "team")
+    return frame(
+      <>
+        <h1 className="sr-only">Team performance</h1>
         <TeamPerformance period={teamPeriod} />
-      </Page>
+      </>,
     );
-  }
 
   let body: React.ReactNode;
+  // The overview opens with its greeting as the h1; every other state names the page for screen readers
+  let greeted = false;
   if (appsRes.isLoading || jobsRes.isLoading) body = <DashboardBodySkeleton />;
   else if ((!appsRes.applications && appsRes.error) || (!jobsRes.jobs && jobsRes.error))
     body = (
@@ -327,17 +381,22 @@ export default function Dashboard() {
         secondary={{ label: "Add applicant", icon: "inbox", href: "/portal/applications/new" }}
       />
     );
-  else body = <Overview all={all} apps={apps} jobs={jobs} titles={titles} range={r} start={start} stats={statsRes} recentTab={recentTab} setRecentTab={setRecentTab} onTeam={() => setParams({ view: "team" })} onStage={(s) => router.push(`/portal/applications?status=${s}`)} />;
+  else {
+    greeted = true;
+    body = <Overview first={first} updated={loadedAt} all={all} apps={apps} jobs={jobs} titles={titles} range={r} start={start} stats={statsRes} recentTab={recentTab} setRecentTab={setRecentTab} onTeam={() => setParams({ view: "team" })} onStage={(s) => router.push(`/portal/applications?status=${s}`)} />;
+  }
 
-  return (
-    <Page>
-      {header}
+  return frame(
+    <>
+      {!greeted && <h1 className="sr-only">Dashboard</h1>}
       {body}
-    </Page>
+    </>,
   );
 }
 
 function Overview({
+  first,
+  updated,
   all,
   apps,
   jobs,
@@ -350,6 +409,8 @@ function Overview({
   onTeam,
   onStage,
 }: {
+  first: string;
+  updated: Date | null;
   all: Application[];
   apps: Application[];
   jobs: Job[];
@@ -357,8 +418,8 @@ function Overview({
   range: (typeof RANGES)[number];
   start: number | null;
   stats: Resource<{ stats?: Stats }>;
-  recentTab: "all" | "interview" | "offered";
-  setRecentTab: (v: "all" | "interview" | "offered") => void;
+  recentTab: "all" | "applied" | "moved";
+  setRecentTab: (v: "all" | "applied" | "moved") => void;
   onTeam: () => void;
   onStage: (s: Stage) => void;
 }) {
@@ -398,7 +459,6 @@ function Overview({
   const vsPrev = (value: number | null) => (prev ? { value, label: value === null ? `for previous ${span}` : `vs previous ${span}` } : undefined);
   const offeredEver = apps.filter((a) => everReached(a, "offered"));
   const decided = offeredEver.filter((a) => a.status === "hired" || a.status === "rejected");
-  const offerAcceptance = decided.length ? Math.round((decided.filter((a) => a.status === "hired").length / decided.length) * 100) : null;
   const timeToHire = median(placements.map((a) => Math.max(0, Math.round(((reachedAt(a, "hired") ?? 0) - new Date(a.appliedAt).getTime()) / DAY))));
 
   const funnel = [...FLOW, "hired" as Stage].map((s, i) => ({
@@ -415,27 +475,63 @@ function Overview({
   const stalled = all.filter((a) => isStale(a)).length;
   const offersAtRisk = all.filter((a) => a.status === "offered" && enteredStageAt(a) < Date.now() - OFFER_STALE_DAYS * DAY).length;
   const unassigned = inProgress.filter((a) => !a.ownership && !a.ownershipName).length;
-  const coverage = openJobs.map((j) => ({ j, n: inPlayCount(j) })).sort((a, b) => a.n - b.n);
   const liveBy = { state: openJobs.filter((j) => jobCategory(j) === "state").length, open: openJobs.filter((j) => jobCategory(j) === "open").length };
 
-  const recent = [...all]
-    .filter((a) => recentTab === "all" || a.status === recentTab)
-    .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt))
-    .slice(0, 6);
+  // Funnel rows: how many reached each stage, the share of the stage before, how long current holders wait
+  const funnelStages: FunnelStage[] = funnel.map((f, i) => ({
+    key: f.key,
+    label: f.label,
+    count: f.value,
+    conversion: i > 0 && funnel[i - 1].value ? Math.round((f.value / funnel[i - 1].value) * 100) : null,
+    medianDays: stageAges.find((x) => x.s === f.key)?.age ?? null,
+  }));
+
+  // How far each group's people get: everyone, reached interview, hired
+  const yieldBy = (key: (a: Application) => string): YieldRow[] => {
+    const m = new Map<string, YieldRow>();
+    for (const a of apps) {
+      const k = key(a);
+      const r = m.get(k) ?? { key: k, label: k, total: 0, mid: 0, end: 0 };
+      r.total++;
+      if (everReached(a, "interview") || a.status === "hired") r.mid++;
+      if (a.status === "hired") r.end++;
+      m.set(k, r);
+    }
+    return [...m.values()];
+  };
+  const jobById = new Map(jobs.map((j) => [j.id, j]));
+  const sourceRows = yieldBy((a) => a.source || "Unattributed");
+  const clientRows = yieldBy((a) => (a.jobId && jobById.get(a.jobId)?.clientName) || "Unattributed");
+  const hireTimes = placements.map((a) => ({
+    key: a.id,
+    label: a.name || a.email,
+    sub: a.jobTitle || undefined,
+    value: Math.max(0, Math.round(((reachedAt(a, "hired") ?? 0) - new Date(a.appliedAt).getTime()) / DAY)),
+    href: `/portal/candidates/${a.id}`,
+  }));
+
+  // Live roles closing within a week or with nobody in play, soonest first
+  const atRisk = openJobs
+    .map((j) => ({ j, due: daysUntil(j.submissionDueDate), n: inPlayCount(j) }))
+    .filter((x) => x.n === 0 || (x.due !== null && x.due <= 7))
+    .sort((a, b) => (a.due ?? 999) - (b.due ?? 999) || a.n - b.n)
+    .slice(0, 6)
+    .map((x) => x.j);
+
+  const events = recentEvents(all, 40).filter((e) => recentTab === "all" || e.kind === recentTab).slice(0, 5);
 
   const sources = tally(apps.map((a) => a.source || "Unattributed"));
-  const jobById = new Map(jobs.map((j) => [j.id, j]));
-  const clientMix = tally(apps.map((a) => (a.jobId && jobById.get(a.jobId)?.clientName) || "Unattributed"), 6);
-  const clientTotal = clientMix.reduce((n, c) => n + c.value, 0);
-  const topClientShare = clientTotal && clientMix.length ? Math.round((clientMix[0].value / clientTotal) * 100) : null;
+  const clientTotal = clientRows.reduce((n, c) => n + c.total, 0);
+  const topClient = [...clientRows].sort((a, b) => b.total - a.total)[0];
+  const topClientShare = clientTotal && topClient ? Math.round((topClient.total / clientTotal) * 100) : null;
   const stats = statsRes.data?.stats;
   const reqMix = stats
     ? [
-        { label: "Live", value: stats.activeJobs },
-        { label: "Draft", value: stats.draftJobs },
-        { label: "On hold", value: stats.onHoldJobs + stats.pausedJobs },
-        { label: "Closed", value: stats.closedJobs },
-      ].filter((x) => x.value > 0)
+        { key: "live", label: "Live", value: stats.activeJobs, color: BAR, href: "/portal/state-roles?focus=live" },
+        { key: "draft", label: "Draft", value: stats.draftJobs, color: "var(--color-mist-500)" },
+        { key: "hold", label: "On hold", value: stats.onHoldJobs + stats.pausedJobs, color: "var(--color-buoy-700)" },
+        { key: "closed", label: "Closed", value: stats.closedJobs, color: "var(--color-mist-300)", light: true },
+      ]
     : [];
 
   const statsBody = (render: (s: Stats) => React.ReactNode) =>
@@ -450,60 +546,74 @@ function Overview({
 
   return (
     <>
-      <KpiRow>
-        <Link href="/portal/applications" className={kpiLink}>
-          <StatCard section="recruiting" label="Applications" value={apps.length} delta={vsPrev(appliedDelta)} change={sources[0] && sources[0].label !== "Unattributed" ? `Top source: ${sources[0].label}` : undefined} hint={prev ? undefined : r.long} spark={appliedSeries} />
-        </Link>
-        <Link href="/portal/applications?status=inprogress" className={kpiLink}>
-          <StatCard section="recruiting" label="Candidates in progress" value={inProgress.length} delta={vsPrev(inProgressDelta)} change={`${openJobs.length ? (inProgress.length / openJobs.length).toFixed(1) : "0"} per live role`} hint="now" spark={inProgressSeries} />
-        </Link>
-        <Link href="/portal/applications?status=interview" className={kpiLink}>
-          <StatCard section="recruiting" label="Interviews" value={interviews} delta={vsPrev(interviewDelta)} change={`${interviewingNow} interviewing now`} hint={prev ? undefined : r.long} spark={interviewSeries} />
-        </Link>
-        <Link href="/portal/applications?status=hired" className={kpiLink}>
-          <StatCard section="recruiting" label="Placements" value={placements.length} delta={vsPrev(placedDelta)} change={timeToHire !== null ? `${timeToHire}d median to hire` : "No hires yet"} hint={prev ? undefined : r.long} spark={hiredSeries} />
-        </Link>
-      </KpiRow>
+      <Greeting first={first} updated={updated} />
 
-      {/* Z order: trend wide on the left, the queues in a rail on the right; below xl the rail follows the trend */}
-      <div className="grid gap-6 xl:grid-cols-3 xl:grid-rows-[auto_1fr]">
-        <Panel title="Applications and hires" className="xl:col-span-2">
-          {apps.length || placements.length ? (
-            <div className="grid gap-4">
-              <TrendChart
-                title={`Applications received, hires and rejections, ${r.long}`}
-                labels={bs.map((b) => b.label)}
-                series={[{ name: "Applications", values: appliedSeries }, { name: "Hired", values: hiredSeries }, { name: "Rejected", values: rejectedSeries }]}
-                area
-              />
-              <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-mist-200 pt-3 text-adm-base">
-                {[
-                  { label: "Applications", value: apps.length },
-                  { label: "Placements", value: placements.length },
-                  { label: "Rejected", value: rejectedSeries.reduce((n, v) => n + v, 0) },
-                  { label: "Offer acceptance", value: offerAcceptance !== null ? `${offerAcceptance}%` : "–" },
-                ].map((x) => (
-                  <div key={x.label} className="flex items-baseline gap-1.5">
-                    <dt className="text-mist-600">{x.label}</dt>
-                    <dd className="font-semibold tabular-nums text-navy-900">{x.value}</dd>
+      <FigureStrip
+        items={[
+          { label: "Applications", icon: "inbox", value: apps.length, href: "/portal/applications", delta: vsPrev(appliedDelta), note: sources[0] && sources[0].label !== "Unattributed" ? `top source ${sources[0].label}` : prev ? undefined : r.long, spark: appliedSeries },
+          { label: "Candidates in progress", icon: "activity", value: inProgress.length, href: "/portal/applications?status=inprogress", delta: vsPrev(inProgressDelta), note: `${openJobs.length ? (inProgress.length / openJobs.length).toFixed(1) : "0"} per live role`, spark: inProgressSeries },
+          { label: "Interviews", icon: "calendar", value: interviews, href: "/portal/applications?status=interview", delta: vsPrev(interviewDelta), note: `${interviewingNow} interviewing now`, spark: interviewSeries },
+          { label: "Placements", icon: "award", value: placements.length, href: "/portal/applications?status=hired", delta: vsPrev(placedDelta), note: timeToHire !== null ? `${timeToHire}d median to hire` : "no hires yet", spark: hiredSeries },
+        ]}
+      />
+
+      {/* Two columns that flow on their own, as Plane's home does: the analysis wide on the left,
+          what to act on in a rail on the right. Nothing stretches to match its neighbour. */}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-6">
+          <Section title="Hiring activity" meta={cap(r.long)}>
+            {apps.length || placements.length ? (
+              <div className="grid gap-4">
+                <ActivityChart
+                  range={r.long}
+                  labels={bs.map((b) => b.label)}
+                  series={[{ name: "Applications", values: appliedSeries }, { name: "Hired", values: hiredSeries }, { name: "Rejected", values: rejectedSeries }]}
+                />
+<div className="grid gap-5 border-t border-mist-200 pt-4 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]">
+                  <Meter label="Offer acceptance" value={decided.filter((a) => a.status === "hired").length} of={decided.length} hint="decided offers accepted" />
+                  <div className="grid min-w-0 content-start gap-1">
+                    <p className="text-adm-xs text-mist-600">Time to hire, one dot per placement</p>
+                    <DotStrip title="Days from application to hire" items={hireTimes} />
                   </div>
-                ))}
-              </dl>
-            </div>
-          ) : (
-            quiet("No applications in this period", "Pick a longer range to see the trend.")
-          )}
-        </Panel>
+                </div>
+              </div>
+            ) : (
+              quiet("No applications in this period", "Pick a longer range to see the trend.")
+            )}
+          </Section>
 
-        <aside aria-label="Needs attention and tasks" className="grid min-w-0 content-start gap-6 lg:grid-cols-2 lg:[&>*:only-child]:col-span-2 xl:col-start-3 xl:row-span-2 xl:row-start-1 xl:grid-cols-1">
-          <Panel title="Needs attention" description="Right now, across every role">
+          <Section title="Pipeline conversion" meta="Select a stage to open it">
+            {apps.length ? (
+              <div className="grid gap-4">
+                <ConversionFunnel stages={funnelStages} href={(k) => (k === "pending" ? "/portal/applications" : `/portal/applications?status=${k}`)} />
+                {bottleneck && (
+                  <p className="flex items-center gap-2 text-adm-base text-mist-700">
+                    <Icon name="timer" className="size-4 shrink-0 text-status-warning" />
+                    <span>
+                      <span className="font-medium text-navy-900">{STAGE_LABEL[bottleneck.s]}</span> is the bottleneck: people there have waited a median {bottleneck.age} days.
+                    </span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              quiet("No applications in this period")
+            )}
+          </Section>
+
+          <Section title="Source effectiveness" meta="Applicants, then the share interviewed and hired">
+            <YieldBars title="Applicants by source and how far they get" rows={sourceRows} labels={["Applicants", "Interviewed", "Hired"]} limit={6} empty="No source data yet" />
+          </Section>
+        </div>
+
+        <div className="grid min-w-0 gap-6">
+          <Section title="Needs attention" meta="Right now, every role" flush>
             {openJobs.length > 0 && (
-              <div className="mb-3 grid gap-2 border-b border-mist-200 pb-4">
+              <div className="grid gap-2 border-b border-mist-200 p-4">
                 <div className="flex items-baseline justify-between gap-3">
                   <Link href="/portal/state-roles?focus=live" className="text-adm-base font-medium text-navy-900 hover:underline">
-                    <span className="text-adm-lg font-semibold tabular-nums">{openJobs.length}</span> live role{openJobs.length === 1 ? "" : "s"}
+                    <span className="text-adm-lg font-semibold">{openJobs.length}</span> live role{openJobs.length === 1 ? "" : "s"}
                   </Link>
-                  <span className="truncate text-adm-base text-mist-600">{liveBy.state} state, {liveBy.open} open</span>
+                  <span className="truncate text-adm-xs text-mist-600">{liveBy.state} state · {liveBy.open} open</span>
                 </div>
                 <ProgressBar value={((openJobs.length - starved) / openJobs.length) * 100} tone={starved ? "amber" : "green"} />
                 <p className="text-adm-xs text-mist-600">
@@ -511,12 +621,13 @@ function Overview({
                 </p>
               </div>
             )}
-            <div className="grid gap-1">
+            <ul className="divide-y divide-mist-100">
               <AttentionRow
                 label="Roles with no candidates"
                 hint="Live on the website, nobody in play"
                 value={starved}
                 tone="red"
+                icon="briefcase"
                 href={`/portal/${starvedBy.open > starvedBy.state ? "open" : "state"}-roles?focus=starved`}
                 split={
                   starvedBy.state && starvedBy.open
@@ -527,135 +638,73 @@ function Overview({
                     : undefined
                 }
               />
-              <AttentionRow label="Offers awaiting response" hint={`No answer for ${OFFER_STALE_DAYS}+ days`} value={offersAtRisk} tone="red" href="/portal/applications?status=offered" />
-              <AttentionRow label="Stalled candidates" hint={`In progress, no stage change for ${STALE_DAYS}+ days`} value={stalled} tone="amber" href="/portal/applications?saved=stale" />
-              <AttentionRow label="Unassigned candidates" hint="In progress, nobody owns them" value={unassigned} tone="red" href="/portal/applications?status=inprogress&owner=unassigned" />
-            </div>
-          </Panel>
-          <MyTasks />
-        </aside>
-
-        <Panel title="Hiring funnel" className="xl:col-span-2" description="Click a stage to open it">
-          {apps.length ? (
-            <div className="grid gap-4">
-              <StageFunnel stages={funnel} onSelect={(label) => { const s = funnel.find((f) => f.label === label)?.key; if (s) onStage(s); }} />
-              {bottleneck && (
-                <p className="text-adm-base text-mist-600">
-                  <span className="font-medium text-navy-900">{STAGE_LABEL[bottleneck.s]}</span> is the slowest stage, at a median of {bottleneck.age} days.
-                </p>
-              )}
-            </div>
-          ) : (
-            quiet("No applications in this period")
-          )}
-        </Panel>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-3">
-        <TabbedPanel
-          className="xl:col-span-2"
-          tabs={[
-            {
-              id: "team",
-              label: "Team",
-              content: <TeamPerformancePanel applications={all} titles={titles} onOpen={onTeam} />,
-            },
-            {
-              id: "coverage",
-              label: "Role coverage",
-              content: coverage.length ? (
-                <div className="grid gap-3">
-                  <p className="text-adm-base text-mist-600">Candidates in progress per live role, thinnest first.</p>
-                  <ul className="grid gap-1">
-                    {coverage.slice(0, 8).map(({ j, n }) => (
-                      <li key={j.id}>
-                        <Link href={`/portal/jobs/${j.id}`} className="flex min-h-10 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
-                          <span className={`w-10 shrink-0 rounded-md py-1 text-center text-adm-base font-semibold tabular-nums ${n === 0 ? "bg-status-danger-soft text-status-danger" : n < 3 ? "bg-status-warning-soft text-status-warning" : "bg-ocean-50 text-ocean-700"}`}>{n}</span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-adm-base font-medium text-navy-900">{j.title}</span>
-                            <span className="block truncate text-adm-xs text-mist-600">{j.clientName || j.department || j.postingId}</span>
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                quiet("No live roles", "Set a role to Active to put it on the website.")
-              ),
-            },
-            {
-              id: "sources",
-              label: "Sources",
-              content: sources.length ? <DonutChart title="Applications by source" data={sources} centerLabel="Applications" size={160} /> : quiet("No source data yet"),
-            },
-            {
-              id: "clients",
-              label: "Pipeline by client",
-              content: clientMix.length ? (
-                <div className="grid gap-4">
-                  <BarList items={clientMix} />
-                  {topClientShare !== null && topClientShare >= 40 && (
-                    <p className="text-adm-base text-mist-600">
-                      <span className="font-medium text-navy-900">{clientMix[0].label}</span> holds{" "}
-                      <span className="font-semibold text-status-warning">{topClientShare}%</span> of the pipeline.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                quiet("No client data yet")
-              ),
-            },
-            {
-              id: "reqs",
-              label: "Requisitions",
-              content: statsBody(() => (reqMix.length ? <DonutChart title="Requisitions by status" data={reqMix} centerLabel="Roles" size={160} /> : quiet("No roles posted yet"))),
-            },
-            {
-              id: "monthly",
-              label: "Six months",
-              content: statsBody((s) => (
-                <BarChart title="Applications per month, last six months" labels={s.monthlyApplications.map((m) => m.month)} series={[{ name: "Applications", values: s.monthlyApplications.map((m) => m.applications) }]} height={220} />
-              )),
-            },
-          ]}
-        />
-        <Panel
-          title="Recent applications"
-          action={
-            <Segmented
-              label="Activity filter"
-              size="sm"
-              value={recentTab}
-              onChange={setRecentTab}
-              options={[
-                { value: "all", label: "Latest" },
-                { value: "interview", label: "Interviews" },
-                { value: "offered", label: "Offers" },
-              ]}
-            />
-          }
-        >
-          {recent.length === 0 ? (
-            quiet(recentTab === "all" ? "No applications yet" : recentTab === "interview" ? "Nobody interviewing" : "No offers out")
-          ) : (
-            <ul className="grid gap-1">
-              {recent.map((a) => (
-                <li key={a.id}>
-                  <Link href={`/portal/candidates/${a.id}`} className="flex min-h-12 items-center gap-3 rounded-lg p-2 transition-colors duration-150 hover:bg-mist-50">
-                    <Avatar name={a.name || a.email} size="sm" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-adm-base font-medium text-navy-900">{a.name || "Unnamed"}</span>
-                      <span className="block truncate text-adm-xs text-mist-600">{a.jobTitle || "No role"}, {fmtRelative(a.appliedAt)}</span>
-                    </span>
-                    <StageBadge stage={a.status} />
-                  </Link>
-                </li>
-              ))}
+              <AttentionRow label="Offers awaiting response" hint={`No answer for ${OFFER_STALE_DAYS}+ days`} value={offersAtRisk} tone="red" icon="mail" href="/portal/applications?status=offered" />
+              <AttentionRow label="Stalled candidates" hint={`No stage change for ${STALE_DAYS}+ days`} value={stalled} tone="amber" icon="timer" href="/portal/applications?saved=stale" />
+              <AttentionRow label="Unassigned candidates" hint="In progress, nobody owns them" value={unassigned} tone="red" icon="userPlus" href="/portal/applications?status=inprogress&owner=unassigned" />
             </ul>
-          )}
-        </Panel>
+          </Section>
+
+          <Section title="Roles at risk" meta="Closing within a week or empty" flush>
+            <RolesAtRisk jobs={atRisk} />
+          </Section>
+
+
+          <MyTasks />
+
+          <Section
+            title="Recent activity"
+            flush
+            action={
+              <MenuSelect
+                label="Show"
+                value={recentTab}
+                onChange={setRecentTab}
+                options={[
+                  { value: "all", label: "Everything" },
+                  { value: "applied", label: "Applications" },
+                  { value: "moved", label: "Stage moves" },
+                ]}
+              />
+            }
+          >
+            <ActivityFeed events={events} />
+          </Section>
+        </div>
       </div>
+
+      {/* The deeper views, full width under both columns */}
+      <TabbedSection
+        title="Insights"
+        tabs={[
+          { id: "team", label: "Team", content: <TeamPerformancePanel applications={all} titles={titles} onOpen={onTeam} /> },
+          {
+            id: "clients",
+            label: "Pipeline by client",
+            content: clientRows.length ? (
+              <div className="grid max-w-[60rem] gap-4">
+                <YieldBars title="Pipeline by client and how far it gets" rows={clientRows} labels={["Applicants", "Interviewed", "Hired"]} />
+                {topClientShare !== null && topClientShare >= 40 && (
+                  <p className="text-adm-base text-mist-600">
+                    <span className="font-medium text-navy-900">{topClient.label}</span> holds{" "}
+                    <span className="font-semibold text-status-warning">{topClientShare}%</span> of the pipeline.
+                  </p>
+                )}
+              </div>
+            ) : (
+              quiet("No client data yet")
+            ),
+          },
+          { id: "rhythm", label: "When people apply", content: <RhythmHeatmap title={`Applications by weekday and time of day, ${r.long}`} times={apps.map((a) => new Date(a.appliedAt).getTime())} /> },
+          { id: "reqs", label: "Requisitions", content: statsBody(() => (reqMix.some((x) => x.value) ? <CompositionBar title="Requisitions by status" parts={reqMix} /> : quiet("No roles posted yet"))) },
+          {
+            id: "monthly",
+            label: "Six months",
+            content: statsBody((st) => (
+              <BarChart title="Applications per month, last six months" labels={st.monthlyApplications.map((m) => m.month)} series={[{ name: "Applications", values: st.monthlyApplications.map((m) => m.applications) }]} height={220} />
+            )),
+          },
+        ]}
+      />
     </>
   );
 }

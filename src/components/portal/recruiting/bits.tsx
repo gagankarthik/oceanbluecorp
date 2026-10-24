@@ -1,5 +1,6 @@
 "use client";
 
+import { StateIcon, type StateMark } from "../kit/state-icon";
 import { useEffect } from "react";
 import { useToast } from "../toast";
 import Icon from "../icons";
@@ -10,7 +11,7 @@ import { Modal as KitModal } from "../kit/overlay";
 import { ErrorState as KitErrorState } from "../kit/states";
 import { ListPageSkeleton } from "../kit/skeletons";
 import {
-  JOB_STATUS_DOT, STAGE_DOT, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
+  JOB_STATE, JOB_STATUS_DOT, PIPELINE, STAGE_DOT, stageState, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
 } from "./model";
 
 /** Kit Modal; kept for existing imports. */
@@ -87,7 +88,7 @@ export function ChipFilter({
             aria-pressed={on}
             onClick={() => onChange(on ? null : o.value)}
             className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-adm-base font-medium ring-1 ring-inset transition-colors ${
-              on ? "bg-navy-900 text-white ring-navy-900" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
+              on ? "bg-contrast text-on-contrast ring-contrast" : "bg-mist-0 text-navy-900 ring-mist-300 hover:bg-mist-50"
             }`}
           >
             {o.color && <span aria-hidden className="size-2 rounded-full" style={{ background: o.color }} />}
@@ -108,7 +109,7 @@ export function KpiButton({ active, onClick, label, children }: { active: boolea
       onClick={onClick}
       aria-pressed={active}
       aria-label={label}
-      className={`block w-full rounded-xl text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-md ${active ? "ring-2 ring-ocean-600 ring-offset-2 ring-offset-mist-50" : ""}`}
+      className={`block w-full rounded-lg text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-md ${active ? "ring-2 ring-ocean-600 ring-offset-2 ring-offset-mist-50" : ""}`}
     >
       {children}
     </button>
@@ -140,7 +141,7 @@ export function StageFunnel({
             <span className="truncate text-left text-adm-base text-navy-900">{s.label}</span>
             <span className="relative h-7 overflow-hidden rounded-md bg-mist-100">
               <span
-                className={`absolute inset-y-0 left-0 rounded-md transition-[width] duration-200 ${on ? "bg-navy-900" : "bg-ocean-600"}`}
+                className={`absolute inset-y-0 left-0 rounded-md transition-[width] duration-200 ${on ? "bg-contrast" : "bg-ocean-600"}`}
                 style={{ width: `${Math.max(4, (s.value / max) * 100)}%`, opacity: on || !active ? 1 : 0.45 }}
               />
             </span>
@@ -215,19 +216,20 @@ export function BreakdownList({
 /** Pipeline stage chip, coloured by the real stage key */
 export function StageBadge({ stage }: { stage: string }) {
   return (
-    <Badge tone={STAGE_TONE[stage as Stage] ?? "grey"} dot>
+    <Badge tone={STAGE_TONE[stage as Stage] ?? "grey"} mark={stageState(stage)}>
       {STAGE_LABEL[stage as Stage] ?? stage}
     </Badge>
   );
 }
 
-/** Compact native select for an inline status change; the dot carries the colour */
+/** Compact native select for an inline status change; the state icon (or dot) carries the colour */
 export function InlineSelect({
   value,
   options,
   onChange,
   label,
   dot,
+  mark,
   disabled,
   width = "w-36",
 }: {
@@ -236,18 +238,25 @@ export function InlineSelect({
   onChange: (v: string) => void;
   label: string;
   dot?: string;
+  mark?: StateMark;
   disabled?: boolean;
   width?: string;
 }) {
   return (
     <span className={`relative inline-flex max-w-full items-center ${width}`} onClick={(e) => e.stopPropagation()}>
-      {dot && <span aria-hidden className="pointer-events-none absolute left-2.5 size-2 rounded-full" style={{ background: dot }} />}
+      {mark ? (
+        <span aria-hidden className="pointer-events-none absolute left-2 flex">
+          <StateIcon {...mark} />
+        </span>
+      ) : (
+        dot && <span aria-hidden className="pointer-events-none absolute left-2.5 size-2 rounded-full" style={{ background: dot }} />
+      )}
       <select
         value={value}
         aria-label={label}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className={`h-8 w-full cursor-pointer appearance-none rounded-md bg-transparent pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 focus:bg-mist-0 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50 ${dot ? "pl-6" : "pl-2.5"}`}
+        className={`h-8 w-full cursor-pointer appearance-none rounded-md bg-transparent pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 focus:bg-mist-0 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50 ${mark || dot ? "pl-6" : "pl-2.5"}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -261,6 +270,30 @@ export function InlineSelect({
 }
 
 export const stageDot = (s: string) => STAGE_DOT[s as Stage] ?? "var(--color-mist-400)";
+
+/**
+ * How far through the pipeline a candidate got, as one segment per stage from
+ * New to Hired, filled in the current stage's colour. A rejected candidate
+ * keeps the steps they reached, in the rejected colour.
+ */
+export function StageProgress({ status, history }: { status: string; history?: { status: string }[] }) {
+  const at = (s: string) => PIPELINE.indexOf(s as Stage);
+  const reached =
+    status === "rejected"
+      ? Math.max(0, ...(history ?? []).map((h) => at(h.status)))
+      : Math.max(0, at(status));
+  const steps = PIPELINE.length;
+  // The dot colour, so New reads as grey rather than its hollow white fill.
+  const fill = stageDot(status);
+  const label = status === "rejected" ? `Rejected after ${STAGE_LABEL[PIPELINE[reached]]}` : `Step ${reached + 1} of ${steps}`;
+  return (
+    <span role="img" aria-label={label} title={label} className="flex h-3.5 w-20 items-center gap-0.5 rounded-sm bg-mist-100 px-0.5">
+      {PIPELINE.map((s, i) => (
+        <span key={s} className="h-2.5 flex-1 rounded-[1px]" style={{ background: i <= reached ? fill : "var(--color-mist-300)" }} />
+      ))}
+    </span>
+  );
+}
 
 /** First-load placeholder: the kit list skeleton, without a header unless asked. */
 export function LoadingState({ label = "Loading", header = false, kpis = 4 }: { label?: string; header?: boolean; kpis?: number }) {
@@ -351,7 +384,7 @@ export function JobStatusSelect({
       onClick={(e) => e.stopPropagation()}
       className={`relative inline-flex h-8 max-w-full items-center gap-1.5 rounded-md pl-2.5 pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 has-[:focus-visible]:bg-mist-0 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ocean-600 ${disabled ? "opacity-50" : ""}`}
     >
-      <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "var(--color-mist-400)" }} />
+      {JOB_STATE[value] ? <StateIcon {...JOB_STATE[value]} /> : <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "var(--color-mist-400)" }} />}
       <span aria-hidden className="whitespace-nowrap">{jobStatusShort(value)}</span>
       <Icon name="chevronDown" className="pointer-events-none absolute right-2 size-3.5 text-mist-500" />
       <select

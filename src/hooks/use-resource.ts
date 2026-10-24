@@ -19,12 +19,24 @@ type Entry<T = unknown> = {
 
 const cache = new Map<string, Entry>();
 const FRESH_MS = 30_000;
+/** Keys include record ids, so a long session would otherwise keep every record it opened. */
+const MAX_ENTRIES = 200;
+
+/** Drops the oldest entries nobody is reading or loading once the cache is over its cap. */
+function prune() {
+  if (cache.size <= MAX_ENTRIES) return;
+  for (const [key, e] of cache) {
+    if (cache.size <= MAX_ENTRIES) break;
+    if (e.listeners.size === 0 && !e.inflight) cache.delete(key);
+  }
+}
 
 function entry(key: string): Entry {
   let e = cache.get(key);
   if (!e) {
     e = { at: 0, listeners: new Set() };
     cache.set(key, e);
+    prune();
   }
   return e;
 }

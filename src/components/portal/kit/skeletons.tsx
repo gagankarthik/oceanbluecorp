@@ -12,14 +12,14 @@ export function Skeleton({ className = "" }: { className?: string }) {
 /** Announces the wait once; the blocks inside carry no text of their own. */
 function Busy({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div role="status" aria-busy="true" aria-label={label} className={`mx-auto grid w-full min-w-0 content-start gap-6 ${className}`}>
+    <div role="status" aria-busy="true" aria-label={label} className={`grid w-full min-w-0 content-start gap-6 ${className}`}>
       {children}
       <span className="sr-only">{label}</span>
     </div>
   );
 }
 
-const card = "rounded-xl bg-mist-0 ring-1 ring-mist-200";
+const card = "rounded-lg bg-mist-0 ring-1 ring-mist-200";
 
 /** PageHeader: icon chip, title, description; action buttons right from md. */
 export function HeaderSkeleton({ actions = 1, back = false, icon = true }: { actions?: number; back?: boolean; icon?: boolean }) {
@@ -166,7 +166,7 @@ export function ListPageSkeleton({
   rows?: number;
 }) {
   return (
-    <Busy label={label} className="max-w-[1600px]">
+    <Busy label={label}>
       {header && <HeaderSkeleton actions={actions} />}
       {kpis > 0 && <KpiRowSkeleton count={kpis} />}
       {insights && <InsightsSkeleton />}
@@ -178,7 +178,7 @@ export function ListPageSkeleton({
 /** Dashboard: header, KPIs, insights, then two working panels. */
 export function DashboardSkeleton({ label = "Loading the dashboard", header = true }: { label?: string; header?: boolean }) {
   return (
-    <Busy label={label} className="max-w-[1600px]">
+    <Busy label={label}>
       {header && <HeaderSkeleton actions={2} />}
       <KpiRowSkeleton count={4} />
       <InsightsSkeleton />
@@ -205,7 +205,7 @@ function LinesCard({ lines = 5 }: { lines?: number }) {
 /** Single record: back link and header, then content with a 320px aside from lg. */
 export function DetailSkeleton({ label = "Loading record" }: { label?: string }) {
   return (
-    <Busy label={label} className="max-w-[1600px]">
+    <Busy label={label}>
       <HeaderSkeleton back actions={2} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid content-start gap-6">
@@ -249,12 +249,12 @@ export function FormSkeleton({ label = "Loading form", sections = 2, aside = fal
             <LinesCard lines={5} />
           </div>
         </div>
-        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-lg" />
       </Busy>
     );
   }
   return (
-    <Busy label={label} className="max-w-5xl">
+    <Busy label={label} className="mx-auto max-w-5xl">
       <HeaderSkeleton back actions={0} icon={false} />
       {Array.from({ length: sections }, (_, s) => (
         <div key={s} className={`${card} grid gap-5 p-5 sm:p-6`}>
@@ -274,5 +274,84 @@ export function FormSkeleton({ label = "Loading form", sections = 2, aside = fal
         <Skeleton className="h-10 w-32 rounded-lg" />
       </div>
     </Busy>
+  );
+}
+
+/**
+ * A list page while it loads, Plane's layout: the 44px header (crumb, tabs, controls), a 44px
+ * column header, 44px rows and the footer strip, edge to edge. `page` also cancels the shell
+ * gutter (route loading.tsx), matching ListPage; inside a ListPage leave it off.
+ */
+export function CrmListSkeleton({
+  label = "Loading",
+  page = false,
+  tabs = 0,
+  filters = 3,
+  actions = 2,
+  rows = 14,
+}: {
+  label?: string;
+  page?: boolean;
+  /** Tabs in the header; 0 hides them */
+  tabs?: number;
+  /** Accepted for existing call sites; filters now sit behind one button */
+  filters?: number;
+  actions?: number;
+  rows?: number;
+}) {
+  void filters;
+  const cols = ["w-36", "w-28", "w-20", "w-24", "w-24", "w-16", "w-28"];
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label={label}
+      className={`flex min-h-0 flex-1 flex-col overflow-hidden bg-mist-0 ${page ? "-m-5 h-[calc(100svh-3.75rem-2px)] min-h-[32rem] sm:-m-6 lg:-m-8" : ""}`}
+    >
+      <div className="flex h-11 shrink-0 items-center gap-3 border-b border-mist-200 px-4">
+        <Skeleton className="size-4 rounded" />
+        <Skeleton className="h-3 w-24" />
+        {tabs > 0 && (
+          <span className="hidden items-center gap-4 border-l border-mist-200 pl-3 sm:flex">
+            {Array.from({ length: tabs }, (_, i) => (
+              <Skeleton key={i} className={`h-3 ${i === 0 ? "w-8" : "w-16"}`} />
+            ))}
+          </span>
+        )}
+        <span className="ml-auto flex gap-2">
+          <Skeleton className="size-7 rounded-md" />
+          <Skeleton className="hidden h-7 w-20 rounded-md sm:block" />
+          <Skeleton className="hidden h-7 w-20 rounded-md sm:block" />
+          {Array.from({ length: actions }, (_, i) => (
+            <Skeleton key={i} className={`h-7 rounded-md ${i === actions - 1 ? "w-28" : "w-20"}`} />
+          ))}
+        </span>
+      </div>
+      <div className="hidden h-11 shrink-0 items-center justify-between border-b border-mist-200 bg-mist-50 px-3 md:flex">
+        <Skeleton className="h-3 w-24" />
+        {cols.slice(1).map((w, i) => (
+          <Skeleton key={i} className="h-3 w-14" />
+        ))}
+      </div>
+      <ul className="min-h-0 flex-1 overflow-hidden">
+        {Array.from({ length: rows }, (_, r) => (
+          <li key={r} className="flex h-11 items-center justify-between gap-6 border-b border-mist-100 px-3">
+            <span className="flex items-center gap-3">
+              <Skeleton className="size-6 rounded-full" />
+              <Skeleton className={`h-3 ${cols[r % 3]}`} />
+            </span>
+            {cols.slice(1).map((w, i) => (
+              <Skeleton key={i} className={`hidden h-3 md:block ${i % 2 ? "w-16" : w}`} />
+            ))}
+          </li>
+        ))}
+      </ul>
+      <div className="flex h-10 shrink-0 items-center gap-6 border-t border-mist-200 px-4">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="hidden h-3 w-24 sm:block" />
+      </div>
+      <span className="sr-only">{label}</span>
+    </div>
   );
 }

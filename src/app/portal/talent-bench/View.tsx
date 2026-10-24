@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Application, BenchType } from "@/lib/aws/dynamodb";
-import DataTable, { TableTabs, type Column, type Filter } from "@/components/portal/DataTable";
-import { BarChart, DonutChart } from "@/components/portal/charts";
+import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
-import { InlineSelect, KpiButton, StageBadge, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
-import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, tally, type Stage } from "@/components/portal/recruiting/model";
+import { InlineSelect, StageBadge, StarInput, Tags } from "@/components/portal/recruiting/bits";
+import { stageState } from "@/components/portal/recruiting/model";
+import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, type Stage } from "@/components/portal/recruiting/model";
 import { STATE_NAME, hireTypeLabel, stateOf } from "@/components/portal/console/theme";
 import {
-  Avatar, Badge, Button, EmptyState, ErrorState, InsightsSheet, KeyValue, KpiRow, ListPageSkeleton, Page, PageHeader, Panel, Segmented, StatCard,
-  usePortalRouter,
+  Avatar, Badge, Button, PeekTitle, PeekFooter, PeekSection, EmptyState, ErrorState, KeyValue, ListPage, ListPageState, PillButton, usePortalRouter,
+  CrmListSkeleton, ClampText
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
@@ -65,11 +65,9 @@ export default function TalentBenchView() {
   const { setData } = benchRes;
 
   const [pool, setPool] = useState<Pool>("all");
-  const [insightsOpen, setInsightsOpen] = useState(false);
   // Cards suit browsing a bench by skills and availability; the choice is remembered.
   const [layout, setLayout] = useLocalStorage<"table" | "cards">("portal.bench.layout", "cards");
   const [table, setTable] = useState<TableState>({ query: "", filters: {} });
-  const [tableKey, setTableKey] = useState(0);
 
   // Lead Sourcing links back with the pool it was opened from.
   useEffect(() => {
@@ -159,26 +157,19 @@ export default function TalentBenchView() {
 
   const inPool = useMemo(() => (pool === "all" ? rows : rows.filter((a) => poolOf(a) === pool)), [rows, pool]);
 
-  // KPIs and skill chips write the table's filters, so every constraint shows as a chip.
-  const setFilter = (key: string, value: string | null) => {
-    setTable((t) => {
-      const next = { ...t.filters };
-      if (!value || next[key] === value) delete next[key];
-      else next[key] = value;
-      return { ...t, filters: next };
-    });
-    setTableKey((k) => k + 1);
-  };
-  const isOn = (key: string, value: string) => table.filters[key] === value;
-
   const loading = benchRes.isLoading || jobsRes.isLoading;
   const failed = (!benchRes.applications && benchRes.error) || (!jobsRes.jobs && jobsRes.error);
-  const ready = !loading && !failed;
 
   const canFilterByAdder = isAdmin || pool === "internal";
-  const idle = inPool.filter(isIdle).length;
-  const skills = tally(inPool.flatMap((a) => a.skills ?? []), 8).filter((s) => !s.label.startsWith("Other ("));
-  const stageMix = BENCH_STAGES.map((s) => ({ label: STAGE_LABEL[s], value: inPool.filter((a) => a.status === s).length })).filter((s) => s.value > 0);
+  const summary = (list: Row[]): Summary[] => {
+    const idle = list.filter(isIdle).length;
+    return [
+      { label: "active", value: list.filter((a) => a.status === "active").length },
+      { label: "submitted", value: list.filter((a) => a.status === "submitted").length },
+      { label: "idle 30+ days", value: idle, warn: idle > 0 },
+      { label: "with a resume", value: list.filter((a) => a.resumeId).length },
+    ];
+  };
   const allSkills = [...new Set(inPool.flatMap((a) => a.skills ?? []))].sort();
   const opts = (vals: (string | undefined)[]) => [...new Set(vals.filter((v): v is string => !!v))].sort();
 
@@ -221,7 +212,7 @@ export default function TalentBenchView() {
         <InlineSelect
           value={a.status}
           label={`Stage for ${a.name || a.email}`}
-          dot={stageDot(a.status)}
+          mark={stageState(a.status)}
           options={benchOptions.some((o) => o.value === a.status) ? benchOptions : [...benchOptions, { value: a.status, label: stageLabel(a.status) }]}
           onChange={(v) => void setField(a, "status", v as Stage, "Couldn't change the stage. Try again.")}
         />
@@ -272,48 +263,38 @@ export default function TalentBenchView() {
   const detail = (a: Row) => {
     const d = daysOnBench(a);
     return (
-      <div className="grid gap-6">
-        <div className="flex items-center gap-4">
-          <Avatar name={a.name || a.email} size="lg" />
-          <div className="min-w-0">
-            <h3 className="truncate text-adm-lg font-semibold">{a.name || "Unknown"}</h3>
-            <p className="truncate text-adm-base text-mist-600">{a.jobTitle || "No position on file"}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StageBadge stage={a.status} />
-          <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge>
-          {d !== null && <span className={`text-adm-base ${d >= IDLE_DAYS ? "font-medium text-status-warning" : "text-mist-600"}`}>{d} days on the bench</span>}
-        </div>
+      <div className="grid gap-5">
+        <PeekTitle name={a.name || a.email} subtitle={a.jobTitle || "No position on file"} />
         <KeyValue
           items={[
-            { k: "Email", v: <a className="break-all text-ocean-700 underline underline-offset-2" href={`mailto:${a.email}`}>{a.email}</a> },
-            { k: "Phone", v: a.phone || "—" },
-            { k: "Location", v: locationOf(a) || "—" },
-            { k: "Work authorization", v: a.workAuthorization || "—" },
-            { k: "Hire type", v: hireTypeLabel(a.hireType) || "—" },
-            { k: "Rating", v: <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
-            { k: "Added by", v: a.adderRole ? `${a.adder} (${a.adderRole})` : a.adder },
-            { k: "Added", v: fmtDate(a.createdAt || a.appliedAt) },
-            { k: "ID", v: a.applicationId || a.id.slice(0, 8) },
+            { k: "Stage", icon: "activity", v: <StageBadge stage={a.status} /> },
+            { k: "Pool", icon: "layers", v: <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge> },
+            ...(d !== null ? [{ k: "On the bench", icon: "clock" as const, v: <span className={d >= IDLE_DAYS ? "font-medium text-status-warning" : ""}>{d} days</span> }] : []),
+            { k: "Rating", icon: "star", v: <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
+            { k: "Email", icon: "mail", v: <a className="break-all text-ocean-700 hover:underline" href={`mailto:${a.email}`}>{a.email}</a> },
+            { k: "Phone", icon: "phone", v: a.phone || "—" },
+            { k: "Location", icon: "map", v: locationOf(a) || "—" },
+            { k: "Work authorization", icon: "idBadge", v: a.workAuthorization || "—" },
+            { k: "Hire type", icon: "briefcase", v: hireTypeLabel(a.hireType) || "—" },
+            { k: "Added by", icon: "userCheck", v: a.adderRole ? `${a.adder} (${a.adderRole})` : a.adder },
+            { k: "Added", icon: "calendar", v: fmtDate(a.createdAt || a.appliedAt) },
+            { k: "ID", icon: "tag", v: a.applicationId || a.id.slice(0, 8) },
           ]}
         />
         {!!a.skills?.length && (
-          <section>
-            <h4 className="text-adm-base font-semibold">Skills</h4>
-            <div className="mt-2">
-              <Tags items={a.skills} />
-            </div>
-          </section>
+          <PeekSection title="Skills">
+            <Tags items={a.skills} />
+          </PeekSection>
         )}
         {a.notes && (
-          <section>
-            <h4 className="text-adm-base font-semibold">Notes</h4>
-            <p className="mt-2 whitespace-pre-line rounded-lg bg-mist-50 p-3 text-adm-base">{a.notes}</p>
-          </section>
+          <PeekSection title="Notes">
+            <ClampText maxHeight="6rem">
+              <p className="whitespace-pre-line rounded-md bg-mist-50 p-3 text-adm-base">{a.notes}</p>
+            </ClampText>
+          </PeekSection>
         )}
         {/* One primary, one secondary, the rest in the overflow */}
-        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+        <PeekFooter>
           {a.email && (
             <Button icon="mail" className="flex-1" href={`mailto:${a.email}`}>
               Email
@@ -333,7 +314,7 @@ export default function TalentBenchView() {
               { label: "Remove from bench", icon: "x", danger: true, onSelect: () => void removeFromBench(a) },
             ]}
           />
-        </div>
+        </PeekFooter>
       </div>
     );
   };
@@ -352,8 +333,6 @@ export default function TalentBenchView() {
   const counts: Record<Pool, number> = { all: rows.length, internal: 0, external: 0 };
   for (const a of rows) counts[poolOf(a)] += 1;
 
-  const poolHint =
-    pool === "all" ? `${POOL_META.internal.label}: ${POOL_META.internal.hint.toLowerCase()}. ${POOL_META.external.label}: ${POOL_META.external.hint.toLowerCase()}.` : `${POOL_META[pool].hint}.`;
   const poolTabs = (
     <TableTabs
       label="Pool"
@@ -370,7 +349,7 @@ export default function TalentBenchView() {
   );
 
   let body: React.ReactNode;
-  if (loading) body = <ListPageSkeleton header={false} label="Loading the talent bench" kpis={4} insights={false} />;
+  if (loading) body = <CrmListSkeleton label="Loading the talent bench" />;
   else if (failed)
     body = (
       <ErrorState
@@ -397,7 +376,7 @@ export default function TalentBenchView() {
       rows.length === 0 ? (
         empty
       ) : (
-        <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+        <div className="min-w-0 rounded-lg bg-mist-0 ring-1 ring-mist-200">
           <div className="border-b border-mist-200 px-2 sm:px-4">{poolTabs}</div>
           {empty}
         </div>
@@ -405,120 +384,62 @@ export default function TalentBenchView() {
   }
   else
     body = (
-      <>
-        <KpiRow>
-          <KpiButton label="Show active consultants" active={isOn("stage", STAGE_LABEL.active)} onClick={() => setFilter("stage", STAGE_LABEL.active)}>
-            <StatCard section="recruiting" label="Active" value={inPool.filter((a) => a.status === "active").length} icon="userCheck" change={`${inPool.length} on bench`} trend="flat" />
-          </KpiButton>
-          <KpiButton label="Show submitted consultants" active={isOn("stage", STAGE_LABEL.submitted)} onClick={() => setFilter("stage", STAGE_LABEL.submitted)}>
-            <StatCard section="recruiting" label="Submitted" value={inPool.filter((a) => a.status === "submitted").length} icon="send" change={`${inPool.filter((a) => a.status === "interview").length} interviewing`} trend="flat" />
-          </KpiButton>
-          <KpiButton label="Show idle profiles" active={isOn("idle", IDLE)} onClick={() => setFilter("idle", IDLE)}>
-            <StatCard section="recruiting" label="Idle 30+ days" value={idle} icon="timer" change={idle ? "Re-engage" : "All fresh"} trend={idle ? "down" : "up"} />
-          </KpiButton>
-          <StatCard section="recruiting" label="With a resume" value={inPool.filter((a) => a.resumeId).length} icon="resume" change={`of ${inPool.length}`} trend="flat" />
-        </KpiRow>
-
-        <DataTable
-          key={`${pool}-${tableKey}`}
-          rows={inPool}
-          tabs={poolTabs}
-          columns={columns}
-          filters={filters}
-          initialQuery={table.query}
-          initialFilters={table.filters}
-          onStateChange={setTable}
-          storageKey="bench"
-          toolbar={
-            <Segmented
-              label="Layout"
-              value={layout}
-              onChange={setLayout}
-              options={[
-                { value: "cards", label: "Cards", icon: "dashboard" },
-                { value: "table", label: "Table", icon: "menu" },
-              ]}
-            />
-          }
-          exportName="bench"
-          onExport={exportCsv}
-          searchPlaceholder="Search name, email or skill"
-          emptyTitle="No candidates match your filters"
-          detailTitle={(a) => a.name || a.email}
-          renderDetail={(a) => detail(rows.find((r) => r.id === a.id) ?? a)}
-          detailActions={(a) => <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />}
-          rowMenu={rowMenu}
-          renderGrid={
-            layout === "cards"
-              ? (page, open) => (
-                  <BenchCards
-                    rows={page}
-                    showAdder={canFilterByAdder}
-                    onOpen={open}
-                    onRate={rate}
-                    onResume={(a) => void downloadResume(a)}
-                    onRemove={(a) => void removeFromBench(a)}
-                  />
-                )
-              : undefined
-          }
-        />
-      </>
+      <DataTable
+        key={pool}
+        fill
+        noun="profiles"
+        summary={summary}
+        rows={inPool}
+        tabs={poolTabs}
+        columns={columns}
+        filters={filters}
+        initialQuery={table.query}
+        initialFilters={table.filters}
+        onStateChange={setTable}
+        storageKey="bench"
+        layouts={{
+          value: layout,
+          onChange: (v) => setLayout(v as typeof layout),
+          options: [
+            { value: "table", label: "Table", icon: "table" },
+            { value: "cards", label: "Cards", icon: "dashboard" },
+          ],
+        }}
+        toolbar={
+          <>
+            <PillButton icon="sparkle" href={`/portal/lead-sourcing?from=${pool}`}>Lead sourcing</PillButton>
+            <PillButton variant="primary" icon="plus" href="/portal/applications/new?bench=1">Add profile</PillButton>
+          </>
+        }
+        exportName="bench"
+        onExport={exportCsv}
+        searchPlaceholder="Search name, email or skill"
+        emptyTitle="No candidates match your filters"
+        detailTitle={(a) => a.name || a.email}
+        renderDetail={(a) => detail(rows.find((r) => r.id === a.id) ?? a)}
+        detailActions={(a) => <Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${a.id}`} />}
+        rowMenu={rowMenu}
+        renderGrid={
+          layout === "cards"
+            ? (page, open) => (
+                <BenchCards
+                  rows={page}
+                  showAdder={canFilterByAdder}
+                  onOpen={open}
+                  onRate={rate}
+                  onResume={(a) => void downloadResume(a)}
+                  onRemove={(a) => void removeFromBench(a)}
+                />
+              )
+            : undefined
+        }
+      />
     );
 
   return (
-    <Page>
-      <PageHeader
-        section="recruiting"
-        icon="bench"
-        title="Talent bench"
-
-        actions={
-          <>
-            <Button variant="secondary" icon="sparkle" href={`/portal/lead-sourcing?from=${pool}`}>Lead sourcing</Button>
-            {ready && inPool.length > 0 && <ActionMenu items={[{ label: "Insights", icon: "chart", onSelect: () => setInsightsOpen(true) }]} />}
-            {ready && inPool.length > 0 && (
-              <InsightsSheet open={insightsOpen} onOpenChange={setInsightsOpen} title="Talent bench insights" description="The skills on the bench and where each profile sits. Pick a skill to filter.">
-                {(close) => (
-                  <>
-                    <Panel title="Top skills on the bench" description="Pick a skill to filter">
-                      {skills.length ? (
-                        <>
-                          <BarChart title="Bench profiles by skill" labels={skills.map((s) => s.label)} series={[{ name: "Profiles", values: skills.map((s) => s.value) }]} height={220} />
-                          <div className="mt-4 flex flex-wrap gap-1.5">
-                            {skills.map((s) => (
-                              <Button
-                                key={s.label}
-                                size="sm"
-                                variant={isOn("skill", s.label) ? "primary" : "secondary"}
-                                onClick={() => {
-                                  setFilter("skill", s.label);
-                                  close();
-                                }}
-                              >
-                                {s.label} <span className="tabular-nums opacity-70">{s.value}</span>
-                              </Button>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <EmptyState compact icon="tag" title="No skills recorded" body="Skills show here once the profiles on the bench list some." />
-                      )}
-                    </Panel>
-                    <Panel title="By stage">
-                      <DonutChart title="Bench profiles by stage" data={stageMix} centerLabel="Profiles" size={160} />
-                    </Panel>
-                  </>
-                )}
-              </InsightsSheet>
-            )}
-            <Button icon="plus" href="/portal/applications/new?bench=1">Add profile</Button>
-          </>
-        }
-        tabs={ready && rows.length > 0 && <p className="text-adm-base text-mist-600">{poolHint}</p>}
-      />
-      {body}
-    </Page>
+    <ListPage title="Talent bench">
+      {!loading && !failed && inPool.length > 0 ? body : <ListPageState>{body}</ListPageState>}
+    </ListPage>
   );
 }
 
@@ -538,11 +459,11 @@ function BenchCards({
   onRemove: (a: Row) => void;
 }) {
   return (
-    <ul className="grid gap-4 bg-mist-50 p-4 md:grid-cols-2 2xl:grid-cols-3">
+    <ul className="grid min-h-full content-start gap-4 bg-mist-50 p-4 md:grid-cols-2 2xl:grid-cols-3">
       {rows.map((a) => {
         const age = daysOnBench(a);
         return (
-          <li key={a.id} className="flex min-w-0 flex-col rounded-xl bg-mist-0 p-5 ring-1 ring-mist-200 transition-shadow duration-150 hover:shadow-md">
+          <li key={a.id} className="flex min-w-0 flex-col rounded-lg bg-mist-0 p-5 ring-1 ring-mist-200 transition-shadow duration-150 hover:shadow-md">
             <div className="flex items-start gap-3">
               <Avatar name={a.name || a.email} />
               <div className="min-w-0 flex-1">

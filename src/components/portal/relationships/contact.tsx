@@ -104,13 +104,23 @@ export function ContactMessage({ c }: { c: Contact }) {
 }
 
 /** The same fact set in the drawer and on the record page. */
-export function ContactFacts({ c, stacked }: { c: Contact; /** One column, for a narrow rail */ stacked?: boolean }) {
+export function ContactFacts({
+  c,
+  stacked,
+  withContact = true,
+}: {
+  c: Contact;
+  /** One column, for a narrow rail */
+  stacked?: boolean;
+  /** false where ContactIdentity already shows email and phone */
+  withContact?: boolean;
+}) {
   const linkedin = safeHttpUrl(c.linkedinUrl);
   const link = "text-ocean-700 underline-offset-2 hover:underline";
   return (
     <Facts
       cols={stacked ? 1 : 2}
-      items={[
+      items={([
         ["Email", <a key="e" href={`mailto:${c.email}`} className={link}>{c.email}</a>],
         ["Phone", c.phone ? <a key="p" href={telHref(c.phone)} className={`${link} tabular-nums`}>{c.phone}</a> : undefined],
         ["For", audienceOf(c)],
@@ -129,7 +139,7 @@ export function ContactFacts({ c, stacked }: { c: Contact; /** One column, for a
         ],
         ["Received", fmtDateTime(c.createdAt)],
         ...(c.updatedAt ? [["Updated", fmtDateTime(c.updatedAt)] as [string, React.ReactNode]] : []),
-      ]}
+      ] as [string, React.ReactNode][]).filter(([k]) => withContact || (k !== "Email" && k !== "Phone"))}
     />
   );
 }
@@ -201,6 +211,21 @@ export function ContactIdentity({ c }: { c: Contact }) {
       <div className="min-w-0">
         <p className="truncate text-adm-md font-semibold text-navy-900">{contactName(c)}</p>
         <p className="truncate text-adm-base text-mist-600">{[c.jobTitle, c.company].filter(Boolean).join(", ") || audienceOf(c)}</p>
+        {/* How to reach them, right under the name */}
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-adm-base">
+          {c.email && (
+            <a href={`mailto:${c.email}`} className="inline-flex min-w-0 items-center gap-1.5 text-ocean-700 hover:underline">
+              <Icon name="mail" className="size-3.5 shrink-0" />
+              <span className="truncate">{c.email}</span>
+            </a>
+          )}
+          {c.phone && (
+            <a href={`tel:${c.phone.replace(/[^+\d]/g, "")}`} className="inline-flex items-center gap-1.5 tabular-nums text-ocean-700 hover:underline">
+              <Icon name="phone" className="size-3.5 shrink-0" />
+              {c.phone}
+            </a>
+          )}
+        </p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <ContactStatusBadge status={c.status} />
           <AudienceBadge c={c} />

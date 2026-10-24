@@ -30,11 +30,12 @@ import {
 import Icon from "@/components/portal/icons";
 import { ActionMenu, type MenuEntry } from "./Menu";
 import { SaveStateLine, Stepper, type SaveState, type StepDef } from "./form-steps";
+import { scrollPageTop } from "@/components/portal/chrome";
 
 // The posting preview only renders on Review, so it loads then.
 const JobReview = dynamic(() => import("./JobPreview"), {
   ssr: false,
-  loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
+  loading: () => <Skeleton className="h-96 w-full rounded-lg" />,
 });
 
 // Kept for existing imports; the lists live in lib/job-options.
@@ -527,7 +528,7 @@ export function JobForm({
       pendingField.current = null;
     } else {
       headingRef.current?.focus({ preventScroll: true });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollPageTop(true);
     }
   }, [stepIdx]);
 
@@ -784,7 +785,7 @@ export function JobForm({
 
       <FormBanner message={serverError} onDismiss={onDismissError} />
 
-      <form id={formId} noValidate onSubmit={handleFormSubmit} onBlur={revalidate} className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+      <form id={formId} noValidate onSubmit={handleFormSubmit} onBlur={revalidate} className="min-w-0 rounded-lg bg-mist-0 ring-1 ring-mist-200">
         <div className="border-b border-mist-200 px-5 py-4 lg:px-8">
           <Stepper steps={stepDefs} current={stepIdx} reachable={reached} invalid={invalidSteps} onGo={goTo} />
         </div>
@@ -1115,7 +1116,7 @@ export function JobForm({
           {step === "review" && <JobReview job={posting} jobId={job?.id} suggestions={quality.advisoryLeft} onJump={jumpToField} />}
         </div>
 
-        <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-b-xl border-t border-mist-200 bg-mist-0 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 lg:px-8">
+        <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-b-lg border-t border-mist-200 bg-mist-0 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 lg:px-8">
           {stepIdx > 0 ? (
             <Button variant="ghost" icon="chevronLeft" onClick={() => goTo(stepIdx - 1)} className={tap}>
               Back

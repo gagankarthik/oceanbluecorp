@@ -326,7 +326,7 @@ export function SavedViewsMenu<S>({
         My views
       </button>
       {open && (
-        <div className="absolute right-0 top-12 z-30 w-72 rounded-xl bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
+        <div className="absolute right-0 top-12 z-30 w-72 rounded-lg bg-mist-0 p-3 shadow-xl ring-1 ring-mist-200">
           {items.length === 0 ? (
             <p className="px-1 py-2 text-adm-base text-mist-600">Save the current view, search and filters to come back to them.</p>
           ) : (

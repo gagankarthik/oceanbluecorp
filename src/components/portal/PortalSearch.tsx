@@ -124,29 +124,30 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
 
   return (
     <>
-      {/* Icon first at every width; the field opens on demand */}
+      {/* Plane's centred field from md; an icon on phones. Either opens the live field. */}
       {!expanded && (
         <button
           type="button"
           onClick={focus}
           aria-label="Search roles, applicants and contacts (Ctrl K)"
           title="Search (Ctrl K)"
-          className="grid size-10 place-items-center rounded-lg text-navy-900 hover:bg-mist-100"
+          className="grid size-8 shrink-0 place-items-center rounded-md text-navy-900 transition-colors hover:bg-mist-100 md:flex md:h-7 md:w-[22.75rem] md:items-center md:justify-start md:gap-2 md:border md:border-mist-200 md:bg-mist-0 md:px-2 md:text-adm-xs md:text-placeholder md:hover:border-mist-300 md:hover:bg-mist-0"
         >
-          <Icon name="search" />
+          <Icon name="search" className="size-4 md:size-3.5 md:text-mist-500" />
+          <span className="hidden md:inline">Search roles, applicants, contacts</span>
         </button>
       )}
       <div
         ref={wrap}
         className={
           expanded
-            ? "absolute inset-0 z-30 flex items-center bg-mist-0 px-4 sm:px-6 md:relative md:inset-auto md:z-auto md:w-80 md:bg-transparent md:px-0 lg:w-96"
+            ? "absolute inset-0 z-30 flex items-center bg-shell px-4 sm:px-6 md:relative md:inset-auto md:z-auto md:w-[22.75rem] md:bg-transparent md:px-0 lg:w-[34.6rem]"
             : "hidden"
         }
       >
         <label className="relative block flex-1">
           <span className="sr-only">Search roles, applicants and contacts</span>
-          <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
+          <Icon name="search" className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-mist-500" />
           <input
             ref={input}
             type="search"
@@ -163,7 +164,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
             onFocus={() => setOpen(true)}
             onKeyDown={onKeyDown}
             placeholder="Search roles, applicants, contacts"
-            className="h-10 w-full rounded-lg bg-mist-50 pl-10 pr-11 text-adm-base [&::-webkit-search-cancel-button]:hidden ring-1 ring-inset ring-mist-200 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+            className="h-8 w-full rounded-lg border border-mist-300 bg-mist-0 pl-7 pr-10 text-adm-base [&::-webkit-search-cancel-button]:hidden placeholder:text-placeholder focus:border-mist-400 focus:outline-none md:h-7 md:text-adm-xs"
           />
           {/* Close sits inside the field, at its end */}
           <button
@@ -171,14 +172,14 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
             onClick={fold}
             aria-label="Close search"
             title="Close (Esc)"
-            className="adm-hit absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-mist-600 hover:bg-mist-200 hover:text-navy-900"
+            className="adm-hit absolute right-1 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded text-mist-600 hover:bg-mist-100 hover:text-navy-900"
           >
             <Icon name="x" className="size-4" />
           </button>
         </label>
 
         {showPanel && (
-          <div className="absolute inset-x-4 top-full z-30 mt-1 overflow-hidden rounded-xl bg-mist-0 shadow-xl ring-1 ring-mist-200 sm:inset-x-6 md:left-auto md:right-0 md:top-12 md:mt-0 md:w-[28rem]">
+          <div className="absolute inset-x-4 top-full z-30 mt-1 overflow-hidden rounded-lg border border-mist-200 bg-mist-0 shadow-[0_12px_32px_rgba(15,23,42,0.12)] sm:inset-x-6 md:inset-x-0 md:top-9 md:mt-0">
             {hits.length === 0 ? (
               <p role="status" className="px-4 py-5 text-center text-adm-base text-mist-600">
                 {loading ? "Searching…" : `No matches for "${q.trim()}"`}
@@ -196,7 +197,7 @@ export default function PortalSearch({ ref }: { ref?: React.Ref<PortalSearchHand
                       e.preventDefault();
                       go(h);
                     }}
-                    className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 ${i === active ? "bg-ocean-50" : ""}`}
+                    className={`mx-1 flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 ${i === active ? "bg-mist-100" : ""}`}
                   >
                     <Icon name={TYPE[h.type].icon} className="size-4 shrink-0 text-mist-600" />
                     <span className="min-w-0 flex-1">

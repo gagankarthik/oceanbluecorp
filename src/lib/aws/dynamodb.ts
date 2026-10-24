@@ -1,3 +1,4 @@
+import "server-only";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,

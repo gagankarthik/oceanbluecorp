@@ -3,19 +3,19 @@ import { HeaderSkeleton, Skeleton } from "@/components/portal/kit/skeletons";
 /** Help: header, get-help cards, one directory panel of rows. */
 export default function Loading() {
   return (
-    <div role="status" aria-busy="true" aria-label="Loading help" className="mx-auto grid w-full max-w-[1600px] content-start gap-6">
+    <div role="status" aria-busy="true" aria-label="Loading help" className="grid w-full content-start gap-6">
       <HeaderSkeleton actions={1} />
       <div className="grid gap-3">
         <Skeleton className="h-5 w-24" />
         <div className="grid gap-4 sm:grid-cols-2">
           {[0, 1].map((i) => (
-            <Skeleton key={i} className="h-[4.5rem] rounded-xl" />
+            <Skeleton key={i} className="h-[4.5rem] rounded-lg" />
           ))}
         </div>
       </div>
       <div className="grid gap-3">
         <Skeleton className="h-5 w-36" />
-        <div className="overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
+        <div className="overflow-hidden rounded-lg bg-mist-0 ring-1 ring-mist-200">
           <div className="flex items-center justify-between gap-4 border-b border-mist-200 px-4 py-3">
             <Skeleton className="h-6 w-full max-w-md" />
             <Skeleton className="hidden h-9 w-64 rounded-lg sm:block" />

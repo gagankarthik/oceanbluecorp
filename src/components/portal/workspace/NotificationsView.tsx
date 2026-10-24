@@ -112,7 +112,7 @@ function FeedSkeleton() {
       {[4, 3].map((rows, g) => (
         <div key={g} className="grid gap-3">
           <Skeleton className="h-3.5 w-24" />
-          <div className="divide-y divide-mist-100 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+          <div className="divide-y divide-mist-100 rounded-lg bg-mist-0 ring-1 ring-mist-200">
             {Array.from({ length: rows }, (_, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3.5">
                 <Skeleton className="size-9 rounded-lg" />
@@ -191,7 +191,7 @@ export default function NotificationsView() {
   };
 
   return (
-    <Page width="narrow">
+    <Page>
       <PageHeader
         title="Notifications"
         icon="bell"
@@ -239,7 +239,7 @@ export default function NotificationsView() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search notifications"
-                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                className="h-8 w-full rounded-md border border-mist-200 bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 placeholder:text-placeholder focus:border-mist-400 focus:outline-none"
               />
             </label>
           </div>
@@ -257,7 +257,7 @@ export default function NotificationsView() {
                   <h2 id={`day-${gi}`} className="px-1 text-adm-base font-semibold text-mist-600">
                     {g.day}
                   </h2>
-                  <ul className="divide-y divide-mist-100 overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
+                  <ul className="divide-y divide-mist-100 overflow-hidden rounded-lg bg-mist-0 ring-1 ring-mist-200">
                     {g.items.map((n) => (
                       <Row key={n.id} n={n} isAdmin={isAdmin} onDelete={() => setPendingDelete(n)} />
                     ))}

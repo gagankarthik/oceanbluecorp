@@ -16,7 +16,7 @@ import Icon from "@/components/portal/icons";
 /** Ties the action-bar submit button to the form it sits outside of. */
 const FORM_ID = "applicant-form";
 // One choice on the first step: equal cards with icon, title, line and hint
-const OPTION = "flex h-full flex-col rounded-xl p-5 text-left transition-colors";
+const OPTION = "flex h-full flex-col rounded-lg p-5 text-left transition-colors";
 
 function NewApplicationInner() {
   const router = useRouter();
