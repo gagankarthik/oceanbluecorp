@@ -19,6 +19,8 @@ these; new code imports the kit directly.
 | `Drawer` | Record panel: right from sm (544px, `lg` 768px) on a 20% scrim, 92% bottom sheet on phones. `width` md/lg, `actions`, `footer`. |
 | `EmptyState` | `variant` `first-use` / `no-results` (+`onClearFilters`) / `plain`; `primary`, `secondary`, `framed`, `compact`. |
 | `ErrorState` | `title`, `message`, `onRetry`, `retrying`. Always offers Get help. |
+| List chrome | `ListHeader`, `HeaderSearch`, `LayoutSwitch`, `FilterMenu`, `DisplayMenu`, `AppliedFilters`, `BTN_PRIMARY` / `BTN_SECONDARY` (`kit/list-chrome.tsx`): Plane's list header, Filters and Display panels and filter chips. `DataTable` uses them; a custom grid (Applications) composes them directly. |
+| `StateIcon` | Plane's five state groups (`kit/state-icon.tsx`); `Badge mark`, `StatusBadge` and stage selects draw it. |
 | `Button` | `loading` disables and shows a spinner without changing width. `Spinner` for inline waits. |
 | Skeletons | `Skeleton` block, `ListPageSkeleton`, `DashboardSkeleton`, `DetailSkeleton`, `FormSkeleton`, parts (`HeaderSkeleton`, `KpiRowSkeleton`, `InsightsSkeleton`, `TableSkeleton`, `PanelSkeleton`). |
 | `useNavProgress` / `usePortalRouter` | Navigation state (no visible bar; route skeletons are the feedback). `usePortalRouter().push` for programmatic moves. |
@@ -79,13 +81,10 @@ don't count.
 
 ## Spacing and responsive rules
 
-- Gutters live on `<main>`: 20px phones, 24px sm, 32px lg. Pages never pad or use negative margins.
+- Gutters live on `<main>`, inside the rounded work surface: 20px phones, 24px sm, 32px lg. Pages never pad; `ListPage` cancels the gutter to fill the surface.
 - Rhythm: 24px (`gap-6`) between page blocks, 16px (`gap-4`) inside rows of cards, 20px panel padding.
 - Container padding and gaps sit on 4px steps; half steps (`py-1.5`, `gap-1.5`) only inside badge, chip and icon atoms.
 - Breakpoints: sm 640 (2-col KPIs, centred modals), md 768 (header actions move right, tables
   replace cards), lg 1024 (sidebar appears, insights split), xl 1280 (4 KPIs, sidebar expanded by default).
-- Touch targets ≥ 40px (`min-h-10`). The page is the only vertical scroller: a table's header sticks
-  under the 64px top bar, and only a table wider than its panel scrolls sideways (first and actions
-  columns pinned).
-- Sidebar: 216px (240px from 2xl) or a 64px rail (toggle on its edge, remembered per browser;
-  default expanded from xl, rail from lg); an off-canvas drawer below lg.
+- Touch targets ≥ 40px (`min-h-10`) on forms; list controls are Plane's 28px. A table's header sticks under the 44px top bar, and only a table wider than its panel scrolls sideways (first and actions columns pinned).
+- Sidebar: 250px (drag 220 to 350), hidden from the top-bar toggle; an off-canvas drawer below lg.

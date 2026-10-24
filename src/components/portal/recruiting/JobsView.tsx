@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Job } from "@/lib/aws/dynamodb";
 import DataTable, { type Column, type Filter, type Summary } from "@/components/portal/DataTable";
-import Icon from "@/components/portal/icons";
+import Icon, { type IconName } from "@/components/portal/icons";
+import { StateIcon } from "@/components/portal/kit/state-icon";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
 import {
   Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, KeyValue, CrmListSkeleton, ListPage, ListPageState, PillButton,
-  Skeleton, usePortalRouter,
+  Skeleton, usePortalRouter, PeekSection, PeekFooter, ClampText,
 } from "@/components/portal/kit";
 import { refreshApplications, refreshJobs, useJobSummaries } from "@/hooks/use-console-data";
 import { downloadCsv } from "@/lib/csv";
@@ -21,7 +22,7 @@ import { jobLocationLabel, workplaceOf, WORKPLACE_LABEL } from "@/lib/workplace"
 import { AvatarStack, JobStatusSelect, StageBadge, jobMenuItems } from "./bits";
 import { ActionMenu } from "@/components/portal/records/Menu";
 import {
-  JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, PIPELINE, STAGE_LABEL, assigneesOf, daysUntil, duplicateJobHref,
+  JOB_STATE, JOB_STATUSES, JOB_STATUS_TONE, JOB_TYPE_LABEL, stageState, PIPELINE, STAGE_LABEL, assigneesOf, daysUntil, duplicateJobHref,
   jobStatusLabel, jobStatusShort, needsCandidates, permissionsFor, stageColors,
 } from "./model";
 
@@ -350,7 +351,7 @@ export default function JobsView({ category }: { category: JobCategory }) {
       : []),
   ];
 
-  const dateCls = "h-10 min-w-0 rounded-lg bg-mist-0 px-2.5 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 focus:outline-none focus:ring-2 focus:ring-ocean-600";
+  const dateCls = "h-8 min-w-0 rounded-md border border-mist-200 bg-mist-0 px-2.5 text-adm-base text-navy-900 focus:border-mist-400 focus:outline-none";
   const detailFor = (job: Job) => (
     <JobDetail
       job={jobs.find((x) => x.id === job.id) ?? job}
@@ -511,70 +512,72 @@ function JobDetail({
   const wp = workplaceOf(job);
   const pay = job.salary ? formatSalary(job.salary) : null;
   const total = job.applicationsCount ?? 0;
-  const facts: { k: string; v: React.ReactNode }[] = [
-    { k: "Job ID", v: job.postingId },
-    { k: "Client", v: canPrice ? job.clientName : undefined },
-    { k: "Vendor", v: canPrice ? job.vendorName : undefined },
-    { k: "Manager", v: canPrice ? job.recruitmentManagerName : undefined },
-    { k: "Location", v: jobLocationLabel(job) || (wp ? WORKPLACE_LABEL[wp] : undefined) },
-    { k: "Type", v: [JOB_TYPE_LABEL[job.type] ?? job.type, wp && WORKPLACE_LABEL[wp]].filter(Boolean).join(", ") },
-    { k: "Salary", v: pay },
-    { k: "Pay / bill", v: canPrice && (job.payRate || job.clientBillRate) ? `$${job.payRate ?? "—"} / $${job.clientBillRate ?? "—"} per hour` : undefined },
-    { k: "Department", v: job.department },
-    { k: "Assignees", v: canPrice ? <AvatarStack names={assigneesOf(job)} max={5} /> : undefined },
-    { k: "Deadline", v: job.submissionDueDate ? <DueCell job={job} /> : undefined },
-    { k: "Posted", v: fmtDate(job.publishedAt ?? job.createdAt) },
-  ].filter((f) => !!f.v);
+  const facts: { k: string; v: React.ReactNode; icon: IconName }[] = (
+    [
+      { k: "Status", icon: "activity", v: <Badge mark={JOB_STATE[job.status]}>{jobStatusShort(job.status)}</Badge> },
+      { k: "Deadline", icon: "calendar", v: job.submissionDueDate ? <DueCell job={job} /> : undefined },
+      { k: "Client", icon: "building", v: canPrice ? job.clientName : undefined },
+      { k: "Vendor", icon: "handshake", v: canPrice ? job.vendorName : undefined },
+      { k: "Manager", icon: "userCheck", v: canPrice ? job.recruitmentManagerName : undefined },
+      { k: "Assignees", icon: "userPlus", v: canPrice && assigneesOf(job).length ? <AvatarStack names={assigneesOf(job)} max={5} /> : undefined },
+      { k: "Location", icon: "map", v: jobLocationLabel(job) || (wp ? WORKPLACE_LABEL[wp] : undefined) },
+      { k: "Type", icon: "clock", v: [JOB_TYPE_LABEL[job.type] ?? job.type, wp && WORKPLACE_LABEL[wp]].filter(Boolean).join(", ") },
+      { k: "Salary", icon: "dollar", v: pay },
+      { k: "Pay / bill", icon: "dollar", v: canPrice && (job.payRate || job.clientBillRate) ? `$${job.payRate ?? "—"} / $${job.clientBillRate ?? "—"} per hour` : undefined },
+      { k: "Department", icon: "layers", v: job.department },
+      { k: "Posted", icon: "calendar", v: fmtDate(job.publishedAt ?? job.createdAt) },
+    ] as { k: string; v: React.ReactNode; icon: IconName }[]
+  ).filter((f) => !!f.v);
 
   return (
-    <div className="grid gap-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={JOB_STATUS_TONE[job.status] ?? "grey"} dot>
-          {jobStatusShort(job.status)}
-        </Badge>
-        {!isPubliclyOpen(job.status) && <span className="text-adm-base text-mist-600">Not on the careers site</span>}
+    <div className="grid gap-5">
+      {/* The role names itself first: title, ID and client, and whether it is on the careers site */}
+      <div className="grid gap-1">
+        <h3 className="text-adm-lg font-semibold leading-tight text-navy-900">{job.title}</h3>
+        <p className="text-adm-base text-mist-600">
+          {[job.postingId, canPrice ? job.clientName : null].filter(Boolean).join(" · ")}
+          {!isPubliclyOpen(job.status) && <span> · Not on the careers site</span>}
+        </p>
       </div>
       <KeyValue items={facts} />
-      <section>
-        <div className="flex items-baseline justify-between">
-          <h3 className="text-adm-base font-semibold text-navy-900">Applicants</h3>
-          <span className="text-adm-base tabular-nums text-mist-600">{total} total</span>
-        </div>
+      <PeekSection title={`Applicants · ${total}`}>
         {/* Media's projection carries the count without the stage breakdown. */}
         {total > 0 ? (
           job.pipeline && (
-            <ul className="mt-2 grid gap-1.5">
-              {PIPELINE.filter((s) => (job.pipeline?.[s] ?? 0) > 0).map((s) => (
-                <li key={s} className="flex items-center justify-between rounded-lg bg-mist-50 px-3 py-2">
-                  <StageBadge stage={s} />
-                  <span className="text-adm-base font-semibold tabular-nums">{job.pipeline?.[s]}</span>
+            <ul className="-mx-2 grid">
+              {PIPELINE.filter((st) => (job.pipeline?.[st] ?? 0) > 0).map((st) => (
+                <li key={st} className="flex h-8 items-center gap-2 rounded-md px-2 text-adm-base">
+                  <StateIcon {...stageState(st)} />
+                  <span className="flex-1 text-navy-900">{STAGE_LABEL[st]}</span>
+                  <span className="font-semibold tabular-nums text-navy-900">{job.pipeline?.[st]}</span>
                 </li>
               ))}
             </ul>
           )
         ) : (
-          <p className="mt-2 rounded-lg bg-mist-50 p-3 text-adm-base text-mist-600">No applicants yet.</p>
+          <p className="text-adm-base text-mist-600">No applicants yet.</p>
         )}
-      </section>
-      <section>
-        <h3 className="text-adm-base font-semibold text-navy-900">Description</h3>
+      </PeekSection>
+      <PeekSection title="Description">
         {descError ? (
-          <p className="mt-2 text-adm-base text-mist-600">Couldn&apos;t load the description. Open the job page to read it.</p>
+          <p className="text-adm-base text-mist-600">Couldn&apos;t load the description. Open the job page to read it.</p>
         ) : description === null ? (
-          <div className="mt-2 grid gap-2" role="status" aria-label="Loading description">
+          <div className="grid gap-2" role="status" aria-label="Loading description">
             <Skeleton className="h-3 w-full rounded" />
             <Skeleton className="h-3 w-11/12 rounded" />
             <Skeleton className="h-3 w-4/5 rounded" />
           </div>
         ) : description ? (
-          <div className="prose prose-sm mt-2 max-w-none text-adm-base text-navy-900" dangerouslySetInnerHTML={renderRichText(description)} />
+          <ClampText>
+            <div className="prose prose-sm max-w-none text-adm-base text-navy-900" dangerouslySetInnerHTML={renderRichText(description)} />
+          </ClampText>
         ) : (
-          <p className="mt-2 text-adm-base text-mist-600">No description yet.</p>
+          <p className="text-adm-base text-mist-600">No description yet.</p>
         )}
-      </section>
-      {/* One primary, one secondary, the rest in the overflow */}
+      </PeekSection>
+      {/* One primary, one secondary, the rest in the overflow; pinned so they never need a scroll */}
       {(canEdit || canPrice) && (
-        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+        <PeekFooter>
           {canPrice ? (
             <Button icon="plus" className="flex-1" href={`/portal/applications/new?jobId=${job.id}`}>Add applicant</Button>
           ) : (
@@ -589,7 +592,7 @@ function JobDetail({
               ...(canPrice ? [{ label: "Delete", icon: "trash" as const, danger: true, onSelect: () => onDelete(job) }] : []),
             ]}
           />
-        </div>
+        </PeekFooter>
       )}
     </div>
   );

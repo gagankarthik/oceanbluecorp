@@ -26,7 +26,7 @@ const isPdf = (name?: string) => /\.pdf$/i.test(name || "");
 
 function Section({ title, children, flush = false }: { title: string; children: React.ReactNode; flush?: boolean }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
+    <section className="min-w-0 overflow-hidden rounded-lg bg-mist-0 ring-1 ring-mist-200">
       <h3 className="border-b border-mist-200 px-4 py-2.5 text-adm-base font-semibold text-navy-900">{title}</h3>
       <div className={flush ? "" : "p-4"}>{children}</div>
     </section>

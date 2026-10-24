@@ -66,7 +66,7 @@ export function ConfirmModal({
 }
 
 export const inputCls =
-  "mt-1.5 block h-10 w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-status-danger-mark";
+  "mt-1.5 block h-10 w-full rounded-md bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600 aria-[invalid=true]:ring-status-danger-mark";
 
 /** Labelled input with its inline error */
 export function Field({
@@ -159,7 +159,7 @@ export function InlineDelete({ label, warning, busy, onConfirm }: { label: strin
     );
   }
   return (
-    <div className="grid gap-3 rounded-xl bg-status-danger-soft p-4 ring-1 ring-inset ring-status-danger-line">
+    <div className="grid gap-3 rounded-lg bg-status-danger-soft p-4 ring-1 ring-inset ring-status-danger-line">
       <p className="text-adm-base text-status-danger">{warning}</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={() => setAsking(false)} disabled={busy}>
@@ -290,14 +290,14 @@ export function LinkedRoles({ jobs, loading, error }: { jobs: { id: string; titl
   if (loading)
     return (
       <div role="status" aria-label="Loading roles" className="grid gap-2">
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
       </div>
     );
   if (error) return <p className="text-adm-base text-mist-600">Couldn&apos;t load the roles for this record.</p>;
   if (!jobs.length) return <p className="text-adm-base text-mist-600">No roles are linked to this record yet.</p>;
   return (
-    <ul className="divide-y divide-mist-200 rounded-xl ring-1 ring-mist-200">
+    <ul className="divide-y divide-mist-200 rounded-lg ring-1 ring-mist-200">
       {jobs.map((j) => (
         <li key={j.id}>
           <Link href={`/portal/jobs/${j.id}`} className="flex items-center justify-between gap-3 px-4 py-3 text-adm-base hover:bg-mist-50">

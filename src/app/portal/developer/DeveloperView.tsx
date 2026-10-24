@@ -25,6 +25,7 @@ import {
   Panel,
   PillButton,
   CrmListSkeleton,
+  ListHeader, PeekFooter
 } from "@/components/portal/kit";
 import { Facts, Field, FormError, GoneNotice, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
 
@@ -114,7 +115,7 @@ function KeyDetail({
 
   return (
     <div className="grid gap-6">
-      <div className={`flex items-center gap-3 rounded-xl p-4 ${k.lastUsedAt ? "bg-mist-50" : "bg-status-warning-soft"}`}>
+      <div className={`flex items-center gap-3 rounded-lg p-4 ${k.lastUsedAt ? "bg-mist-50" : "bg-status-warning-soft"}`}>
         <Icon name="activity" className={`size-5 shrink-0 ${k.lastUsedAt ? "text-mist-500" : "text-status-warning"}`} />
         <div className="min-w-0 text-adm-base">
           <p className="font-semibold text-navy-900">{lastUsedText(k)}</p>
@@ -123,7 +124,7 @@ function KeyDetail({
       </div>
 
       {editing ? (
-        <div className="grid gap-4 rounded-xl p-4 ring-1 ring-mist-200">
+        <div className="grid gap-4 rounded-lg p-4 ring-1 ring-mist-200">
           <Field label="Partner or platform" required error={nameError}>
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={LIMITS.name} aria-invalid={!!nameError || undefined} className={inputCls} autoFocus />
           </Field>
@@ -165,7 +166,7 @@ function KeyDetail({
         ]}
       />
 
-      <section className="rounded-xl ring-1 ring-mist-200">
+      <section className="rounded-lg ring-1 ring-mist-200">
         <h3 className="border-b border-mist-200 px-4 py-3 text-adm-base font-semibold">Access</h3>
         <div className="grid gap-4 p-4">
           <div className="text-adm-base font-medium">
@@ -190,14 +191,12 @@ function KeyDetail({
         </div>
       </section>
 
-      <div className="grid gap-2 border-t border-mist-200 pt-5">
-        <div>
-          <Button variant="danger" icon="trash" onClick={onRevoke}>
-            Revoke key
-          </Button>
-        </div>
-        <p className="text-adm-xs text-mist-600">Revoking deletes the key. To pause it, disable it instead.</p>
-      </div>
+      <PeekFooter>
+        <Button variant="danger" icon="trash" onClick={onRevoke}>
+          Revoke key
+        </Button>
+        <p className="min-w-0 flex-1 text-adm-xs text-mist-600">Revoking deletes the key. To pause it, disable it instead.</p>
+      </PeekFooter>
     </div>
   );
 }
@@ -323,7 +322,7 @@ function CreateKey({ onClose, onCreated }: { onClose: () => void; onCreated: () 
           </legend>
           <div className="mt-2 grid gap-2">
             {API_ACCESS_LEVELS.map((l) => (
-              <label key={l.id} className={`flex cursor-pointer items-start gap-3 rounded-xl p-3 ring-1 ring-inset ${level === l.id ? "bg-ocean-50 ring-ocean-600" : "ring-mist-300 hover:bg-mist-50"}`}>
+              <label key={l.id} className={`flex cursor-pointer items-start gap-3 rounded-lg p-3 ring-1 ring-inset ${level === l.id ? "bg-ocean-50 ring-ocean-600" : "ring-mist-300 hover:bg-mist-50"}`}>
                 <input type="radio" name="access" value={l.id} checked={level === l.id} onChange={() => setLevel(l.id)} className="mt-0.5 size-4 accent-ocean-600" />
                 <span className="text-adm-base">
                   <span className="block font-medium text-navy-900">{l.label}</span>
@@ -527,21 +526,23 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
     { key: "access", label: "Access", options: API_ACCESS_LEVELS.map((l) => l.summary), value: (k) => accessLevelMeta(k.accessLevel).summary },
   ];
 
+  const devTabs = (
+    <TableTabs
+      label="Developer views"
+      value={tab}
+      onChange={switchTab}
+      options={[
+        { value: "keys", label: "Keys" },
+        { value: "reference", label: "Reference" },
+      ]}
+    />
+  );
+
   return (
     <RoleGate href="/portal/developer">
       <ListPage title="Developer">
-        {/* Keys and Reference share one tab strip, so the docs stay a click away from the table */}
-        <div className="shrink-0 border-b border-mist-200 px-4">
-          <TableTabs
-            label="Developer views"
-            value={tab}
-            onChange={switchTab}
-            options={[
-              { value: "keys", label: "Keys" },
-              { value: "reference", label: "Reference" },
-            ]}
-          />
-        </div>
+        {/* Keys and Reference sit in the header's tabs, so the docs stay a click away from the table */}
+        {(tab === "reference" || isLoading || (error && !data) || keys.length === 0) && <ListHeader tabs={devTabs} />}
 
         {tab === "reference" ? (
           <div className="scroll-thin min-h-0 flex-1 overflow-auto p-4 sm:p-6">
@@ -568,6 +569,7 @@ export default function DeveloperView({ initialTab = "keys" }: { initialTab?: Ta
         ) : (
           <DataTable
             fill
+            tabs={devTabs}
             noun="keys"
             summary={summary}
             toolbar={

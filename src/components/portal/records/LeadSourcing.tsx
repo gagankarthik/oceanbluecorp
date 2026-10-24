@@ -134,7 +134,7 @@ export function LeadSourcing() {
   };
 
   return (
-    <Page width="narrow">
+    <Page>
       <PageHeader
         back={{ label: "Talent bench", href: `/portal/talent-bench?pool=${backPool}` }}
         icon="target"

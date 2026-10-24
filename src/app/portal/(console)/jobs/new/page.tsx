@@ -15,6 +15,7 @@ import { useNavSection } from "@/components/portal/console/provider";
 import { refreshJobs, useUserDirectory } from "@/hooks/use-console-data";
 import { FormSkeleton } from "@/components/portal/kit";
 import { useToast } from "@/components/portal/toast";
+import { scrollPageTop } from "@/components/portal/chrome";
 
 export default function NewJobPage({
   searchParams,
@@ -139,7 +140,7 @@ export default function NewJobPage({
       setCreated(json.job);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Couldn't create the job. Try again.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollPageTop(true);
     } finally {
       setSubmitting(false);
     }
@@ -202,7 +203,7 @@ export default function NewJobPage({
           setContact(null);
           if (fromId || fromContactId) router.replace(`/portal/jobs/new?category=${category}`);
           setFormKey((k) => k + 1);
-          window.scrollTo({ top: 0 });
+          scrollPageTop();
         }}
       />
     </>

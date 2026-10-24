@@ -19,6 +19,10 @@ function cookieOptions(maxAge: number) {
 
 // POST, verify the token and set the session cookie.
 export async function POST(req: NextRequest) {
+  // JSON only: a cross-site form or text/plain post (login CSRF) can't send this content type without a preflight
+  if (!req.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+    return NextResponse.json({ error: "Expected JSON" }, { status: 415 });
+  }
   let body: { token?: unknown; expiresIn?: unknown };
   try {
     body = await req.json();

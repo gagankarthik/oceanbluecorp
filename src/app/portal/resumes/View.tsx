@@ -1,5 +1,6 @@
 "use client";
 
+import { usePolling } from "@/hooks/use-polling";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import Icon from "@/components/portal/icons";
@@ -9,7 +10,7 @@ import { fieldCls } from "@/components/portal/recruiting/bits";
 import type { MenuEntry } from "@/components/portal/records/Menu";
 import {
   Badge, Button, ConfirmDialog, EmptyState, ErrorState, KeyValue, ListPage, ListPageState, Modal, Panel, PillButton, ProgressBar, Spinner,
-  CrmListSkeleton,
+  CrmListSkeleton, PeekFooter
 } from "@/components/portal/kit";
 import { downloadCsv } from "@/lib/csv";
 import { fmtDate, fmtDateTime, fmtRelative } from "@/lib/format";
@@ -96,14 +97,15 @@ export default function ResumesView() {
     void loadJob();
   }, [loadJob]);
   const jobBusy = job?.phase === "running" || job?.phase === "stopping";
-  useEffect(() => {
-    if (!jobBusy) return;
-    const t = setInterval(() => {
+  // The job's progress and the rows' search status while it runs, paused in a hidden tab
+  usePolling(
+    () => {
       void loadJob();
       void load(true);
-    }, 10_000);
-    return () => clearInterval(t);
-  }, [jobBusy, loadJob, load]);
+    },
+    10_000,
+    jobBusy,
+  );
   const wasBusy = useRef(false);
   useEffect(() => {
     if (wasBusy.current && !jobBusy) {
@@ -300,7 +302,7 @@ export default function ResumesView() {
   const loading = resumes === null && !error;
   const searchable = list.filter((r) => r.indexed).length;
 
-  const IndexCell = ({ r }: { r: BankResume }) =>
+  const indexCell = (r: BankResume) =>
     r.indexing ? (
       <span className="inline-flex items-center gap-1.5 text-adm-base text-mist-600"><Spinner className="size-4 text-ocean-600" /> Indexing</span>
     ) : r.indexed ? (
@@ -343,7 +345,7 @@ export default function ResumesView() {
     { key: "uploader", header: "Uploaded by", sortable: true, card: false, hideBelow: "xl", value: (r) => r.uploaderEmail, cell: (r) => <span className="text-adm-base text-mist-700">{r.uploaderEmail}</span> },
     { key: "size", header: "Size", sortable: true, numeric: true, card: false, hideBelow: "lg", value: (r) => r.fileSize || 0, cell: (r) => <span className="tabular-nums text-mist-600">{fmtSize(r.fileSize || 0)}</span> },
     { key: "uploadedAt", header: "Uploaded", sortable: true, hideBelow: "md", value: (r) => r.uploadedAt, cell: (r) => <span className="text-adm-base tabular-nums text-mist-600">{fmtDate(r.uploadedAt)}</span> },
-    { key: "indexed", header: "Search", sortable: true, align: "center", value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => <IndexCell r={r} /> },
+    { key: "indexed", header: "Search", sortable: true, align: "center", value: (r) => (r.indexed ? "Searchable" : isExtra(r) ? "Extra copy" : isFailed(r) ? "Failed" : "Not searchable yet"), cell: (r) => indexCell(r) },
   ];
   const filters: Filter<BankResume>[] = [
     { key: "type", label: "Type", options: ["PDF", "Word"], value: (r) => formatLabel(r.fileType) },
@@ -467,10 +469,14 @@ export default function ResumesView() {
             renderDetail={(r) => {
               const row = list.find((x) => x.id === r.id) ?? r;
               return (
-                <div className="grid gap-6">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone="grey">{formatLabel(row.fileType)}</Badge>
-                    <IndexCell r={row} />
+                <div className="grid gap-5">
+                  <div className="grid gap-2">
+                    <h3 className="break-words text-adm-lg font-semibold leading-tight text-navy-900">{row.candidateName || row.fileName}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-adm-base text-mist-600">
+                      <Badge tone="grey">{formatLabel(row.fileType)}</Badge>
+                      {indexCell(row)}
+                      {row.candidateName && <span className="min-w-0 truncate">{row.fileName}</span>}
+                    </div>
                   </div>
                   <KeyValue
                     items={[
@@ -481,13 +487,13 @@ export default function ResumesView() {
                     ]}
                   />
                   {isFailed(row) && serverFailures.get(row.fileKey) && <p className="rounded-lg bg-status-danger-soft p-3 text-adm-base text-status-danger">{serverFailures.get(row.fileKey)}</p>}
-                  <div className="flex flex-wrap gap-2 border-t border-mist-200 pt-5">
-                    <Button icon="download" onClick={() => void download(row)}>Download</Button>
+                  <PeekFooter>
+                    <Button icon="download" className="flex-1" onClick={() => void download(row)}>Download</Button>
                     {!row.indexed && !isExtra(row) && (
                       <Button variant="secondary" icon="search" loading={row.indexing} disabled={rowIndexing || jobBusy} onClick={() => void indexOne(row)}>Make searchable</Button>
                     )}
-                    <Button variant="danger" icon="trash" className="sm:ml-auto" onClick={() => setDeleteRow(row)}>Delete</Button>
-                  </div>
+                    <Button variant="danger" icon="trash" onClick={() => setDeleteRow(row)}>Delete</Button>
+                  </PeekFooter>
                 </div>
               );
             }}
@@ -528,7 +534,7 @@ export default function ResumesView() {
         />
         {drag && (
           <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-navy-950/40 p-4">
-            <div className="w-full max-w-sm rounded-xl border-2 border-dashed border-ocean-600 bg-mist-0 px-6 py-10 text-center shadow-2xl">
+            <div className="w-full max-w-sm rounded-lg border-2 border-dashed border-ocean-600 bg-mist-0 px-6 py-10 text-center shadow-2xl">
               <Icon name="upload" className="mx-auto size-7 text-ocean-600" />
               <p className="mt-3 text-adm-md font-semibold">Drop resumes to upload</p>
               <p className="mt-1 text-adm-base text-mist-600">PDF or Word, up to 5 MB each</p>

@@ -11,7 +11,7 @@ import { safeHttpUrl } from "@/lib/portal/format";
 import { useResource } from "@/hooks/use-resource";
 import Icon, { type IconName } from "@/components/portal/icons";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
-import { Button, ConfirmDialog, EmptyState, ErrorState, Page, PageHeader, Panel, Skeleton, PanelSkeleton, usePortalRouter } from "@/components/portal/kit";
+import { Avatar, Button, ConfirmDialog, EmptyState, ErrorState, Page, PageHeader, Panel, Skeleton, PanelSkeleton, usePortalRouter } from "@/components/portal/kit";
 import { errorText, send, useToast } from "@/components/portal/relationships/shared";
 import {
   AudienceBadge,
@@ -41,7 +41,7 @@ function BodySkeleton() {
         <PanelSkeleton height="h-64" />
         <PanelSkeleton height="h-40" />
       </div>
-      <div className="grid gap-3 rounded-xl bg-mist-0 p-5 ring-1 ring-mist-200">
+      <div className="grid gap-3 rounded-lg bg-mist-0 p-5 ring-1 ring-mist-200">
         {Array.from({ length: 7 }, (_, i) => (
           <Skeleton key={i} className="h-4 w-full" />
         ))}
@@ -230,8 +230,10 @@ export default function ContactRecordPage({ params }: { params: Promise<{ id: st
   ];
 
   return (
-    <Page>
+    <Page tinted>
       <PageHeader
+        hero
+        leading={<Avatar name={name} size="lg" />}
         back={BACK}
         title={name}
         icon="contact"

@@ -124,84 +124,92 @@ deuteranopia and protanopia.
 
 ### 2.5 Stage colour system
 
-Pipeline stages in `colors.css` (`@theme static`, `--color-stage-{stage}-{part}`).
-In-flight stages step down the ocean ramp; only the two outcomes leave it. Each stage
-has `fill`, `on-fill`, `edge`, `badge-bg`, `badge-ink`, `badge-rim`, and an icon.
+Statuses are coded as Plane codes states (Oct 2026). Every status belongs to one of
+five groups, drawn by `StateIcon` (`kit/state-icon.tsx`) as a 14px circle:
 
-| Stage (record value) | Fill | Badge | Icon |
+| Group | Mark | Token | Used for |
 |---|---|---|---|
-| New (`pending`) | white, hollow on a `mist-500` edge | white, navy ink | clock |
-| Screening (`reviewing`) | `ocean-300` | `ocean-50`, `ocean-700` ink | eye |
-| Submitted | `ocean-600` | `ocean-100`, `ocean-800` ink | send |
-| Interview | `ocean-800` | `ocean-700`, white ink | calendar |
-| Offered | `navy-900` | `navy-900`, white ink | mail |
-| Hired | `kelp-700` | `kelp-50`, `kelp-800` ink | check |
-| Rejected | `coral-700` | `coral-50`, `coral-700` ink | x |
+| backlog | dashed grey ring | `--color-state-backlog` (`mist-500`) | New, draft, archived, on hold, closed |
+| unstarted | plain blue ring | `--color-state-unstarted` (`ocean-600`) | open (internal), invited, unread |
+| started | amber ring, filling as it advances | `--color-state-started` (`buoy-600`) | Screening 25%, Submitted 50%, Interview 70%, Offered 90%; live postings |
+| completed | green disc, tick | `--color-state-completed` (`kelp-700`) | Hired, placed, responded |
+| cancelled | red disc, cross | `--color-state-cancelled` (`coral-600`) | Rejected, lost, revoked |
 
-Read through `stageColors()` / `stageDotStyle()` (`recruiting/model.ts`) and the
-`stage-*` tones of `Badge` (`ui.tsx`). `StageChevrons` draws the pipeline as a
-chevron chain: current solid, passed tinted with a check, future grey. Contrast is
-pinned in `tests/contrast.test.mjs`.
+Badges are Plane's property pills (`STATE_PILL`): neutral, bordered, navy text, the
+colour carried by the state icon (stages, `StatusBadge`) or a dot (label tones). Maps:
+`STAGE_STATE` / `stageState()` and `JOB_STATE` in `recruiting/model.ts`, `statusState()`
+for free-text statuses. The pipeline tokens (`--color-stage-{stage}-{part}`, `@theme
+static`) follow the same groups: in-flight stages fill `buoy-600` with `navy-950` text,
+Hired `kelp-700`, Rejected `coral-700`, New hollow on `mist-500`. `StageChevrons` draws
+the chain from them. Contrast is pinned in `tests/contrast.test.mjs`.
 
-### 2.6 Space, grid, breakpoints, density
-
-Base unit 4px; Tailwind's scale. Breakpoints are Tailwind's: sm 640, md 768,
-lg 1024, xl 1280, 2xl 1536.
-
-| Measure | Value |
-|---|---|
-| Canvas padding (`<main>` in `PortalShell`) | 20px phones, 24px from sm, 32px from lg. Pages never pad themselves |
-| Page | `Page`: 24px (`gap-6`) between blocks; `default` up to 1600px, `narrow` 64rem, `full` |
-| Panel | 12px radius, 20px padding, 56px header with a hairline |
-| KPI row | 16px gaps; 1 column, 2 from sm, 3 from lg or 4 from xl |
-| Controls | kit `Button` 32 (`sm`) / 40 (`md`); toolbar controls 40 |
-| Table rows | 44 / 56 / 68 (compact / default / relaxed), set in `DataTable` |
-| Containers | Padding and gaps on 4px steps (`py-2`, `py-4`, `px-3`); half steps (`py-1.5`, `gap-1.5`) only inside badges, chips and icon atoms. Icons are `size-3.5` / `4` / `5`, never `size-[18px]` |
-
-### 2.7 Type
-
-General Sans (400/500/600) for text, Geist Mono for codes (`font-mono`). The whole
-portal, kit and console, sizes text from one scale, `text-adm-*`: ratio 1.2 from a
-14px body.
-
-| Step | Size | Leading | Used for |
-|---|---|---|---|
-| `text-adm-xs` | 11.5 | 1.45 | Badges, chips, labels, group titles, table headers, meta lines |
-| `text-adm-base` | 14 | 1.5 | Body, controls, table cells, descriptions, card names |
-| `text-adm-md` | 17 | 1.4 | Panel, modal and drawer titles; section and empty-state headings |
-| `text-adm-lg` | 20 | 1.25 | Record names in drawers, inline figures |
-| `text-adm-xl` | 24 | 1.2 | Page title (`PageHeader`) |
-| `text-adm-2xl` | 29 | 1.15 | KPI value (`StatCard`), score dials |
-
-`tests/type-scale.test.mjs` fails on a literal `text-[Npx]` anywhere under
-`src/app/portal` or `src/components/portal`. Body copy keeps the scale's leading
-(`leading-normal` where one is set; no `leading-relaxed`); running text in help and
-docs is capped at 65ch. Sentence case for titles, buttons and labels (section names
-too: "Case studies", "Customer stories"). Numbers are `tabular-nums`.
-
-### 2.8 Radius, elevation, motion
-
-| Group | Value |
-|---|---|
 | Radius | Buttons, inputs, nav rows, menus 8 (`rounded-lg`) · badges 6 (`rounded-md`) · panels, stat cards, popovers 12 (`rounded-xl`) · modals 16 (`rounded-2xl`) |
 | Elevation | Resting surfaces are ring-only. Menus and popovers `shadow-xl`; modals and drawers `shadow-2xl`; the batch bar `shadow-xl` |
 | Motion | Backdrop fade 160ms, modal rise 200ms, drawer slide 240ms (up on phones), phone nav 220ms, sidebar width 200ms on `--ease-standard`. Skeleton shimmer 2.4s. All off under reduced motion |
 
+### 2.8b Portal consistency rules (Oct 24 2026)
+
+Every portal screen follows these; a new screen that breaks one is a bug.
+
+1. **Width.** All pages start at the same left edge and use the full width. Only focused
+   single-task forms (job posting, add/edit applicant) centre at `Page width="narrow"`;
+   the article editor caps at 1360px. Loading skeletons match their page's width.
+2. **Ground.** Lists and forms sit on the white surface. Pages built from cards
+   (dashboard, candidate, contact, help) use `Page tinted`, a light grey ground, so the
+   white cards carry the focus. The sidebar is the canvas grey; the current page is a
+   white tab with the accent icon.
+3. **Tables.** One style: `DataTable` (or a grid built to its spec), 44px rows, row
+   rules only, never column lines. A list page is the table edge to edge; a table inside a
+   page sits in a bordered box.
+4. **Tabs.** One active state everywhere: a 2px `ocean-600` underline and semibold ink;
+   inactive tabs muted (`mist-600`).
+5. **Side sheets.** Open with what the record is (name or title) and how to reach it
+   (email, phone). Properties as `KeyValue` rows with icons. Long text (descriptions,
+   messages, notes, excerpts) in `ClampText` with "Show more". Actions always in
+   `PeekFooter`, pinned to the sheet's bottom, never at the end of the scroll.
+6. **Controls.** 32px in headers and toolbars (buttons, search, dropdowns, date fields),
+   6px corners; 40px form fields; cards and panels 8px corners.
+7. **No duplication.** A fact appears once per view (a count, a status, a contact detail).
+
 ### 2.9 Shell
 
-- **Sidebar**: white, `mist-200` right hairline, 216px wide below 2xl and 240px from
-  1536px. Collapsible to a 64px icon rail from a 24px round toggle on its edge; a
-  stored choice (`portal.sidebar` in localStorage) wins, else it is expanded from
-  1280px and a rail from 1024 to 1279px. Below lg it is an off-canvas drawer (288px,
-  focus trapped). Nav is four groups (Recruiting, Relationships, Publishing,
-  Workspace), filtered per role by `canAccess`. Rows are 32px, 14px medium, 16px
-  icons; the active row is `ocean-700` on `ocean-50` with a 4px `ocean-600` edge bar.
-  In the rail, labels become fixed tooltips and group titles become dividers.
-- **Top bar**: white, 64px, sticky. Phone menu button left; on the right, search
-  (an icon that opens a 320/384px field from md, a full-width field on phones;
-  Ctrl K), the admin "Previewing as" pill, notifications, help, and the account menu
-  with avatar, name and role. No breadcrumbs: a record or form has a `PageHeader`
-  back link.
+Plane's layout (Oct 2026): a canvas (`bg-shell`, `mist-50`; `#0e0e0e` dark) holding a
+52px top bar and, inset 8px left, right and below, one rounded (`rounded-lg`), bordered
+white work surface with the sidebar and the page side by side.
+
+- **Top bar** (on the canvas, sticky): sidebar toggle and workspace mark left, search
+  centred (a 364px field from md that opens to 554px from lg; an icon on phones;
+  Ctrl K), then "Previewing as", notifications, theme and the account avatar. 32px
+  ghost icon buttons.
+- **Sidebar** (inside the surface, sticky under the top bar): 250px, drag its edge
+  between 220 and 350px (`portal.sidebar-width`); the top-bar toggle hides it
+  (`portal.sidebar-hidden`) from its one toggle, in the top bar right of the logo, whose icon shows the direction. Four
+  collapsible groups (`portal.nav-closed`), 28px rows with 16px Lucide icons, the
+  current page on a `mist-100` fill. Help sits in its 48px footer. Below lg it is an
+  off-canvas drawer.
+- **Page header** (`PageHeader`, every non-list page): a 44px bar pinned to the top of the
+  page, the trail (Clients › Acme) ending in the title, status beside it, actions right
+  at the 32px control size. Record pages pass `hero` and `leading` (an avatar): the
+  name then also shows large on the page with its badges and the line under it.
+- **Settings**: a section nav on the left (sticky); each section a two-column row,
+  title and description left, fields right, hairlines between.
+- **Record pages** (job detail first, Plane's work-item page): the 44px header with
+  breadcrumbs (`ListHeader crumbs`) and actions right (View posting, Edit, ⋯); a main
+  pane (ID, the title as h1, stage chips with state icons, underline tabs, content,
+  max 50rem); a 360px properties rail from lg, sticky under the top bar, with
+  `KeyValue narrow` rows (icon, label, value; a blank reads "Not set · Add" for
+  editors) and the Team section. Status, place and terms show once, in the rail.
+- **Side sheets** use `PeekTitle`, `KeyValue` rows with icons (stage as an inline
+  state select, rating inline), `PeekSection` blocks, and `PeekFooter` for actions
+  pinned to the sheet's bottom edge.
+- **Notifications** dropdown: header with the unread count, mark-all-read and open-all
+  icons; All / Unread tabs; rows with an icon chip, the title (bold while unread), a
+  two-line message, time and an unread dot; "View all notifications" footer.
+- **Account menu**: name, email and role, then Account settings, HR portal (admin, HR),
+  View portal as (admin), and Sign out set apart.
+- **Theme switch** crossfades the page for 200ms through the View Transitions API,
+  instant under reduced motion.
+- **Icons** are Lucide at a 1.75 stroke, in both `icons.tsx` and `console/icons.tsx`.
 - **No top loading bar.** `NavProgressProvider` tracks navigation state but renders
   nothing; each route's `loading.tsx` skeleton is the feedback.
 
@@ -282,8 +290,20 @@ ghost buttons with a `label` and do not count.
 
 - **Applications**: My views · ⋯ (Insights) · Add applicant.
 - **Talent bench**: Lead sourcing · ⋯ (Insights) · Add profile.
-- **Dashboard**: Refresh (icon) · Applications · ⋯ (State roles for sales, Resumes
-  for HR) · New role.
+- **Dashboard** (Plane's home, Oct 2026): the 44px header with Overview / Team
+  performance tabs, a date-range dropdown (`MenuSelect`), Refresh (icon) and New role.
+  No shortcuts to other lists: the sidebar already has them. The page opens with
+  "Good morning, <name>" (the h1) and today's date, then the four headline figures in
+  one ruled strip (each opens its list), then flat sections (a muted title over one
+  bordered body): Applications and hires, Needs attention, Hiring funnel, My tasks,
+  Insights (tabs), Recent applications. A number appears once on the page.
+  Redesigned again the same day: two flowing columns (Hiring activity with series toggles
+  and a crosshair readout, Pipeline conversion with stage-to-stage rates and median wait,
+  flagged past the stall limit; Needs attention, Roles at risk, My tasks), then Source
+  effectiveness (sortable) beside Recent activity (arrivals and stage moves, who moved
+  whom), then Insights. Chart colours: slot 1 `#1580c8`, hired `#0e8a4f`, rejected
+  `#d9452c`, validated together on both surfaces with the dataviz script; single
+  measures stay one hue, no donuts.
 
 `InsightsSheet` takes `open` / `onOpenChange` so a menu item can open it; without
 them it renders its own "Insights" button.
@@ -291,7 +311,15 @@ them it renders its own "Insights" button.
 ### DataTable (`DataTable.tsx`)
 
 - **Page is the only vertical scroller.** The table never scrolls vertically; its
-  header sticks under the 64px top bar.
+  header sticks under the 44px top bar. A `fill` table (list pages) fills the work
+  surface instead and scrolls its rows under a fixed header.
+- **Header** (`kit/list-chrome.tsx`, Plane's): a 44px bar with the section breadcrumb,
+  a count chip ("9 of 15" while filtered) and underline tabs, then the layout switch,
+  search icon, **Filters** (a 300px panel: search, one collapsible section per filter,
+  counts), **Display** (property chips for columns, order by, row height, export) and
+  the page's actions. Applied filters show as a row of removable chips with Clear all.
+- **Rows** are 44px (36 compact, 56 relaxed) with hairline column rules; checkboxes
+  appear on hover and stay once anything is selected.
 - **Wide tables** (wider than their box) scroll sideways inside it, with the first
   column and the actions column pinned; a seam and soft shadow appear once content
   runs under them. The header then sticks to the top of the box.

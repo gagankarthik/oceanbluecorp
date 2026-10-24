@@ -13,11 +13,13 @@
  */
 import { useMemo, useRef, useState } from "react";
 
-// ocean-600, navy-900, ocean-400, mist-500, ocean-800, mist-400 (literal: SVG attributes take no var()).
-export const SERIES = ["#0a72c0", "#0b2e46", "#3794d4", "#6e8291", "#0a4b7d", "#98a9b4"] as const;
+// Slot 1 and the two outcomes were run through the dataviz validator together: they pass every
+// check on the white surface and on the dark one (#161616), so one set serves both themes.
+// The later slots stay single-hue steps for single-series and ordinal use (literal: SVG attributes take no var()).
+export const SERIES = ["#1580c8", "#0b2e46", "#3794d4", "#6e8291", "#0a4b7d", "#98a9b4"] as const;
 const OVERFLOW = "#98a9b4";
-/** Outcome series keep their meaning: kelp-700 for hires, coral-700 for rejections. */
-const OUTCOME: Record<string, string> = { hired: "#067647", hires: "#067647", placements: "#067647", placed: "#067647", rejected: "#b42318", rejections: "#b42318" };
+/** Outcome series keep their meaning: green for hires, red-orange for rejections. */
+const OUTCOME: Record<string, string> = { hired: "#0e8a4f", hires: "#0e8a4f", placements: "#0e8a4f", placed: "#0e8a4f", rejected: "#d9452c", rejections: "#d9452c" };
 
 /** One colour per series name: outcomes by meaning, the rest SERIES in order, overflow neutral. */
 export function seriesColors(names: string[]): string[] {
@@ -45,12 +47,13 @@ function niceMax(v: number) {
   return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
 }
 
-export function Legend({ items }: { items: { label: string; color: string }[] }) {
+/** The key mirrors the mark: a swatch for bars and areas, a short stroke for lines. */
+export function Legend({ items, shape = "rect" }: { items: { label: string; color: string }[]; shape?: "rect" | "line" }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-adm-xs text-mist-600">
       {items.map((i) => (
         <li key={i.label} className="flex items-center gap-1.5">
-          <span aria-hidden className="size-2.5 rounded-[3px]" style={{ background: i.color }} />
+          <span aria-hidden className={shape === "line" ? "h-0.5 w-3 rounded-full" : "size-2.5 rounded-[3px]"} style={{ background: i.color }} />
           {i.label}
         </li>
       ))}
@@ -103,6 +106,7 @@ export function TrendChart({
   area = true,
   format = fmtDefault,
   title,
+  legend = true,
 }: {
   labels: string[];
   series: { name: string; values: number[] }[];
@@ -110,13 +114,15 @@ export function TrendChart({
   area?: boolean;
   format?: (n: number) => string;
   title: string;
+  /** false when the caller draws its own (e.g. toggles that show and hide series) */
+  legend?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<number | null>(null);
   const W = 640;
   const H = height;
   const pad = { l: 44, r: 12, t: 12, b: 28 };
-  const max = niceMax(Math.max(...series.flatMap((s) => s.values)));
+  const max = niceMax(Math.max(0, ...series.flatMap((s) => s.values)));
   const x = (i: number) => pad.l + (i / Math.max(1, labels.length - 1)) * (W - pad.l - pad.r);
   const y = (v: number) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * max);
@@ -136,9 +142,9 @@ export function TrendChart({
   return (
     <figure>
       <figcaption className="sr-only">{title}</figcaption>
-      {series.length >= 2 && (
+      {legend && series.length >= 2 && (
         <div className="mb-3">
-          <Legend items={series.map((s, i) => ({ label: s.name, color: colors[i] }))} />
+          <Legend shape="line" items={series.map((s, i) => ({ label: s.name, color: colors[i] }))} />
         </div>
       )}
       <div ref={ref} className="relative">
@@ -170,7 +176,7 @@ export function TrendChart({
           })}
           {hover !== null && (
             <g>
-              <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} stroke="#98a9b4" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} stroke="#98a9b4" strokeWidth="1" />
               {series.map((s, si) => (
                 <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={colors[si]} stroke="#fff" strokeWidth="2" />
               ))}
@@ -183,8 +189,8 @@ export function TrendChart({
             <p className="font-semibold">{labels[hover]}</p>
             {series.map((s, si) => (
               <p key={s.name} className="mt-1 flex items-center justify-between gap-4">
-                <span className="flex items-center gap-1.5 text-mist-300">
-                  <span className="size-2 rounded-[2px]" style={{ background: colors[si] }} />
+                <span className="flex items-center gap-1.5 text-white/70">
+                  <span className="h-0.5 w-3 rounded-full" style={{ background: colors[si] }} />
                   {s.name}
                 </span>
                 <span className="font-semibold tabular-nums">{format(s.values[hover])}</span>

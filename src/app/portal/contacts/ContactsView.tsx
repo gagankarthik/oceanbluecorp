@@ -12,7 +12,7 @@ import { permissionsFor } from "@/components/portal/recruiting/model";
 import { canCreateRoleFromContact } from "@/lib/job-from-contact";
 import {
   Avatar, Button, ConfirmDialog, EmptyState, ErrorState, ListPage, ListPageState, usePortalRouter,
-  CrmListSkeleton,
+  CrmListSkeleton, PeekFooter, ClampText
 } from "@/components/portal/kit";
 import type { MenuEntry } from "@/components/portal/records/Menu";
 import { GoneNotice, InlineDelete, errorText, send, useToast } from "@/components/portal/relationships/shared";
@@ -73,15 +73,17 @@ function DrawerBody({
       <ContactRespond c={c} busy={busy !== null} onStatus={(s) => void run("status", () => onStatus(s))} />
       <section className="grid gap-2">
         <h3 className="text-adm-base font-semibold text-navy-900">{c.inquiryType} enquiry</h3>
-        <div className="rounded-xl p-4 ring-1 ring-mist-200">
-          <ContactMessage c={c} />
+        <div className="rounded-lg p-4 ring-1 ring-mist-200">
+          <ClampText>
+            <ContactMessage c={c} />
+          </ClampText>
         </div>
       </section>
-      <ContactFacts c={c} />
+      <ContactFacts c={c} withContact={false} />
       <ContactNotes c={c} onSave={onNotes} />
-      <div className="flex flex-wrap items-start justify-end gap-3 border-t border-mist-200 pt-5">
+      <PeekFooter>
         <InlineDelete label="Delete enquiry" warning="This enquiry is removed permanently. This cannot be undone." busy={busy === "delete"} onConfirm={() => void run("delete", onDelete)} />
-      </div>
+      </PeekFooter>
     </div>
   );
 }

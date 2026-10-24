@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
 
     const userId = rawUserId.trim().slice(0, 254);
     // It also becomes an S3 path segment; keep that to one segment of safe chars.
-    const keyOwner = userId.replace(/[^a-zA-Z0-9@._+-]/g, "_");
+    // No dots: a userId of ".." must not become a path segment in the key
+    const keyOwner = userId.replace(/[^a-zA-Z0-9@_+-]/g, "_");
     const fileName = file.name.slice(0, 255);
 
     // Validate file type and size

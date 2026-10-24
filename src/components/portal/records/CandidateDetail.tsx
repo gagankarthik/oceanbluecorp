@@ -1,5 +1,6 @@
 "use client";
 
+import { usePolling } from "@/hooks/use-polling";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Application, BenchType, Job, PipelineRecord, Submission } from "@/lib/aws/dynamodb";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -10,7 +11,7 @@ import { POOL_LABEL, POOL_META, POOL_ORDER, poolOf } from "@/lib/bench";
 import { fmtDateTime } from "@/lib/format";
 import { TERMINAL } from "@/lib/pipeline";
 import { jobLocationLabel } from "@/lib/workplace";
-import { Badge, Button, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, Spinner, usePortalRouter } from "@/components/portal/kit";
+import { Avatar, Badge, Button, DetailSkeleton, EmptyState, ErrorState, Page, PageHeader, Panel, Spinner, usePortalRouter } from "@/components/portal/kit";
 import { useToast } from "@/components/portal/toast";
 import { CandidateEditDrawer } from "./CandidateEditDrawer";
 import { EmailComposer } from "./EmailComposer";
@@ -128,25 +129,24 @@ export function CandidateDetail({ id }: { id: string }) {
     };
   }, [candidate?.jobId]);
 
-  // Poll every 5 s while the background resume analysis is running.
-  useEffect(() => {
-    const status = candidate?.resumeAnalysisStatus;
-    if (status !== "pending" && status !== "processing") return;
-    const timer = setInterval(async () => {
+  // Poll every 5 s while the background resume analysis runs: paused in a hidden tab, and given
+  // up after ten minutes so an analysis stuck on the server cannot poll forever.
+  const analysisRunning = candidate?.resumeAnalysisStatus === "pending" || candidate?.resumeAnalysisStatus === "processing";
+  usePolling(
+    async () => {
       try {
         const res = await fetch(`/api/applications/${id}`);
         if (!res.ok) return;
         const data = await res.json();
         const updated = data.application as Detail;
         setCandidate((prev) => (prev ? { ...prev, ...updated } : prev));
-        if (updated.resumeAnalysisStatus === "completed" || updated.resumeAnalysisStatus === "failed") {
-          clearInterval(timer);
-          if (updated.resumeAnalysisStatus === "completed") notify("Resume analyzed. The results are ready.");
-        }
+        if (updated.resumeAnalysisStatus === "completed") notify("Resume analyzed. The results are ready.");
       } catch { /* non-fatal */ }
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [candidate?.resumeAnalysisStatus, id, notify]);
+    },
+    5000,
+    analysisRunning,
+    10 * 60_000,
+  );
 
   usePageCrumb(candidate?.applicationId);
 
@@ -452,8 +452,10 @@ export function CandidateDetail({ id }: { id: string }) {
   ];
 
   return (
-    <Page>
+    <Page tinted>
       <PageHeader
+        hero
+        leading={<Avatar name={candidate.name || candidate.email || "?"} size="lg" />}
         back={back}
         title={candidate.name || "Unnamed candidate"}
         meta={
@@ -512,7 +514,7 @@ export function CandidateDetail({ id }: { id: string }) {
       />
 
       {/* Pinned while the record scrolls: where they are, the next move, and the tabs. */}
-      <div ref={stripRef} className="sticky top-16 z-20 grid gap-3 rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200 sm:pb-0">
+      <div ref={stripRef} className="sticky top-6 z-10 sm:top-5 lg:top-3 grid gap-3 rounded-lg bg-mist-0 p-4 ring-1 ring-mist-200 sm:pb-0">
         <StageTrack status={candidate.status} saving={statusSaving} daysInStage={daysInStage} onStage={(s) => void handleStage(s)} />
         <RecordTabs label="Candidate record" tabs={tabs} value={activeTab} onChange={setActiveTab} />
       </div>
@@ -606,7 +608,7 @@ export function CandidateDetail({ id }: { id: string }) {
           {activeTab === "activity" && <ActivityTab history={history} activity={activity} />}
         </div>
 
-        <div className="min-w-0 lg:sticky lg:top-[calc(var(--strip,7rem)+5.5rem)]">
+        <div className="min-w-0 lg:sticky lg:top-[calc(var(--strip,7rem)+2.25rem)]">
           <RecordRail
             candidate={candidate}
             isOwner={isOwner}

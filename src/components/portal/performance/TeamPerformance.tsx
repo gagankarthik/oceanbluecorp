@@ -170,7 +170,7 @@ export default function TeamPerformance({ period }: { period: Period }) {
           <p className="text-adm-base text-mist-600">{r.active} active candidates, {p.label.toLowerCase()}</p>
         </div>
       </div>
-      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-mist-50 p-4 text-adm-base">
+      <dl className="grid grid-cols-2 gap-3 rounded-lg bg-mist-50 p-4 text-adm-base">
         {[
           { k: "Submit to interview", v: pct(r.submitToInterview) },
           { k: "Interview to hire", v: pct(r.interviewToHire) },

@@ -6,7 +6,7 @@
  * never sees it. The same token names are remapped, so every
  * bg-mist-0 / text-navy-900 / ring-mist-200 in the portal follows without edits.
  *
- *   mist   surfaces and lines: #161616 page, #1e1e1e raised, #232323 lines
+ *   mist   surfaces and lines: #161616 page, #1e1e1e raised, #2a2a2a lines (Plane's dark hairline)
  *   navy   ink: #f9fbff text; 950 is the scrim
  *   ocean  the CRM's violet-blue action (#4124fb), washes and light link ink
  *   status kelp / buoy / coral as dark washes with light inks
@@ -16,10 +16,10 @@ html:has([data-portal-shell][data-theme="dark"]) {
   color-scheme: dark;
 
   --color-mist-0: #161616;
-  --color-mist-50: #171717;
+  --color-mist-50: #101010; /* tinted grounds and the sidebar sit below the #161616 surface */
   --color-mist-100: #1e1e1e;
-  --color-mist-200: #232323;
-  --color-mist-300: #393939;
+  --color-mist-200: #2a2a2a;
+  --color-mist-300: #3d3d3d;
   --color-mist-400: #454545;
   --color-mist-500: #6e6e6e;
   --color-mist-550: #858585;
@@ -29,7 +29,7 @@ html:has([data-portal-shell][data-theme="dark"]) {
   --color-navy-600: #a4a4a4;
   --color-navy-700: #d0d4dd;
   --color-navy-800: #e6e8ec;
-  --color-navy-900: #f9fbff;
+  --color-navy-900: #f2f2f2;
   --color-navy-950: #000000;
 
   --color-ocean-50: #1d1a33;
@@ -55,6 +55,7 @@ html:has([data-portal-shell][data-theme="dark"]) {
   --color-buoy-100: #3e291d;
   --color-buoy-200: #6c4830;
   --color-buoy-500: #fbbf24;
+  --color-buoy-600: #f59e0b;
   --color-buoy-700: #fbbf24;
   --color-buoy-800: #fed7aa;
 
@@ -83,13 +84,15 @@ html:has([data-portal-shell][data-theme="dark"]) {
   --adm-focus-ring: rgb(65 36 251 / 0.35);
   --adm-scrim: rgb(0 0 0 / 0.6);
 
+  --color-shell: #0e0e0e;
+
   /* A solid ink chip (tooltips, the current page, batch bars): light on dark here */
   --color-contrast: #f9fbff;
   --color-on-contrast: #161616;
 }
 
 html:has([data-portal-shell][data-theme="dark"]) body {
-  background: #161616;
+  background: #0e0e0e;
 }
 
 html:has([data-portal-shell][data-theme="dark"]) * {

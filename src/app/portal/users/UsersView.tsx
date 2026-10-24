@@ -25,6 +25,7 @@ import {
   PillButton,
   type Tone,
   CrmListSkeleton,
+  ListHeader, PeekFooter
 } from "@/components/portal/kit";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, errorText, inputCls, send, useToast } from "@/components/portal/relationships/shared";
 import { canAccess, nav, roles, type Role } from "@/lib/portal/roles";
@@ -139,7 +140,7 @@ function UserDetail({
         ]}
       />
 
-      <section className="rounded-xl ring-1 ring-mist-200">
+      <section className="rounded-lg ring-1 ring-mist-200">
         <h3 className="border-b border-mist-200 px-4 py-3 text-adm-base font-semibold">Access</h3>
         <div className="grid gap-4 p-4">
           {!canManage && (
@@ -192,9 +193,9 @@ function UserDetail({
       </section>
 
       {canManage && (
-        <div className="border-t border-mist-200 pt-5">
+        <PeekFooter>
           <InlineDelete label="Delete user" warning="Their account and access are removed permanently. This cannot be undone." busy={busy === "delete"} onConfirm={() => run("delete", onDelete)} />
-        </div>
+        </PeekFooter>
       )}
     </div>
   );
@@ -237,7 +238,7 @@ function RolesPanel() {
         {ROLE_KEYS.map((r) => {
           const n = SCREENS.filter((s) => canAccess(r, s.href)).length;
           return (
-            <div key={r} className="flex min-w-0 flex-col gap-2 rounded-xl bg-mist-0 p-5 ring-1 ring-mist-200">
+            <div key={r} className="flex min-w-0 flex-col gap-2 rounded-lg bg-mist-0 p-5 ring-1 ring-mist-200">
               <p className="text-adm-base font-semibold text-navy-900">{roles[r].label}</p>
               <p className="text-adm-base tabular-nums text-mist-600">
                 <span className="text-adm-lg font-semibold text-navy-900">{n}</span> of {SCREENS.length} screens
@@ -546,8 +547,8 @@ export default function UsersView({ initialTab = "users" }: { initialTab?: Tab }
       <ListPage title="Users">
         {tab === "roles" ? (
           <>
-            <div className="shrink-0 border-b border-mist-200 px-4">{viewTabs}</div>
-            <div className="scroll-thin min-h-0 flex-1 overflow-auto bg-mist-50 p-4 sm:p-6">
+            <ListHeader tabs={viewTabs} />
+            <div className="scroll-thin min-h-0 flex-1 overflow-auto p-4 sm:p-6">
               <RolesPanel />
             </div>
           </>

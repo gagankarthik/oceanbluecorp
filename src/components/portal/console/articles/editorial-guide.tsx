@@ -25,13 +25,13 @@ export function EditorialGuide({
   const bodyId = useId();
 
   return (
-    <section className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+    <section className="min-w-0 rounded-lg bg-mist-0 ring-1 ring-mist-200">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={bodyId}
-        className="flex min-h-14 w-full items-center gap-3 rounded-xl px-5 py-3 text-left hover:bg-mist-50"
+        className="flex min-h-14 w-full items-center gap-3 rounded-lg px-5 py-3 text-left hover:bg-mist-50"
       >
         <Icon name="help" className="size-5 shrink-0 text-mist-500" />
         <span className="min-w-0 flex-1">

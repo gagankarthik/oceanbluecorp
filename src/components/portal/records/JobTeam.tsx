@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { Job } from "@/lib/aws/dynamodb";
 import { refreshJobs } from "@/hooks/use-console-data";
-import { Avatar, Button, Panel, Spinner } from "@/components/portal/kit";
+import { Avatar, Button, Spinner } from "@/components/portal/kit";
 import { FieldError, useStaff, type StaffPerson } from "@/components/portal/fields";
 import Select from "@/components/portal/Select";
 import Icon from "@/components/portal/icons";
@@ -77,21 +77,24 @@ export function JobTeamCard({
     );
 
   return (
-    <Panel
-      title={
-        <>
-          Team <span className="ml-1 text-adm-base font-medium tabular-nums text-mist-600">{memberCount}</span>
-        </>
-      }
-      action={
-        canEdit && (
-          <Button size="sm" variant={adding ? "ghost" : "secondary"} icon={adding ? "x" : "plus"} onClick={() => setAdding((v) => !v)}>
-            {adding ? "Done" : "Add"}
-          </Button>
-        )
-      }
-    >
-      <div className="grid gap-4">
+    <section aria-label="Team" className="grid gap-2">
+      <div className="flex h-7 items-center justify-between gap-2">
+        <h2 className="text-adm-base font-semibold text-navy-900">
+          Team <span className="ml-1 font-medium tabular-nums text-mist-600">{memberCount}</span>
+        </h2>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setAdding((v) => !v)}
+            aria-label={adding ? "Done adding" : "Add to the team"}
+            title={adding ? "Done" : "Add to the team"}
+            className="grid size-7 place-items-center rounded-md text-mist-600 transition-colors duration-150 hover:bg-mist-100 hover:text-navy-900"
+          >
+            <Icon name={adding ? "check" : "plus"} className="size-4" />
+          </button>
+        )}
+      </div>
+      <div className="grid gap-3">
         {canEdit && adding && (
           <div className="grid gap-1.5">
             {staff.loading ? (
@@ -134,11 +137,11 @@ export function JobTeamCard({
         )}
 
         {memberCount === 0 ? (
-          <p className="text-adm-base text-mist-600">{canEdit ? "Nobody is assigned yet. Use Add to put a recruiter on this job." : "Nobody is assigned to this job yet."}</p>
+          <p className="text-adm-base text-mist-600">{canEdit ? "Nobody is assigned yet. Use + to put a recruiter on this job." : "Nobody is assigned to this job yet."}</p>
         ) : (
-          <ul className="grid gap-1" aria-label="Team members">
+          <ul className="-mx-2 grid" aria-label="Team members">
             {job.recruitmentManagerName && (
-              <li className="flex min-h-10 items-center gap-3">
+              <li className="flex min-h-10 items-center gap-3 rounded-md px-2">
                 <Avatar name={job.recruitmentManagerName} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-adm-base font-medium text-navy-900">{job.recruitmentManagerName}</span>
                 <span className="shrink-0 text-adm-xs text-mist-600">Manager</span>
@@ -147,7 +150,7 @@ export function JobTeamCard({
             {names.map((name, i) => {
               const busy = savingId === (ids[i] ?? `row-${i}`);
               return (
-                <li key={ids[i] ?? i} className="flex min-h-10 items-center gap-3">
+                <li key={ids[i] ?? i} className="group flex min-h-10 items-center gap-3 rounded-md px-2 transition-colors duration-150 hover:bg-mist-50">
                   <Avatar name={name} size="sm" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-adm-base font-medium text-navy-900">{name}</span>
@@ -163,7 +166,7 @@ export function JobTeamCard({
                         disabled={!!savingId}
                         aria-label={`Remove ${name} from the team`}
                         title="Remove from the team"
-                        className="grid size-8 shrink-0 place-items-center rounded-lg text-mist-500 transition-colors hover:bg-status-danger-soft hover:text-status-danger disabled:opacity-50"
+                        className="grid size-7 shrink-0 place-items-center rounded-md text-mist-500 opacity-0 transition-[color,background-color,opacity] duration-150 hover:bg-status-danger-soft hover:text-status-danger focus-visible:opacity-100 group-hover:opacity-100 disabled:opacity-50"
                       >
                         <Icon name="x" className="size-4" />
                       </button>
@@ -175,6 +178,6 @@ export function JobTeamCard({
           </ul>
         )}
       </div>
-    </Panel>
+    </section>
   );
 }

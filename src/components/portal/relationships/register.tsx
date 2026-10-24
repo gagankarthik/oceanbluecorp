@@ -33,7 +33,7 @@ export function KpiFilter({ active, onClick, label, children }: { active: boolea
       aria-pressed={active}
       aria-label={label}
       title={label}
-      className={`block w-full rounded-xl text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 ${
+      className={`block w-full rounded-lg text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-600 ${
         active ? "ring-2 ring-ocean-600 ring-offset-2 ring-offset-mist-50" : ""
       }`}
     >
@@ -78,7 +78,7 @@ export function RecordStats({ items }: { items: { k: string; v: React.ReactNode 
   return (
     <dl className="grid grid-cols-3 gap-3">
       {items.map((s) => (
-        <div key={s.k} className="min-w-0 rounded-xl bg-mist-50 p-3">
+        <div key={s.k} className="min-w-0 rounded-lg bg-mist-50 p-3">
           <dt className="text-adm-xs text-mist-600">{s.k}</dt>
           <dd className="mt-1 truncate text-adm-md font-semibold tabular-nums text-navy-900">{s.v}</dd>
         </div>

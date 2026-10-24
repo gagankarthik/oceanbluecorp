@@ -147,7 +147,7 @@ function SectionHeader({ id, icon, title, description }: { id: string; icon: Ico
 
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-4 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+    <section className="mt-4 rounded-lg bg-mist-0 ring-1 ring-mist-200">
       <h3 className="border-b border-mist-200 px-5 py-3 text-adm-md font-semibold text-navy-900">{title}</h3>
       <div className="grid min-w-0 gap-3 p-5">{children}</div>
     </section>
@@ -162,7 +162,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
   };
   const icon: Record<"info" | "warning" | "tip", IconName> = { info: "help", warning: "alert", tip: "check" };
   return (
-    <div className={`flex items-start gap-3 rounded-xl p-4 text-adm-base leading-normal ring-1 ring-inset ${styles[variant]}`}>
+    <div className={`flex items-start gap-3 rounded-lg p-4 text-adm-base leading-normal ring-1 ring-inset ${styles[variant]}`}>
       <Icon name={icon[variant]} className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 [&_code]:break-words [&_code]:font-mono">{children}</div>
     </div>
@@ -172,7 +172,7 @@ function InfoCard({ children, variant = "info" }: { children: React.ReactNode; v
 /** Static reference table; scrolls inside itself on phones. */
 function DocTable({ headers, rows }: { headers: string[]; rows: (string | React.ReactNode)[][] }) {
   return (
-    <div className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden rounded-xl ring-1 ring-mist-200">
+    <div className="scroll-thin max-w-full overflow-x-auto overflow-y-hidden rounded-lg ring-1 ring-mist-200">
       <table className="w-full min-w-[520px] border-collapse text-adm-base">
         <thead>
           <tr className="border-b border-mist-200 bg-mist-50 text-adm-xs text-mist-600">
@@ -202,7 +202,7 @@ function DocTable({ headers, rows }: { headers: string[]; rows: (string | React.
 function CodeBlock({ label = "Code", children }: { label?: string; children: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="min-w-0 overflow-hidden rounded-xl bg-navy-950">
+    <div className="min-w-0 overflow-hidden rounded-lg bg-navy-950">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-1">
         <span className="truncate font-mono text-adm-xs text-tide-200">{label}</span>
         <button
@@ -255,7 +255,7 @@ function No() {
 
 function Well({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-mist-50 p-4 ring-1 ring-inset ring-mist-200">
+    <div className="rounded-lg bg-mist-50 p-4 ring-1 ring-inset ring-mist-200">
       <p className="mb-1 text-adm-base font-semibold text-navy-900">{title}</p>
       <p className="max-w-[65ch] text-adm-base text-mist-700">{children}</p>
     </div>
@@ -390,7 +390,7 @@ export default function DocsView() {
         />
 
         <div className="grid items-start gap-6 lg:grid-cols-[248px_minmax(0,1fr)]">
-          <div className="grid min-w-0 gap-3 lg:sticky lg:top-20">
+          <div className="grid min-w-0 gap-3 lg:sticky lg:top-4">
             <label className="relative block">
               <span className="sr-only">Search the docs</span>
               <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist-500" />
@@ -399,10 +399,10 @@ export default function DocsView() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search the docs"
-                className="h-10 w-full rounded-lg bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 ring-1 ring-inset ring-mist-300 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
+                className="h-8 w-full rounded-md border border-mist-200 bg-mist-0 pl-9 pr-3 text-adm-base text-navy-900 placeholder:text-placeholder focus:border-mist-400 focus:outline-none"
               />
             </label>
-            <div className="overflow-hidden rounded-xl bg-mist-0 ring-1 ring-mist-200">
+            <div className="overflow-hidden rounded-lg bg-mist-0 ring-1 ring-mist-200">
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
@@ -434,7 +434,7 @@ export default function DocsView() {
               description="The staff portal: job postings, the applicant pipeline, clients, vendors, contact enquiries, the four publishing sections, and team access."
             />
 
-            <div className="mt-4 overflow-hidden rounded-xl ring-1 ring-mist-200">
+            <div className="mt-4 overflow-hidden rounded-lg ring-1 ring-mist-200">
             <div className="grid grid-cols-1 gap-px bg-mist-200 sm:grid-cols-2 xl:grid-cols-3">
               {([
                 { icon: "briefcase",         label: "Jobs",         desc: "State roles and open roles" },
@@ -513,7 +513,7 @@ export default function DocsView() {
                   { keys: "↑ ↓", desc: "Navigate command palette results" },
                   { keys: "Tab", desc: "Cycle through form fields" },
                 ].map((s) => (
-                  <div key={s.keys} className="flex min-w-0 items-center gap-3 rounded-xl border border-mist-200 bg-mist-50 px-4 py-3">
+                  <div key={s.keys} className="flex min-w-0 items-center gap-3 rounded-lg border border-mist-200 bg-mist-50 px-4 py-3">
                     <Kbd>{s.keys}</Kbd>
                     <span className="text-adm-base text-mist-700">{s.desc}</span>
                   </div>
@@ -615,7 +615,7 @@ export default function DocsView() {
                   ["hired",     "Hired",         "Accepted offer and placement confirmed"],
                   ["rejected",  "Rejected",      "Not moving forward, candidate notified"],
                 ] as const).map(([status, label, desc]) => (
-                  <div key={status} className="flex flex-col gap-1.5 rounded-xl border border-mist-200 bg-mist-50 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
+                  <div key={status} className="flex flex-col gap-1.5 rounded-lg border border-mist-200 bg-mist-50 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
                     <span className="sm:w-32 sm:flex-none"><DocBadge status={status} label={label} size="md" /></span>
                     <p className="max-w-[65ch] text-adm-base text-mist-700">{desc}</p>
                   </div>
@@ -798,7 +798,7 @@ export default function DocsView() {
             <SubSection title="Status">
               <div className="grid gap-1.5">
                 {ARTICLE_STATUSES.map((s) => (
-                  <div key={s.key} className="flex flex-col gap-1.5 rounded-xl bg-mist-50 px-4 py-3 ring-1 ring-inset ring-mist-200 sm:flex-row sm:items-center sm:gap-3">
+                  <div key={s.key} className="flex flex-col gap-1.5 rounded-lg bg-mist-50 px-4 py-3 ring-1 ring-inset ring-mist-200 sm:flex-row sm:items-center sm:gap-3">
                     <span className="sm:w-32 sm:flex-none">
                       <DocBadge label={s.label} tone={s.tone} />
                     </span>

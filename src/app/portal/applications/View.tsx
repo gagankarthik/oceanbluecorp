@@ -1,18 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { Application } from "@/lib/aws/dynamodb";
 import { useToast } from "@/components/portal/toast";
 import Icon from "@/components/portal/icons";
 import Select from "@/components/portal/Select";
 import { Drawer } from "@/components/portal/kit/overlay";
-import { InlineSelect, RatingValue, StageBadge, StageProgress, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
+import { InlineSelect, RatingValue, StageBadge, StageProgress, StarInput, Tags } from "@/components/portal/recruiting/bits";
+import { stageState } from "@/components/portal/recruiting/model";
 import { BOARD, STAGE_LABEL, locationOf, stageLabel, type Stage } from "@/components/portal/recruiting/model";
 import { nextStage } from "@/components/portal/recruiting/applications-views";
 import {
-  Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, KeyValue, usePortalRouter,
-  CrmListSkeleton,
+  Avatar, Button, ConfirmDialog, PeekTitle, PeekFooter, PeekSection, deleteConfirmText, EmptyState, ErrorState, KeyValue, usePortalRouter,
+  CrmListSkeleton, ListHeader, HeaderSearch, FilterMenu, DisplayMenu, AppliedFilters, BTN_PRIMARY,
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { refreshApplications, useApplicationSummaries, useJobSummaries } from "@/hooks/use-console-data";
@@ -77,12 +78,22 @@ const sortValue = (a: Row, key: SortKey): string | number => {
   }
 };
 
-// The CRM table: a grid of max-content columns spread edge to edge, each row a subgrid so the
-// cells line up; 38px header, 42px rows, one line per cell.
+// Plane's spreadsheet: a grid of max-content columns spread edge to edge, each row a subgrid so
+// the cells line up; 44px header and rows, one line per cell.
 const GRID = "grid min-w-max grid-cols-[repeat(8,max-content)] justify-between";
 const ROW = "col-span-full grid grid-cols-subgrid";
-const TH = "flex h-[38px] items-center whitespace-nowrap px-3 text-adm-xs font-medium text-mist-600";
-const TD = "flex h-[42px] min-w-0 items-center whitespace-nowrap px-3";
+const TH = "flex h-11 items-center whitespace-nowrap px-3 text-adm-base font-medium text-mist-600";
+const TD = "flex h-11 min-w-0 items-center whitespace-nowrap px-3";
+
+// md and up gets the grid, phones the cards: one is rendered, never both. Rows only exist after
+// the client fetch, so reading the media query directly never meets a hydration pass.
+const MD = "(min-width: 768px)";
+const subscribeMd = (cb: () => void) => {
+  const mql = window.matchMedia(MD);
+  mql.addEventListener("change", cb);
+  return () => mql.removeEventListener("change", cb);
+};
+const useIsDesktop = () => useSyncExternalStore(subscribeMd, () => window.matchMedia(MD).matches, () => true);
 
 export default function ApplicationsView() {
   const notify = useToast();
@@ -128,8 +139,9 @@ export default function ApplicationsView() {
 
   const sort: Sort = sortParam ? { key: sortParam.split(":")[0] as SortKey, dir: sortParam.endsWith(":-1") ? -1 : 1 } : null;
 
+  const deferredQuery = useDeferredValue(query);
   const visible = useMemo(() => {
-    const terms = searchTerms(query);
+    const terms = searchTerms(deferredQuery);
     const since = windowDays ? Date.now() - Number(windowDays) * DAY : 0;
     const out = rows.filter((a) => {
       if (stage === IN_PROGRESS && TERMINAL.has(a.status)) return false;
@@ -146,7 +158,7 @@ export default function ApplicationsView() {
       return (typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv))) * sort.dir;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, query, stage, owner, windowDays, sortParam]);
+  }, [rows, deferredQuery, stage, owner, windowDays, sortParam]);
 
   const allSelected = visible.length > 0 && visible.every((a) => selected.has(a.id));
   const someSelected = !allSelected && visible.some((a) => selected.has(a.id));
@@ -255,18 +267,30 @@ export default function ApplicationsView() {
     return items;
   };
 
-  const owners = useMemo(() => [...new Set(rows.map((a) => a.ownershipName).filter((n): n is string => !!n))].sort(), [rows]);
-  const count = (fn: (a: Row) => boolean) => rows.filter(fn).length;
+  // Every filter count in one pass over the rows, redone only when the rows change
+  const tallies = useMemo(() => {
+    const byStage = new Map<string, number>();
+    const byOwner = new Map<string, number>();
+    let inProgress = 0, stalled = 0, unassigned = 0;
+    for (const a of rows) {
+      byStage.set(a.status, (byStage.get(a.status) ?? 0) + 1);
+      if (a.ownershipName) byOwner.set(a.ownershipName, (byOwner.get(a.ownershipName) ?? 0) + 1);
+      else if (!a.ownership) unassigned++;
+      if (!TERMINAL.has(a.status)) inProgress++;
+      if (isStale(a)) stalled++;
+    }
+    return { byStage, byOwner, inProgress, stalled, unassigned, owners: [...byOwner.keys()].sort() };
+  }, [rows]);
   const stageFilterOptions = [
     { value: ALL, label: "All", count: rows.length },
-    { value: IN_PROGRESS, label: "In progress", count: count((a) => !TERMINAL.has(a.status)) },
-    { value: STALLED, label: "Stalled", count: count((a) => isStale(a)) },
-    ...BOARD.map((s) => ({ value: s, label: STAGE_LABEL[s], count: count((a) => a.status === s) })),
+    { value: IN_PROGRESS, label: "In progress", count: tallies.inProgress },
+    { value: STALLED, label: "Stalled", count: tallies.stalled },
+    ...BOARD.map((s) => ({ value: s, label: STAGE_LABEL[s], count: tallies.byStage.get(s) ?? 0 })),
   ];
   const ownerOptions = [
     { value: ALL, label: "All", count: rows.length },
-    { value: UNASSIGNED, label: "Unassigned", count: count((a) => !a.ownership && !a.ownershipName) },
-    ...owners.map((o) => ({ value: o, label: o, count: count((a) => a.ownershipName === o) })),
+    { value: UNASSIGNED, label: "Unassigned", count: tallies.unassigned },
+    ...tallies.owners.map((o) => ({ value: o, label: o, count: tallies.byOwner.get(o) ?? 0 })),
   ];
   const filtering = !!(query || stage || owner || windowDays);
   const clearAll = () => {
@@ -277,16 +301,21 @@ export default function ApplicationsView() {
   };
 
   // Footer figures, from what the filters leave
-  const inFlight = visible.filter((a) => !TERMINAL.has(a.status));
-  const rated = visible.filter((a) => a.rating);
-  const stalled = inFlight.filter((a) => isStale(a)).length;
-  const figures = [
-    { label: "avg days in stage", value: inFlight.length ? Math.round(avg(inFlight.map(daysInStage))) : "—", warn: false },
-    { label: "stalled", value: stalled, warn: stalled > 0 },
-    { label: "unassigned", value: visible.filter((a) => !a.ownership && !a.ownershipName).length, warn: false },
-    { label: "avg rating", value: rated.length ? avg(rated.map((a) => a.rating!)).toFixed(1) : "—", warn: false },
-  ];
+  const figures = useMemo(() => {
+    const inFlight = visible.filter((a) => !TERMINAL.has(a.status));
+    const rated = visible.filter((a) => a.rating);
+    const stalled = inFlight.filter((a) => isStale(a)).length;
+    return [
+      { label: "avg days in stage", value: inFlight.length ? Math.round(avg(inFlight.map(daysInStage))) : "—", warn: false },
+      { label: "stalled", value: stalled, warn: stalled > 0 },
+      { label: "unassigned", value: visible.filter((a) => !a.ownership && !a.ownershipName).length, warn: false },
+      { label: "avg rating", value: rated.length ? avg(rated.map((a) => a.rating!)).toFixed(1) : "—", warn: false },
+    ];
+  }, [visible]);
   const picked = [...selected];
+  const desktop = useIsDesktop();
+  // Plane shows a row's checkbox on hover; once anything is selected they all stay visible
+  const boxReveal = picked.length ? "" : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100";
 
   const loading = appsRes.isLoading || jobsRes.isLoading;
   const failed = (!appsRes.applications && appsRes.error) || (!jobsRes.jobs && jobsRes.error);
@@ -332,45 +361,36 @@ export default function ApplicationsView() {
     body = (
       // One panel that fills the screen: toolbar, the table scrolling inside it, and the summary footer.
       <section aria-label="Applicants" className="flex min-h-0 flex-1 flex-col">
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-mist-200 p-4">
-          <label className="relative block min-w-0 flex-1 basis-full sm:max-w-60 sm:basis-auto">
-            <span className="sr-only">Search applicants, emails or skills</span>
-            <Icon name="search" className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-mist-500" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search applicants, emails or skills"
-              className="h-[30px] w-full rounded-full bg-mist-0 pl-8 pr-3 text-adm-xs text-navy-900 ring-1 ring-inset ring-mist-200 placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-ocean-600"
-            />
-          </label>
-          <Select label="Sort by" defaultLabel="Newest" value={sortParam} onChange={setSortParam} options={SORTS} size="sm" className="w-auto shrink-0" />
-          <Select label="Stage" value={stage} onChange={setStage} options={stageFilterOptions} size="sm" className="w-auto shrink-0" />
-          <Select label="Owner" value={owner} onChange={setOwner} options={ownerOptions} size="sm" className="w-auto shrink-0" />
-          <Select label="Last activity" defaultLabel="Any time" value={windowDays} onChange={setWindowDays} options={WINDOWS} size="sm" className="w-auto shrink-0" />
-          {filtering && (
-            <button type="button" onClick={clearAll} className="h-[30px] px-2 text-adm-xs font-medium text-ocean-700 hover:underline">
-              Clear
-            </button>
-          )}
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={exportRows}
-              className="inline-flex h-[30px] items-center gap-1.5 rounded-full bg-mist-0 px-[9px] text-adm-xs font-medium text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-mist-200 transition-colors hover:bg-mist-50"
-            >
-              <Icon name="download" className="size-3" />
-              Export
-            </button>
-            <Link
-              href="/portal/applications/new"
-              className="inline-flex h-[30px] items-center gap-1.5 rounded-full bg-ocean-600 px-[9px] text-adm-xs font-medium text-white shadow-[0_1px_2px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors hover:bg-ocean-700"
-            >
-              <Icon name="plus" className="size-3" />
-              Add applicant
-            </Link>
-          </div>
-        </div>
+        <ListHeader count={visible.length} total={rows.length}>
+          <HeaderSearch value={query} onChange={setQuery} placeholder="Search applicants, emails or skills" />
+          <FilterMenu
+            applied={[stage, owner, windowDays].filter(Boolean).length}
+            sections={[
+              { key: "stage", label: "Stage", value: stage, onChange: setStage, options: stageFilterOptions },
+              { key: "owner", label: "Owner", value: owner, onChange: setOwner, options: ownerOptions },
+              { key: "window", label: "Last activity", value: windowDays, onChange: setWindowDays, options: WINDOWS.map((w) => ({ ...w, label: w.value ? `Within ${w.label}` : w.label })) },
+            ]}
+          />
+          <DisplayMenu
+            order={{ options: SORTS, value: sortParam, onChange: setSortParam }}
+            actions={[{ label: `Export ${visible.length === rows.length ? "all" : visible.length} as CSV`, icon: "download", onSelect: exportRows }]}
+            changed={!!sortParam}
+          />
+          <Link href="/portal/applications/new" className={BTN_PRIMARY}>
+            <Icon name="plus" className="size-4" />
+            Add applicant
+          </Link>
+        </ListHeader>
+
+        <AppliedFilters
+          onClearAll={clearAll}
+          chips={[
+            ...(query ? [{ key: "q", label: "Search", value: `“${query}”`, clear: () => setQuery("") }] : []),
+            ...(stage ? [{ key: "stage", label: "Stage", value: stageFilterOptions.find((o) => o.value === stage)?.label ?? stage, clear: () => setStage(ALL) }] : []),
+            ...(owner ? [{ key: "owner", label: "Owner", value: ownerOptions.find((o) => o.value === owner)?.label ?? owner, clear: () => setOwner(ALL) }] : []),
+            ...(windowDays ? [{ key: "window", label: "Last activity", value: `Within ${WINDOWS.find((w) => w.value === windowDays)?.label}`, clear: () => setWindowDays(ALL) }] : []),
+          ]}
+        />
 
         <div className="scroll-thin min-h-0 flex-1 overflow-auto">
           {visible.length === 0 ? (
@@ -378,12 +398,56 @@ export default function ApplicationsView() {
           ) : (
             // The CRM grid: one column per field sized to its widest cell, spread across the panel
             // (justify-between), rows on subgrid so every cell lines up; scrolls sideways only when narrower.
+            <>
+            {!desktop && (
+            <ul className="divide-y divide-mist-100">
+              {visible.map((a) => {
+                const last = lastActivity(a);
+                return (
+                  <li key={a.id} className={`flex items-start gap-3 px-4 py-3 ${selected.has(a.id) ? "bg-ocean-50" : ""}`}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${a.name || a.email}`}
+                      checked={selected.has(a.id)}
+                      onChange={() => toggle(a.id)}
+                      className="mt-2 size-4 shrink-0 cursor-pointer accent-ocean-600"
+                    />
+                    <button type="button" onClick={() => setOpenId(a.id)} className="min-w-0 flex-1 text-left">
+                      <span className="flex items-center gap-2">
+                        <Avatar name={a.name || a.email} size="sm" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium text-navy-900">{a.name || a.email}</span>
+                          <span className="block truncate text-adm-xs text-mist-600">{a.jobTitle || "No position"}</span>
+                        </span>
+                      </span>
+                      <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-adm-xs text-mist-600">
+                        <StageBadge stage={a.status} />
+                        <span>{a.ownershipName || <span className="font-medium text-status-danger">Unassigned</span>}</span>
+                        <span className="tabular-nums">{shortDate(last.at)} · {last.label}</span>
+                      </span>
+                    </button>
+                    <ActionMenu
+                      label={`Actions for ${a.name || a.email}`}
+                      width="w-52"
+                      items={rowMenu(a)}
+                      trigger={
+                        <button type="button" aria-label={`Actions for ${a.name || a.email}`} className="grid size-9 shrink-0 place-items-center rounded-md text-mist-600 hover:bg-mist-100">
+                          <Icon name="dotsVertical" className="size-4" />
+                        </button>
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+            )}
+            {desktop && (
             <table className={`${GRID} w-full text-adm-base`}>
               <thead className="contents">
-                <tr className={`${ROW} sticky top-0 z-10 border-b border-mist-200 bg-mist-50`}>
+                <tr className={`${ROW} group/row sticky top-0 z-10 border-b border-mist-200 bg-mist-50`}>
                   <th scope="col" className={`${TH} justify-start`}>
-                    <span className="flex items-center gap-4">
-                      <input ref={selectAllRef} type="checkbox" aria-label="Select all applicants in view" checked={allSelected} onChange={toggleAll} className="size-4 cursor-pointer accent-ocean-600" />
+                    <span className="flex items-center gap-3">
+                      <input ref={selectAllRef} type="checkbox" aria-label="Select all applicants in view" checked={allSelected} onChange={toggleAll} className={`size-3.5 cursor-pointer accent-ocean-600 ${boxReveal}`} />
                       {sortButton("name", "Applicant")}
                     </span>
                   </th>
@@ -413,17 +477,17 @@ export default function ApplicationsView() {
                           setOpenId(a.id);
                         }
                       }}
-                      className={`${ROW} cursor-pointer border-b border-mist-100 transition-colors duration-150 hover:bg-mist-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600 data-[active=true]:bg-ocean-50`}
+                      className={`${ROW} group/row cursor-pointer border-b border-mist-100 transition-colors duration-150 hover:bg-mist-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ocean-600 data-[active=true]:bg-ocean-50`}
                     >
                       <td className={`${TD} justify-start`}>
-                        <span className="flex min-w-0 items-center gap-4">
+                        <span className="flex min-w-0 items-center gap-3">
                           <input
                             type="checkbox"
                             aria-label={`Select ${a.name || a.email}`}
                             checked={on}
                             onChange={() => toggle(a.id)}
                             onClick={(e) => e.stopPropagation()}
-                            className="size-4 shrink-0 cursor-pointer accent-ocean-600"
+                            className={`size-3.5 shrink-0 cursor-pointer accent-ocean-600 ${boxReveal}`}
                           />
                           <span className="flex min-w-0 items-center gap-2" title={a.applicationId || undefined}>
                             <Avatar name={a.name || a.email} size="sm" />
@@ -438,7 +502,7 @@ export default function ApplicationsView() {
                         <InlineSelect
                           value={a.status}
                           label={`Stage for ${a.name || a.email}`}
-                          dot={stageDot(a.status)}
+                          mark={stageState(a.status)}
                           width="w-32"
                           options={stageOptions.some((o) => o.value === a.status) ? stageOptions : [...stageOptions, { value: a.status, label: stageLabel(a.status) }]}
                           onChange={(v) => void move(a, v as Stage)}
@@ -494,11 +558,13 @@ export default function ApplicationsView() {
                 })}
               </tbody>
             </table>
+            )}
+            </>
           )}
         </div>
 
         {/* Footer: what is in view and its figures, or the batch actions while rows are selected */}
-        <div className="flex min-h-12 shrink-0 flex-wrap items-center border-t border-mist-200 bg-mist-0 sm:px-2">
+        <div className="flex min-h-10 shrink-0 flex-wrap items-center border-t border-mist-200 bg-mist-0 sm:px-1">
           {picked.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2 px-4 py-2" role="region" aria-label="Selected applicants">
               <span className="mr-2 font-semibold tabular-nums text-navy-900" aria-live="polite">{picked.length} selected</span>
@@ -517,13 +583,9 @@ export default function ApplicationsView() {
               <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Deselect all</Button>
             </div>
           ) : (
-            <dl className="flex flex-wrap items-center text-adm-base">
-              <div className="flex items-baseline gap-1.5 border-r border-mist-200 px-4 py-3">
-                <dd className="font-semibold tabular-nums text-navy-900">{visible.length}</dd>
-                <dt className="text-mist-600">{visible.length === rows.length ? "applicants" : `of ${rows.length} applicants`} in view</dt>
-              </div>
+            <dl className="flex flex-wrap items-center text-adm-xs">
               {figures.map((f) => (
-                <div key={f.label} className="flex items-baseline gap-1.5 border-r border-mist-200 px-4 py-3 last:border-r-0">
+                <div key={f.label} className="flex items-baseline gap-1.5 border-r border-mist-200 px-3 py-2.5 last:border-r-0">
                   <dd className={`font-semibold tabular-nums ${f.warn ? "text-status-warning" : "text-navy-900"}`}>{f.value}</dd>
                   <dt className="text-mist-600">{f.label}</dt>
                 </div>
@@ -537,8 +599,8 @@ export default function ApplicationsView() {
   const nxt = current ? nextStage(current.status) : null;
 
   return (
-    // Full-bleed like the CRM: cancels the shell's padding and fills the height under the 64px top bar.
-    <div className="-m-5 flex h-[calc(100svh-4rem)] min-h-[32rem] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
+    // Full-bleed like ListPage: cancels the shell's padding and fills the work surface.
+    <div className="-m-5 flex h-[calc(100svh-3.75rem-2px)] min-h-[32rem] flex-col bg-mist-0 sm:-m-6 lg:-m-8">
       {/* The shell header shows "Applications"; this keeps the page's heading for screen readers */}
       <h1 className="sr-only">Applications</h1>
       {loading || (rows.length > 0 && !failed) ? body : <div className="p-4 sm:p-6">{body}</div>}
@@ -549,66 +611,62 @@ export default function ApplicationsView() {
           onClose={() => setOpenId(null)}
           actions={<Button size="sm" variant="secondary" icon="expand" label="Open full record" href={`/portal/candidates/${current.id}`} />}
         >
-          <div className="grid gap-6">
-            <div className="flex items-center gap-4">
-              <Avatar name={current.name || current.email} size="lg" />
-              <div className="min-w-0">
-                <h3 className="truncate text-adm-lg font-semibold">{current.name || current.email}</h3>
-                <p className="truncate text-adm-base text-mist-600">{current.jobTitle || "No position"}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <StageBadge stage={current.status} />
-              <StageProgress status={current.status} history={current.statusHistory} />
-              {!TERMINAL.has(current.status) && <span className="text-adm-base text-mist-600">{daysInStage(current)} days in stage</span>}
-              {current.addToTalentBench && <Badge tone="green">Bench</Badge>}
-            </div>
-            <StarInput value={current.rating || 0} onChange={(n) => void rate(current, n)} label={`Rating for ${current.name}`} />
-            <Select
-              label="Move to stage"
-              variant="field"
-              value={current.status}
-              onChange={(v) => void move(current, v as Stage)}
-              options={stageOptions.some((o) => o.value === current.status) ? stageOptions : [...stageOptions, { value: current.status, label: stageLabel(current.status) }]}
-            />
+          <div className="grid gap-5">
+            <PeekTitle name={current.name || current.email} subtitle={current.jobTitle || "No position"} />
             <KeyValue
               items={[
-                { k: "Email", v: <a className="break-all text-ocean-700 underline underline-offset-2" href={`mailto:${current.email}`}>{current.email}</a> },
-                { k: "Phone", v: current.phone || "—" },
-                { k: "Location", v: locationOf(current) || "—" },
-                { k: "Applied", v: fmtDate(current.appliedAt) },
-                { k: "Last activity", v: `${fmtDate(lastActivity(current).at)}, ${lastActivity(current).label === "Applied" ? "applied" : `moved to ${lastActivity(current).label}`}` },
-                { k: "Source", v: current.source || "—" },
-                { k: "Owner", v: current.ownershipName || <span className="font-medium text-status-danger">Unassigned</span> },
-                { k: "Work authorization", v: current.workAuthorization || "—" },
-                { k: "Hire type", v: hireTypeLabel(current.hireType) || "—" },
+                {
+                  k: "Stage",
+                  icon: "activity",
+                  v: (
+                    <>
+                      <InlineSelect
+                        value={current.status}
+                        label={`Stage for ${current.name || current.email}`}
+                        mark={stageState(current.status)}
+                        width="w-40"
+                        options={stageOptions.some((o) => o.value === current.status) ? stageOptions : [...stageOptions, { value: current.status, label: stageLabel(current.status) }]}
+                        onChange={(v) => void move(current, v as Stage)}
+                      />
+                      {!TERMINAL.has(current.status) && <span className="text-adm-xs text-mist-600">{daysInStage(current)} days in stage</span>}
+                    </>
+                  ),
+                },
+                { k: "Progress", icon: "trendUp", v: <StageProgress status={current.status} history={current.statusHistory} /> },
+                { k: "Rating", icon: "star", v: <StarInput value={current.rating || 0} onChange={(n) => void rate(current, n)} label={`Rating for ${current.name}`} /> },
+                { k: "Owner", icon: "userCheck", v: current.ownershipName || <span className="font-medium text-status-danger">Unassigned</span> },
+                { k: "Email", icon: "mail", v: <a className="break-all text-ocean-700 hover:underline" href={`mailto:${current.email}`}>{current.email}</a> },
+                { k: "Phone", icon: "phone", v: current.phone || "—" },
+                { k: "Location", icon: "map", v: locationOf(current) || "—" },
+                { k: "Applied", icon: "calendar", v: fmtDate(current.appliedAt) },
+                { k: "Last activity", icon: "clock", v: `${fmtDate(lastActivity(current).at)}, ${lastActivity(current).label === "Applied" ? "applied" : `moved to ${lastActivity(current).label}`}` },
+                { k: "Source", icon: "globe", v: current.source || "—" },
+                { k: "Work authorization", icon: "idBadge", v: current.workAuthorization || "—" },
+                { k: "Hire type", icon: "briefcase", v: hireTypeLabel(current.hireType) || "—" },
+                ...(current.addToTalentBench ? [{ k: "Talent bench", icon: "bench" as const, v: "On the bench" }] : []),
               ]}
             />
             {!!current.skills?.length && (
-              <section>
-                <h4 className="text-adm-base font-semibold">Skills</h4>
-                <div className="mt-2">
-                  <Tags items={current.skills} />
-                </div>
-              </section>
+              <PeekSection title="Skills">
+                <Tags items={current.skills} />
+              </PeekSection>
             )}
             {!!current.statusHistory?.length && (
-              <section>
-                <h4 className="text-adm-base font-semibold">Stage history</h4>
-                <ol className="mt-2 grid gap-1.5">
+              <PeekSection title="Stage history">
+                <ol className="grid gap-1.5">
                   {[...current.statusHistory].reverse().slice(0, 6).map((h, i) => (
                     <li key={i} className="flex items-center justify-between gap-3 text-adm-base">
                       <StageBadge stage={h.status} />
-                      <span className="truncate text-mist-600">
+                      <span className="truncate text-adm-xs text-mist-600">
                         {h.changedByName ? `${h.changedByName}, ` : ""}
                         {fmtDate(h.changedAt)}
                       </span>
                     </li>
                   ))}
                 </ol>
-              </section>
+              </PeekSection>
             )}
-            <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+            <PeekFooter>
               {nxt && (
                 <Button icon="chevronRight" className="flex-1" onClick={() => void move(current, nxt)}>
                   Move to {STAGE_LABEL[nxt]}
@@ -620,7 +678,7 @@ export default function ApplicationsView() {
                 </Button>
               )}
               <ActionMenu label="More actions" items={rowMenu(current, true)} />
-            </div>
+            </PeekFooter>
           </div>
         </Drawer>
       )}

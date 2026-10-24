@@ -4,6 +4,12 @@ export { sectionTone, type Section } from "./tone";
 export { Button, Spinner, type ButtonVariant } from "./Button";
 export { Page, PageHeader, Panel, KpiRow, InsightsRow, ListPage, ListPageState, PillButton } from "./layout";
 export { CrmListSkeleton } from "./skeletons";
+export { ClampText } from "./clamp-text";
+export {
+  ListHeader, HeaderSearch, LayoutSwitch, FilterMenu, DisplayMenu, AppliedFilters, MenuSelect, usePopover,
+  BTN_PRIMARY, BTN_SECONDARY, BTN_ICON, DENSITIES,
+  type FilterSection, type FilterOption, type AppliedChip, type Density, type Crumb,
+} from "./list-chrome";
 export { Modal, ConfirmDialog, Drawer, useDialog, deleteConfirmText } from "./overlay";
 export { InsightsSheet, useInSheet } from "./insights";
 export { EmptyState, ErrorState, NoAccess } from "./states";
@@ -21,4 +27,4 @@ export {
   FormSkeleton,
 } from "./skeletons";
 export { NavProgressProvider, NavProgressBar, useNavProgress, usePortalRouter } from "./NavProgress";
-export { StatCard, Segmented, Badge, StatusBadge, statusTone, Avatar, ProgressBar, KeyValue, BarList, type Tone } from "../ui";
+export { StatCard, Segmented, Badge, StatusBadge, statusTone, Avatar, ProgressBar, KeyValue, BarList, PeekTitle, PeekFooter, PeekSection, type Tone } from "../ui";

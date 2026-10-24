@@ -7,7 +7,7 @@ import Icon, { type IconName } from "../icons";
    forms: 13px labels, 40px controls on a mist ring, 12px help and error lines. */
 
 export const inputCls =
-  "block h-10 w-full rounded-lg bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-[var(--color-border-control)] transition-shadow placeholder:text-placeholder hover:ring-mist-600 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:cursor-not-allowed disabled:bg-mist-50 disabled:text-mist-600 aria-[invalid=true]:ring-coral-600";
+  "block h-10 w-full rounded-md bg-mist-0 px-3 text-adm-base text-navy-900 ring-1 ring-inset ring-[var(--color-border-control)] transition-shadow placeholder:text-placeholder hover:ring-mist-600 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:cursor-not-allowed disabled:bg-mist-50 disabled:text-mist-600 aria-[invalid=true]:ring-coral-600";
 
 export const textareaCls = inputCls.replace("h-10", "min-h-24 py-2.5 leading-normal resize-y");
 
@@ -318,14 +318,14 @@ export function FormSection({
     </>
   );
   return (
-    <section id={id} className="min-w-0 scroll-mt-24 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+    <section id={id} className="min-w-0 scroll-mt-24 rounded-lg bg-mist-0 ring-1 ring-mist-200">
       {collapsible ? (
         <button
           type="button"
           aria-expanded={open}
           aria-controls={bodyId}
           onClick={() => setOpen((v) => !v)}
-          className={`flex min-h-14 w-full items-center gap-3 rounded-xl px-5 py-3 text-left hover:bg-mist-50 ${open ? "rounded-b-none border-b border-mist-200" : ""}`}
+          className={`flex min-h-14 w-full items-center gap-3 rounded-lg px-5 py-3 text-left hover:bg-mist-50 ${open ? "rounded-b-none border-b border-mist-200" : ""}`}
         >
           {head}
           <Icon name="chevronDown" className={`size-5 shrink-0 text-mist-500 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
@@ -363,7 +363,7 @@ export function SectionBadge({ tone = "grey", children }: { tone?: "grey" | "red
 export function StickyActions({ status, children }: { status?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="sticky bottom-0 z-20 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-2">
-      <div className="flex flex-col gap-3 rounded-xl bg-mist-0 px-4 py-3 ring-1 ring-mist-200 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="flex flex-col gap-3 rounded-lg bg-mist-0 px-4 py-3 ring-1 ring-mist-200 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="min-w-0 text-adm-base text-mist-600">{status}</div>
         <div className="flex flex-wrap items-center gap-2 max-sm:[&>*]:flex-1">{children}</div>
       </div>

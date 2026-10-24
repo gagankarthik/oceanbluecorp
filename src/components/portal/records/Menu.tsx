@@ -44,7 +44,7 @@ export function ActionMenu({
             aria-label={label}
             title={label}
             onClick={(e) => e.stopPropagation()}
-            className="grid size-10 shrink-0 place-items-center rounded-lg bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50 data-[state=open]:bg-mist-100"
+            className="kit-btn kit-btn-icon grid size-10 shrink-0 place-items-center rounded-lg bg-mist-0 text-navy-900 ring-1 ring-inset ring-mist-300 hover:bg-mist-50 data-[state=open]:bg-mist-100"
           >
             <Icon name="dots" className="size-5" />
           </button>
@@ -59,7 +59,7 @@ export function ActionMenu({
           triggerRef.current?.focus();
           flush();
         }}
-        className={`${width} max-w-[calc(100vw-2rem)] rounded-xl border-0 bg-mist-0 p-1.5 shadow-xl ring-1 ring-mist-200`}>
+        className={`kit-pop ${width} max-w-[calc(100vw-2rem)] rounded-lg border border-mist-200 bg-mist-0 p-1 shadow-[0_12px_32px_rgba(15,23,42,0.12)]`}>
         {items.map((it, i) =>
           it.kind === "separator" ? (
             <DropdownMenuSeparator key={i} className="my-1 bg-mist-200" />
@@ -75,7 +75,7 @@ export function ActionMenu({
                 pending.current = it.onSelect;
                 window.setTimeout(flush, 150); // fallback if the close event never comes
               }}
-              className={`flex min-h-10 cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 text-adm-base focus:bg-mist-100 data-[disabled]:cursor-default data-[disabled]:opacity-60 ${
+              className={`flex min-h-8 cursor-pointer items-start gap-2.5 rounded-md px-2 py-1.5 text-adm-base focus:bg-mist-100 data-[disabled]:cursor-default data-[disabled]:opacity-60 ${
                 it.danger ? "text-status-danger focus:bg-status-danger-soft focus:text-status-danger" : "text-navy-900"
               }`}
             >

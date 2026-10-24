@@ -45,7 +45,7 @@ export default function JobReview({
           </ul>
         </div>
       )}
-      <div className="overflow-hidden rounded-xl ring-1 ring-mist-200">
+      <div className="overflow-hidden rounded-lg ring-1 ring-mist-200">
         <div className="flex h-9 items-center gap-2 border-b border-mist-200 bg-mist-50 px-3 text-adm-xs text-mist-600">
           <Icon name="lock" className="size-3.5 shrink-0" />
           <span className="truncate">oceanbluecorp.com/jobs/{jobId ?? "new-role"}</span>

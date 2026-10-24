@@ -5,12 +5,13 @@ import type { Application, BenchType } from "@/lib/aws/dynamodb";
 import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { useSession } from "@/components/portal/session";
 import { useToast } from "@/components/portal/toast";
-import { InlineSelect, StageBadge, StarInput, Tags, stageDot } from "@/components/portal/recruiting/bits";
+import { InlineSelect, StageBadge, StarInput, Tags } from "@/components/portal/recruiting/bits";
+import { stageState } from "@/components/portal/recruiting/model";
 import { BENCH_STAGES, STAGE_LABEL, permissionsFor, stageLabel, type Stage } from "@/components/portal/recruiting/model";
 import { STATE_NAME, hireTypeLabel, stateOf } from "@/components/portal/console/theme";
 import {
-  Avatar, Badge, Button, EmptyState, ErrorState, KeyValue, ListPage, ListPageState, PillButton, Segmented, usePortalRouter,
-  CrmListSkeleton,
+  Avatar, Badge, Button, PeekTitle, PeekFooter, PeekSection, EmptyState, ErrorState, KeyValue, ListPage, ListPageState, PillButton, usePortalRouter,
+  CrmListSkeleton, ClampText
 } from "@/components/portal/kit";
 import { ActionMenu, type MenuEntry } from "@/components/portal/records/Menu";
 import { useAuth } from "@/lib/auth";
@@ -211,7 +212,7 @@ export default function TalentBenchView() {
         <InlineSelect
           value={a.status}
           label={`Stage for ${a.name || a.email}`}
-          dot={stageDot(a.status)}
+          mark={stageState(a.status)}
           options={benchOptions.some((o) => o.value === a.status) ? benchOptions : [...benchOptions, { value: a.status, label: stageLabel(a.status) }]}
           onChange={(v) => void setField(a, "status", v as Stage, "Couldn't change the stage. Try again.")}
         />
@@ -262,48 +263,38 @@ export default function TalentBenchView() {
   const detail = (a: Row) => {
     const d = daysOnBench(a);
     return (
-      <div className="grid gap-6">
-        <div className="flex items-center gap-4">
-          <Avatar name={a.name || a.email} size="lg" />
-          <div className="min-w-0">
-            <h3 className="truncate text-adm-lg font-semibold">{a.name || "Unknown"}</h3>
-            <p className="truncate text-adm-base text-mist-600">{a.jobTitle || "No position on file"}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StageBadge stage={a.status} />
-          <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge>
-          {d !== null && <span className={`text-adm-base ${d >= IDLE_DAYS ? "font-medium text-status-warning" : "text-mist-600"}`}>{d} days on the bench</span>}
-        </div>
+      <div className="grid gap-5">
+        <PeekTitle name={a.name || a.email} subtitle={a.jobTitle || "No position on file"} />
         <KeyValue
           items={[
-            { k: "Email", v: <a className="break-all text-ocean-700 underline underline-offset-2" href={`mailto:${a.email}`}>{a.email}</a> },
-            { k: "Phone", v: a.phone || "—" },
-            { k: "Location", v: locationOf(a) || "—" },
-            { k: "Work authorization", v: a.workAuthorization || "—" },
-            { k: "Hire type", v: hireTypeLabel(a.hireType) || "—" },
-            { k: "Rating", v: <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
-            { k: "Added by", v: a.adderRole ? `${a.adder} (${a.adderRole})` : a.adder },
-            { k: "Added", v: fmtDate(a.createdAt || a.appliedAt) },
-            { k: "ID", v: a.applicationId || a.id.slice(0, 8) },
+            { k: "Stage", icon: "activity", v: <StageBadge stage={a.status} /> },
+            { k: "Pool", icon: "layers", v: <Badge tone={poolOf(a) === "internal" ? "blue" : "grey"}>{POOL_META[poolOf(a)].label}</Badge> },
+            ...(d !== null ? [{ k: "On the bench", icon: "clock" as const, v: <span className={d >= IDLE_DAYS ? "font-medium text-status-warning" : ""}>{d} days</span> }] : []),
+            { k: "Rating", icon: "star", v: <StarInput value={a.rating || 0} onChange={(n) => rate(a, n)} label={`Rating for ${a.name}`} /> },
+            { k: "Email", icon: "mail", v: <a className="break-all text-ocean-700 hover:underline" href={`mailto:${a.email}`}>{a.email}</a> },
+            { k: "Phone", icon: "phone", v: a.phone || "—" },
+            { k: "Location", icon: "map", v: locationOf(a) || "—" },
+            { k: "Work authorization", icon: "idBadge", v: a.workAuthorization || "—" },
+            { k: "Hire type", icon: "briefcase", v: hireTypeLabel(a.hireType) || "—" },
+            { k: "Added by", icon: "userCheck", v: a.adderRole ? `${a.adder} (${a.adderRole})` : a.adder },
+            { k: "Added", icon: "calendar", v: fmtDate(a.createdAt || a.appliedAt) },
+            { k: "ID", icon: "tag", v: a.applicationId || a.id.slice(0, 8) },
           ]}
         />
         {!!a.skills?.length && (
-          <section>
-            <h4 className="text-adm-base font-semibold">Skills</h4>
-            <div className="mt-2">
-              <Tags items={a.skills} />
-            </div>
-          </section>
+          <PeekSection title="Skills">
+            <Tags items={a.skills} />
+          </PeekSection>
         )}
         {a.notes && (
-          <section>
-            <h4 className="text-adm-base font-semibold">Notes</h4>
-            <p className="mt-2 whitespace-pre-line rounded-lg bg-mist-50 p-3 text-adm-base">{a.notes}</p>
-          </section>
+          <PeekSection title="Notes">
+            <ClampText maxHeight="6rem">
+              <p className="whitespace-pre-line rounded-md bg-mist-50 p-3 text-adm-base">{a.notes}</p>
+            </ClampText>
+          </PeekSection>
         )}
         {/* One primary, one secondary, the rest in the overflow */}
-        <div className="flex items-center gap-2 border-t border-mist-200 pt-5">
+        <PeekFooter>
           {a.email && (
             <Button icon="mail" className="flex-1" href={`mailto:${a.email}`}>
               Email
@@ -323,7 +314,7 @@ export default function TalentBenchView() {
               { label: "Remove from bench", icon: "x", danger: true, onSelect: () => void removeFromBench(a) },
             ]}
           />
-        </div>
+        </PeekFooter>
       </div>
     );
   };
@@ -385,7 +376,7 @@ export default function TalentBenchView() {
       rows.length === 0 ? (
         empty
       ) : (
-        <div className="min-w-0 rounded-xl bg-mist-0 ring-1 ring-mist-200">
+        <div className="min-w-0 rounded-lg bg-mist-0 ring-1 ring-mist-200">
           <div className="border-b border-mist-200 px-2 sm:px-4">{poolTabs}</div>
           {empty}
         </div>
@@ -406,17 +397,16 @@ export default function TalentBenchView() {
         initialFilters={table.filters}
         onStateChange={setTable}
         storageKey="bench"
+        layouts={{
+          value: layout,
+          onChange: (v) => setLayout(v as typeof layout),
+          options: [
+            { value: "table", label: "Table", icon: "table" },
+            { value: "cards", label: "Cards", icon: "dashboard" },
+          ],
+        }}
         toolbar={
           <>
-            <Segmented
-              label="Layout"
-              value={layout}
-              onChange={setLayout}
-              options={[
-                { value: "cards", label: "Cards", icon: "dashboard" },
-                { value: "table", label: "Table", icon: "menu" },
-              ]}
-            />
             <PillButton icon="sparkle" href={`/portal/lead-sourcing?from=${pool}`}>Lead sourcing</PillButton>
             <PillButton variant="primary" icon="plus" href="/portal/applications/new?bench=1">Add profile</PillButton>
           </>
@@ -473,7 +463,7 @@ function BenchCards({
       {rows.map((a) => {
         const age = daysOnBench(a);
         return (
-          <li key={a.id} className="flex min-w-0 flex-col rounded-xl bg-mist-0 p-5 ring-1 ring-mist-200 transition-shadow duration-150 hover:shadow-md">
+          <li key={a.id} className="flex min-w-0 flex-col rounded-lg bg-mist-0 p-5 ring-1 ring-mist-200 transition-shadow duration-150 hover:shadow-md">
             <div className="flex items-start gap-3">
               <Avatar name={a.name || a.email} />
               <div className="min-w-0 flex-1">

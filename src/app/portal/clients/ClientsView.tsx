@@ -11,7 +11,7 @@ import { useJobSummaries } from "@/hooks/use-console-data";
 import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { Avatar, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, ListPage, ListPageState, Modal, PillButton, CrmListSkeleton } from "@/components/portal/kit";
+import { Avatar, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, ListPage, ListPageState, Modal, PillButton, CrmListSkeleton, PeekFooter } from "@/components/portal/kit";
 import Select from "@/components/portal/Select";
 import Icon from "@/components/portal/icons";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, LinkedRoles, errorText, inputCls, send, useDiscardGuard, useToast } from "@/components/portal/relationships/shared";
@@ -225,7 +225,7 @@ function ClientDetail({ c, jobs, jobsLoading, jobsError, onDelete }: { c: Client
         <LinkedRoles jobs={jobs} loading={jobsLoading} error={jobsError} />
       </section>
 
-      <div className="border-t border-mist-200 pt-5">
+      <PeekFooter>
         <InlineDelete
           label="Delete client"
           warning="The client record is removed permanently. Roles that name it keep their copy of the name. This cannot be undone."
@@ -235,7 +235,7 @@ function ClientDetail({ c, jobs, jobsLoading, jobsError, onDelete }: { c: Client
             void onDelete().finally(() => setDeleting(false));
           }}
         />
-      </div>
+      </PeekFooter>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 // AI matches for a job: the saved ranking of the resume bank and talent bench,
 // loaded on open and re-run on demand. Renders inside the job's tab panel.
+import { usePolling } from "@/hooks/use-polling";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { fmtDate, fmtDateTime } from "@/lib/format";
@@ -31,11 +32,11 @@ const POLL_MS = 4000;
 
 /** The name's ::after stretches over the whole card, so the card is one target. */
 const STRETCHED =
-  "truncate rounded after:absolute after:inset-0 after:rounded-xl after:content-[''] hover:text-ocean-700 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ocean-600";
+  "truncate rounded after:absolute after:inset-0 after:rounded-lg after:content-[''] hover:text-ocean-700 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ocean-600";
 
 function MatchSkeleton() {
   return (
-    <div className="grid gap-3 rounded-xl p-4 ring-1 ring-mist-200">
+    <div className="grid gap-3 rounded-lg p-4 ring-1 ring-mist-200">
       <div className="flex items-start justify-between gap-4">
         <div className="grid gap-2">
           <Skeleton className="h-4 w-40" />
@@ -105,9 +106,9 @@ export function BestCandidates({ jobId }: { jobId: string }) {
     };
   }, [jobId, loadAttempt, apply]);
 
-  useEffect(() => {
-    if (!runningElsewhere) return;
-    const timer = setInterval(() => {
+  // Paused while the tab is hidden; gives up after ten minutes so a stuck ranking cannot poll forever
+  usePolling(
+    () => {
       fetch(`/api/jobs/${jobId}/match-candidates`)
         .then((r) => (r.ok ? r.json() : null))
         .then((d: RankingResponse | null) => {
@@ -116,9 +117,11 @@ export function BestCandidates({ jobId }: { jobId: string }) {
           if (!d.running && d.lastError) setError(d.lastError);
         })
         .catch(() => {});
-    }, POLL_MS);
-    return () => clearInterval(timer);
-  }, [runningElsewhere, jobId, apply]);
+    },
+    POLL_MS,
+    runningElsewhere,
+    10 * 60_000,
+  );
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -219,7 +222,7 @@ export function BestCandidates({ jobId }: { jobId: string }) {
             return (
               <li
                 key={c.resume_id}
-                className={`relative min-w-0 rounded-xl bg-mist-0 p-4 ring-1 ring-mist-200 transition-shadow ${opens ? "hover:shadow-md hover:ring-mist-300" : ""}`}
+                className={`relative min-w-0 rounded-lg bg-mist-0 p-4 ring-1 ring-mist-200 transition-shadow ${opens ? "hover:shadow-md hover:ring-mist-300" : ""}`}
               >
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 w-5 shrink-0 text-right text-adm-xs font-medium tabular-nums text-mist-600">{i + 1}</span>

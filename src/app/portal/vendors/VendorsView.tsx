@@ -10,7 +10,7 @@ import { useJobSummaries, useUserDirectory } from "@/hooks/use-console-data";
 import DataTable, { TableTabs, type Column, type Filter, type Summary } from "@/components/portal/DataTable";
 import { RoleGate } from "@/components/portal/session";
 import type { MenuEntry } from "@/components/portal/records/Menu";
-import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, ListPage, ListPageState, Modal, PillButton, CrmListSkeleton } from "@/components/portal/kit";
+import { Avatar, Badge, Button, ConfirmDialog, deleteConfirmText, EmptyState, ErrorState, ListPage, ListPageState, Modal, PillButton, CrmListSkeleton, PeekFooter } from "@/components/portal/kit";
 import Select from "@/components/portal/Select";
 import { Facts, Field, FormError, GoneNotice, InlineDelete, LinkedRoles, errorText, inputCls, send, useDiscardGuard, useToast } from "@/components/portal/relationships/shared";
 import { FieldShell, RecordHead, RecordStats, RoleCount, StateField, stateName, stateOf } from "@/components/portal/relationships/register";
@@ -200,7 +200,7 @@ function VendorDetail({ v, jobs, jobsLoading, jobsError, onDelete }: { v: Vendor
         <LinkedRoles jobs={jobs} loading={jobsLoading} error={jobsError} />
       </section>
 
-      <div className="border-t border-mist-200 pt-5">
+      <PeekFooter>
         <InlineDelete
           label="Delete vendor"
           warning="The vendor record is removed permanently. Roles that name it keep their copy of the name. This cannot be undone."
@@ -210,7 +210,7 @@ function VendorDetail({ v, jobs, jobsLoading, jobsError, onDelete }: { v: Vendor
             void onDelete().finally(() => setDeleting(false));
           }}
         />
-      </div>
+      </PeekFooter>
     </div>
   );
 }

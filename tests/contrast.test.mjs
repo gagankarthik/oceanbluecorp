@@ -221,14 +221,15 @@ describe("record and page headers", () => {
      that no white-on-fill text survives in the header components. */
   const ws = readFileSync("src/components/portal/console/workspace.tsx", "utf8");
   const slice = (from, to) => ws.slice(ws.indexOf(from), ws.indexOf(to, ws.indexOf(from)));
-  const header = slice("export function BackLink", "export function RecordFact");
+  // RecordHeader was retired for the kit PageHeader; the console's BackLink is what remains here
+  const header = slice("export function BackLink", "export function FormActionBar");
 
   test("the header components were found", () => {
-    assert.ok(header.includes("export function RecordHeader"), "RecordHeader not found");
+    assert.ok(header.includes("export function BackLink"), "BackLink not found");
   });
 
   test("no white text on a fill in the headers", () => {
-    for (const [name, src] of [["RecordHeader/BackLink", header]]) {
+    for (const [name, src] of [["BackLink", header]]) {
       assert.doesNotMatch(src, /text-white/, `${name} still sets white text`);
     }
   });

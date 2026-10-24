@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useMemo, useContext, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { landingRouteFor } from "@/lib/auth/config";
 import { canAccess, navItems, type PortalUser, type Role } from "@/lib/portal/roles";
@@ -51,7 +51,30 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     void authSignOut().finally(() => router.replace("/auth/sign-in"));
   }, [authSignOut, router]);
 
-  if (auth.isLoading || !auth.user || !realRole) {
+  // Stable between renders (the provider re-renders on every navigation), so consumers that
+  // depend on `user` or the context do not re-run for nothing
+  const authUser = auth.user;
+  const user = useMemo<PortalUser | null>(
+    () =>
+      authUser && realRole
+        ? {
+            id: authUser.id,
+            name: authUser.name || authUser.email,
+            email: authUser.email,
+            role: realRole,
+            title: realRole === "marketing" ? "Media" : realRole[0].toUpperCase() + realRole.slice(1),
+            status: "Active",
+            lastActive: "Just now",
+          }
+        : null,
+    [authUser, realRole],
+  );
+  const value = useMemo(
+    () => (user && realRole ? { user, role: preview ?? realRole, realRole, setRole, signOut } : null),
+    [user, preview, realRole, setRole, signOut],
+  );
+
+  if (auth.isLoading || !value) {
     return (
       <div className="grid min-h-svh place-items-center bg-mist-50">
         <div className="flex items-center gap-3 text-adm-base text-mist-600">
@@ -62,18 +85,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const user: PortalUser = {
-    id: auth.user.id,
-    name: auth.user.name || auth.user.email,
-    email: auth.user.email,
-    role: realRole,
-    title: realRole === "marketing" ? "Media" : realRole[0].toUpperCase() + realRole.slice(1),
-    status: "Active",
-    lastActive: "Just now",
-  };
-  return (
-    <SessionContext.Provider value={{ user, role: preview ?? realRole, realRole, setRole, signOut }}>{children}</SessionContext.Provider>
-  );
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
 export function useSession() {

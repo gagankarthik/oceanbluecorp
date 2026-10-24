@@ -1,6 +1,7 @@
 import Icon, { type IconName } from "./icons";
 import { Sparkline } from "./charts";
 import { sectionTone, type Section } from "./kit/tone";
+import { STATE_PILL, StateIcon, statusState, type StateMark } from "./kit/state-icon";
 
 // Layout, states and Button live in ./kit; re-exported so existing imports keep working.
 export { sectionTone, type Section } from "./kit/tone";
@@ -27,7 +28,7 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex w-fit max-w-full shrink-0 justify-self-start scroll-strip rounded-lg bg-mist-100 p-1">
+    <div role="radiogroup" aria-label={label} className="inline-flex w-fit max-w-full shrink-0 justify-self-start scroll-strip rounded-md bg-mist-100 p-0.5">
       {options.map((o) => (
         <button
           key={o.value}
@@ -35,9 +36,9 @@ export function Segmented<T extends string>({
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors duration-150 ${
-            size === "sm" ? "px-2.5 py-1 text-adm-xs" : "min-h-9 px-3 py-1.5 text-adm-base"
-          } ${value === o.value ? "bg-mist-0 text-navy-900 shadow-sm" : "text-mist-600 hover:text-navy-900"}`}
+          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded font-medium transition-colors duration-150 ${
+            size === "sm" ? "h-7 px-2.5 text-adm-xs" : "h-8 px-3 text-adm-base"
+          } ${value === o.value ? "bg-mist-0 text-navy-900 shadow-[0_1px_2px_rgba(15,23,42,0.08)]" : "text-mist-600 hover:text-navy-900"}`}
         >
           {o.icon && <Icon name={o.icon} className="size-4" />}
           {o.label}
@@ -61,7 +62,7 @@ export type StatDelta = {
   goodWhen?: "up" | "down";
 };
 
-function DeltaPill({ value, goodWhen = "up" }: StatDelta) {
+export function DeltaPill({ value, goodWhen = "up" }: StatDelta) {
   if (value === null) return <span className="shrink-0 rounded-md bg-mist-100 px-1.5 py-0.5 text-adm-xs font-medium text-mist-700">No data</span>;
   const dir = value > 0 ? "up" : value < 0 ? "down" : "flat";
   const tone = dir === "flat" ? "bg-mist-100 text-mist-700" : dir === goodWhen ? "bg-kelp-50 text-kelp-800" : "bg-coral-50 text-coral-700";
@@ -134,47 +135,61 @@ type StageTone = "stage-new" | "stage-screening" | "stage-submitted" | "stage-in
 /** `violet` is kept for older call sites; it draws as a deep ocean step, not an off-brand hue. */
 export type Tone = "blue" | "green" | "amber" | "red" | "grey" | "navy" | "cyan" | "violet" | StageTone;
 
-// Spelled out: Tailwind only sees whole class names.
-const toneStyles: Record<Tone, string> = {
-  blue: "bg-ocean-50 text-ocean-700 ring-ocean-200",
-  green: "bg-kelp-50 text-kelp-800 ring-kelp-200",
-  amber: "bg-buoy-50 text-buoy-700 ring-buoy-200",
-  red: "bg-coral-50 text-coral-700 ring-coral-200",
-  grey: "bg-mist-100 text-mist-700 ring-mist-300",
-  navy: "bg-contrast text-on-contrast ring-contrast",
-  cyan: "bg-cyan-100 text-navy-900 ring-cyan-200",
-  violet: "bg-ocean-100 text-ocean-800 ring-ocean-200",
-  "stage-new": "bg-stage-new-badge-bg text-stage-new-badge-ink ring-stage-new-badge-rim",
-  "stage-screening": "bg-stage-screening-badge-bg text-stage-screening-badge-ink ring-stage-screening-badge-rim",
-  "stage-submitted": "bg-stage-submitted-badge-bg text-stage-submitted-badge-ink ring-stage-submitted-badge-rim",
-  "stage-interview": "bg-stage-interview-badge-bg text-stage-interview-badge-ink ring-stage-interview-badge-rim",
-  "stage-offered": "bg-stage-offered-badge-bg text-stage-offered-badge-ink ring-stage-offered-badge-rim",
-  "stage-hired": "bg-stage-hired-badge-bg text-stage-hired-badge-ink ring-stage-hired-badge-rim",
-  "stage-rejected": "bg-stage-rejected-badge-bg text-stage-rejected-badge-ink ring-stage-rejected-badge-rim",
+// Plane's labels: a neutral bordered pill, the colour carried by a dot or icon. Spelled out:
+// Tailwind only sees whole class names.
+const toneMark: Record<Exclude<Tone, StageTone>, string> = {
+  blue: "text-ocean-600",
+  green: "text-kelp-700",
+  amber: "text-buoy-600",
+  red: "text-coral-600",
+  grey: "text-mist-500",
+  navy: "text-navy-900",
+  cyan: "text-cyan-600",
+  violet: "text-ocean-800",
 };
 
-/** Stage badges always carry their icon: the stage is never told by hue alone. */
-const STAGE_ICON: Record<StageTone, IconName> = {
-  "stage-new": "clock",
-  "stage-screening": "eye",
-  "stage-submitted": "send",
-  "stage-interview": "calendar",
-  "stage-offered": "mail",
-  "stage-hired": "check",
-  "stage-rejected": "x",
+const STAGE_MARK: Record<StageTone, StateMark> = {
+  "stage-new": { group: "backlog" },
+  "stage-screening": { group: "started", progress: 0.25 },
+  "stage-submitted": { group: "started", progress: 0.5 },
+  "stage-interview": { group: "started", progress: 0.7 },
+  "stage-offered": { group: "started", progress: 0.9 },
+  "stage-hired": { group: "completed" },
+  "stage-rejected": { group: "cancelled" },
 };
 
-export function Badge({ children, tone = "grey", dot = false, icon: iconProp }: { children: React.ReactNode; tone?: Tone; dot?: boolean; icon?: IconName }) {
-  const icon = iconProp ?? STAGE_ICON[tone as StageTone];
+export function Badge({
+  children,
+  tone = "grey",
+  dot = false,
+  icon,
+  mark,
+}: {
+  children: React.ReactNode;
+  tone?: Tone;
+  /** Accepted for existing call sites: every label pill carries its dot */
+  dot?: boolean;
+  icon?: IconName;
+  /** A state icon instead of the dot (stages, statuses) */
+  mark?: StateMark;
+}) {
+  void dot;
+  const state = mark ?? STAGE_MARK[tone as StageTone];
   return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-0.5 text-adm-xs font-medium ring-1 ring-inset ${toneStyles[tone]}`}>
-      {icon ? <Icon name={icon} className="size-3.5 shrink-0" /> : dot && <span className="size-1.5 rounded-full bg-current" />}
-      {children}
+    <span className={STATE_PILL}>
+      {state ? (
+        <StateIcon {...state} />
+      ) : icon ? (
+        <Icon name={icon} className={`size-3.5 shrink-0 ${toneMark[tone as Exclude<Tone, StageTone>]}`} />
+      ) : (
+        <span aria-hidden className={`size-2 shrink-0 rounded-full bg-current ${toneMark[tone as Exclude<Tone, StageTone>]}`} />
+      )}
+      <span className="truncate">{children}</span>
     </span>
   );
 }
 
-/** Maps common status words to a tone so every page colours them the same way */
+/** Maps common status words to a tone, for callers that colour something other than a badge */
 export function statusTone(status: string): Tone {
   const s = status.toLowerCase();
   // Deliberate pauses and unstarted work are neutral, never green or red.
@@ -189,16 +204,9 @@ export function statusTone(status: string): Tone {
   return "grey";
 }
 
-const TONE_ICON: Partial<Record<Tone, IconName>> = { green: "check", red: "x", amber: "timer" };
-
-/** Status word on its tone; semantic tones carry an icon so the state is not hue alone. */
+/** Status word with its Plane state icon: the group reads before the word does. */
 export function StatusBadge({ status }: { status: string }) {
-  const tone = statusTone(status);
-  return (
-    <Badge tone={tone} dot icon={TONE_ICON[tone]}>
-      {status}
-    </Badge>
-  );
+  return <Badge mark={statusState(status)}>{status}</Badge>;
 }
 
 const avatarTones = ["bg-ocean-100 text-ocean-800", "bg-tide-200 text-tide-800", "bg-mist-200 text-mist-700", "bg-ocean-50 text-ocean-700", "bg-mist-100 text-navy-900", "bg-cyan-100 text-cyan-700"];
@@ -229,16 +237,55 @@ export function ProgressBar({ value, tone = "blue" }: { value: number; tone?: "b
   );
 }
 
-export function KeyValue({ items }: { items: { k: string; v: React.ReactNode }[] }) {
+/** Plane's property list: an icon and muted label, the value beside it, one 32px row each. */
+export function KeyValue({
+  items,
+  narrow = false,
+}: {
+  items: { k: string; v: React.ReactNode; icon?: IconName }[];
+  /** A properties rail: a tighter label column so values keep one line */
+  narrow?: boolean;
+}) {
   return (
-    <dl className="grid gap-3 sm:grid-cols-2">
+    <dl className="grid">
       {items.map((i) => (
-        <div key={i.k}>
-          <dt className="text-adm-xs font-medium text-mist-600">{i.k}</dt>
-          <dd className="mt-0.5 text-adm-base text-navy-900">{i.v}</dd>
+        <div key={i.k} className={`grid items-start gap-3 ${narrow ? "grid-cols-[7.5rem_minmax(0,1fr)]" : "grid-cols-[8.5rem_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)]"}`}>
+          <dt className="flex min-h-8 min-w-0 items-center gap-2 text-adm-base text-mist-600">
+            {i.icon && <Icon name={i.icon} className="size-4 shrink-0 text-mist-500" />}
+            <span className="truncate">{i.k}</span>
+          </dt>
+          <dd className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-2 py-1 text-adm-base text-navy-900 [overflow-wrap:anywhere]">{i.v}</dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+/** A side sheet's title block: who or what the record is, and one line under it. */
+export function PeekTitle({ name, subtitle }: { name: string; subtitle?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar name={name} size="lg" />
+      <div className="min-w-0">
+        <h3 className="truncate text-adm-lg font-semibold leading-tight text-navy-900">{name}</h3>
+        {subtitle && <p className="mt-0.5 truncate text-adm-base text-mist-600">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** A side sheet's actions, pinned to its bottom edge while the record scrolls. */
+export function PeekFooter({ children }: { children: React.ReactNode }) {
+  return <div className="sticky -bottom-5 z-[1] -mx-5 -mb-5 flex flex-wrap items-center gap-2 border-t border-mist-200 bg-mist-0 px-5 py-3 sm:-mx-8 sm:px-8">{children}</div>;
+}
+
+/** A titled block inside a side sheet (Skills, Stage history). */
+export function PeekSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="grid gap-2 border-t border-mist-100 pt-5">
+      <h4 className="text-adm-base font-semibold text-navy-900">{title}</h4>
+      {children}
+    </section>
   );
 }
 

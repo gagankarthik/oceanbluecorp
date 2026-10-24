@@ -61,3 +61,10 @@ export function titleFor(path: string): string {
   const key = longest(path, Object.keys(TITLES));
   return key ? TITLES[key] : navItemFor(path)?.label ?? "Portal";
 }
+
+/** Scroll the page to its top: the portal's <main> scrolls, not the window. */
+export function scrollPageTop(smooth = false) {
+  const main = document.getElementById("portal-main");
+  if (main) main.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+  else window.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+}

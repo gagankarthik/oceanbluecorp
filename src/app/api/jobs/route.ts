@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
 
     // Anonymous callers only ever see live postings, so query those instead of
     // scanning, whatever ?status they send (it used to force the full query).
+    // Staff lists also need applicant counts, which don't depend on the jobs read: both start at once
+    const countsPromise = isStaff || isEditor ? getApplicationCountsByJob() : null;
     const result = !isStaff && !isEditor
       ? await getPublicJobs()
       : await getAllJobs(status || undefined);
@@ -70,8 +72,8 @@ export async function GET(request: NextRequest) {
     // Anonymous visitors keep the old rule exactly.
     // Signed-in lists count applicants from the applications table; anonymous
     // callers keep the stored figure and skip the extra read.
-    const counted = isStaff || isEditor
-      ? await getApplicationCountsByJob().then((counts) =>
+    const counted = countsPromise
+      ? await countsPromise.then((counts) =>
           // The stage split is recruiting data: staff only. toPublicJob drops it for media.
           jobs.map((j) => ({
             ...j,

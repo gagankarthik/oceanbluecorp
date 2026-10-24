@@ -6,7 +6,7 @@ import { downloadCsv } from "@/lib/csv";
 import DataTable, { TableTabs, type Column, type Summary } from "@/components/portal/DataTable";
 import Icon, { type IconName } from "@/components/portal/icons";
 import { Badge, KeyValue } from "@/components/portal/ui";
-import { Button, EmptyState, ErrorState, ListPage, ListPageState, PillButton, usePortalRouter } from "@/components/portal/kit";
+import { Button, EmptyState, ErrorState, ListPage, ListPageState, PillButton, usePortalRouter, PeekFooter, ClampText } from "@/components/portal/kit";
 import { CrmListSkeleton } from "@/components/portal/kit/skeletons";
 import type { MenuEntry } from "@/components/portal/records/Menu";
 import { useSession } from "@/components/portal/session";
@@ -281,7 +281,8 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
     ).filter((s) => s.status !== a.status && !(s.status === "published" && isLive(a)));
 
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-5">
+        <h3 className="break-words text-adm-lg font-semibold leading-tight text-navy-900">{a.title}</h3>
         {a.heroImageUrl && <img src={a.heroImageUrl} alt={a.heroImageAlt || ""} className="aspect-[16/9] w-full rounded-lg object-cover" />}
         <div className="flex flex-wrap items-center gap-2">
           <ArticleStatusBadge article={a} />
@@ -292,7 +293,11 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
           ))}
         </div>
         {a.subtitle && <p className="text-adm-base font-medium text-navy-900">{a.subtitle}</p>}
-        {a.excerpt && <p className="text-adm-base text-mist-700">{a.excerpt}</p>}
+        {a.excerpt && (
+          <ClampText maxHeight="6rem">
+            <p className="text-adm-base text-mist-700">{a.excerpt}</p>
+          </ClampText>
+        )}
 
         <KeyValue
           items={[
@@ -353,8 +358,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
         )}
 
         {editable && (
-          <div className="grid gap-3 border-t border-mist-200 pt-5">
-            <p className="text-adm-xs font-medium text-mist-600">Status</p>
+          <PeekFooter>
             <div className="flex flex-wrap gap-2">
               {next.map((s) => (
                 <Button key={s.status} size="sm" variant="secondary" icon={s.icon} disabled={busy} onClick={() => apply([a.id], { status: s.status }, `set to ${articleStatusLabel(s.status).toLowerCase()}`)}>
@@ -371,7 +375,7 @@ export default function ArticleWorkspace({ kind }: { kind: ArticleKind }) {
                 Delete
               </Button>
             </div>
-          </div>
+          </PeekFooter>
         )}
       </div>
     );

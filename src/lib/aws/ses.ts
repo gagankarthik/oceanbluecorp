@@ -1,3 +1,4 @@
+import "server-only";
 import * as nodemailer from "nodemailer";
 import { renderRichText, renderListField, richTextToPlain } from "@/lib/rich-text";
 import { escapeHtml } from "@/lib/email-templates";

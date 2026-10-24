@@ -1,5 +1,6 @@
 "use client";
 
+import { StateIcon, type StateMark } from "../kit/state-icon";
 import { useEffect } from "react";
 import { useToast } from "../toast";
 import Icon from "../icons";
@@ -10,7 +11,7 @@ import { Modal as KitModal } from "../kit/overlay";
 import { ErrorState as KitErrorState } from "../kit/states";
 import { ListPageSkeleton } from "../kit/skeletons";
 import {
-  JOB_STATUS_DOT, PIPELINE, STAGE_DOT, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
+  JOB_STATE, JOB_STATUS_DOT, PIPELINE, STAGE_DOT, stageState, STAGE_LABEL, STAGE_TONE, duplicateJobHref, jobStatusLabel, jobStatusShort, publicJobPath, type JobStatus, type Stage,
 } from "./model";
 
 /** Kit Modal; kept for existing imports. */
@@ -108,7 +109,7 @@ export function KpiButton({ active, onClick, label, children }: { active: boolea
       onClick={onClick}
       aria-pressed={active}
       aria-label={label}
-      className={`block w-full rounded-xl text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-md ${active ? "ring-2 ring-ocean-600 ring-offset-2 ring-offset-mist-50" : ""}`}
+      className={`block w-full rounded-lg text-left transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-md ${active ? "ring-2 ring-ocean-600 ring-offset-2 ring-offset-mist-50" : ""}`}
     >
       {children}
     </button>
@@ -215,19 +216,20 @@ export function BreakdownList({
 /** Pipeline stage chip, coloured by the real stage key */
 export function StageBadge({ stage }: { stage: string }) {
   return (
-    <Badge tone={STAGE_TONE[stage as Stage] ?? "grey"} dot>
+    <Badge tone={STAGE_TONE[stage as Stage] ?? "grey"} mark={stageState(stage)}>
       {STAGE_LABEL[stage as Stage] ?? stage}
     </Badge>
   );
 }
 
-/** Compact native select for an inline status change; the dot carries the colour */
+/** Compact native select for an inline status change; the state icon (or dot) carries the colour */
 export function InlineSelect({
   value,
   options,
   onChange,
   label,
   dot,
+  mark,
   disabled,
   width = "w-36",
 }: {
@@ -236,18 +238,25 @@ export function InlineSelect({
   onChange: (v: string) => void;
   label: string;
   dot?: string;
+  mark?: StateMark;
   disabled?: boolean;
   width?: string;
 }) {
   return (
     <span className={`relative inline-flex max-w-full items-center ${width}`} onClick={(e) => e.stopPropagation()}>
-      {dot && <span aria-hidden className="pointer-events-none absolute left-2.5 size-2 rounded-full" style={{ background: dot }} />}
+      {mark ? (
+        <span aria-hidden className="pointer-events-none absolute left-2 flex">
+          <StateIcon {...mark} />
+        </span>
+      ) : (
+        dot && <span aria-hidden className="pointer-events-none absolute left-2.5 size-2 rounded-full" style={{ background: dot }} />
+      )}
       <select
         value={value}
         aria-label={label}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className={`h-8 w-full cursor-pointer appearance-none rounded-md bg-transparent pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 focus:bg-mist-0 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50 ${dot ? "pl-6" : "pl-2.5"}`}
+        className={`h-8 w-full cursor-pointer appearance-none rounded-md bg-transparent pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 focus:bg-mist-0 focus:outline-none focus:ring-2 focus:ring-ocean-600 disabled:opacity-50 ${mark || dot ? "pl-6" : "pl-2.5"}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -375,7 +384,7 @@ export function JobStatusSelect({
       onClick={(e) => e.stopPropagation()}
       className={`relative inline-flex h-8 max-w-full items-center gap-1.5 rounded-md pl-2.5 pr-7 text-adm-base font-medium text-navy-900 ring-1 ring-inset ring-transparent transition-colors hover:bg-mist-0 hover:ring-mist-300 has-[:focus-visible]:bg-mist-0 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ocean-600 ${disabled ? "opacity-50" : ""}`}
     >
-      <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "var(--color-mist-400)" }} />
+      {JOB_STATE[value] ? <StateIcon {...JOB_STATE[value]} /> : <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: JOB_STATUS_DOT[value] ?? "var(--color-mist-400)" }} />}
       <span aria-hidden className="whitespace-nowrap">{jobStatusShort(value)}</span>
       <Icon name="chevronDown" className="pointer-events-none absolute right-2 size-3.5 text-mist-500" />
       <select
